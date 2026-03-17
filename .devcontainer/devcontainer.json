@@ -1,0 +1,49 @@
+{
+	"name": "GBA Development",
+	"build": {
+		"dockerfile": "../docker/Dockerfile",
+		"context": ".."
+	},
+	// Set environment variables
+	"containerEnv": {
+		"DEVKITPRO": "/opt/devkitpro",
+		"DEVKITARM": "/opt/devkitpro/devkitARM",
+		"BUTANO_HOME": "/workspace/extern/butano"
+	},
+	// Configure VS Code settings
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "bash"
+			},
+			"extensions": [
+				"ms-vscode.cpptools",
+				"ms-vscode.cpptools-extension-pack",
+				"ms-vscode.cmake-tools",
+				"twxs.cmake",
+				"ms-python.python"
+			]
+		}
+	},
+	// Privileged mode for GPU/DRI access and hardware rendering
+	"runArgs": ["--privileged"],
+	// X11 display forwarding
+	"initializeCommand": "xhost +local: 2>/dev/null || true",
+	"remoteEnv": {
+		"DISPLAY": "${localEnv:DISPLAY}",
+		"SDL_AUDIODRIVER": "dummy"
+	},
+	"mounts": [
+		{
+			"source": "/tmp/.X11-unix",
+			"target": "/tmp/.X11-unix",
+			"type": "bind"
+		}
+	],
+	// Set the default user
+	"remoteUser": "ubuntu",
+	"updateRemoteUserUID": true,
+	// Mount the workspace folder
+	"workspaceFolder": "/workspace",
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind"
+}

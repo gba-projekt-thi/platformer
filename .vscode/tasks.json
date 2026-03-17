@@ -1,0 +1,43 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-sprites",
+            "type": "shell",
+            "command": "cd src/sprites && make",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "clean-sprites",
+            "type": "shell",
+            "command": "cd src/sprites && make clean",
+            "problemMatcher": []
+        },
+        {
+            "label": "run-rom-host",
+            "type": "shell",
+            "command": "mgba-qt",
+            "args": [
+                "${workspaceFolder}/src/sprites/foo.gba"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "test-rom",
+            "type": "shell",
+            "command": "./test-rom.sh",
+            "args": [
+                "src/sprites/foo.gba"
+            ],
+            "problemMatcher": []
+        }
+    ]
+}

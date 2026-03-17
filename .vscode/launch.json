@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug GBA ROM",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/sprites/foo.elf",
+            "miDebuggerServerAddress": "host.docker.internal:2345",
+            "miDebuggerPath": "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gdb",
+            "cwd": "${workspaceFolder}",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build-sprites",
+            "externalConsole": false,
+            "logging": {
+                "engineLogging": false
+            }
+        }
+    ]
+}
