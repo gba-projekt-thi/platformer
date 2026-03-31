@@ -5,7 +5,7 @@
             "name": "Debug GBA ROM",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/sprites/foo.elf",
+            "program": "${workspaceFolder}/game/foo.elf",
             "miDebuggerServerAddress": "host.docker.internal:2345",
             "miDebuggerPath": "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gdb",
             "cwd": "${workspaceFolder}",
@@ -16,7 +16,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "build-sprites",
+            "preLaunchTask": "build-game",
             "externalConsole": false,
             "logging": {
                 "engineLogging": false

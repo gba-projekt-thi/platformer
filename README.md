@@ -28,11 +28,11 @@ code .
 #    VS Code will build the dev container automatically (takes a few minutes first time)
 
 # 4. Once inside the container, build your game
-cd src/sprites && make
+make
 
 # 5. Run the generated .gba file on your host computer
 #    (Open a terminal OUTSIDE VS Code on your host)
-mgba-qt src/sprites/foo.gba
+mgba-qt platformer.gba
 ```
 
 **Alternative:** If not using VS Code, build the Docker image manually:
@@ -52,17 +52,17 @@ docker build -t projectgba -f docker/Dockerfile .
 
 ```bash
 # Option 1: Using Make (recommended)
-cd src/sprites && make
+make
 
 # Option 2: Using CMake wrapper
 ./build.sh
 
 # Option 3: Using Docker directly (if not using VS Code)
 docker run --rm -v $(pwd):/workspace -w /workspace projectgba \
-    bash -c "cd src/sprites && make"
+    bash -c "make"
 ```
 
-**Output:** `src/sprites/foo.gba` and `src/sprites/foo.elf`
+**Output:** `foo.gba` and `foo.elf`
 
 **Note:** If you try to build on your host system (outside the container), you'll get "command not found" errors because the ARM toolchain isn't installed there.
 
@@ -70,13 +70,13 @@ docker run --rm -v $(pwd):/workspace -w /workspace projectgba \
 
 ```bash
 # Interactive GUI (requires X11 forwarding or host installation)
-mgba-qt src/sprites/foo.gba
+mgba-qt foo.gba
 
 # Headless testing (for CI, works in Docker)
-./test-rom.sh src/sprites/foo.gba
+./test-rom.sh foo.gba
 
 # Helper script with options
-./run-gba.sh src/sprites/foo.gba [OPTIONS]
+./run-gba.sh foo.gba [OPTIONS]
 #   -h, --headless  Run in headless mode (no GUI, for CI)
 #   -c, --console   Enable console output with debug logging
 ```
@@ -90,7 +90,7 @@ sudo apt-get install mgba-qt
 
 ```
 projectGBA/
-├── src/sprites/        # Example project
+├── game/               # Example project
 ├── extern/butano/      # Butano engine (submodule)
 ├── docker/             # Docker build environment
 └── .devcontainer/      # VS Code devcontainer config
@@ -119,17 +119,17 @@ This workflow splits tasks between the dev container and your host system:
    ```bash
    # Open a terminal on your HOST (not in VS Code)
    # Install mGBA if needed: sudo apt-get install mgba-qt
-   mgba-qt src/sprites/foo.gba
+   mgba-qt foo.gba
    ```
 
 3. **Debug with GDB** (split between host and container):
    ```bash
    # Terminal 1 (HOST): Start mGBA GUI with GDB stub on port 2345
-   mgba-qt -g src/sprites/foo.gba
+   mgba-qt -g foo.gba
 
    # Terminal 2 (DEV CONTAINER): Connect ARM debugger
    # Must run from container because host doesn't have arm-none-eabi-gdb
-   arm-none-eabi-gdb src/sprites/foo.elf
+   arm-none-eabi-gdb foo.elf
    (gdb) target remote host.docker.internal:2345
    (gdb) continue
    ```
@@ -152,7 +152,7 @@ All commands run automatically in the correct environment (container or host).
 
 For automated testing without GUI:
 ```bash
-./test-rom.sh src/sprites/foo.gba
+./test-rom.sh foo.gba
 ```
 
 **Note:** GDB connection verified working. The container connects to host mGBA via `host.docker.internal:2345`.
@@ -169,7 +169,7 @@ VS Code → `F1` → "Dev Containers: Rebuild Container"
 
 **Root-owned files:**
 ```bash
-sudo chown -R $(whoami):$(whoami) src/sprites/build
+sudo chown -R $(whoami):$(whoami) build
 ```
 
 ## Links
