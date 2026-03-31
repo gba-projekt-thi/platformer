@@ -31,18 +31,18 @@
 #
 # All directories are specified relative to the project directory where the makefile is found.
 #---------------------------------------------------------------------------------------------------------------------
-TARGET      	:=  foo
+TARGET      	:=  platformer
 BUILD       	:=  build
-LIBBUTANO   	:=  ../../extern/butano/butano
+LIBBUTANO   	:=  extern/butano/butano
 PYTHON      	:=  python
-SOURCES     	:=  src ../../extern/butano/common/src
-INCLUDES    	:=  include ../../extern/butano/common/include
+SOURCES     	:=  game/src extern/butano/common/src
+INCLUDES    	:=  game/include extern/butano/common/include
 DATA        	:=
-GRAPHICS    	:=  graphics ../../extern/butano/common/graphics
-AUDIO       	:=  audio ../../extern/butano/common/audio
+GRAPHICS    	:=  game/graphics extern/butano/common/graphics
+AUDIO       	:=  game/audio extern/butano/common/audio
 AUDIOBACKEND	:=  maxmod
 AUDIOTOOL		:=  
-DMGAUDIO    	:=  dmg_audio ../../extern/butano/common/dmg_audio
+DMGAUDIO    	:=  game/dmg_audio extern/butano/common/dmg_audio
 DMGAUDIOBACKEND	:=  default
 ROMTITLE    	:=  BUTANO SPRTS
 ROMCODE     	:=  SBTP

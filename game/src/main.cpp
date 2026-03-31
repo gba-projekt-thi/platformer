@@ -1,36 +1,11 @@
 #include "bn_core.h"
 #include "bn_keypad.h"
-#include "bn_sprite_ptr.h"
-#include "bn_sprite_tiles_ptr.h"
-#include "bn_sprite_items_ente.h"   // verwendetes sprite
 #include "bn_bg_palettes.h"
 
-#include "bn_sprites_mosaic.h"
-#include "bn_sprite_actions.h"
-#include "bn_sprite_builder.h"
-#include "bn_sprites_actions.h"
-#include "bn_sprite_text_generator.h"
 #include "bn_sprite_animate_actions.h"
-#include "bn_sprite_first_attributes.h"
-#include "bn_sprite_third_attributes.h"
-#include "bn_sprite_position_hbe_ptr.h"
-#include "bn_sprite_first_attributes_hbe_ptr.h"
-#include "bn_sprite_third_attributes_hbe_ptr.h"
-#include "bn_sprite_affine_second_attributes.h"
-#include "bn_sprite_regular_second_attributes.h"
-#include "bn_sprite_affine_second_attributes_hbe_ptr.h"
-#include "bn_sprite_regular_second_attributes_hbe_ptr.h"
 
-#include "bn_sprite_items_ninja.h"
-#include "bn_sprite_items_caveman.h"
-#include "bn_sprite_items_red_sprite.h"
-#include "bn_sprite_items_blue_sprite.h"
-#include "bn_sprite_items_green_sprite.h"
-#include "bn_sprite_items_yellow_sprite.h"
-#include "bn_regular_bg_items_red_bg.h"
-#include "bn_regular_bg_items_blue_bg.h"
-#include "bn_regular_bg_items_green_bg.h"
-#include "bn_regular_bg_items_yellow_bg.h"
+// Sprites
+#include "bn_sprite_items_ente.h"
 
 int main()
 {
