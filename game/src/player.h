@@ -2,6 +2,7 @@
 
 #include "bn_fixed.h"
 #include "bn_sprite_ptr.h"
+#include "bn_sprite_animate_actions.h"
 
 class Player
 {
@@ -25,4 +26,5 @@ class Player
         bn::fixed x_velocity;
         bn::fixed y_velocity;
         bool canJump;
+        bn::sprite_animate_action<2> action;
 };
