@@ -2,7 +2,7 @@
 
 ## What's Been Set Up
 
-Your project is now configured to use clang-tidy with proper Butano library support.
+The project is configured to use clang-tidy with proper Butano library support.
 
 ### Key Components
 
@@ -23,17 +23,17 @@ Your project is now configured to use clang-tidy with proper Butano library supp
 
 ## How It Works
 
-- **clangd** (the language server) reads your source code
-- **clang-tidy** runs checks defined in `.clang-tidy`
-- **compile_commands.json** tells clang-tidy about:
-  - Include paths to Butano libraries
-  - Compiler flags (C++20, ARM architecture flags)
-  - All dependencies
+- **clangd** (the language server) reads the source code
+- **clang-tidy** runs checks configured in `.clang-tidy`
+- **compile_commands.json** provides clang-tidy with:
+  - include paths to Butano libraries
+  - compiler flags (C++20 and ARM architecture flags)
+  - dependency information
 
-This allows clang-tidy to:
-- ✅ Understand all Butano symbols and functions
-- ✅ Resolve includes properly  
-- ✅ Analyze your code with correct compilation context
+This setup helps clang-tidy to:
+- ✅ understand Butano symbols and functions
+- ✅ resolve includes properly
+- ✅ analyze code in the right compilation context
 
 ## Linting Your Code
 

@@ -1,6 +1,6 @@
 # Code Quality Setup Guide
 
-This project has a complete code quality pipeline with automatic formatting, linting, and pre-commit hooks.
+The repository is now supported by a complete code quality pipeline with automatic formatting, linting, and pre-commit hooks.
 
 ## 📋 What's Configured
 
@@ -34,22 +34,19 @@ This project has a complete code quality pipeline with automatic formatting, lin
 
 ### Initial Setup (Run Once)
 
+A quick first pass can make the environment ready for work:
+
 ```bash
-# Navigate to workspace
 cd /workspace
-
-# Install the pre-commit hook (also installs required tools)
 bash setup-hooks.sh
-
-# Build the compilation database (if not already done)
 cd src/sprites && bear -- make && cp compile_commands.json /workspace/
 ```
 
-The `setup-hooks.sh` script will automatically install:
-- `clang-format` - Code formatting
-- `clang-tidy` - Static analysis
-- `clangd` - Language server for VS Code
-- `bear` - Compilation database generation
+The `setup-hooks.sh` script typically installs:
+- `clang-format` for formatting
+- `clang-tidy` for static analysis
+- `clangd` as the VS Code language server
+- `bear` to generate the compilation database
 
 ### Daily Workflow
 

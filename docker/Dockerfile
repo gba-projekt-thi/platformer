@@ -10,6 +10,9 @@ RUN apt-get update && \
     apt-get install -y wget apt-transport-https python3 git cmake make && \
     # Create python symlink so 'python' command works
     ln -sf /usr/bin/python3 /usr/bin/python && \
+    # install clang tooling for devcontainer language server
+    apt-get install -y clang-tidy clang-format clangd-18 && \
+    ln -sf /usr/bin/clangd-18 /usr/bin/clangd && \
     # Clean up apt cache to reduce image size
     rm -rf /var/lib/apt/lists/*
 

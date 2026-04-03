@@ -2,12 +2,12 @@
 
 ## Overview
 
-Your Butano GBA project now has a **complete, production-ready code quality pipeline** with:
-- 🎨 Automatic code formatting
-- 🔍 Real-time linting in VS Code
-- ✔️ Pre-commit hooks for quality gates
+The Butano GBA project is now supported by a **complete, production-ready code quality pipeline** that includes:
+- 🎨 automatic code formatting
+- 🔍 real-time linting in VS Code
+- ✔️ pre-commit hooks for quality gates
 - 🤖 CI/CD automated checks
-- 📊 Compilation database for Butano library awareness
+- 📊 a compilation database for Butano library awareness
 
 ---
 
@@ -57,20 +57,25 @@ CLANG_TIDY_SETUP.md              # Original clang-tidy guide
 ## 🚀 How to Use
 
 ### Development Workflow
-```bash
-# Edit code in VS Code
-# Real-time linting appears as squiggles
+The setup is designed to be friendly for day-to-day development:
+- Make code edits in VS Code as usual
+- Clangd + clang-tidy will show lint feedback in real time
+- When you commit, the pre-commit hook can run formatting and checks automatically
 
-# When ready to commit:
+```bash
+# Typical commit flow
 git add .
 git commit -m "Your message"
-# Pre-commit hook automatically:
-# 1. Formats code with clang-format
-# 2. Checks with clang-tidy
-# 3. Prevents commit if critical issues found
 ```
 
+You can expect:
+- the code to be formatted with `clang-format`
+- lint checks to be executed with `clang-tidy`
+- commits to be blocked if the checks find issues that are treated as failures
+
 ### Command Line Checks
+These commands are available if you prefer to run things explicitly:
+
 ```bash
 # Check a single file
 clang-tidy -p=/workspace src/sprites/src/main.cpp
@@ -163,10 +168,10 @@ clang-tidy -p=/workspace src/sprites/src/main.cpp
 
 ## ✨ Next Steps
 
-1. **Commit this setup**: `git add -A && git commit -m "Add code quality tooling"`
-2. **Test the hook**: Make a small change and commit
-3. **Verify in CI**: Push to origin and check GitHub Actions
-4. **Share with team**: Point them to `CODE_QUALITY.md`
+- Consider committing the setup once you’re ready: `git add -A && git commit -m "Add code quality tooling"`
+- It can be helpful to test the hook by making a small change and committing
+- A useful check is to push to origin and observe GitHub Actions in CI
+- Share the project docs with teammates (for example, `CODE_QUALITY.md`) so others can follow the same flow
 
 ---
 

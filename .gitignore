@@ -1,1 +1,4 @@
 src/**/build/
+extern/build/
+build/
+extern/*

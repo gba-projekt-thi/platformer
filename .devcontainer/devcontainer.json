@@ -10,7 +10,6 @@
 		"DEVKITARM": "/opt/devkitpro/devkitARM",
 		"BUTANO_HOME": "/workspace/extern/butano"
 	},
-	"postCreateCommand": "apt-get update && apt-get install -y clang-tidy clang-format clangd-18 && ln -sf /usr/bin/clangd-18 /usr/bin/clangd",
 	// Configure VS Code settings
 	"customizations": {
 		"vscode": {

@@ -12,8 +12,14 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y clang-tidy
-        
+        run: sudo apt-get update && sudo apt-get install -y clang-tidy cmake
+
+      - name: Configure project and export compilation database
+        run: |
+          mkdir -p src/sprites/build
+          cmake -S src/sprites -B src/sprites/build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
       - name: Run clang-tidy
         run: |
-          find . -name "*.cpp" -o -name "*.h" | xargs clang-tidy --quiet --warnings-as-errors=* --
+          find src/sprites -type f \( -name "*.cpp" -o -name "*.h" \) | \
+            xargs -r clang-tidy --quiet --warnings-as-errors=* -p src/sprites/build --
