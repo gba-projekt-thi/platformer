@@ -21,11 +21,5 @@ jobs:
 
       - name: Run clang-tidy
         run: |
-<<<<<<< HEAD
           find src/sprites -type f \( -name "*.cpp" -o -name "*.h" \) | \
-            xargs -r clang-tidy --quiet --warnings-as-errors=* -p src/sprites/build --
-=======
-          find . \
-            -type f \( -name "*.cpp" -o -name "*.h" \) | \
-          xargs -r clang-tidy --quiet --warnings-as-errors=*
->>>>>>> refs/remotes/origin/feat/linter2
+            xargs -r clang-tidy --quiet --warnings-as-errors=*
