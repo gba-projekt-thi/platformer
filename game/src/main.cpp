@@ -7,9 +7,19 @@
 // Sprites
 #include "bn_sprite_items_ente.h"
 
+// Wallpapers
+#include "bn_regular_bg_items_level1.h"
+#include "bn_regular_bg_ptr.h"
+
 int main()
 {
     bn::core::init();
+
+    // Create wallpaper
+    bn::regular_bg_ptr bg = bn::regular_bg_items::level1.create_bg(0, 0);
+    
+    // Prio 3 to be in the background
+    bg.set_priority(3);
 
     // Sprite wird erstellt
     bn::sprite_ptr ente_sprite = bn::sprite_items::ente.create_sprite(0, 0);
@@ -18,7 +28,7 @@ int main()
     // grau     16,16,16
     // blau     00,00,16
     //      
-    bn::bg_palettes::set_transparent_color(bn::color(12,20,31)); 
+    // bn::bg_palettes::set_transparent_color(bn::color(12,20,31)); 
     // für animation
     bn::sprite_animate_action<2> action = bn::create_sprite_animate_action_forever(
                     ente_sprite, 26, bn::sprite_items::ente.tiles_item(), 0, 1);
