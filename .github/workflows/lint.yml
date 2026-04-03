@@ -16,4 +16,4 @@ jobs:
         
       - name: Run clang-tidy
         run: |
-          find . -name "*.cpp" -o -name "*.h" | xargs clang-tidy --quiet --warnings-as-errors=* --
+          find . -name "*.cpp" -o -name "*.h" | xargs clang-tidy --quiet --warnings-as-errors=*
