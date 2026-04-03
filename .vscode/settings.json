@@ -1,0 +1,18 @@
+{
+  "clangd.arguments": [
+    "--clang-tidy",
+    "--compile-commands-dir=/workspace",
+    "--header-insertion=never",
+    "-j=4"
+  ],
+  "clangd.checkUpdates": false,
+  "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+  "C_Cpp.codeAnalysis.clangTidy.args": [
+    "--config-file=/workspace/.clang-tidy"
+  ],
+  "editor.formatOnSave": false,
+  "editor.defaultFormatter": "ms-vscode.cpptools",
+  "[cpp]": {
+    "editor.defaultFormatter": "ms-vscode.cpptools"
+  }
+}

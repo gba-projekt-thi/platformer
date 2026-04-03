@@ -10,18 +10,25 @@
 		"DEVKITARM": "/opt/devkitpro/devkitARM",
 		"BUTANO_HOME": "/workspace/extern/butano"
 	},
+	"postCreateCommand": "apt-get update && apt-get install -y clang-tidy clang-format clangd-18 && ln -sf /usr/bin/clangd-18 /usr/bin/clangd",
 	// Configure VS Code settings
 	"customizations": {
 		"vscode": {
 			"settings": {
-				"terminal.integrated.defaultProfile.linux": "bash"
+				"terminal.integrated.defaultProfile.linux": "bash",
+				"clangd.arguments": [
+					"--clang-tidy",
+					"--compile-commands-dir=/workspace"
+				],
+				"clang-tidy.buildPath": "/workspace"
 			},
 			"extensions": [
 				"ms-vscode.cpptools",
 				"ms-vscode.cpptools-extension-pack",
 				"ms-vscode.cmake-tools",
 				"twxs.cmake",
-				"ms-python.python"
+				"ms-python.python",
+				"llvm-vs-code-extensions.vscode-clangd"
 			]
 		}
 	},
