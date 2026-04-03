@@ -16,4 +16,4 @@ jobs:
         
       - name: Run clang-tidy
         run: |
-          find . -name "*.cpp" -o -name "*.h" | xargs clang-tidy --quiet --warnings-as-errors=*
+          find . -type d -name build -prune -o -type d -name cmake_build -prune -o -name "*.cpp" -print -o -name "*.h" -print | xargs clang-tidy --quiet --warnings-as-errors=*
