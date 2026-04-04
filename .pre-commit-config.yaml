@@ -1,0 +1,16 @@
+repos:
+- repo: local
+  hooks:
+  - id: clang-format
+    name: clang-format
+    entry: clang-format -i -style=file
+    language: system
+    files: '^src/.*\.(c|cc|cpp|h|hpp)$'
+    types: [c, c++]
+  - id: clang-tidy
+    name: clang-tidy
+    entry: bash
+    args: [-c, 'output=$(clang-tidy -p=/workspace "$@" --quiet 2>&1); rc=$?; echo "$output"; if [ "$rc" -ne 0 ] || echo "$output" | grep -q "error:"; then exit 1; fi', --]
+    language: system
+    files: '^src/.*\.(c|cc|cpp|h|hpp)$'
+    types: [c, c++]

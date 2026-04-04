@@ -6,13 +6,15 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system prerequisites and tools
 RUN apt-get update && \
-    # Install wget (for downloading), apt-transport-https (for https apt sources), python3, git, and cmake
-    apt-get install -y wget apt-transport-https python3 git cmake make && \
+    # Install wget (for downloading), apt-transport-https (for https apt sources), python3, pip, git, and cmake
+    apt-get install -y wget apt-transport-https python3 python3-pip git cmake make bear && \
     # Create python symlink so 'python' command works
     ln -sf /usr/bin/python3 /usr/bin/python && \
     # install clang tooling for devcontainer language server
     apt-get install -y clang-tidy clang-format clangd-18 && \
     ln -sf /usr/bin/clangd-18 /usr/bin/clangd && \
+    # Install pre-commit for repo hook management
+    python3 -m pip install pre-commit && \
     # Clean up apt cache to reduce image size
     rm -rf /var/lib/apt/lists/*
 

@@ -24,7 +24,7 @@ The Butano GBA project is now supported by a **complete, production-ready code q
 - ✓ `compile_commands.json` - 106 build entries with Butano includes
 
 ### 3. **Git Integration**
-- ✓ Pre-commit hook installed (71 lines)
+- ✓ Pre-commit hook installed
 - ✓ Automatically runs on `git commit`
 - ✓ Skippable with `--no-verify` if needed
 
@@ -44,7 +44,8 @@ The Butano GBA project is now supported by a **complete, production-ready code q
 ```
 .clang-format                      # Code formatting rules
 .clang-tidy                        # Linting configuration
-.githooks/pre-commit              # Git hook script
+.pre-commit-config.yaml            # pre-commit hook configuration
+.githooks/pre-commit              # Git hook wrapper script
 .vscode/settings.json             # VS Code linting settings
 setup-hooks.sh                    # Hook installation script
 compile_commands.json             # Build database (generated)
@@ -125,6 +126,8 @@ make clean
 bear -- make
 cp compile_commands.json /workspace/
 ```
+
+If you want to regenerate the compilation database from scratch, `bash setup-hooks.sh` now also updates `compile_commands.json` automatically.
 
 ### After Updating Tools
 ```bash

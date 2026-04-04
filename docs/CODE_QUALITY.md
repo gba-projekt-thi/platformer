@@ -39,8 +39,9 @@ A quick first pass can make the environment ready for work:
 ```bash
 cd /workspace
 bash setup-hooks.sh
-cd src/sprites && bear -- make && cp compile_commands.json /workspace/
 ```
+
+`setup-hooks.sh` installs system tools, sets up the `pre-commit` hook automatically, and generates `compile_commands.json` from `src/sprites`. If `pre-commit` is not available on the host, the script will install it via `python3 -m pip`.
 
 The `setup-hooks.sh` script typically installs:
 - `clang-format` for formatting
