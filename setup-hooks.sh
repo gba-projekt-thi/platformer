@@ -1,38 +1,54 @@
 #!/bin/bash
+set -euo pipefail
+
 # Setup git hooks for this repository
 # Run: ./setup-hooks.sh
 
-# Install required tools if not present
+WORKSPACE=$(pwd)
+VENV_DIR="$WORKSPACE/.venv"
+
+install_package() {
+    local package="$1"
+    echo "Installing ${package}..."
+    sudo apt-get update
+    sudo apt-get install -y "$package"
+}
+
 echo "Checking required tools..."
 if ! command -v clang-format &> /dev/null; then
-    echo "Installing clang-format..."
-    sudo apt-get update && sudo apt-get install -y clang-format
+    install_package clang-format
 fi
 
 if ! command -v clang-tidy &> /dev/null; then
-    echo "Installing clang-tidy..."
-    sudo apt-get install -y clang-tidy
+    install_package clang-tidy
 fi
 
 if ! command -v clangd &> /dev/null; then
-    echo "Installing clangd..."
-    sudo apt-get install -y clangd-18
+    install_package clangd-18
     sudo ln -sf /usr/bin/clangd-18 /usr/bin/clangd
 fi
 
 if ! command -v bear &> /dev/null; then
-    echo "Installing bear..."
-    sudo apt-get install -y bear
+    install_package bear
 fi
 
-if ! command -v pip3 &> /dev/null; then
-    echo "Installing python3-pip..."
-    sudo apt-get update && sudo apt-get install -y python3-pip
+if ! command -v python3 &> /dev/null; then
+    echo "Error: python3 is required but not installed"
+    exit 1
 fi
 
-if ! python3 -m pre_commit --version >/dev/null 2>&1; then
-    echo "Installing pre-commit..."
-    python3 -m pip install --user pre-commit
+if ! python3 -m venv "$VENV_DIR" >/dev/null 2>&1; then
+    install_package python3-venv
+    python3 -m venv "$VENV_DIR"
+fi
+
+source "$VENV_DIR/bin/activate"
+python -m pip install --upgrade pip
+python -m pip install pre-commit
+
+if ! python -m pre_commit --version >/dev/null 2>&1; then
+    echo "Error: pre-commit installation failed"
+    exit 1
 fi
 
 echo "✓ Required tools installed"
@@ -44,23 +60,19 @@ if [ ! -d "$GIT_HOOKS_DIR" ]; then
     exit 1
 fi
 
-if ! python3 -m pre_commit --version >/dev/null 2>&1; then
-    echo "Error: pre-commit installation failed"
-    exit 1
-fi
-
 echo "Installing pre-commit hook..."
-python3 -m pre_commit install --install-hooks
+python -m pre_commit install --install-hooks
 
 echo "Generating compilation database..."
 pushd src/sprites >/dev/null
 bear -- make
-cp compile_commands.json /workspace/
+cp compile_commands.json "$WORKSPACE/"
 popd >/dev/null
 
 echo "✓ compile_commands.json generated"
 
 echo "✓ Git hooks installed successfully"
-echo ""
+echo
+
 echo "Installed hooks:"
 echo "  - pre-commit: Runs clang-format and clang-tidy on staged files via .pre-commit-config.yaml"

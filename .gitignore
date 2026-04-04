@@ -2,3 +2,6 @@ src/**/build/
 extern/build/
 build/
 extern/*
+.venv/
+compile_commands.json
+src/**/compile_commands.json
