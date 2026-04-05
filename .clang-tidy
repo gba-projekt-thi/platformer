@@ -1,0 +1,19 @@
+Checks: >
+  clang-diagnostic-*,
+  clang-analyzer-*,
+  bugprone-*,
+  modernize-*,
+  performance-*,
+  readability-*
+
+ExtraArgs:
+  - "-std=c++23"
+  - "-Wno-unknown-argument"
+  - "-Wno-unused-command-line-argument"
+  - "-Wno-unqualified-std-cast-call"
+  - "-isystem"
+  - "/opt/devkitpro/devkitARM/arm-none-eabi/include/c++/15.2.0"
+  - "-isystem"
+  - "/opt/devkitpro/devkitARM/arm-none-eabi/include/c++/15.2.0/arm-none-eabi"
+  - "-isystem"
+  - "/opt/devkitpro/devkitARM/arm-none-eabi/include"

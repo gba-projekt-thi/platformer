@@ -6,8 +6,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system prerequisites and tools
 RUN apt-get update && \
-    # Install wget (for downloading), apt-transport-https (for https apt sources), python3, git, and cmake
-    apt-get install -y wget apt-transport-https python3 git cmake make && \
+    # Install wget (for downloading), apt-transport-https (for https apt sources), python3, git, pre-commit and cmake
+    apt-get install -y wget apt-transport-https python3 git pre-commit clang-format bear clang-tidy cmake make && \
     # Create python symlink so 'python' command works
     ln -sf /usr/bin/python3 /usr/bin/python && \
     # Clean up apt cache to reduce image size

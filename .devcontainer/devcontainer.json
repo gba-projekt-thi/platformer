@@ -29,6 +29,7 @@
 	"runArgs": ["--privileged"],
 	// X11 display forwarding
 	"initializeCommand": "xhost +local: 2>/dev/null || true",
+	"postCreateCommand": "${containerWorkspaceFolder}/post-create.sh",
 	"remoteEnv": {
 		"DISPLAY": "${localEnv:DISPLAY}",
 		"SDL_AUDIODRIVER": "dummy"

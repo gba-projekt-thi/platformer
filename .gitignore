@@ -1,2 +1,3 @@
 build/
 platformer.*
+compile_commands.json

@@ -172,6 +172,11 @@ VS Code → `F1` → "Dev Containers: Rebuild Container"
 sudo chown -R $(whoami):$(whoami) build
 ```
 
+## Contributing
+### Linter
+Before every commit a short script runs to check if all files are using a consistent code style using clang-format and clang-tidy with pre-commit.
+This is only possible in the devcontainer or if you have [pre-commit](https://pre-commit.com), clang-format and clang-tidy installed on your system. 
+
 ## Links
 
 - [Butano Documentation](https://gvaliente.github.io/butano/)
