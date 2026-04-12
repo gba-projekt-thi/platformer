@@ -32,8 +32,8 @@ int main() {
     bn::array<bn::sprite_ptr, 4> platform_sprites = {
         bn::sprite_items::platformslevel1.create_sprite(0, 60),
         bn::sprite_items::platformslevel1.create_sprite(16, 60),
-        bn::sprite_items::platformslevel1.create_sprite(32, 60),
         bn::sprite_items::platformslevel1.create_sprite(48, 60),
+        bn::sprite_items::platformslevel1.create_sprite(64, 60),
     };
 
     for (size_t i = 0; i < 4; i++) {
@@ -44,16 +44,22 @@ int main() {
     bn::array<StaticBody, 4> platform_bodies = {
         StaticBody(0, 60, 16, 16, Player::PLATFORM_LAYER),
         StaticBody(16, 60, 16, 16, Player::PLATFORM_LAYER),
-        StaticBody(32, 60, 16, 16, Player::PLATFORM_LAYER),
         StaticBody(48, 60, 16, 16, Player::PLATFORM_LAYER),
+        StaticBody(64, 60, 16, 16, Player::PLATFORM_LAYER),
     };
 
     // Create player
-    Player player(0, 0, 16, 16);
+    Player player(0, 0, 8, 8);
+    player.sprite_offset_y = 4;
 
     while (true) {
         // Physics update
         CollisionRegistry::instance().update_all();
+
+        // Camera should not follow the player for now
+        // Camera::instance().follow(player.x, player.y);
+
+        SpriteRegistry::instance().sync_all(Camera::instance());
 
         bn::core::update();
     }

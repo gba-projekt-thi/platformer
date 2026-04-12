@@ -14,7 +14,10 @@ Player::Player(
     : PhysicsBody(start_x, start_y, width, height, LAYERS, MASK, BLOCK),
 
       // Configuration values
-      player_sprite(bn::sprite_items::ente.create_sprite(start_x, start_y)),
+      player_sprite(
+          bn::sprite_items::ente.create_sprite(start_x, start_y),
+          start_x,
+          start_y),
       groundLevel(60),
       acceleration(0.3),
       max_speed(2),
@@ -23,18 +26,17 @@ Player::Player(
       max_fall_speed(3),
 
       // Working values
-      x_coord(start_x),
-      y_coord(start_y),
-      x_velocity(0),
-      y_velocity(0),
       canJump(true),
-      action(bn::create_sprite_animate_action_forever(
-          player_sprite,
-          26,
-          bn::sprite_items::ente.tiles_item(),
-          0,
-          1)),
-      facing(Facing::Forward) {}
+      action(
+          bn::create_sprite_animate_action_forever(
+              player_sprite.sprite(),
+              26,
+              bn::sprite_items::ente.tiles_item(),
+              0,
+              1)),
+      facing(Facing::Forward) {
+    this->sprite = &player_sprite;
+}
 
 void Player::update() {
     // Handle player input for left and right
@@ -42,104 +44,85 @@ void Player::update() {
         // Update animation on direction change
         if (facing != Facing::Left) {
             action = bn::create_sprite_animate_action_forever(
-                player_sprite, 10, bn::sprite_items::ente.tiles_item(), 4, 5);
+                player_sprite.sprite(), 10, bn::sprite_items::ente.tiles_item(),
+                4, 5);
             facing = Facing::Left;
             // Flip sprite manually in case we're in the air
-            player_sprite.set_tiles(
+            player_sprite.sprite().set_tiles(
                 bn::sprite_items::ente.tiles_item().create_tiles(4));
         }
 
         // Calculate speed
-        x_velocity -= acceleration;
-        if (x_velocity < -max_speed) {
-            x_velocity = -max_speed;
+        inc_velocity(-acceleration, 0);
+        if (vel_x < -max_speed) {
+            set_velocity(-max_speed, vel_y);
         }
     } else if (bn::keypad::right_held()) {
         // Update animation on direction change
         if (facing != Facing::Right) {
             action = bn::create_sprite_animate_action_forever(
-                player_sprite, 10, bn::sprite_items::ente.tiles_item(), 0, 1);
+                player_sprite.sprite(), 10, bn::sprite_items::ente.tiles_item(),
+                0, 1);
             facing = Facing::Right;
             // Flip sprite manually in case we're in the air
-            player_sprite.set_tiles(
+            player_sprite.sprite().set_tiles(
                 bn::sprite_items::ente.tiles_item().create_tiles(0));
         }
 
         // Calculate speed
-        x_velocity += acceleration;
-        if (x_velocity > max_speed) {
-            x_velocity = max_speed;
+        inc_velocity(acceleration, 0);
+        if (vel_x > max_speed) {
+            set_velocity(max_speed, vel_y);
         }
     } else {
         // Slow down when there is no input
-        if (x_velocity < 0) {
-            x_velocity += acceleration;
-            if (x_velocity > 0)
-                x_velocity = 0;
-        } else if (x_velocity > 0) {
-            x_velocity -= acceleration;
-            if (x_velocity < 0)
-                x_velocity = 0;
-        }
+        dec_velocity(acceleration, 0);
     }
 
-    // Calculate new x_coordinate
-    x_coord += x_velocity;
-
     // Check if we're at the edge of the map
-    if (x_coord < -110) {
-        x_coord = -110;
-        x_velocity = 0;
-    } else if (x_coord > 110) {
-        x_coord = 110;
-        x_velocity = 0;
+    if (x < -110 || x > 110) {
+        set_velocity(0, vel_y);
     }
 
     // Jump
     if (bn::keypad::a_pressed() && canJump) {
-        y_velocity = jump_speed;
+        set_velocity(vel_x, jump_speed);
         canJump = false;
     }
 
     // Gravity
-    y_velocity += gravity;
-    if (y_velocity > max_fall_speed) {
-        y_velocity = max_fall_speed;
+    inc_velocity(0, gravity);
+    if (vel_y > max_fall_speed) {
+        set_velocity(vel_x, max_fall_speed);
     }
-
-    // Calculate new y_coordinate
-    y_coord += y_velocity;
 
     // Check if we're on the Ground
-    if (y_coord >= groundLevel) {
-        y_coord = groundLevel;
-        y_velocity = 0;
-        canJump = true;
-    }
+    canJump = probe_bottom() != 0;
 
     // Update player sprite
-    player_sprite.set_position(x_coord, y_coord);
+    // player_sprite.sprite().set_position(x_coord, y_coord);
+
     // Only play animation when we're moving but not falling
-    if (x_velocity != 0 && y_velocity == 0) {
+    if (vel_x != 0 && canJump) {
         action.update();
     }
     // Face forward when we're neither moving nor falling
-    else if (y_velocity == 0) {
-        player_sprite.set_tiles(
+    else if (canJump) {
+        player_sprite.sprite().set_tiles(
             bn::sprite_items::ente.tiles_item().create_tiles(8));
         facing = Facing::Forward;
     }
 
     // Player input for up and down
     if (bn::keypad::up_held()) {
-        player_sprite.set_tiles(
+        player_sprite.sprite().set_tiles(
             bn::sprite_items::ente.tiles_item().create_tiles(9));
         facing = Facing::Back;
     } else if (bn::keypad::down_held()) {
-        player_sprite.set_tiles(
+        player_sprite.sprite().set_tiles(
             bn::sprite_items::ente.tiles_item().create_tiles(8));
         facing = Facing::Forward;
     }
 
-    BN_LOG("Player x:", x_coord, " y:", y_coord);
+    BN_LOG("x:", x, " y:", y, "vel_x:", vel_x, " vel_y:", vel_y);
 }

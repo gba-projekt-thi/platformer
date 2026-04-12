@@ -3,7 +3,6 @@
 // Butano
 #include "bn_fixed.h"
 #include "bn_sprite_animate_actions.h"
-#include "bn_sprite_ptr.h"
 
 // Engine team
 #include "physics_body.h"
@@ -32,7 +31,7 @@ class Player : public PhysicsBody {
     enum class Facing { Forward, Back, Left, Right };
 
     // Configuration values
-    bn::sprite_ptr player_sprite;
+    Sprite player_sprite;
     int groundLevel;
     bn::fixed acceleration;
     bn::fixed max_speed;
@@ -41,10 +40,6 @@ class Player : public PhysicsBody {
     bn::fixed max_fall_speed;
 
     // Working values
-    bn::fixed x_coord;
-    bn::fixed y_coord;
-    bn::fixed x_velocity;
-    bn::fixed y_velocity;
     bool canJump;
     bn::sprite_animate_action<2> action;
     Facing facing;
