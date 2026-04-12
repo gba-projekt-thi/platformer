@@ -28,19 +28,12 @@
 	// Privileged mode for GPU/DRI access and hardware rendering
 	"runArgs": ["--privileged"],
 	// X11 display forwarding
-	"initializeCommand": "xhost +local: 2>/dev/null || true",
+	//"initializeCommand": "xhost +local: 2>/dev/null || true",
 	"postCreateCommand": "${containerWorkspaceFolder}/post-create.sh",
 	"remoteEnv": {
 		"DISPLAY": "${localEnv:DISPLAY}",
 		"SDL_AUDIODRIVER": "dummy"
 	},
-	"mounts": [
-		{
-			"source": "/tmp/.X11-unix",
-			"target": "/tmp/.X11-unix",
-			"type": "bind"
-		}
-	],
 	// Set the default user
 	"remoteUser": "ubuntu",
 	"updateRemoteUserUID": true,
