@@ -3,6 +3,9 @@
 
 #include "player.h"
 
+// Platforms
+#include "bn_sprite_items_platformslevel1.h"
+
 // Wallpapers
 #include "bn_regular_bg_items_level1.h"
 #include "bn_regular_bg_ptr.h"
