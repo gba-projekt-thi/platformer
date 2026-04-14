@@ -33,16 +33,16 @@
 #---------------------------------------------------------------------------------------------------------------------
 TARGET      	:=  platformer
 BUILD       	:=  build
-LIBBUTANO   	:=  extern/butano/butano
+LIBBUTANO   	:=  extern/engine/extern/butano/butano
 PYTHON      	:=  python
-SOURCES     	:=  game/src extern/butano/common/src
-INCLUDES    	:=  game/include extern/butano/common/include
+SOURCES     	:=  game/src extern/engine/extern/butano/common/src
+INCLUDES    	:=  game/include extern/engine/extern/butano/common/include
 DATA        	:=
-GRAPHICS    	:=  game/graphics extern/butano/common/graphics
-AUDIO       	:=  game/audio extern/butano/common/audio
+GRAPHICS    	:=  game/graphics extern/engine/extern/butano/common/graphics
+AUDIO       	:=  game/audio extern/engine/extern/butano/common/audio
 AUDIOBACKEND	:=  maxmod
 AUDIOTOOL		:=  
-DMGAUDIO    	:=  game/dmg_audio extern/butano/common/dmg_audio
+DMGAUDIO    	:=  game/dmg_audio extern/engine/extern/butano/common/dmg_audio
 DMGAUDIOBACKEND	:=  default
 ROMTITLE    	:=  BUTANO SPRTS
 ROMCODE     	:=  SBTP
