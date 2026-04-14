@@ -13,7 +13,7 @@
 int main() {
     bn::core::init();
 
-    // Create wallpaper
+    // Create wallpaper (default)
     bn::regular_bg_ptr bg = bn::regular_bg_items::level1.create_bg(0, 0);
 
     // Prio 3 to be in the background
