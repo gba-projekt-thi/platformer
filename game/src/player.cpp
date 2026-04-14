@@ -18,7 +18,9 @@ Player::Player(
           bn::sprite_items::ente.create_sprite(start_x, start_y),
           start_x,
           start_y),
-      groundLevel(60),
+      restart_x(start_x),
+      restart_y(start_y),
+      deathHeight(100),
       acceleration(0.3),
       max_speed(2),
       jump_speed(-3.5),  // This should be negative
@@ -26,7 +28,7 @@ Player::Player(
       max_fall_speed(3),
 
       // Working values
-      canJump(true),
+      onGround(true),
       action(
           bn::create_sprite_animate_action_forever(
               player_sprite.sprite(),
@@ -85,9 +87,9 @@ void Player::update() {
     }
 
     // Jump
-    if (bn::keypad::a_pressed() && canJump) {
+    if (bn::keypad::a_pressed() && onGround) {
         set_velocity(vel_x, jump_speed);
-        canJump = false;
+        onGround = false;
     }
 
     // Gravity
@@ -97,17 +99,19 @@ void Player::update() {
     }
 
     // Check if we're on the Ground
-    canJump = probe_bottom() != 0;
+    onGround = probe_bottom() != 0;
 
-    // Update player sprite
-    // player_sprite.sprite().set_position(x_coord, y_coord);
+    // Check if we've fallen off the map
+    if (y > deathHeight) {
+        death();
+    }
 
     // Only play animation when we're moving but not falling
-    if (vel_x != 0 && canJump) {
+    if (vel_x != 0 && onGround) {
         action.update();
     }
     // Face forward when we're neither moving nor falling
-    else if (canJump) {
+    else if (onGround) {
         player_sprite.sprite().set_tiles(
             bn::sprite_items::ente.tiles_item().create_tiles(8));
         facing = Facing::Forward;
@@ -125,4 +129,10 @@ void Player::update() {
     }
 
     BN_LOG("x:", x, " y:", y, "vel_x:", vel_x, " vel_y:", vel_y);
+}
+
+void Player::death() {
+    set_velocity(0, 0);
+    x = restart_x;
+    y = restart_y;
 }

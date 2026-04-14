@@ -25,6 +25,7 @@ class Player : public PhysicsBody {
         bn::fixed width,
         bn::fixed height);
     void update() override;
+    void death();
 
    private:
     // Used for sprite animation
@@ -32,7 +33,9 @@ class Player : public PhysicsBody {
 
     // Configuration values
     Sprite player_sprite;
-    int groundLevel;
+    bn::fixed restart_x;
+    bn::fixed restart_y;
+    int deathHeight;
     bn::fixed acceleration;
     bn::fixed max_speed;
     bn::fixed jump_speed;
@@ -40,7 +43,7 @@ class Player : public PhysicsBody {
     bn::fixed max_fall_speed;
 
     // Working values
-    bool canJump;
+    bool onGround;
     bn::sprite_animate_action<2> action;
     Facing facing;
 };
