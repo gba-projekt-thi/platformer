@@ -8,6 +8,9 @@
 #include "player.h"
 #include "death_counter.h"
 
+// Platforms
+#include "bn_sprite_items_platformslevel1.h"
+
 // Wallpapers
 #include "bn_regular_bg_items_level1.h"
 #include "bn_regular_bg_ptr.h"
@@ -15,7 +18,7 @@
 int main() {
     bn::core::init();
 
-    // Create wallpaper
+    // Create wallpaper (default)
     bn::regular_bg_ptr bg = bn::regular_bg_items::level1.create_bg(0, 0);
 
     // Prio 3 to be in the background
