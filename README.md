@@ -90,10 +90,11 @@ sudo apt-get install mgba-qt
 
 ```
 projectGBA/
-├── game/               # Example project
-├── extern/butano/      # Butano engine (submodule)
-├── docker/             # Docker build environment
-└── .devcontainer/      # VS Code devcontainer config
+├── game/                              # Example project
+├── extern/engine/                     # Engine team (submodule)
+├── extern/engine/extern/butano/       # Butano engine (submodule)
+├── docker/                            # Docker build environment
+└── .devcontainer/                     # VS Code devcontainer config
 ```
 
 ## Environment Variables
@@ -101,7 +102,7 @@ projectGBA/
 Set automatically in devcontainer:
 - `DEVKITPRO=/opt/devkitpro`
 - `DEVKITARM=/opt/devkitpro/devkitARM`
-- `BUTANO_HOME=/workspace/extern/butano`
+- `BUTANO_HOME=/workspace/extern/engine/extern/butano`
 
 ## How to Debug
 

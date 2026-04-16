@@ -8,7 +8,7 @@
 	"containerEnv": {
 		"DEVKITPRO": "/opt/devkitpro",
 		"DEVKITARM": "/opt/devkitpro/devkitARM",
-		"BUTANO_HOME": "/workspace/extern/butano"
+		"BUTANO_HOME": "/workspace/extern/engine/extern/butano"
 	},
 	// Configure VS Code settings
 	"customizations": {
