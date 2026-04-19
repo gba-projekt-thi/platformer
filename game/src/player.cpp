@@ -19,6 +19,10 @@ Player::Player(
           RIGHT_FRAMES[0],
           RIGHT_FRAMES[1])),
 
+      deathCounter(),
+      deathCounterTextGen(common::variable_8x16_sprite_font),
+      deathCounterHud(deathCounterTextGen, deathCounter),
+
       restart_x(start_x),
       restart_y(start_y),
 
@@ -110,6 +114,8 @@ void Player::check_death() {
         death();
 }
 void Player::death() {
+    deathCounter.on_player_death();
+    deathCounterHud.update();
     set_velocity(0, 0);
     x = restart_x;
     y = restart_y;
