@@ -5,7 +5,10 @@
 #include "bn_log.h"
 #include "bn_sprite_animate_actions.h"
 #include "bn_sprite_items_ente.h"
+#include "bn_sprite_text_generator.h"
+#include "common_variable_8x16_sprite_font.h"
 
+#include "death_counter.h"
 #include "physics_body.h"
 #include "sprite.h"
 
@@ -32,6 +35,11 @@ class Player : public PhysicsBody {
     // Sprite and animation
     Sprite player_sprite;
     bn::sprite_animate_action<2> action;
+
+    // Death Counter
+    DeathCounter deathCounter;
+    bn::sprite_text_generator deathCounterTextGen;
+    DeathCounterHUD deathCounterHud;
 
     // Restart position
     bn::fixed restart_x;
