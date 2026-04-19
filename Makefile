@@ -36,6 +36,7 @@ BUILD       	:=  build
 LIBBUTANO   	:=  extern/engine/extern/butano/butano
 PYTHON      	:=  python
 SOURCES     	:=  game/src extern/engine/src/general_collision_detection/src extern/engine/extern/butano/common/src
+SOURCES		 	:= 	$(filter-out extern/engine/src/general_collision_detection/src/main.cpp, $(SOURCES))
 INCLUDES    	:=  game/include extern/engine/src/general_collision_detection/include extern/engine/extern/butano/common/include
 DATA        	:=
 GRAPHICS    	:=  game/graphics extern/engine/extern/butano/common/graphics
