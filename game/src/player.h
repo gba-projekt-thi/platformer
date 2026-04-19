@@ -1,23 +1,24 @@
 #pragma once
 
-// Butano
 #include "bn_fixed.h"
+#include "bn_keypad.h"
+#include "bn_log.h"
 #include "bn_sprite_animate_actions.h"
+#include "bn_sprite_items_ente.h"
 
-// Engine team
 #include "physics_body.h"
 #include "sprite.h"
 
 class Player : public PhysicsBody {
    public:
-    static constexpr uint16_t LAYERS = 0x0001;  // what am I
+    static constexpr uint16_t LAYERS = 0x0001;
     static constexpr uint16_t TRAP_LAYER = 0x0002;
     static constexpr uint16_t PLATFORM_LAYER = 0x0004;
 
-    static constexpr uint16_t MASK =
-        TRAP_LAYER;  // what I detect (on_enter / on_exit)
-    static constexpr uint16_t BLOCK =
-        0xFFFF & ~TRAP_LAYER;  // what blocks me (pass through traps)
+    static constexpr uint16_t MASK = TRAP_LAYER;             // detect
+    static constexpr uint16_t BLOCK = 0xFFFF & ~TRAP_LAYER;  // blocks
+
+    static constexpr int DEFAULT_DEATH_HEIGHT = 100;
 
     Player(
         bn::fixed start_x,
@@ -28,22 +29,54 @@ class Player : public PhysicsBody {
     void death();
 
    private:
-    // Used for sprite animation
-    enum class Facing { Forward, Back, Left, Right };
-
-    // Configuration values
+    // Sprite and animation
     Sprite player_sprite;
+    bn::sprite_animate_action<2> action;
+
+    // Restart position
     bn::fixed restart_x;
     bn::fixed restart_y;
-    int deathHeight;
+
+    // Physics parameters
     bn::fixed acceleration;
     bn::fixed max_speed;
     bn::fixed jump_speed;
     bn::fixed gravity;
     bn::fixed max_fall_speed;
+    int deathHeight;
 
-    // Working values
+    // State tracking
     bool onGround;
-    bn::sprite_animate_action<2> action;
+
+    enum class Facing { Forward, Back, Left, Right };
     Facing facing;
+
+    // State machine
+    enum class PlayerState { Idle, Run, Jump, Fall };
+    PlayerState state;
+
+    // Animation frames
+    static constexpr int LEFT_FRAMES[2] = {4, 5};
+    static constexpr int RIGHT_FRAMES[2] = {0, 1};
+    static constexpr int IDLE_FRAME = 8;
+    static constexpr int BACK_FRAME = 9;
+
+    // Input & physics handlers
+    void handle_horizontal_input();
+    void handle_jump();
+    void apply_gravity();
+    void clamp_velocity();
+    void check_bounds();
+    void update_ground_state();
+    void check_death();
+
+    // State machine
+    void update_state();
+    void enter_state(PlayerState new_state);
+
+    // Animation helpers
+    void update_animation();
+    void set_direction(Facing new_facing, int tile_index);
+    void set_frame(int tile_index);
+    void set_walk_animation(const int frames[2]);
 };
