@@ -10,14 +10,12 @@
 #include "player.h"
 
 // Platforms
-#include "bn_sprite_items_platformslevel1.h"
+#include "bn_sprite_items_platformslvl1.h"
 
 // Wallpapers
 #include "bn_regular_bg_items_level1.h"
+#include "bn_regular_bg_items_level2.h"
 #include "bn_regular_bg_ptr.h"
-
-// Sprites
-#include "bn_sprite_items_platformslevel1.h"
 
 int main() {
     bn::core::init();
@@ -30,17 +28,17 @@ int main() {
 
     // Create some platforms
     bn::array<bn::sprite_ptr, 5> platform_sprites = {
-        bn::sprite_items::platformslevel1.create_sprite(-96, 60),
-        bn::sprite_items::platformslevel1.create_sprite(-80, 60),
-        bn::sprite_items::platformslevel1.create_sprite(-48, 60),
-        bn::sprite_items::platformslevel1.create_sprite(-16, 60),
-        bn::sprite_items::platformslevel1.create_sprite(0, 40),
+        bn::sprite_items::platformslvl1.create_sprite(-96, 60),
+        bn::sprite_items::platformslvl1.create_sprite(-80, 60),
+        bn::sprite_items::platformslvl1.create_sprite(-48, 60),
+        bn::sprite_items::platformslvl1.create_sprite(-16, 60),
+        bn::sprite_items::platformslvl1.create_sprite(0, 40),
 
     };
 
     for (size_t i = 0; i < 4; i++) {
         platform_sprites[i].set_tiles(
-            bn::sprite_items::platformslevel1.tiles_item().create_tiles(i % 4));
+            bn::sprite_items::platformslvl1.tiles_item().create_tiles(i % 4));
     }
 
     bn::array<StaticBody, 5> platform_bodies = {
