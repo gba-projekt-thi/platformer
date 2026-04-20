@@ -17,8 +17,13 @@
 #include "bn_regular_bg_items_level2.h"
 #include "bn_regular_bg_ptr.h"
 
+// Music
+#include "bn_dmg_music_items_level1.h"
+
 int main() {
     bn::core::init();
+
+    bn::dmg_music_items::level1.play();
 
     // Create wallpaper (default)
     bn::regular_bg_ptr bg = bn::regular_bg_items::level1.create_bg(0, 0);
