@@ -28,8 +28,8 @@ Player::Player(
 
       acceleration(0.3),
       max_speed(2),
-      jump_speed(-3.5),
-      gravity(0.2),
+      jump_speed(-2.8),
+      gravity(0.22),
       max_fall_speed(3),
       deathHeight(DEFAULT_DEATH_HEIGHT),
 
@@ -41,27 +41,42 @@ Player::Player(
 
 void Player::update() {
     handle_horizontal_input();
-    handle_jump();
+
+    // Store jump input (jump buffer)
+    if (bn::keypad::a_pressed()) {
+        jump_buffer_timer = JUMP_BUFFER_FRAMES;
+    }
+
     apply_gravity();
+    apply_variable_jump();
     clamp_velocity();
-    update_ground_state();
+
     check_bounds();
     check_death();
 
+    update_ground_state();
+
+    handle_jump();
+
     update_state();
     update_animation();
+
+    // Decrease jump buffer timer
+    if (jump_buffer_timer > 0)
+        jump_buffer_timer--;
 
     BN_LOG(
         "x:", x, " y:", y, "vel_x:", vel_x, " vel_y:", vel_y,
         "state:", (int)state);
 }
 
-// Horizontal input
+// Horizontal input handling
 void Player::handle_horizontal_input() {
     if (bn::keypad::left_held()) {
         inc_velocity(-acceleration, 0);
         if (vel_x < -max_speed)
             set_velocity(-max_speed, vel_y);
+
         if (facing != Facing::Left) {
             set_direction(Facing::Left, LEFT_FRAMES[0]);
             set_walk_animation(LEFT_FRAMES);
@@ -70,49 +85,81 @@ void Player::handle_horizontal_input() {
         inc_velocity(acceleration, 0);
         if (vel_x > max_speed)
             set_velocity(max_speed, vel_y);
+
         if (facing != Facing::Right) {
             set_direction(Facing::Right, RIGHT_FRAMES[0]);
             set_walk_animation(RIGHT_FRAMES);
         }
     } else {
-        // Friction
+        // Apply friction
         dec_velocity(acceleration, 0);
     }
 }
 
-// Jump input
+// Jump handling with buffer and coyote time
 void Player::handle_jump() {
-    if (bn::keypad::a_pressed() && onGround) {
+    if (jump_buffer_timer > 0 && onGround) {
         set_velocity(vel_x, jump_speed);
         onGround = false;
+        jump_buffer_timer = 0;
+        coyote_timer = 0;
+    }
+
+    // Stop upward movement if hitting ceiling
+    if (vel_y < 0 && probe_top()) {
+        set_velocity(vel_x, 0);
     }
 }
 
-// Gravity and limits
+// Apply gravity
 void Player::apply_gravity() {
     inc_velocity(0, gravity);
 }
+
+// Variable jump height logic
+void Player::apply_variable_jump() {
+    // If jump button released while moving upward → cut jump short
+    if (!bn::keypad::a_held() && vel_y < 0) {
+        vel_y *= 0.5;  // cut upward velocity
+    }
+}
+
+// Clamp falling speed
 void Player::clamp_velocity() {
     if (vel_y > max_fall_speed)
         set_velocity(vel_x, max_fall_speed);
 }
 
-// Map boundaries
+// Keep player inside horizontal bounds
 void Player::check_bounds() {
     if (x < -110 || x > 110)
         set_velocity(0, vel_y);
 }
 
-// Ground detection
+// Ground detection with layer filtering and coyote time
 void Player::update_ground_state() {
-    onGround = probe_bottom() != 0;
+    bool grounded_now = (probe_bottom() & PLATFORM_LAYER) != 0;
+
+    if (grounded_now) {
+        onGround = true;
+        coyote_timer = COYOTE_FRAMES;
+    } else {
+        if (coyote_timer > 0) {
+            coyote_timer--;
+            onGround = true;
+        } else {
+            onGround = false;
+        }
+    }
 }
 
-// Death / respawn
+// Death check
 void Player::check_death() {
     if (y > deathHeight)
         death();
 }
+
+// Respawn player
 void Player::death() {
     deathCounter.on_player_death();
     deathCounterHud.update();
@@ -121,45 +168,49 @@ void Player::death() {
     y = restart_y;
 }
 
-// State machine
+// Update player state
 void Player::update_state() {
     PlayerState new_state;
 
     if (!onGround) {
         new_state = (vel_y < 0) ? PlayerState::Jump : PlayerState::Fall;
     } else {
-        new_state = (vel_x != 0) ? PlayerState::Run : PlayerState::Idle;
+        // Idle ONLY when pressing down
+        if (bn::keypad::down_held()) {
+            new_state = PlayerState::Idle;
+        } else {
+            new_state = PlayerState::Run;
+        }
     }
 
     if (new_state != state)
         enter_state(new_state);
 }
 
+// Enter a new state
 void Player::enter_state(PlayerState new_state) {
     state = new_state;
-    // Optional: specific frame for Jump/Fall
+
     switch (state) {
         case PlayerState::Jump:
             set_frame(
                 (facing == Facing::Left) ? LEFT_FRAMES[0] : RIGHT_FRAMES[0]);
-            break;
-        case PlayerState::Fall:
-            set_frame(IDLE_FRAME);
             break;
         default:
             break;
     }
 }
 
-// Animation by state
+// Update animation based on state
 void Player::update_animation() {
-    // Up/down overrides
-    if (bn::keypad::up_held()) {
+    // Up/Down look only when grounded
+    if (onGround && bn::keypad::up_held()) {
         set_frame(BACK_FRAME);
         facing = Facing::Back;
         return;
     }
-    if (bn::keypad::down_held()) {
+
+    if (onGround && bn::keypad::down_held()) {
         set_frame(IDLE_FRAME);
         facing = Facing::Forward;
         return;
@@ -169,27 +220,38 @@ void Player::update_animation() {
         case PlayerState::Idle:
             set_frame(IDLE_FRAME);
             break;
+
         case PlayerState::Run:
-            action.update();
+            // If no input, keep last frame (no animation update)
+            if (bn::keypad::left_held() || bn::keypad::right_held()) {
+                action.update();
+            }
             break;
-        case PlayerState::Jump: /* frame already set */
+
+        case PlayerState::Jump:
             break;
-        case PlayerState::Fall: /* frame already set */
+
+        case PlayerState::Fall:
             break;
+
         default:
             break;
     }
 }
 
-// Helpers
+// Change facing direction
 void Player::set_direction(Facing new_facing, int tile_index) {
     facing = new_facing;
     set_frame(tile_index);
 }
+
+// Set a specific sprite frame
 void Player::set_frame(int tile_index) {
     player_sprite.sprite().set_tiles(
         bn::sprite_items::ente.tiles_item().create_tiles(tile_index));
 }
+
+// Set walking animation
 void Player::set_walk_animation(const int frames[2]) {
     action = bn::create_sprite_animate_action_forever(
         player_sprite.sprite(), 10, bn::sprite_items::ente.tiles_item(),
