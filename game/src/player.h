@@ -79,9 +79,6 @@ class Player : public PhysicsBody {
     static constexpr int COYOTE_FRAMES = 4;
     static constexpr int JUMP_BUFFER_FRAMES = 6;
 
-    // Deadzone (kept if needed later)
-    static constexpr bn::fixed EPSILON = 0.05;
-
     // Input & physics handlers
     void handle_horizontal_input();
     void handle_jump();
