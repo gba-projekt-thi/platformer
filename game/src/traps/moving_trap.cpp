@@ -1,5 +1,4 @@
 #include "moving_trap.h"
-#include "bn_log.h"
 #include "bn_math.h"
 
 MovingTrap::MovingTrap(
