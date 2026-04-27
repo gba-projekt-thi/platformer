@@ -106,7 +106,7 @@ void Player::handle_jump() {
     }
 
     // Stop upward movement if hitting ceiling
-    if (vel_y < 0 && probe_top()) {
+    if (vel_y < 0 && probe_top() & BLOCK) {
         set_velocity(vel_x, 0);
     }
 }
@@ -138,9 +138,7 @@ void Player::check_bounds() {
 
 // Ground detection with layer filtering and coyote time
 void Player::update_ground_state() {
-    bool grounded_now = (probe_bottom() & PLATFORM_LAYER) != 0;
-
-    if (grounded_now) {
+    if (probe_bottom() & BLOCK) {
         onGround = true;
         coyote_timer = COYOTE_FRAMES;
     } else {
