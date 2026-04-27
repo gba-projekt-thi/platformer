@@ -5,19 +5,19 @@
 MovingTrap::MovingTrap(
     bn::fixed start_x,
     bn::fixed start_y,
-    bn::fixed width,
-    bn::fixed height,
-    bn::sprite_item sprite,
-    uint16_t block,
-    bn::fixed x_accel,
-    bn::fixed y_accel,
-    bn::fixed max_vel,
-    Trigger& trigger)
-    : BaseTrap(start_x, start_y, width, height, sprite, block),
-      x_accel(x_accel),
-      y_accel(y_accel),
-      max_vel(max_vel),
-      trigger(trigger) {}
+    bn::fixed t_width,
+    bn::fixed t_height,
+    const bn::sprite_item& t_sprite,
+    uint16_t t_block,
+    bn::fixed t_x_accel,
+    bn::fixed t_y_accel,
+    bn::fixed t_max_vel,
+    Trigger& t_trigger)
+    : BaseTrap(start_x, start_y, t_width, t_height, t_sprite, t_block),
+      x_accel(t_x_accel),
+      y_accel(t_y_accel),
+      max_vel(t_max_vel),
+      trigger(t_trigger) {}
 
 void MovingTrap::update() {
     BaseTrap::update();

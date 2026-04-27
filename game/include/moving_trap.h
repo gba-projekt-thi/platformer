@@ -11,14 +11,14 @@ class MovingTrap : public BaseTrap {
     MovingTrap(
         bn::fixed start_x,
         bn::fixed start_y,
-        bn::fixed width,
-        bn::fixed height,
-        bn::sprite_item sprite,
-        uint16_t block,
-        bn::fixed accel_x,
-        bn::fixed y_accel,
-        bn::fixed max_vel,
-        Trigger& trigger);
+        bn::fixed t_width,
+        bn::fixed t_height,
+        const bn::sprite_item& t_sprite,
+        uint16_t t_block,
+        bn::fixed t_x_accel,
+        bn::fixed t_y_accel,
+        bn::fixed t_max_vel,
+        Trigger& t_trigger);
     void update() override;
 
    private:

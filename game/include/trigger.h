@@ -12,7 +12,11 @@ class Trigger : public PhysicsBody {
     static constexpr u_int16_t MASK = Player::LAYERS;
     static constexpr uint16_t BLOCK = 0;
 
-    Trigger(bn::fixed x, bn::fixed y, bn::fixed width, bn::fixed height);
+    Trigger(
+        bn::fixed start_x,
+        bn::fixed start_y,
+        bn::fixed t_width,
+        bn::fixed t_height);
     bool is_triggered();
     void on_enter(StaticBody& body) override;
     void reset();

@@ -19,10 +19,10 @@ class BaseTrap : public PhysicsBody {
     BaseTrap(
         bn::fixed start_x,
         bn::fixed start_y,
-        bn::fixed width,
-        bn::fixed height,
-        const bn::sprite_item& sprite,
-        uint16_t block);
+        bn::fixed t_width,
+        bn::fixed t_height,
+        const bn::sprite_item& t_sprite,
+        uint16_t t_block);
     void update() override;
     void on_enter(StaticBody& body) override;
 
