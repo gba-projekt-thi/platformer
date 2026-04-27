@@ -7,9 +7,12 @@
 #include "sprite.h"
 
 // Our team
+#include "moving_trap.h"
 #include "player.h"
+#include "trigger.h"
 
 // Platforms
+#include "bn_sprite_items_bubbles.h"
 #include "bn_sprite_items_platformslvl1.h"
 
 // Wallpapers
@@ -52,8 +55,14 @@ int main() {
         StaticBody(-48, 60, 16, 16, Player::PLATFORM_LAYER),
         StaticBody(-16, 60, 16, 16, Player::PLATFORM_LAYER),
         StaticBody(0, 40, 16, 16, Player::PLATFORM_LAYER),
-
     };
+
+    Trigger b = Trigger(-50, 30, 30, 30);
+
+    MovingTrap a = MovingTrap(
+        10, 10, 50, 50, bn::sprite_items::bubbles, 0x0000, -0.1, 0.1, 5, b);
+
+    BaseTrap c = BaseTrap(-20, -20, 50, 50, bn::sprite_items::bubbles, 0);
 
     // Create player
     Player player(-96, 0, 8, 8);

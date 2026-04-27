@@ -17,10 +17,10 @@ class Player : public PhysicsBody {
     static constexpr uint16_t LAYERS = 0x0001;
     static constexpr uint16_t TRAP_LAYER = 0x0002;
     static constexpr uint16_t PLATFORM_LAYER = 0x0004;
+    static constexpr uint16_t TRIGGER_LAYER = 0x0008;
 
-    static constexpr uint16_t MASK = TRAP_LAYER;  // overlap detection
-    static constexpr uint16_t BLOCK =
-        0xFFFF & ~TRAP_LAYER;  // collision blocking
+    static constexpr uint16_t MASK = TRAP_LAYER;  // detect
+    static constexpr uint16_t BLOCK = 0xFFFF & ~TRAP_LAYER & ~TRIGGER_LAYER;
 
     static constexpr int DEFAULT_DEATH_HEIGHT = 100;
     static constexpr int HORIZONTAL_EDGE = 110;
