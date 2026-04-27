@@ -1,7 +1,7 @@
 #pragma once
 
-#include "bn_fixed.h"
-#include "bn_vector.h"
+#include <bn_fixed.h>
+#include <bn_vector.h>
 
 #include "physics_body.h"
 #include "player.h"

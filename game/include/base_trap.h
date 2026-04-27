@@ -1,9 +1,9 @@
 #pragma once
 
-#include "bn_fixed.h"
-#include "bn_sprite_animate_actions.h"
-#include "bn_sprite_item.h"
-#include "bn_vector.h"
+#include <bn_fixed.h>
+#include <bn_sprite_animate_actions.h>
+#include <bn_sprite_item.h>
+#include <bn_vector.h>
 
 #include "physics_body.h"
 #include "player.h"

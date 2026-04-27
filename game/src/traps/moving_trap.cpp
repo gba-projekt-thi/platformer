@@ -1,5 +1,6 @@
+#include <bn_math.h>
+
 #include "moving_trap.h"
-#include "bn_math.h"
 
 MovingTrap::MovingTrap(
     bn::fixed start_x,
