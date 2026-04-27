@@ -29,6 +29,7 @@ class Player : public PhysicsBody {
         bn::fixed start_y,
         bn::fixed width,
         bn::fixed height);
+
     void update() override;
     void death();
 
@@ -37,12 +38,12 @@ class Player : public PhysicsBody {
     Sprite player_sprite;
     bn::sprite_animate_action<2> action;
 
-    // Death Counter
+    // Death counter UI
     DeathCounter deathCounter;
     bn::sprite_text_generator deathCounterTextGen;
     DeathCounterHUD deathCounterHud;
 
-    // Restart position
+    // Respawn position
     bn::fixed restart_x;
     bn::fixed restart_y;
 
@@ -54,9 +55,10 @@ class Player : public PhysicsBody {
     bn::fixed max_fall_speed;
     int deathHeight;
 
-    // State tracking
+    // Ground state
     bool onGround;
 
+    // Facing direction
     enum class Facing { Forward, Back, Left, Right };
     Facing facing;
 
@@ -70,10 +72,18 @@ class Player : public PhysicsBody {
     static constexpr int IDLE_FRAME = 8;
     static constexpr int BACK_FRAME = 9;
 
+    // Jump helpers
+    int coyote_timer = 0;
+    int jump_buffer_timer = 0;
+
+    static constexpr int COYOTE_FRAMES = 4;
+    static constexpr int JUMP_BUFFER_FRAMES = 6;
+
     // Input & physics handlers
     void handle_horizontal_input();
     void handle_jump();
     void apply_gravity();
+    void apply_variable_jump();
     void clamp_velocity();
     void check_bounds();
     void update_ground_state();
