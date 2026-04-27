@@ -23,6 +23,7 @@ class Player : public PhysicsBody {
         0xFFFF & ~TRAP_LAYER;  // collision blocking
 
     static constexpr int DEFAULT_DEATH_HEIGHT = 100;
+    static constexpr int HORIZONTAL_EDGE = 110;
 
     Player(
         bn::fixed start_x,
