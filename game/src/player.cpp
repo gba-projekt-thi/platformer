@@ -132,8 +132,8 @@ void Player::clamp_velocity() {
 
 // Keep player inside horizontal bounds
 void Player::check_bounds() {
-    if (x < -110 || x > 110)
-        set_velocity(0, vel_y);
+    if (x < -HORIZONTAL_EDGE || x > HORIZONTAL_EDGE)
+        set_velocity(-vel_x, vel_y);
 }
 
 // Ground detection with layer filtering and coyote time
