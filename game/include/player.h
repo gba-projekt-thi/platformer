@@ -26,10 +26,10 @@ class Player : public PhysicsBody {
     static constexpr int HORIZONTAL_EDGE = 110;
 
     Player(
-        bn::fixed start_x,
-        bn::fixed start_y,
-        bn::fixed width,
-        bn::fixed height);
+        bn::fixed in_start_x,
+        bn::fixed in_start_y,
+        bn::fixed in_width,
+        bn::fixed in_height);
 
     void update() override;
     void death();

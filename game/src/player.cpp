@@ -1,16 +1,16 @@
 #include "player.h"
 
 Player::Player(
-    bn::fixed start_x,
-    bn::fixed start_y,
-    bn::fixed width,
-    bn::fixed height)
-    : PhysicsBody(start_x, start_y, width, height, LAYERS, MASK, BLOCK),
+    bn::fixed in_start_x,
+    bn::fixed in_start_y,
+    bn::fixed in_width,
+    bn::fixed in_height)
+    : PhysicsBody(in_start_x, in_start_y, in_width, in_height, LAYERS, MASK, BLOCK),
 
       player_sprite(
-          bn::sprite_items::ente.create_sprite(start_x, start_y),
-          start_x,
-          start_y),
+          bn::sprite_items::ente.create_sprite(in_start_x, in_start_y),
+          in_start_x,
+          in_start_y),
 
       action(bn::create_sprite_animate_action_forever(
           player_sprite.sprite(),
@@ -23,8 +23,8 @@ Player::Player(
       deathCounterTextGen(common::variable_8x16_sprite_font),
       deathCounterHud(deathCounterTextGen, deathCounter),
 
-      restart_x(start_x),
-      restart_y(start_y),
+      restart_x(in_start_x),
+      restart_y(in_start_y),
 
       acceleration(0.3),
       max_speed(2),
