@@ -18,12 +18,18 @@ class MovingTrap : public BaseTrap {
         bn::fixed t_x_accel,
         bn::fixed t_y_accel,
         bn::fixed t_max_vel,
-        Trigger& t_trigger);
+        bn::fixed t_range,
+        Trigger* t_trigger);
+
     void update() override;
 
    private:
     bn::fixed x_accel;
     bn::fixed y_accel;
     bn::fixed max_vel;
-    Trigger& trigger;
+    bn::fixed range;
+    bn::fixed start_x;
+    bn::fixed start_y;
+
+    Trigger* trigger;
 };

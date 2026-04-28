@@ -49,16 +49,30 @@ class LevelManager {
         for (int i = 0; i < level.trap_count; i++) {
             const TrapData& t = level.traps[i];
 
+            Trigger* trigger = nullptr;
+
+            if (t.trigger_index >= 0 && t.trigger_index < _triggers.size()) {
+                trigger = &_triggers[t.trigger_index];
+            }
+
             if (t.type == TrapType::BASE) {
                 _base_traps.emplace_back(
-                    t.x, t.y, t.width, t.height, t.sprite, 0);
+                    t.x, t.y, t.width, t.height, *t.sprite, 0);
             } else if (t.type == TrapType::MOVING) {
-                Trigger& trigger = _triggers[t.trigger_index];
-
                 _moving_traps.emplace_back(
-                    t.x, t.y, t.width, t.height, t.sprite, 0, t.velocity_x,
-                    t.velocity_y, t.range, trigger);
+                    t.x, t.y, t.width, t.height, *t.sprite, 0, t.velocity_x,
+                    t.velocity_y, t.max_vel, t.range, trigger);
             }
+        }
+    }
+
+    void update() {
+        for (auto& trap : _base_traps) {
+            trap.update();
+        }
+
+        for (auto& trap : _moving_traps) {
+            trap.update();
         }
     }
 
