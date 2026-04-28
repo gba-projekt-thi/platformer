@@ -46,5 +46,5 @@ struct LevelData {
 
     const bn::sprite_item sprite_item_platform;
     const bn::regular_bg_item back_ground;
-    const bn::dmg_music_item music;
+    const bn::music_item music;
 };

@@ -20,7 +20,7 @@ const LevelData LEVEL_0 = {
     2,
     bn::sprite_items::platformslvl1,
     bn::regular_bg_items::level1,
-    bn::dmg_music_items::level1};
+    bn::music_items::level1};
 
 constexpr PlatformData level1_platforms[] = {
     {-96, 60, 0}, {-80, 60, 1}, {-48, 60, 3},
@@ -48,4 +48,4 @@ const LevelData LEVEL_1 = {
     4,
     bn::sprite_items::platformslvl1,
     bn::regular_bg_items::level1,
-    bn::dmg_music_items::level1};
+    bn::music_items::level1};
