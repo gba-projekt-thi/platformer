@@ -3,8 +3,8 @@
 #include "moving_trap.h"
 
 MovingTrap::MovingTrap(
-    bn::fixed p_start_x,
-    bn::fixed p_start_y,
+    bn::fixed t_start_x,
+    bn::fixed t_start_y,
     bn::fixed t_width,
     bn::fixed t_height,
     const bn::sprite_item& t_sprite,
@@ -14,13 +14,13 @@ MovingTrap::MovingTrap(
     bn::fixed t_max_vel,
     bn::fixed t_range,
     Trigger* t_trigger)
-    : BaseTrap(p_start_x, p_start_y, t_width, t_height, t_sprite, t_block),
+    : BaseTrap(t_start_x, t_start_y, t_width, t_height, t_sprite, t_block),
       x_accel(t_x_accel),
       y_accel(t_y_accel),
       max_vel(t_max_vel),
       range(t_range),
-      start_x(p_start_x),
-      start_y(p_start_y),
+      start_x(t_start_x),
+      start_y(t_start_y),
       trigger(t_trigger) {}
 
 void MovingTrap::update() {
