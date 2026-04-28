@@ -24,12 +24,13 @@ struct TrapData {
     int width;
     int height;
 
-    const bn::sprite_item sprite;
+    const bn::sprite_item* sprite;
 
     // moving trap parameters
     bn::fixed velocity_x;
     bn::fixed velocity_y;
-    int range;
+    bn::fixed max_vel;
+    bn::fixed range;
 
     int trigger_index;  // which trigger this trap uses (-1 if none)
 };

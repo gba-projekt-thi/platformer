@@ -7,9 +7,11 @@ constexpr PlatformData level0_platforms[] =
 constexpr TriggerData level0_triggers[] = {{-50, 30, 30, 30}};
 
 constexpr TrapData level0_traps[] = {
-    {TrapType::MOVING, 10, 10, 50, 50, bn::sprite_items::bubbles, -0.1, 0.1, 5,
-     0},
-    {TrapType::BASE, -20, -20, 50, 50, bn::sprite_items::bubbles, 0, 0, 0, -1}};
+    {TrapType::MOVING, 10, 10, 50, 50, &bn::sprite_items::bubbles, -0.1, 0.1, 1,
+     5, 0},
+
+    {TrapType::BASE, -20, -20, 50, 50, &bn::sprite_items::bubbles, 0, 0, 0, 0,
+     -1}};
 
 const LevelData LEVEL_0 = {
     level0_platforms,
@@ -31,13 +33,17 @@ constexpr PlatformData level1_platforms[] = {
 constexpr TriggerData level1_triggers[] = {{80, 30, 30, 30}};
 
 constexpr TrapData level1_traps[] = {
-    {TrapType::MOVING, 80, -32, 32, 32, bn::sprite_items::bubbles, 0.0, 1, 5,
-     0},
-    {TrapType::BASE, -48, 8, 32, 32, bn::sprite_items::bubbles, 0, 0, 0, -1},
-    {TrapType::BASE, -64, 60, 16, 16, bn::sprite_items::connector16x16, 0, 0, 0,
+    {TrapType::MOVING, 80, -32, 32, 32, &bn::sprite_items::bubbles, 0.0, 3, 3,
+     5, 0},
+
+    {TrapType::BASE, -48, 8, 32, 32, &bn::sprite_items::bubbles, 0, 0, 0, 0,
      -1},
-    {TrapType::BASE, -32, 60, 16, 16, bn::sprite_items::connector16x16, 0, 0, 0,
-     -1}};
+
+    {TrapType::BASE, -64, 60, 16, 16, &bn::sprite_items::connector16x16, 0, 0,
+     0, 0, -1},
+
+    {TrapType::BASE, -32, 60, 16, 16, &bn::sprite_items::connector16x16, 0, 0,
+     0, 0, -1}};
 
 const LevelData LEVEL_1 = {
     level1_platforms,
