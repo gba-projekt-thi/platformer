@@ -12,7 +12,7 @@ bool Trigger::is_triggered() {
     return triggered;
 }
 
-void Trigger::on_enter(StaticBody& body) {
+void Trigger::on_enter([[maybe_unused]] StaticBody& body) {
     // no need to check the mask because we only check the player layer anyways
     triggered = true;
 }
