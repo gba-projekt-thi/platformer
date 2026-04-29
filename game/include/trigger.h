@@ -13,8 +13,8 @@ class Trigger : public PhysicsBody {
     static constexpr uint16_t BLOCK = 0;
 
     Trigger(
-        bn::fixed start_x,
-        bn::fixed start_y,
+        bn::fixed t_start_x,
+        bn::fixed t_start_y,
         bn::fixed t_width,
         bn::fixed t_height);
     bool is_triggered();

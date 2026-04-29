@@ -1,4 +1,3 @@
-#include <bn_math.h>
 
 #include "moving_trap.h"
 
@@ -13,7 +12,7 @@ MovingTrap::MovingTrap(
     bn::fixed t_y_accel,
     bn::fixed t_max_vel,
     bn::fixed t_range,
-    Trigger* t_trigger)
+    Trigger& t_trigger)
     : BaseTrap(t_start_x, t_start_y, t_width, t_height, t_sprite, t_block),
       x_accel(t_x_accel),
       y_accel(t_y_accel),
@@ -25,10 +24,16 @@ MovingTrap::MovingTrap(
 
 void MovingTrap::update() {
     BaseTrap::update();
-
-    if (trigger && trigger->is_triggered()) {
-        if ((bn::abs(vel_x) + bn::abs(vel_y)) < max_vel) {
-            inc_velocity(x_accel, y_accel);
-        }
+    if (trigger.is_triggered() &&
+        // Check max speed
+        (bn::abs(vel_x) + bn::abs(vel_y)) < max_vel) {
+        inc_velocity(x_accel, y_accel);
     }
+}
+
+void MovingTrap::reset() {
+    trigger.reset();
+    set_velocity(0, 0);
+    x = start_x;
+    y = start_y;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bn_fixed.h>
+#include <bn_math.h>
 #include <bn_vector.h>
 
 #include "base_trap.h"
@@ -9,8 +10,8 @@
 class MovingTrap : public BaseTrap {
    public:
     MovingTrap(
-        bn::fixed start_x,
-        bn::fixed start_y,
+        bn::fixed t_start_x,
+        bn::fixed t_start_y,
         bn::fixed t_width,
         bn::fixed t_height,
         const bn::sprite_item& t_sprite,
@@ -19,17 +20,16 @@ class MovingTrap : public BaseTrap {
         bn::fixed t_y_accel,
         bn::fixed t_max_vel,
         bn::fixed t_range,
-        Trigger* t_trigger);
-
+        Trigger& t_trigger);
     void update() override;
+    void reset();
 
    private:
     bn::fixed x_accel;
     bn::fixed y_accel;
     bn::fixed max_vel;
-    bn::fixed range;
+    bn::fixed range;  // unused
     bn::fixed start_x;
     bn::fixed start_y;
-
-    Trigger* trigger;
+    Trigger& trigger;
 };
