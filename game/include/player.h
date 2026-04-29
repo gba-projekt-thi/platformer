@@ -14,12 +14,13 @@
 
 class Player : public PhysicsBody {
    public:
+    // Collision layers for the player and other objects.
     static constexpr uint16_t LAYERS = 0x0001;
     static constexpr uint16_t TRAP_LAYER = 0x0002;
     static constexpr uint16_t PLATFORM_LAYER = 0x0004;
     static constexpr uint16_t TRIGGER_LAYER = 0x0008;
 
-    static constexpr uint16_t MASK = TRAP_LAYER;  // detect
+    static constexpr uint16_t MASK = TRAP_LAYER;  // detect trap collisions
     static constexpr uint16_t BLOCK = 0xFFFF & ~TRAP_LAYER & ~TRIGGER_LAYER;
 
     static constexpr int DEFAULT_DEATH_HEIGHT = 100;
@@ -31,10 +32,15 @@ class Player : public PhysicsBody {
         bn::fixed in_width,
         bn::fixed in_height);
 
+    // Main per-frame update for player motion and animation.
     void update() override;
+    // Handle player death and respawn.
     void death();
+    // Set the current respawn location.
     void set_spawn(bn::fixed in_x, bn::fixed in_y);
+    // Place the player immediately at the given coordinate.
     void place(bn::fixed in_x, bn::fixed in_y);
+    // Get the count of player deaths.
     const bn::fixed get_deaths();
 
    private:

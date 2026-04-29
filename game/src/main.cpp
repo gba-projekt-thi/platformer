@@ -33,16 +33,20 @@
 #include "levels.h"
 
 int main() {
+    // Initialize the Butano engine core before using any rendering or input
+    // features.
     bn::core::init();
 
+    // Create the ordered level list for game progression.
     bn::vector<LevelData, 16> levels;
     levels.push_back(LEVEL_0);
     levels.push_back(LEVEL_1);
 
+    // Create the player entity and apply an offset for the sprite anchor point.
     Player player(0, 0, 8, 8);
     player.sprite_offset_y = 4;
 
-    // Init lvl mngr
+    // Initialize the level manager and begin the game loop.
     LevelManager level_manager;
     level_manager.startGame(levels, &player);
 }

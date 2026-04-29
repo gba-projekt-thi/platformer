@@ -16,6 +16,7 @@ class BaseTrap : public PhysicsBody {
 
     static constexpr int MAX_ANIMATION_FRAMES = 8;
 
+    // Create a basic trap that can kill the player on contact.
     BaseTrap(
         bn::fixed t_start_x,
         bn::fixed t_start_y,
@@ -23,7 +24,9 @@ class BaseTrap : public PhysicsBody {
         bn::fixed t_height,
         const bn::sprite_item& t_sprite,
         uint16_t t_block);
+    // Animate the trap each frame.
     void update() override;
+    // Handle player collision by triggering death.
     void on_enter(StaticBody& body) override;
 
    private:

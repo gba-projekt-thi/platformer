@@ -21,7 +21,9 @@ class MovingTrap : public BaseTrap {
         bn::fixed t_max_vel,
         bn::fixed t_range,
         Trigger& t_trigger);
+    // Update trap movement and animation each frame.
     void update() override;
+    // Reset the trap and its trigger when the player dies.
     void reset();
 
    private:

@@ -60,6 +60,8 @@ struct LevelData {
     const bn::regular_bg_item back_ground;
     const bn::music_item music;
 
+    // Player start position.
     const PlayerData player_data;
+    // Level exit door position.
     const DoorData door;
 };

@@ -24,14 +24,16 @@ MovingTrap::MovingTrap(
 
 void MovingTrap::update() {
     BaseTrap::update();
-    if (trigger.is_triggered() &&
-        // Check max speed
-        (bn::abs(vel_x) + bn::abs(vel_y)) < max_vel) {
+
+    // When its trigger is activated, accelerate the trap until it hits max
+    // speed.
+    if (trigger.is_triggered() && (bn::abs(vel_x) + bn::abs(vel_y)) < max_vel) {
         inc_velocity(x_accel, y_accel);
     }
 }
 
 void MovingTrap::reset() {
+    // Reset the trap back to its starting position and stop movement.
     trigger.reset();
     set_velocity(0, 0);
     x = start_x;

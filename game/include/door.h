@@ -12,8 +12,11 @@ class Door : public PhysicsBody {
 
     Door(bn::fixed in_x = 0, bn::fixed in_y = 0);
 
+    // Animate the door each frame.
     void update();
+    // Mark the door as reached when the player collides with it.
     void on_enter([[maybe_unused]] StaticBody& body) override;
+    // Returns whether the player has reached the door.
     bool reached();
 
    private:

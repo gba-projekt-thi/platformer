@@ -10,7 +10,9 @@ class DeathCounter {
     unsigned int _count = 0;
 
    public:
+    // Called whenever the player dies to increment the death count.
     void on_player_death();
+    // Returns the current death count.
     unsigned int count() const;
 };
 
@@ -19,6 +21,7 @@ class DeathCounterHUD {
     DeathCounterHUD(
         bn::sprite_text_generator& text_gen,
         const DeathCounter& counter);
+    // Update the HUD if the death count has changed.
     void update();
 
    private:
