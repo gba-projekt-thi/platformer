@@ -28,7 +28,7 @@ Player::Player(
 
       acceleration(0.3),
       max_speed(2),
-      jump_speed(-2.8),
+      jump_speed(-3),
       gravity(0.22),
       max_fall_speed(3),
       deathHeight(DEFAULT_DEATH_HEIGHT),
@@ -65,9 +65,25 @@ void Player::update() {
     if (jump_buffer_timer > 0)
         jump_buffer_timer--;
 
-    BN_LOG(
-        "x:", x, " y:", y, "vel_x:", vel_x, " vel_y:", vel_y,
-        "state:", (int)state);
+//     BN_LOG(
+//         "x:", x, " y:", y, "vel_x:", vel_x, " vel_y:", vel_y,
+//         "state:", (int)state);
+}
+
+// sets spawnpoint
+void Player::set_spawn(bn::fixed in_x, bn::fixed in_y){
+    restart_x = in_x;
+    restart_y = in_y;
+}
+//
+void Player::place(bn::fixed in_x, bn::fixed in_y){
+    set_velocity(0, 0);
+    x = in_x;
+    y = in_y;
+}
+
+const bn::fixed Player::get_deaths(){
+    return deathCounter.count();
 }
 
 // Horizontal input handling

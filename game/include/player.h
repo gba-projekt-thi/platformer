@@ -33,6 +33,9 @@ class Player : public PhysicsBody {
 
     void update() override;
     void death();
+    void set_spawn(bn::fixed in_x, bn::fixed in_y);
+    void place(bn::fixed in_x, bn::fixed in_y);
+    const bn::fixed get_deaths();
 
    private:
     // Sprite and animation

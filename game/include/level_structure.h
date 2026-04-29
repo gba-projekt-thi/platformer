@@ -1,5 +1,6 @@
 #pragma once
 #include "bn_fixed.h"
+#include "bn_music_items.h"
 
 enum class TrapType { BASE, MOVING };
 
@@ -24,7 +25,7 @@ struct TrapData {
     int width;
     int height;
 
-    const bn::sprite_item* sprite;
+    const bn::sprite_item sprite;
 
     // moving trap parameters
     bn::fixed velocity_x;
@@ -33,6 +34,16 @@ struct TrapData {
     bn::fixed range;
 
     int trigger_index;  // which trigger this trap uses (-1 if none)
+};
+
+struct PlayerData {
+    bn::fixed x;
+    bn::fixed y;
+};
+
+struct DoorData {
+    bn::fixed x;
+    bn::fixed y;
 };
 
 struct LevelData {
@@ -48,4 +59,7 @@ struct LevelData {
     const bn::sprite_item sprite_item_platform;
     const bn::regular_bg_item back_ground;
     const bn::music_item music;
+
+    const PlayerData player_data;
+    const DoorData door;
 };

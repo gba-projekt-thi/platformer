@@ -17,8 +17,8 @@ class BaseTrap : public PhysicsBody {
     static constexpr int MAX_ANIMATION_FRAMES = 8;
 
     BaseTrap(
-        bn::fixed start_x,
-        bn::fixed start_y,
+        bn::fixed t_start_x,
+        bn::fixed t_start_y,
         bn::fixed t_width,
         bn::fixed t_height,
         const bn::sprite_item& t_sprite,
