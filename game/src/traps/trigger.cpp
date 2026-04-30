@@ -13,10 +13,11 @@ bool Trigger::is_triggered() {
 }
 
 void Trigger::on_enter([[maybe_unused]] StaticBody& body) {
-    // no need to check the mask because we only check the player layer anyways
+    // The player has entered this trigger area, so activate any linked traps.
     triggered = true;
 }
 
 void Trigger::reset() {
+    // Reset the trigger for the next respawn or level retry.
     triggered = false;
 }

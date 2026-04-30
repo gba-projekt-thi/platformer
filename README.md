@@ -97,6 +97,32 @@ projectGBA/
 └── .devcontainer/                     # VS Code devcontainer config
 ```
 
+## Game Overview
+
+This repository includes a small GBA platformer built with the Butano engine. The game currently features:
+
+- Two playable levels defined in `game/include/levels.h`
+- Level progression through a door at the end of each stage
+- Platform placement and collision defined by level data
+- Trigger zones that activate moving traps when the player enters them
+- Moving traps that accelerate after being triggered and reset when the player dies
+- Static trap hazards and decorative tiles using Butano sprite items
+- Background music per level and tilemap backgrounds
+- A death counter HUD that updates every time the player respawns
+- Player movement with acceleration, maximum speed, gravity, and fall speed clamping
+- Jump mechanics with jump buffering and coyote time for more forgiving platforming
+- Variable jump height based on how long the jump button is held
+- A static camera (camera does not follow the player yet)
+
+## Game Asset Layout
+
+The `game/` folder contains:
+
+- `audio/` and `dmg_audio/` for music and sound assets
+- `graphics/` for global and level-specific sprites and tilemaps
+- `include/` for game headers, level definitions, and shared data
+- `src/` for gameplay code, including player, traps, door, and level management
+
 ## Environment Variables
 
 Set automatically in devcontainer:
