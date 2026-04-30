@@ -35,7 +35,9 @@ void BaseTrap::update() {
     action.update();
 }
 
-void BaseTrap::on_enter(StaticBody& body) {
+void BaseTrap::on_enter(
+    [[maybe_unused]] uint16_t hit_layers,
+    StaticBody* body) {
     // When the player enters a trap, trigger death.
-    static_cast<Player&>(body).death();
+    static_cast<Player*>(body)->death();
 }

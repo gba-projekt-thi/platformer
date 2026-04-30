@@ -44,7 +44,7 @@ int main() {
 
     // Create the player entity and apply an offset for the sprite anchor point.
     Player player(0, 0, 8, 8);
-    player.sprite_offset_y = 4;
+    player.sprite->pos.offset_y = 4;
 
     // Initialize the level manager and begin the game loop.
     LevelManager level_manager;

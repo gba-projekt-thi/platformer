@@ -27,7 +27,8 @@ class BaseTrap : public PhysicsBody {
     // Animate the trap each frame.
     void update() override;
     // Handle player collision by triggering death.
-    void on_enter(StaticBody& body) override;
+    void on_enter([[maybe_unused]] uint16_t hit_layers, StaticBody* body)
+        override;
 
    private:
     Sprite trap_sprite;

@@ -15,7 +15,9 @@ class Door : public PhysicsBody {
     // Animate the door each frame.
     void update();
     // Mark the door as reached when the player collides with it.
-    void on_enter([[maybe_unused]] StaticBody& body) override;
+    void on_enter(
+        [[maybe_unused]] uint16_t hit_layers,
+        [[maybe_unused]] StaticBody* body) override;
     // Returns whether the player has reached the door.
     bool reached();
 
