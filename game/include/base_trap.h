@@ -1,9 +1,10 @@
 #pragma once
 
-#include <bn_fixed.h>
-#include <bn_sprite_animate_actions.h>
-#include <bn_sprite_item.h>
-#include <bn_vector.h>
+#include "bn_fixed.h"
+#include "bn_optional.h"
+#include "bn_sprite_animate_actions.h"
+#include "bn_sprite_item.h"
+#include "bn_vector.h"
 
 #include "physics_body.h"
 #include "player.h"
@@ -32,5 +33,5 @@ class BaseTrap : public PhysicsBody {
 
    private:
     Sprite trap_sprite;
-    bn::sprite_animate_action<MAX_ANIMATION_FRAMES> action;
+    bn::optional<bn::sprite_animate_action<MAX_ANIMATION_FRAMES>> action;
 };

@@ -18,26 +18,33 @@ BaseTrap::BaseTrap(
       trap_sprite(
           t_sprite.create_sprite(t_start_x, t_start_y),
           t_start_x,
-          t_start_y),
-      action(bn::create_sprite_animate_action_forever(
-          trap_sprite.sprite(),
-          26,
-          t_sprite.tiles_item(),
-          0,
-          1,
-          2)) {
-    // Base trap uses a physics body with an animated sprite.
+          t_start_y) {
     this->sprite = &trap_sprite;
+
+    int count = t_sprite.tiles_item().graphics_count();
+
+    if (count > 1) {
+        if (count == 2) {
+            action.emplace(bn::create_sprite_animate_action_forever(
+                trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1));
+        } else if (count == 3) {
+            action.emplace(bn::create_sprite_animate_action_forever(
+                trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2));
+        } else if (count >= 4) {
+            action.emplace(bn::create_sprite_animate_action_forever(
+                trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2, 3));
+        }
+    }
 }
 
 void BaseTrap::update() {
-    // Animate the trap each frame.
-    action.update();
+    if (action) {
+        action->update();
+    }
 }
 
 void BaseTrap::on_enter(
     [[maybe_unused]] uint16_t hit_layers,
     StaticBody* body) {
-    // When the player enters a trap, trigger death.
     static_cast<Player*>(body)->death();
 }
