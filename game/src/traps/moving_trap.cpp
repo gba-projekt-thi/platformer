@@ -36,6 +36,6 @@ void MovingTrap::reset() {
     // Reset the trap back to its starting position and stop movement.
     trigger.reset();
     set_velocity(0, 0);
-    x = start_x;
-    y = start_y;
+    pos.x = start_x;
+    pos.y = start_y;
 }

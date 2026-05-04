@@ -26,7 +26,9 @@ void Door::update() {
     action.update();
 }
 
-void Door::on_enter([[maybe_unused]] StaticBody& body) {
+void Door::on_enter(
+    [[maybe_unused]] uint16_t hit_layers,
+    [[maybe_unused]] StaticBody* body) {
     _reached = 1;
 }
 

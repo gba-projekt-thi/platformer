@@ -12,7 +12,9 @@ bool Trigger::is_triggered() {
     return triggered;
 }
 
-void Trigger::on_enter([[maybe_unused]] StaticBody& body) {
+void Trigger::on_enter(
+    [[maybe_unused]] uint16_t hit_layers,
+    [[maybe_unused]] StaticBody* body) {
     // The player has entered this trigger area, so activate any linked traps.
     triggered = true;
 }

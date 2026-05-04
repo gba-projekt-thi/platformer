@@ -89,8 +89,8 @@ void Player::set_spawn(bn::fixed in_x, bn::fixed in_y) {
 //
 void Player::place(bn::fixed in_x, bn::fixed in_y) {
     set_velocity(0, 0);
-    x = in_x;
-    y = in_y;
+    pos.x = in_x;
+    pos.y = in_y;
 }
 
 const bn::fixed Player::get_deaths() {
@@ -136,7 +136,7 @@ void Player::handle_jump() {
     }
 
     // Cancel upward motion when hitting a ceiling.
-    if (vel_y < 0 && probe_top() & BLOCK) {
+    if (vel_y < 0 && probe_top(BLOCK).any()) {
         set_velocity(vel_x, 0);
     }
 }
@@ -162,14 +162,14 @@ void Player::clamp_velocity() {
 
 // Bounce the player back when leaving the horizontal play area.
 void Player::check_bounds() {
-    if (x < -HORIZONTAL_EDGE || x > HORIZONTAL_EDGE) {
+    if (pos.x < -HORIZONTAL_EDGE || pos.x > HORIZONTAL_EDGE) {
         set_velocity(-vel_x, vel_y);
     }
 }
 
 // Determine if the player is grounded and manage coyote time.
 void Player::update_ground_state() {
-    if (probe_bottom() & BLOCK) {
+    if (probe_bottom(BLOCK).any()) {
         onGround = true;
         coyote_timer = COYOTE_FRAMES;
     } else {
@@ -184,7 +184,7 @@ void Player::update_ground_state() {
 
 // Fall below the death height triggers a respawn.
 void Player::check_death() {
-    if (y > deathHeight) {
+    if (pos.y > deathHeight) {
         death();
     }
 }
@@ -194,8 +194,8 @@ void Player::death() {
     deathCounter.on_player_death();
     deathCounterHud.update();
     set_velocity(0, 0);
-    x = restart_x;
-    y = restart_y;
+    pos.x = restart_x;
+    pos.y = restart_y;
 }
 
 // Update the player's state machine based on movement and grounding.

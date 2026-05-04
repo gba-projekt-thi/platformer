@@ -20,7 +20,7 @@ class Trigger : public PhysicsBody {
     // Returns whether this trigger has been activated.
     bool is_triggered();
     // Activate the trigger when the player enters its area.
-    void on_enter(StaticBody& body) override;
+    void on_enter(uint16_t hit_layers, StaticBody* body) override;
     // Reset the trigger for later reuse.
     void reset();
 
