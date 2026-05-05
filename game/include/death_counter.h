@@ -5,6 +5,8 @@
 #include <bn_vector.h>
 #include "bn_sprite_ptr.h"
 
+#include "cfg.h"
+
 class DeathCounter {
    private:
     unsigned int _count = 0;
@@ -26,11 +28,9 @@ class DeathCounterHUD {
 
    private:
     void refresh();
-    static constexpr unsigned int _stringlength = 16;
-    static constexpr unsigned int _countlength = 8;
 
     bn::sprite_text_generator& _text_gen;
     const DeathCounter& _counter;
-    bn::vector<bn::sprite_ptr, 16> _sprites;
+    bn::vector<bn::sprite_ptr, Cfg::DeathCounter::STRING_LEN> _sprites;
     uint32_t _last_count;
 };

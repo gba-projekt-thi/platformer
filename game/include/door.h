@@ -2,14 +2,10 @@
 
 #include "base_trap.h"
 #include "bn_sprite_items_door32x32.h"
+#include "cfg.h"
 
 class Door : public PhysicsBody {
    public:
-    static constexpr uint16_t LAYERS = 0x0002;
-    static constexpr uint16_t MASK = Player::LAYERS;
-
-    static constexpr int MAX_ANIMATION_FRAMES = 8;
-
     Door(bn::fixed in_x = 0, bn::fixed in_y = 0);
 
     // Animate the door each frame.
@@ -24,5 +20,5 @@ class Door : public PhysicsBody {
    private:
     bool _reached = 0;
     Sprite trap_sprite;
-    bn::sprite_animate_action<MAX_ANIMATION_FRAMES> action;
+    bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES> action;
 };

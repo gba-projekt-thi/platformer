@@ -8,6 +8,7 @@
 #include "bn_sprite_text_generator.h"
 #include "common_variable_8x16_sprite_font.h"
 
+#include "cfg.h"
 #include "death_counter.h"
 #include "physics_body.h"
 #include "sprite.h"
@@ -15,16 +16,8 @@
 class Player : public PhysicsBody {
    public:
     // Collision layers for the player and other objects.
-    static constexpr uint16_t LAYERS = 0x0001;
-    static constexpr uint16_t TRAP_LAYER = 0x0002;
-    static constexpr uint16_t PLATFORM_LAYER = 0x0004;
-    static constexpr uint16_t TRIGGER_LAYER = 0x0008;
-
-    static constexpr uint16_t MASK = TRAP_LAYER;  // detect trap collisions
-    static constexpr uint16_t BLOCK = 0xFFFF & ~TRAP_LAYER & ~TRIGGER_LAYER;
-
-    static constexpr int DEFAULT_DEATH_HEIGHT = 100;
-    static constexpr int HORIZONTAL_EDGE = 110;
+    static constexpr uint16_t BLOCK =
+        0xFFFF & ~Cfg::Layer::TRAP & ~Cfg::Layer::TRIGGER;
 
     Player(
         bn::fixed in_start_x,
@@ -76,18 +69,9 @@ class Player : public PhysicsBody {
     enum class PlayerState { Idle, Run, Jump, Fall };
     PlayerState state;
 
-    // Animation frames
-    static constexpr int LEFT_FRAMES[2] = {4, 5};
-    static constexpr int RIGHT_FRAMES[2] = {0, 1};
-    static constexpr int IDLE_FRAME = 8;
-    static constexpr int BACK_FRAME = 9;
-
     // Jump helpers
     int coyote_timer = 0;
     int jump_buffer_timer = 0;
-
-    static constexpr int COYOTE_FRAMES = 4;
-    static constexpr int JUMP_BUFFER_FRAMES = 6;
 
     // Input & physics handlers
     void handle_horizontal_input();

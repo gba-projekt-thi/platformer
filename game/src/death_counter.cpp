@@ -28,7 +28,8 @@ void DeathCounterHUD::update()  // UI update
 
 void DeathCounterHUD::refresh() {
     _sprites.clear();
-    bn::string<_stringlength> text = "Deaths: ";
-    text += bn::to_string<_countlength>(_counter.count());
-    _text_gen.generate(-110, -70, text, _sprites);
+    bn::string<Cfg::DeathCounter::STRING_LEN> text = "Deaths: ";
+    text += bn::to_string<Cfg::DeathCounter::COUNT_LEN>(_counter.count());
+    _text_gen.generate(
+        Cfg::DeathCounter::X, Cfg::DeathCounter::Y, text, _sprites);
 }
