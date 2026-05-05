@@ -30,11 +30,11 @@ class Player : public PhysicsBody {
     // Handle player death and respawn.
     void death();
     // Set the current respawn location.
-    void set_spawn(bn::fixed in_x, bn::fixed in_y);
-    // Place the player immediately at the given coordinate.
-    void place(bn::fixed in_x, bn::fixed in_y);
+    void set_spawn_point(bn::fixed in_x, bn::fixed in_y);
+    // teleport the player immediately to the given coordinate.
+    void teleport_to(bn::fixed in_x, bn::fixed in_y);
     // Get the count of player deaths.
-    const bn::fixed get_deaths();
+    unsigned int get_deaths() const;
 
    private:
     // Sprite and animation

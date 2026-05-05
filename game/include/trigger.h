@@ -13,9 +13,10 @@ class Trigger : public PhysicsBody {
         bn::fixed t_start_x,
         bn::fixed t_start_y,
         bn::fixed t_width,
-        bn::fixed t_height);
+        bn::fixed t_height,
+        bool t_default_on = false); //allows trap to be deactivatable instead of activatable
     // Returns whether this trigger has been activated.
-    bool is_triggered();
+    bool is_triggered() const;
     // Activate the trigger when the player enters its area.
     void on_enter(uint16_t hit_layers, StaticBody* body) override;
     // Reset the trigger for later reuse.
@@ -23,4 +24,5 @@ class Trigger : public PhysicsBody {
 
    private:
     bool triggered;
+    bool default_on;
 };

@@ -30,9 +30,9 @@ void Door::update() {
 void Door::on_enter(
     [[maybe_unused]] uint16_t hit_layers,
     [[maybe_unused]] StaticBody* body) {
-    _reached = 1;
+    _reached = true;
 }
 
-bool Door::reached() {
+bool Door::reached() const{
     return _reached;
 }

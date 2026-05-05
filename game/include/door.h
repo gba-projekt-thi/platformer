@@ -15,10 +15,10 @@ class Door : public PhysicsBody {
         [[maybe_unused]] uint16_t hit_layers,
         [[maybe_unused]] StaticBody* body) override;
     // Returns whether the player has reached the door.
-    bool reached();
+    bool reached() const;
 
    private:
-    bool _reached = 0;
+    bool _reached = false;
     Sprite trap_sprite;
     bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES> action;
 };

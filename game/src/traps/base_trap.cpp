@@ -26,7 +26,6 @@ BaseTrap::BaseTrap(
         graphics_indexes(t_graphics_indexes) {
     this->sprite = &trap_sprite;
     
-    // int count = t_sprite.tiles_item().graphics_count();
     if (!t_graphics_indexes.empty())
         action = bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES>::forever(trap_sprite.sprite(), t_sprite_waits, t_sprite.tiles_item(), graphics_indexes);
 

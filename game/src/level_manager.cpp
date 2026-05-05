@@ -15,8 +15,8 @@ void LevelManager::startGame(
 
 void LevelManager::load(const LevelData& level) {
     // Position the player and set the respawn point.
-    _player->place(level.player_data.x, level.player_data.y);
-    _player->set_spawn(level.player_data.x, level.player_data.y);
+    _player->teleport_to(level.player_data.x, level.player_data.y);
+    _player->set_spawn_point(level.player_data.x, level.player_data.y);
     _door.emplace(level.door.x, level.door.y);
 
     // Start the level-specific background music.
@@ -32,6 +32,30 @@ void LevelManager::load(const LevelData& level) {
     _triggers.clear();
     _base_traps.clear();
     _moving_traps.clear();
+
+    BN_ASSERT(
+        static_cast<unsigned int>(level.platform_count) <
+            Cfg::Level::Limits::PLATFORMS,
+        "Too many platforms");
+    BN_ASSERT(
+        static_cast<unsigned int>(level.trigger_count) <
+            Cfg::Level::Limits::TRIGGERS,
+        "Too many triggers");
+    unsigned int count_base_traps = 0;
+    unsigned int count_moving_traps = 0;
+    for (int i = 0; i < level.trap_count; i++) {
+        const TrapData& t = level.traps[i];
+        if (t.type == TrapType::BASE)
+            count_base_traps++;
+        else if (t.type == TrapType::MOVING)
+            count_moving_traps++;
+    }
+    BN_ASSERT(
+        count_base_traps < Cfg::Level::Limits::BASE_TRAPS,
+        "Too many base traps");
+    BN_ASSERT(
+        count_moving_traps < Cfg::Level::Limits::MOVING_TRAPS,
+        "Too many moving traps");
 
     // Create platform sprites and collision bodies.
     for (int i = 0; i < level.platform_count; i++) {
@@ -52,28 +76,40 @@ void LevelManager::load(const LevelData& level) {
         _triggers.emplace_back(t.x, t.y, t.width, t.height);
     }
 
+    // add one trigger thats always true in case of no trigger as a fallback
+    if (!_triggers.size())
+        _triggers.emplace_back(1000, 1000, 0, 0, true);
+
     // Instantiate traps based on level definitions.
     for (int i = 0; i < level.trap_count; i++) {
         const TrapData& t = level.traps[i];
 
-
-        // const uint16_t anim_frames[8] = {0, 1, 2};
-        
-        // bn::span<const uint16_t> frames(anim_frames);
-
         if (t.type == TrapType::BASE) {
-            _base_traps.emplace_back(t.x, t.y, t.width, t.height, t.sprite, t.sprite_waits, t.graphic_indexes, 0);
+            _base_traps.emplace_back(
+                t.x, t.y, t.width, t.height, t.sprite, t.sprite_waits,
+                t.graphic_indexes, 0);
         } else if (t.type == TrapType::MOVING) {
-            Trigger& trigger = _triggers[t.trigger_index];
+            // fallback to first trigger if invalid index
+            Trigger& trigger =
+                (t.trigger_index >= 0 && t.trigger_index < _triggers.size())
+                    ? _triggers[t.trigger_index]
+                    : _triggers[0];
+
+            if (t.trigger_index >= 0 && t.trigger_index < _triggers.size())
+                BN_LOG(
+                    "[ERROR] level_manager: no valid trigger for trap found "
+                    "fallback to trigger 1");
+
             _moving_traps.emplace_back(
-                t.x, t.y, t.width, t.height, t.sprite, t.sprite_waits, t.graphic_indexes, 0, t.velocity_x,
-                t.velocity_y, t.max_vel, t.range, trigger);
+                t.x, t.y, t.width, t.height, t.sprite, t.sprite_waits,
+                t.graphic_indexes, 0, t.velocity_x, t.velocity_y, t.max_vel,
+                t.range, trigger);
         }
     }
 }
 
 void LevelManager::_run() {
-    bn::fixed last_death_ct = _player->get_deaths();
+    unsigned int last_death_ct = _player->get_deaths();
 
     while (true) {
         // Physics update

@@ -83,18 +83,17 @@ void Player::update() {
 }
 
 // sets spawnpoint
-void Player::set_spawn(bn::fixed in_x, bn::fixed in_y) {
+void Player::set_spawn_point(bn::fixed in_x, bn::fixed in_y) {
     restart_x = in_x;
     restart_y = in_y;
 }
 //
-void Player::place(bn::fixed in_x, bn::fixed in_y) {
+void Player::teleport_to(bn::fixed in_x, bn::fixed in_y) {
     set_velocity(0, 0);
     pos.x = in_x;
     pos.y = in_y;
 }
-
-const bn::fixed Player::get_deaths() {
+unsigned int Player::get_deaths() const {
     return deathCounter.count();
 }
 
