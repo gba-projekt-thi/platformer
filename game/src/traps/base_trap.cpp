@@ -6,7 +6,8 @@ BaseTrap::BaseTrap(
     bn::fixed t_width,
     bn::fixed t_height,
     const bn::sprite_item& t_sprite,
-    uint16_t t_block)
+    uint16_t t_block,
+    bn::fixed t_max_vel)
     : PhysicsBody(
           t_start_x,
           t_start_y,
@@ -14,7 +15,8 @@ BaseTrap::BaseTrap(
           t_height,
           LAYERS,
           MASK,
-          t_block),
+          t_block,
+          t_max_vel),
       trap_sprite(
           t_sprite.create_sprite(t_start_x, t_start_y),
           t_start_x,

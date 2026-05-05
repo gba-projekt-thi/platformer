@@ -23,7 +23,8 @@ class BaseTrap : public PhysicsBody {
         bn::fixed t_width,
         bn::fixed t_height,
         const bn::sprite_item& t_sprite,
-        uint16_t t_block);
+        uint16_t t_block,
+        bn::fixed t_max_vel = 0);
     // Animate the trap each frame.
     void update() override;
     // Handle player collision by triggering death.

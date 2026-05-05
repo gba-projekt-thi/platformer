@@ -29,7 +29,6 @@ class MovingTrap : public BaseTrap {
    private:
     bn::fixed x_accel;
     bn::fixed y_accel;
-    bn::fixed max_vel;
     bn::fixed range;  // unused
     bn::fixed start_x;
     bn::fixed start_y;
