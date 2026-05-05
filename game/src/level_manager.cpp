@@ -41,7 +41,7 @@ void LevelManager::load(const LevelData& level) {
             p.sprite_index));
 
         _platforms.push_back(bn::move(sprite));
-        _platform_bodies.emplace_back(p.x, p.y, 16, 16, Player::PLATFORM_LAYER);
+        _platform_bodies.emplace_back(p.x, p.y, 16, 16, Cfg::Layer::PLATFORM);
     }
 
     // Create trigger regions that will activate moving traps.

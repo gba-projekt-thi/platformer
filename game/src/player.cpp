@@ -10,8 +10,8 @@ Player::Player(
           in_start_y,
           in_width,
           in_height,
-          LAYERS,
-          MASK,
+          Cfg::Layer::PLAYER,
+          Cfg::Layer::TRAP,
           BLOCK),
 
       player_sprite(
@@ -19,12 +19,13 @@ Player::Player(
           in_start_x,
           in_start_y),
 
-      action(bn::create_sprite_animate_action_forever(
-          player_sprite.sprite(),
-          26,
-          bn::sprite_items::ente.tiles_item(),
-          RIGHT_FRAMES[0],
-          RIGHT_FRAMES[1])),
+      action(
+          bn::create_sprite_animate_action_forever(
+              player_sprite.sprite(),
+              26,
+              bn::sprite_items::ente.tiles_item(),
+              Cfg::Player::RIGHT_FRAMES[0],
+              Cfg::Player::RIGHT_FRAMES[1])),
 
       deathCounter(),
       deathCounterTextGen(common::variable_8x16_sprite_font),
@@ -33,12 +34,12 @@ Player::Player(
       restart_x(in_start_x),
       restart_y(in_start_y),
 
-      acceleration(0.3),
-      max_speed(2),
-      jump_speed(-3),
-      gravity(0.22),
-      max_fall_speed(3),
-      deathHeight(DEFAULT_DEATH_HEIGHT),
+      acceleration(Cfg::Player::ACCELERATION),
+      max_speed(Cfg::Player::MAX_SPEED),
+      jump_speed(Cfg::Player::JUMP_SPEED),
+      gravity(Cfg::Player::GRAVITY),
+      max_fall_speed(Cfg::Player::MAX_FALL_SPEED),
+      deathHeight(Cfg::Player::DEATH_HEIGHT),
 
       onGround(true),
       facing(Facing::Forward),
@@ -53,7 +54,7 @@ void Player::update() {
 
     // Store jump input in a buffer to allow forgiving timing.
     if (bn::keypad::a_pressed()) {
-        jump_buffer_timer = JUMP_BUFFER_FRAMES;
+        jump_buffer_timer = Cfg::Player::JUMP_BUFFER_FRAMES;
     }
 
     // Apply continuous vertical motion effects.
@@ -106,8 +107,8 @@ void Player::handle_horizontal_input() {
         }
 
         if (facing != Facing::Left) {
-            set_direction(Facing::Left, LEFT_FRAMES[0]);
-            set_walk_animation(LEFT_FRAMES);
+            set_direction(Facing::Left, Cfg::Player::LEFT_FRAMES[0]);
+            set_walk_animation(Cfg::Player::LEFT_FRAMES);
         }
     } else if (bn::keypad::right_held()) {
         inc_velocity(acceleration, 0);
@@ -116,8 +117,8 @@ void Player::handle_horizontal_input() {
         }
 
         if (facing != Facing::Right) {
-            set_direction(Facing::Right, RIGHT_FRAMES[0]);
-            set_walk_animation(RIGHT_FRAMES);
+            set_direction(Facing::Right, Cfg::Player::RIGHT_FRAMES[0]);
+            set_walk_animation(Cfg::Player::RIGHT_FRAMES);
         }
     } else {
         // No horizontal input: apply friction to slow the player down.
@@ -162,7 +163,8 @@ void Player::clamp_velocity() {
 
 // Bounce the player back when leaving the horizontal play area.
 void Player::check_bounds() {
-    if (pos.x < -HORIZONTAL_EDGE || pos.x > HORIZONTAL_EDGE) {
+    if (pos.x < -Cfg::Screen::HORIZONTAL_EDGE ||
+        pos.x > Cfg::Screen::HORIZONTAL_EDGE) {
         set_velocity(-vel_x, vel_y);
     }
 }
@@ -171,7 +173,7 @@ void Player::check_bounds() {
 void Player::update_ground_state() {
     if (probe_bottom(BLOCK).any()) {
         onGround = true;
-        coyote_timer = COYOTE_FRAMES;
+        coyote_timer = Cfg::Player::COYOTE_FRAMES;
     } else {
         if (coyote_timer > 0) {
             coyote_timer--;
@@ -225,7 +227,8 @@ void Player::enter_state(PlayerState new_state) {
     switch (state) {
         case PlayerState::Jump:
             set_frame(
-                (facing == Facing::Left) ? LEFT_FRAMES[0] : RIGHT_FRAMES[0]);
+                (facing == Facing::Left) ? Cfg::Player::LEFT_FRAMES[0]
+                                         : Cfg::Player::RIGHT_FRAMES[0]);
             break;
         default:
             break;
@@ -235,20 +238,20 @@ void Player::enter_state(PlayerState new_state) {
 // Update the player sprite based on current state and input.
 void Player::update_animation() {
     if (onGround && bn::keypad::up_held()) {
-        set_frame(BACK_FRAME);
+        set_frame(Cfg::Player::BACK_FRAME);
         facing = Facing::Back;
         return;
     }
 
     if (onGround && bn::keypad::down_held()) {
-        set_frame(IDLE_FRAME);
+        set_frame(Cfg::Player::IDLE_FRAME);
         facing = Facing::Forward;
         return;
     }
 
     switch (state) {
         case PlayerState::Idle:
-            set_frame(IDLE_FRAME);
+            set_frame(Cfg::Player::IDLE_FRAME);
             break;
 
         case PlayerState::Run:
