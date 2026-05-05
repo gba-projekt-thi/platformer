@@ -1,9 +1,10 @@
 #pragma once
 
-#include <bn_fixed.h>
-#include <bn_sprite_animate_actions.h>
-#include <bn_sprite_item.h>
-#include <bn_vector.h>
+#include "bn_fixed.h"
+#include "bn_optional.h"
+#include "bn_sprite_animate_actions.h"
+#include "bn_sprite_item.h"
+#include "bn_vector.h"
 
 #include "cfg.h"
 #include "physics_body.h"
@@ -19,7 +20,8 @@ class BaseTrap : public PhysicsBody {
         bn::fixed t_width,
         bn::fixed t_height,
         const bn::sprite_item& t_sprite,
-        uint16_t t_block);
+        uint16_t t_block,
+        bn::fixed t_max_vel = 0);
     // Animate the trap each frame.
     void update() override;
     // Handle player collision by triggering death.
@@ -28,5 +30,10 @@ class BaseTrap : public PhysicsBody {
 
    private:
     Sprite trap_sprite;
+<<<<<<< refactor/constants
     bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES> action;
 };
+=======
+    bn::optional<bn::sprite_animate_action<MAX_ANIMATION_FRAMES>> action;
+};
+>>>>>>> master

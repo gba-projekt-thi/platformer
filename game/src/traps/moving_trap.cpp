@@ -1,4 +1,3 @@
-
 #include "moving_trap.h"
 
 MovingTrap::MovingTrap(
@@ -13,10 +12,16 @@ MovingTrap::MovingTrap(
     bn::fixed t_max_vel,
     bn::fixed t_range,
     Trigger& t_trigger)
-    : BaseTrap(t_start_x, t_start_y, t_width, t_height, t_sprite, t_block),
+    : BaseTrap(
+          t_start_x,
+          t_start_y,
+          t_width,
+          t_height,
+          t_sprite,
+          t_block,
+          t_max_vel),
       x_accel(t_x_accel),
       y_accel(t_y_accel),
-      max_vel(t_max_vel),
       range(t_range),
       start_x(t_start_x),
       start_y(t_start_y),
@@ -25,9 +30,8 @@ MovingTrap::MovingTrap(
 void MovingTrap::update() {
     BaseTrap::update();
 
-    // When its trigger is activated, accelerate the trap until it hits max
-    // speed.
-    if (trigger.is_triggered() && (bn::abs(vel_x) + bn::abs(vel_y)) < max_vel) {
+    // When its trigger is activated, accelerate the trap
+    if (trigger.is_triggered()) {
         inc_velocity(x_accel, y_accel);
     }
 }

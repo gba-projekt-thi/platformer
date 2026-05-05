@@ -22,6 +22,7 @@ void LevelManager::load(const LevelData& level) {
     // Start the level-specific background music.
     level.music.play();
 
+    _back_ground.reset();
     _back_ground.emplace(level.back_ground.create_bg(0, 0));
     _back_ground.value().set_priority(3);
 
