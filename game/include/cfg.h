@@ -4,6 +4,7 @@
 namespace Cfg {
 
 namespace Layer {
+inline constexpr uint16_t UN_HITABLE = 0x000;
 inline constexpr uint16_t PLAYER = 0x001;
 inline constexpr uint16_t TRAP = 0x0002;
 inline constexpr uint16_t PLATFORM = 0x0004;

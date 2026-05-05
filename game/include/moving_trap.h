@@ -15,6 +15,8 @@ class MovingTrap : public BaseTrap {
         bn::fixed t_width,
         bn::fixed t_height,
         const bn::sprite_item& t_sprite,
+        int t_sprite_waits,
+        const bn::span<const uint16_t> t_graphics_indexes,
         uint16_t t_block,
         bn::fixed t_x_accel,
         bn::fixed t_y_accel,

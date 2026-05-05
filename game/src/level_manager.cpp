@@ -56,12 +56,17 @@ void LevelManager::load(const LevelData& level) {
     for (int i = 0; i < level.trap_count; i++) {
         const TrapData& t = level.traps[i];
 
+
+        // const uint16_t anim_frames[8] = {0, 1, 2};
+        
+        // bn::span<const uint16_t> frames(anim_frames);
+
         if (t.type == TrapType::BASE) {
-            _base_traps.emplace_back(t.x, t.y, t.width, t.height, t.sprite, 0);
+            _base_traps.emplace_back(t.x, t.y, t.width, t.height, t.sprite, t.sprite_waits, t.graphic_indexes, 0);
         } else if (t.type == TrapType::MOVING) {
             Trigger& trigger = _triggers[t.trigger_index];
             _moving_traps.emplace_back(
-                t.x, t.y, t.width, t.height, t.sprite, 0, t.velocity_x,
+                t.x, t.y, t.width, t.height, t.sprite, t.sprite_waits, t.graphic_indexes, 0, t.velocity_x,
                 t.velocity_y, t.max_vel, t.range, trigger);
         }
     }
