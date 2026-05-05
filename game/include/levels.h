@@ -30,7 +30,7 @@ constexpr PlatformData level1_platforms[] = {
     {-16, 44, 2}, {32, 60, 1},  {48, 60, 1},  {64, 60, 0},
     {80, 60, 1},  {96, 60, 0},  {112, 60, 2}};
 
-constexpr TriggerData level1_triggers[] = {{80, 30, 30, 30}};
+constexpr TriggerData level1_triggers[] = {{80, 30, 32, 30}};
 
 constexpr TrapData level1_traps[] = {
     {TrapType::MOVING, 80, -64, 32, 32, bn::sprite_items::bubbles, 0.0, 3, 3, 5,

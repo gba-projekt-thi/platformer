@@ -30,7 +30,19 @@ BaseTrap::BaseTrap(
         } else if (count == 3) {
             action.emplace(bn::create_sprite_animate_action_forever(
                 trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2));
-        } else if (count >= 4) {
+        } else if (count == 4) {
+            action.emplace(bn::create_sprite_animate_action_forever(
+                trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2, 3));
+        } else if (count == 5) {
+            action.emplace(bn::create_sprite_animate_action_forever(
+                trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2, 3));
+        } else if (count == 6) {
+            action.emplace(bn::create_sprite_animate_action_forever(
+                trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2, 3));
+        } else if (count == 7) {
+            action.emplace(bn::create_sprite_animate_action_forever(
+                trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2, 3));
+        } else if (count >= 8) {
             action.emplace(bn::create_sprite_animate_action_forever(
                 trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2, 3));
         }
