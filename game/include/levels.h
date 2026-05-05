@@ -55,18 +55,22 @@ const LevelData LEVEL_1 = {
     {112, 40}};
 
 constexpr PlatformData level2_platforms[] = {
-    {-96, -16, 0}, {-72, 40, 0}, {-24, 40, 0}, {24, 40, 0},
-    {64, 24, 0},   {96, 16, 0},  {112, 16, 0}};
+    {-96, -16, 1}, {-72, 40, 2},
+    {-24, 40, 0},  /*{-8, 40, 0}, {8, 40, 0},*/ {24, 40, 0},
+    {64, 24, 1},   {96, 16, 1},
+    {112, 16, 1}};
 
 constexpr TrapData level2_traps[] = {
-    {TrapType::MOVING, -48, 72, 32, 32, bn::sprite_items::box32x32, 0.0, -3, 3,
+    {TrapType::BASE, -112, -16, 16, 16, bn::sprite_items::pipe16x16, 0, 0, 0, 0,
+     -1},
+    {TrapType::MOVING, -48, 88, 32, 32, bn::sprite_items::can32x32, 0.0, -3, 3,
      0, 0},
     {TrapType::BASE, 0, 40, 32, 16, bn::sprite_items::rustynails32x16, 0, 0, 0,
      0, -1},
     {TrapType::BASE, 80, 24, 16, 16, bn::sprite_items::pipe16x16, 0, 0, 0, 0,
      -1}};
 
-constexpr TriggerData level2_triggers[] = {{-48, 24, 32, 32}};
+constexpr TriggerData level2_triggers[] = {{-48, 16, 32, 40}};
 
 const LevelData LEVEL_2 = {
     level2_platforms,
@@ -76,11 +80,11 @@ const LevelData LEVEL_2 = {
     1,
 
     level2_traps,
-    3,
+    4,
 
     bn::sprite_items::platformslvl2,
     bn::regular_bg_items::level2,
-    bn::music_items::level1,
+    bn::music_items::level2,
 
     {-96, -32},
     {104, 0}};
