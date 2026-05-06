@@ -6,6 +6,7 @@
 #include "bn_sprite_animate_actions.h"
 #include "bn_sprite_items_ente.h"
 #include "bn_sprite_text_generator.h"
+#include "bn_vector.h"
 #include "common_variable_8x16_sprite_font.h"
 
 #include "cfg.h"
@@ -40,7 +41,8 @@ class Player : public PhysicsBody {
     // Sprite
     Sprite player_sprite;
 
-    // Animation (only one needed for running)
+    // Cached tile handles (zero allocation at runtime)
+    bn::vector<bn::sprite_tiles_ptr, 10> cached_tiles;
     bn::sprite_animate_action<4> walk_action;
 
     // Death counter UI

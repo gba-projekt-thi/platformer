@@ -47,6 +47,13 @@ Player::Player(
       state(PlayerState::Idle) {
     // Link the physics body with the player sprite for rendering.
     sprite = &player_sprite;
+
+    // Preload ALL tile frames once (ZERO runtime allocation)
+    const auto& tiles = bn::sprite_items::ente.tiles_item();
+
+    for (int i = 0; i < 10; ++i) {
+        cached_tiles.push_back(tiles.create_tiles(i));
+    }
 }
 
 void Player::update() {
@@ -218,30 +225,24 @@ void Player::enter_state(PlayerState new_state) {
 
 // Update the player sprite based on current state and input.
 void Player::update_animation() {
-    // IMPORTANT: Stop animation if not actively running
+    // Stop animation when not moving
     if (!(bn::keypad::left_held() || bn::keypad::right_held())) {
         walk_action.reset();
     }
 
     if (onGround && bn::keypad::up_held()) {
-        player_sprite.sprite().set_tiles(
-            bn::sprite_items::ente.tiles_item().create_tiles(
-                Cfg::Player::BACK_FRAME));
+        player_sprite.sprite().set_tiles(cached_tiles[Cfg::Player::BACK_FRAME]);
         return;
     }
 
     if (!onGround) {
         player_sprite.sprite().set_tiles(
-            bn::sprite_items::ente.tiles_item().create_tiles(
-                Cfg::Player::RIGHT_FRAMES[0]));
+            cached_tiles[Cfg::Player::RIGHT_FRAMES[0]]);
         return;
     }
 
-    if (state == PlayerState::Idle) {
-        // Only when DOWN is held
-        player_sprite.sprite().set_tiles(
-            bn::sprite_items::ente.tiles_item().create_tiles(
-                Cfg::Player::IDLE_FRAME));
+    if (bn::keypad::down_held()) {
+        player_sprite.sprite().set_tiles(cached_tiles[Cfg::Player::IDLE_FRAME]);
         return;
     }
 
