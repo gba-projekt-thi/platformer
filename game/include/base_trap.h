@@ -30,10 +30,5 @@ class BaseTrap : public PhysicsBody {
 
    private:
     Sprite trap_sprite;
-<<<<<<< refactor/constants
-    bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES> action;
+    bn::optional<bn::sprite_animate_action<8>> action;
 };
-=======
-    bn::optional<bn::sprite_animate_action<MAX_ANIMATION_FRAMES>> action;
-};
->>>>>>> master

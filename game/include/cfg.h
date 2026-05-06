@@ -23,7 +23,7 @@ inline constexpr bn::fixed GRAVITY = 0.22;
 inline constexpr int MAX_FALL_SPEED = 3;
 
 // Animations
-inline constexpr int RIGHT_FRAMES[2] = {0, 1};
+inline constexpr int RIGHT_FRAMES[4] = {0, 1, 2, 3};
 inline constexpr int LEFT_FRAMES[2] = {4, 5};
 inline constexpr int IDLE_FRAME = 8;
 inline constexpr int BACK_FRAME = 9;

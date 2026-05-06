@@ -19,13 +19,14 @@ Player::Player(
           in_start_x,
           in_start_y),
 
-      action(
-          bn::create_sprite_animate_action_forever(
-              player_sprite.sprite(),
-              26,
-              bn::sprite_items::ente.tiles_item(),
-              Cfg::Player::RIGHT_FRAMES[0],
-              Cfg::Player::RIGHT_FRAMES[1])),
+      walk_action(bn::create_sprite_animate_action_forever(
+          player_sprite.sprite(),
+          8,
+          bn::sprite_items::ente.tiles_item(),
+          Cfg::Player::RIGHT_FRAMES[0],
+          Cfg::Player::RIGHT_FRAMES[1],
+          Cfg::Player::RIGHT_FRAMES[2],
+          Cfg::Player::RIGHT_FRAMES[3])),
 
       deathCounter(),
       deathCounterTextGen(common::variable_8x16_sprite_font),
@@ -49,37 +50,27 @@ Player::Player(
 }
 
 void Player::update() {
-    // Handle left/right movement first.
     handle_horizontal_input();
 
-    // Store jump input in a buffer to allow forgiving timing.
     if (bn::keypad::a_pressed()) {
         jump_buffer_timer = Cfg::Player::JUMP_BUFFER_FRAMES;
     }
 
-    // Apply continuous vertical motion effects.
     apply_gravity();
     apply_variable_jump();
     clamp_velocity();
 
-    // Keep the player inside bounds and detect death conditions.
     check_bounds();
     check_death();
 
     update_ground_state();
     handle_jump();
 
-    // Update the current animation and state machine.
     update_state();
     update_animation();
 
-    // Decrease jump buffer timer
     if (jump_buffer_timer > 0)
         jump_buffer_timer--;
-
-    //     BN_LOG(
-    //         "x:", x, " y:", y, "vel_x:", vel_x, " vel_y:", vel_y,
-    //         "state:", (int)state);
 }
 
 // sets spawnpoint
@@ -106,22 +97,19 @@ void Player::handle_horizontal_input() {
             set_velocity(-max_speed, vel_y);
         }
 
-        if (facing != Facing::Left) {
-            set_direction(Facing::Left, Cfg::Player::LEFT_FRAMES[0]);
-            set_walk_animation(Cfg::Player::LEFT_FRAMES);
-        }
+        facing = Facing::Left;
+        player_sprite.sprite().set_horizontal_flip(true);
+
     } else if (bn::keypad::right_held()) {
         inc_velocity(acceleration, 0);
         if (vel_x > max_speed) {
             set_velocity(max_speed, vel_y);
         }
 
-        if (facing != Facing::Right) {
-            set_direction(Facing::Right, Cfg::Player::RIGHT_FRAMES[0]);
-            set_walk_animation(Cfg::Player::RIGHT_FRAMES);
-        }
+        facing = Facing::Right;
+        player_sprite.sprite().set_horizontal_flip(false);
+
     } else {
-        // No horizontal input: apply friction to slow the player down.
         dec_velocity(acceleration, 0);
     }
 }
@@ -210,7 +198,10 @@ void Player::update_state() {
         // Hold down to enter the idle pose while grounded.
         if (bn::keypad::down_held()) {
             new_state = PlayerState::Idle;
+        } else if (bn::keypad::left_held() || bn::keypad::right_held()) {
+            new_state = PlayerState::Run;
         } else {
+            // No input → stay in Run (but no animation update)
             new_state = PlayerState::Run;
         }
     }
@@ -223,69 +214,38 @@ void Player::update_state() {
 // Transition into a new player animation state.
 void Player::enter_state(PlayerState new_state) {
     state = new_state;
-
-    switch (state) {
-        case PlayerState::Jump:
-            set_frame(
-                (facing == Facing::Left) ? Cfg::Player::LEFT_FRAMES[0]
-                                         : Cfg::Player::RIGHT_FRAMES[0]);
-            break;
-        default:
-            break;
-    }
 }
 
 // Update the player sprite based on current state and input.
 void Player::update_animation() {
+    // IMPORTANT: Stop animation if not actively running
+    if (!(bn::keypad::left_held() || bn::keypad::right_held())) {
+        walk_action.reset();
+    }
+
     if (onGround && bn::keypad::up_held()) {
-        set_frame(Cfg::Player::BACK_FRAME);
-        facing = Facing::Back;
+        player_sprite.sprite().set_tiles(
+            bn::sprite_items::ente.tiles_item().create_tiles(
+                Cfg::Player::BACK_FRAME));
         return;
     }
 
-    if (onGround && bn::keypad::down_held()) {
-        set_frame(Cfg::Player::IDLE_FRAME);
-        facing = Facing::Forward;
+    if (!onGround) {
+        player_sprite.sprite().set_tiles(
+            bn::sprite_items::ente.tiles_item().create_tiles(
+                Cfg::Player::RIGHT_FRAMES[0]));
         return;
     }
 
-    switch (state) {
-        case PlayerState::Idle:
-            set_frame(Cfg::Player::IDLE_FRAME);
-            break;
-
-        case PlayerState::Run:
-            if (bn::keypad::left_held() || bn::keypad::right_held()) {
-                action.update();
-            }
-            break;
-
-        case PlayerState::Jump:
-            break;
-
-        case PlayerState::Fall:
-            break;
-
-        default:
-            break;
+    if (state == PlayerState::Idle) {
+        // Only when DOWN is held
+        player_sprite.sprite().set_tiles(
+            bn::sprite_items::ente.tiles_item().create_tiles(
+                Cfg::Player::IDLE_FRAME));
+        return;
     }
-}
 
-// Change facing direction and update the sprite frame.
-void Player::set_direction(Facing new_facing, int tile_index) {
-    facing = new_facing;
-    set_frame(tile_index);
-}
-
-// Set the player sprite to a specific tile frame.
-void Player::set_frame(int tile_index) {
-    player_sprite.sprite().set_tiles(
-        bn::sprite_items::ente.tiles_item().create_tiles(tile_index));
-}
-
-// Update the walking animation using a pair of frames.
-void Player::set_walk_animation(const int frames[2]) {
-    action = bn::create_sprite_animate_action_forever(
-        player_sprite.sprite(), 10, bn::sprite_items::ente.tiles_item(),
-        frames[0], frames[1]);
+    if (bn::keypad::left_held() || bn::keypad::right_held()) {
+        walk_action.update();
+    }
 }

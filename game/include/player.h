@@ -37,9 +37,11 @@ class Player : public PhysicsBody {
     const bn::fixed get_deaths();
 
    private:
-    // Sprite and animation
+    // Sprite
     Sprite player_sprite;
-    bn::sprite_animate_action<2> action;
+
+    // Animation (only one needed for running)
+    bn::sprite_animate_action<4> walk_action;
 
     // Death counter UI
     DeathCounter deathCounter;
@@ -89,7 +91,4 @@ class Player : public PhysicsBody {
 
     // Animation helpers
     void update_animation();
-    void set_direction(Facing new_facing, int tile_index);
-    void set_frame(int tile_index);
-    void set_walk_animation(const int frames[2]);
 };

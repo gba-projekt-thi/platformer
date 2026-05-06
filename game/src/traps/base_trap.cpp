@@ -13,8 +13,8 @@ BaseTrap::BaseTrap(
           t_start_y,
           t_width,
           t_height,
-          LAYERS,
-          MASK,
+          Cfg::Layer::TRAP,
+          Cfg::Layer::PLAYER,
           t_block,
           t_max_vel),
       trap_sprite(
@@ -37,16 +37,20 @@ BaseTrap::BaseTrap(
                 trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2, 3));
         } else if (count == 5) {
             action.emplace(bn::create_sprite_animate_action_forever(
-                trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2, 3));
+                trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2, 3,
+                4));
         } else if (count == 6) {
             action.emplace(bn::create_sprite_animate_action_forever(
-                trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2, 3));
+                trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2, 3, 4,
+                5));
         } else if (count == 7) {
             action.emplace(bn::create_sprite_animate_action_forever(
-                trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2, 3));
+                trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2, 3, 4,
+                5, 6));
         } else if (count >= 8) {
             action.emplace(bn::create_sprite_animate_action_forever(
-                trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2, 3));
+                trap_sprite.sprite(), 26, t_sprite.tiles_item(), 0, 1, 2, 3, 4,
+                5, 6, 7));
         }
     }
 }
