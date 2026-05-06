@@ -95,10 +95,10 @@ void LevelManager::load(const LevelData& level) {
                     ? _triggers[t.trigger_index]
                     : _triggers[0];
 
-            if (t.trigger_index >= 0 && t.trigger_index < _triggers.size())
+            if (!(t.trigger_index >= 0 && t.trigger_index < _triggers.size()))
                 BN_LOG(
                     "[ERROR] level_manager: no valid trigger for trap found "
-                    "fallback to trigger 1");
+                    "fallback to trigger 0");
 
             _moving_traps.emplace_back(
                 t.x, t.y, t.width, t.height, t.sprite, t.sprite_waits,
