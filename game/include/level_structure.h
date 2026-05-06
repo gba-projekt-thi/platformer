@@ -3,7 +3,7 @@
 #include "bn_music_items.h"
 #include "bn_span.h"
 
-enum class TrapType { BASE, MOVING };
+enum class TrapType { BASE, MOVING, PATH };
 
 struct PlatformData {
     int x;
@@ -37,6 +37,10 @@ struct TrapData {
     bn::fixed range;
 
     int trigger_index;  // which trigger this trap uses (-1 if none)
+
+    // path trap parameters
+    bn::span<const bn::fixed_point> path;
+    unsigned int path_waits;
 };
 
 struct PlayerData {

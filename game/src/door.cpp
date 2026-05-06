@@ -2,13 +2,13 @@
 
 Door::Door(bn::fixed in_x, bn::fixed in_y)
     : PhysicsBody(in_x, in_y, 32, 32, Cfg::Layer::TRAP, Cfg::Layer::PLAYER, 0),
-      trap_sprite(
+      door_sprite(
           bn::sprite_items::door32x32.create_sprite(in_x, in_y),
           in_x,
           in_y),
       action(
           bn::create_sprite_animate_action_forever(
-              trap_sprite.sprite(),
+              door_sprite.sprite(),
               8,
               bn::sprite_items::door32x32.tiles_item(),
               0,
@@ -19,7 +19,7 @@ Door::Door(bn::fixed in_x, bn::fixed in_y)
               10,
               12)) {
     // The door is a static physics body and animated sprite.
-    this->sprite = &trap_sprite;
+    this->sprite = &door_sprite;
 }
 
 void Door::update() {
@@ -33,6 +33,10 @@ void Door::on_enter(
     _reached = true;
 }
 
-bool Door::reached() const{
+bool Door::reached() const {
     return _reached;
+}
+
+Door::~Door() {
+    SpriteRegistry::instance().unregister_sprite(&door_sprite);
 }

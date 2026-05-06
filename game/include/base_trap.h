@@ -2,10 +2,10 @@
 
 #include "bn_fixed.h"
 #include "bn_optional.h"
+#include "bn_span.h"
 #include "bn_sprite_animate_actions.h"
 #include "bn_sprite_item.h"
 #include "bn_vector.h"
-#include "bn_span.h"
 
 #include "cfg.h"
 #include "physics_body.h"
@@ -29,11 +29,13 @@ class BaseTrap : public PhysicsBody {
     // Animate the trap each frame.
     virtual void update() override;
     // Handle player collision by triggering death.
-    virtual void on_enter([[maybe_unused]] uint16_t hit_layers, StaticBody* body) override;
+    virtual void on_enter(
+        [[maybe_unused]] uint16_t hit_layers,
+        StaticBody* body) override;
+    virtual ~BaseTrap();
 
    private:
     Sprite trap_sprite;
     bn::optional<bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES>> action;
     bn::span<const uint16_t> graphics_indexes;
-
 };

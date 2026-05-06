@@ -14,9 +14,10 @@ Trigger::Trigger(
           Cfg::Layer::TRIGGER,
           Cfg::Layer::PLAYER,
           0),
-      triggered(t_default_on), default_on(t_default_on){}
+      triggered(t_default_on),
+      default_on(t_default_on) {}
 
-bool Trigger::is_triggered() const{
+bool Trigger::is_triggered() const {
     return triggered;
 }
 

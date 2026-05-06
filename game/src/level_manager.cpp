@@ -7,7 +7,7 @@ void LevelManager::startGame(
     _player = player;
 
     // Load and run each level in sequence.
-    for (auto level : levels) {
+    for (const auto& level : levels) {
         load(level);
         _run();
     }
@@ -32,6 +32,7 @@ void LevelManager::load(const LevelData& level) {
     _triggers.clear();
     _base_traps.clear();
     _moving_traps.clear();
+    _path_traps.clear();
 
     BN_ASSERT(
         static_cast<unsigned int>(level.platform_count) <
@@ -41,14 +42,14 @@ void LevelManager::load(const LevelData& level) {
         static_cast<unsigned int>(level.trigger_count) <
             Cfg::Level::Limits::TRIGGERS,
         "Too many triggers");
+
     unsigned int count_base_traps = 0;
     unsigned int count_moving_traps = 0;
+    unsigned int count_path_traps = 0;
     for (int i = 0; i < level.trap_count; i++) {
-        const TrapData& t = level.traps[i];
-        if (t.type == TrapType::BASE)
-            count_base_traps++;
-        else if (t.type == TrapType::MOVING)
-            count_moving_traps++;
+        count_base_traps += (level.traps[i].type == TrapType::BASE);
+        count_moving_traps += (level.traps[i].type == TrapType::MOVING);
+        count_path_traps += (level.traps[i].type == TrapType::PATH);
     }
     BN_ASSERT(
         count_base_traps < Cfg::Level::Limits::BASE_TRAPS,
@@ -56,6 +57,9 @@ void LevelManager::load(const LevelData& level) {
     BN_ASSERT(
         count_moving_traps < Cfg::Level::Limits::MOVING_TRAPS,
         "Too many moving traps");
+    BN_ASSERT(
+        count_path_traps < Cfg::Level::Limits::PATH_TRAPS,
+        "Too many path traps");
 
     // Create platform sprites and collision bodies.
     for (int i = 0; i < level.platform_count; i++) {
@@ -69,7 +73,8 @@ void LevelManager::load(const LevelData& level) {
         _platform_bodies.emplace_back(p.x, p.y, 16, 16, Cfg::Layer::PLATFORM);
     }
 
-    // Create trigger regions that will activate moving traps.
+    // Create trigger regions that will activate moving traps. //must before any
+    // refrencing also no touching it afterwards!
     for (int i = 0; i < level.trigger_count; i++) {
         const TriggerData& t = level.triggers[i];
 
@@ -104,6 +109,25 @@ void LevelManager::load(const LevelData& level) {
                 t.x, t.y, t.width, t.height, t.sprite, t.sprite_waits,
                 t.graphic_indexes, 0, t.velocity_x, t.velocity_y, t.max_vel,
                 t.range, trigger);
+        } else if (t.type == TrapType::PATH) {
+            // fallback to first trigger if invalid index
+            Trigger& trigger =
+                (t.trigger_index >= 0 && t.trigger_index < _triggers.size())
+                    ? _triggers[t.trigger_index]
+                    : _triggers[0];
+
+            if (!(t.trigger_index >= 0 && t.trigger_index < _triggers.size()))
+                BN_LOG(
+                    "[ERROR] level_manager: no valid trigger for trap found "
+                    "fallback to trigger 0");
+
+            _path_traps.emplace_back(
+                t.x, t.y, t.width, t.height, t.sprite, t.sprite_waits,
+                t.graphic_indexes, 0, t.path, t.path_waits, trigger);
+        } else {
+            BN_LOG(
+                "[ERROR] level_manager: trap variant not implemented, dont "
+                "forget the resets");
         }
     }
 }
@@ -128,6 +152,9 @@ void LevelManager::_run() {
             last_death_ct = _player->get_deaths();
             for (auto& mv_trap : _moving_traps) {
                 mv_trap.reset();
+            }
+            for (auto& pth_trap : _path_traps) {
+                pth_trap.reset();
             }
         }
     }
