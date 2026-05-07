@@ -26,8 +26,13 @@ inline constexpr int MAX_FALL_SPEED = 3;
 // Animations
 inline constexpr int RIGHT_FRAMES[2] = {0, 1};
 inline constexpr int LEFT_FRAMES[2] = {4, 5};
+inline constexpr int JUMP_RIGHT_FRAMES[2] = {2, 3};
+inline constexpr int JUMP_LEFT_FRAMES[2] = {6, 7};
 inline constexpr int IDLE_FRAME = 8;
 inline constexpr int BACK_FRAME = 9;
+inline constexpr int PLAYER_TILE_CACHE_SIZE = 10;
+inline constexpr int ANIMATION_FRAME_COUNT = 4;
+inline constexpr int WAIT_UPDATE = 4;
 
 // Misc.
 inline constexpr int DEATH_HEIGHT = 100;

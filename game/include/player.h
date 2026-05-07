@@ -6,6 +6,7 @@
 #include "bn_sprite_animate_actions.h"
 #include "bn_sprite_items_ente.h"
 #include "bn_sprite_text_generator.h"
+#include "bn_vector.h"
 #include "common_variable_8x16_sprite_font.h"
 
 #include "cfg.h"
@@ -27,8 +28,10 @@ class Player : public PhysicsBody {
 
     // Main per-frame update for player motion and animation.
     void update() override;
+
     // Handle player death and respawn.
     void death();
+
     // Set the current respawn location.
     void set_spawn_point(bn::fixed in_x, bn::fixed in_y);
     // teleport the player immediately to the given coordinate.
@@ -37,9 +40,22 @@ class Player : public PhysicsBody {
     unsigned int get_deaths() const;
 
    private:
-    // Sprite and animation
+    // Sprite
     Sprite player_sprite;
-    bn::sprite_animate_action<2> action;
+
+    // Cached tile handles (zero allocation at runtime)
+    bn::vector<bn::sprite_tiles_ptr, Cfg::Player::PLAYER_TILE_CACHE_SIZE>
+        cached_tiles;
+
+    // Walk animation action
+    bn::sprite_animate_action<Cfg::Player::ANIMATION_FRAME_COUNT> walk_action;
+
+    // Jump animation action
+    bn::sprite_animate_action<Cfg::Player::ANIMATION_FRAME_COUNT> jump_action;
+
+    // Previous movement state tracking
+    bool wasMoving = false;
+    bool wasJumping = false;
 
     // Death counter UI
     DeathCounter deathCounter;
@@ -89,7 +105,4 @@ class Player : public PhysicsBody {
 
     // Animation helpers
     void update_animation();
-    void set_direction(Facing new_facing, int tile_index);
-    void set_frame(int tile_index);
-    void set_walk_animation(const int frames[2]);
 };

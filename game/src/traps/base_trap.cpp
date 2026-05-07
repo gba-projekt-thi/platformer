@@ -15,7 +15,7 @@ BaseTrap::BaseTrap(
           t_y,
           t_width,
           t_height,
-          Cfg::Layer::UN_HITABLE,
+          Cfg::Layer::TRAP,
           Cfg::Layer::PLAYER,
           t_block,
           t_max_vel),
