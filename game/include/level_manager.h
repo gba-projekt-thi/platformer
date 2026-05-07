@@ -12,6 +12,7 @@
 #include "door.h"
 #include "level_structure.h"
 #include "moving_trap.h"
+#include "path_trap.h"
 #include "player.h"
 #include "trigger.h"
 
@@ -30,6 +31,7 @@ class LevelManager {
     bn::vector<Trigger, Cfg::Level::Limits::TRIGGERS> _triggers;
     bn::vector<BaseTrap, Cfg::Level::Limits::BASE_TRAPS> _base_traps;
     bn::vector<MovingTrap, Cfg::Level::Limits::MOVING_TRAPS> _moving_traps;
+    bn::vector<PathTrap, Cfg::Level::Limits::PATH_TRAPS> _path_traps;
     bn::optional<bn::regular_bg_ptr> _back_ground;
     Player* _player;
     bn::optional<Door> _door;

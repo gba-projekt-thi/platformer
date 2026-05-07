@@ -4,6 +4,7 @@
 namespace Cfg {
 
 namespace Layer {
+inline constexpr uint16_t UN_HITABLE = 0x000;
 inline constexpr uint16_t PLAYER = 0x001;
 inline constexpr uint16_t TRAP = 0x0002;
 inline constexpr uint16_t PLATFORM = 0x0004;
@@ -53,6 +54,7 @@ inline constexpr unsigned int PLATFORM_BODIES = 32;
 inline constexpr unsigned int TRIGGERS = 16;
 inline constexpr unsigned int BASE_TRAPS = 16;
 inline constexpr unsigned int MOVING_TRAPS = 16;
+inline constexpr unsigned int PATH_TRAPS = 8;
 }  // namespace Limits
 }  // namespace Level
 
