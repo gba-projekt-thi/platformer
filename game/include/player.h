@@ -28,12 +28,16 @@ class Player : public PhysicsBody {
 
     // Main per-frame update for player motion and animation.
     void update() override;
+
     // Handle player death and respawn.
     void death();
+
     // Set the current respawn location.
     void set_spawn(bn::fixed in_x, bn::fixed in_y);
+
     // Place the player immediately at the given coordinate.
     void place(bn::fixed in_x, bn::fixed in_y);
+
     // Get the count of player deaths.
     const bn::fixed get_deaths();
 
@@ -42,8 +46,18 @@ class Player : public PhysicsBody {
     Sprite player_sprite;
 
     // Cached tile handles (zero allocation at runtime)
-    bn::vector<bn::sprite_tiles_ptr, 10> cached_tiles;
-    bn::sprite_animate_action<4> walk_action;
+    bn::vector<bn::sprite_tiles_ptr, Cfg::Player::PLAYER_TILE_CACHE_SIZE>
+        cached_tiles;
+
+    // Walk animation action
+    bn::sprite_animate_action<Cfg::Player::ANIMATION_FRAME_COUNT> walk_action;
+
+    // Jump animation action
+    bn::sprite_animate_action<Cfg::Player::ANIMATION_FRAME_COUNT> jump_action;
+
+    // Previous movement state tracking
+    bool wasMoving = false;
+    bool wasJumping = false;
 
     // Death counter UI
     DeathCounter deathCounter;

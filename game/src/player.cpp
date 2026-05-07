@@ -24,9 +24,15 @@ Player::Player(
           Cfg::Player::WAIT_UPDATE,
           bn::sprite_items::ente.tiles_item(),
           Cfg::Player::RIGHT_FRAMES[0],
-          Cfg::Player::RIGHT_FRAMES[1],
-          Cfg::Player::RIGHT_FRAMES[2],
-          Cfg::Player::RIGHT_FRAMES[3])),
+          Cfg::Player::RIGHT_FRAMES[1])),
+
+      // Jump animation using cached jump frames
+      jump_action(bn::create_sprite_animate_action_forever(
+          player_sprite.sprite(),
+          Cfg::Player::WAIT_UPDATE,
+          bn::sprite_items::ente.tiles_item(),
+          Cfg::Player::JUMP_RIGHT_FRAMES[0],
+          Cfg::Player::JUMP_RIGHT_FRAMES[1])),
 
       deathCounter(),
       deathCounterTextGen(common::variable_8x16_sprite_font),
@@ -51,7 +57,7 @@ Player::Player(
     // Preload ALL tile frames once (ZERO runtime allocation)
     const auto& tiles = bn::sprite_items::ente.tiles_item();
 
-    for (int i = 0; i < Cfg::Player::PLAYER_TILES_COUNT; ++i) {
+    for (int i = 0; i < Cfg::Player::PLAYER_TILE_CACHE_SIZE; ++i) {
         cached_tiles.push_back(tiles.create_tiles(i));
     }
 }
@@ -92,7 +98,8 @@ void Player::set_spawn(bn::fixed in_x, bn::fixed in_y) {
     restart_x = in_x;
     restart_y = in_y;
 }
-//
+
+// Place player at a position and reset velocity.
 void Player::place(bn::fixed in_x, bn::fixed in_y) {
     set_velocity(0, 0);
     pos.x = in_x;
@@ -107,6 +114,7 @@ const bn::fixed Player::get_deaths() {
 void Player::handle_horizontal_input() {
     if (bn::keypad::left_held()) {
         inc_velocity(-acceleration, 0);
+
         if (vel_x < -max_speed) {
             set_velocity(-max_speed, vel_y);
         }
@@ -116,6 +124,7 @@ void Player::handle_horizontal_input() {
 
     } else if (bn::keypad::right_held()) {
         inc_velocity(acceleration, 0);
+
         if (vel_x > max_speed) {
             set_velocity(max_speed, vel_y);
         }
@@ -198,7 +207,9 @@ void Player::check_death() {
 void Player::death() {
     deathCounter.on_player_death();
     deathCounterHud.update();
+
     set_velocity(0, 0);
+
     pos.x = restart_x;
     pos.y = restart_y;
 }
@@ -231,28 +242,68 @@ void Player::enter_state(PlayerState new_state) {
 
 // Update the player sprite based on current state and input.
 void Player::update_animation() {
-    // Stop animation when not moving
-    if (!(bn::keypad::left_held() || bn::keypad::right_held())) {
+    bool moving = bn::keypad::left_held() || bn::keypad::right_held();
+
+    bool jumping = !onGround;
+
+    // Moving -> start walk animation instantly
+    if (moving && !wasMoving) {
+        walk_action.reset();
+        walk_action.update();
+    }
+
+    // Jump started -> start jump animation instantly
+    if (jumping && !wasJumping) {
+        jump_action.reset();
+        jump_action.update();
+    }
+
+    // Stop walk animation when not moving
+    if (!moving) {
         walk_action.reset();
     }
 
-    if (onGround && bn::keypad::up_held()) {
-        player_sprite.sprite().set_tiles(cached_tiles[Cfg::Player::BACK_FRAME]);
-        return;
-    }
+    // Stop jump animation when grounded
+    if (!jumping && wasJumping) {
+        jump_action.reset();
 
-    if (!onGround) {
+        // Restore default ground frame after landing
         player_sprite.sprite().set_tiles(
             cached_tiles[Cfg::Player::RIGHT_FRAMES[0]]);
+    }
+
+    // BACK FRAME
+    if (onGround && bn::keypad::up_held()) {
+        player_sprite.sprite().set_tiles(cached_tiles[Cfg::Player::BACK_FRAME]);
+
+        wasMoving = moving;
+        wasJumping = jumping;
         return;
     }
 
+    // JUMP ANIMATION
+    if (!onGround) {
+        jump_action.update();
+
+        wasMoving = moving;
+        wasJumping = jumping;
+        return;
+    }
+
+    // IDLE FRAME
     if (bn::keypad::down_held()) {
         player_sprite.sprite().set_tiles(cached_tiles[Cfg::Player::IDLE_FRAME]);
+
+        wasMoving = moving;
+        wasJumping = jumping;
         return;
     }
 
-    if (bn::keypad::left_held() || bn::keypad::right_held()) {
+    // WALK ANIMATION
+    if (moving) {
         walk_action.update();
     }
+
+    wasMoving = moving;
+    wasJumping = jumping;
 }
