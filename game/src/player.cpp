@@ -21,7 +21,7 @@ Player::Player(
 
       walk_action(bn::create_sprite_animate_action_forever(
           player_sprite.sprite(),
-          8,
+          Cfg::Player::WAIT_UPDATE,
           bn::sprite_items::ente.tiles_item(),
           Cfg::Player::RIGHT_FRAMES[0],
           Cfg::Player::RIGHT_FRAMES[1],
@@ -51,33 +51,40 @@ Player::Player(
     // Preload ALL tile frames once (ZERO runtime allocation)
     const auto& tiles = bn::sprite_items::ente.tiles_item();
 
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < Cfg::Player::PLAYER_TILES_COUNT; ++i) {
         cached_tiles.push_back(tiles.create_tiles(i));
     }
 }
 
 void Player::update() {
+    // Handle left/right movement first.
     handle_horizontal_input();
 
+    // Store jump input in a buffer to allow forgiving timing.
     if (bn::keypad::a_pressed()) {
         jump_buffer_timer = Cfg::Player::JUMP_BUFFER_FRAMES;
     }
 
+    // Apply continuous vertical motion effects.
     apply_gravity();
     apply_variable_jump();
     clamp_velocity();
 
+    // Keep the player inside bounds and detect death conditions.
     check_bounds();
     check_death();
 
     update_ground_state();
     handle_jump();
 
+    // Update the current animation and state machine.
     update_state();
     update_animation();
 
-    if (jump_buffer_timer > 0)
+    // Decrease jump buffer timer
+    if (jump_buffer_timer > 0) {
         jump_buffer_timer--;
+    }
 }
 
 // sets spawnpoint
@@ -117,6 +124,7 @@ void Player::handle_horizontal_input() {
         player_sprite.sprite().set_horizontal_flip(false);
 
     } else {
+        // No horizontal input: apply friction to slow the player down.
         dec_velocity(acceleration, 0);
     }
 }
@@ -205,8 +213,6 @@ void Player::update_state() {
         // Hold down to enter the idle pose while grounded.
         if (bn::keypad::down_held()) {
             new_state = PlayerState::Idle;
-        } else if (bn::keypad::left_held() || bn::keypad::right_held()) {
-            new_state = PlayerState::Run;
         } else {
             // No input → stay in Run (but no animation update)
             new_state = PlayerState::Run;

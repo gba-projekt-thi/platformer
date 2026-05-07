@@ -27,6 +27,8 @@ inline constexpr int RIGHT_FRAMES[4] = {0, 1, 2, 3};
 inline constexpr int LEFT_FRAMES[2] = {4, 5};
 inline constexpr int IDLE_FRAME = 8;
 inline constexpr int BACK_FRAME = 9;
+inline constexpr int PLAYER_TILES_COUNT = 10;
+inline constexpr int WAIT_UPDATE = 8;
 
 // Misc.
 inline constexpr int DEATH_HEIGHT = 100;
