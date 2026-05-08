@@ -29,7 +29,7 @@
 
 // Level 3
 #include "bn_sprite_items_baumstamm.h"
-// #include "bn_sprite_items_nebel.h"
+#include "bn_sprite_items_nebel.h"
 
 // Wallpapers
 #include "bn_regular_bg_items_level1.h"
@@ -54,11 +54,10 @@ int main() {
     levels.push_back(LEVEL_0);
     levels.push_back(LEVEL_1);
     levels.push_back(LEVEL_2);
-    // levels.push_back(LEVEL_3);
+    levels.push_back(LEVEL_3);
 
     // Create the player entity and apply an offset for the sprite anchor point.
     Player player(0, 0, 8, 8);
-    player.sprite->pos.offset_y = 4;
 
     // Initialize the level manager and begin the game loop.
     static LevelManager level_manager __attribute__((section(".ewram")));

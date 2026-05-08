@@ -10,7 +10,7 @@ PathTrap::PathTrap(
     const bn::span<const uint16_t> t_graphics_indexes,
     uint16_t t_block,
     bn::span<const bn::fixed_point> t_path,
-    unsigned int t_path_waits,  // how many frames between current path iondex and next
+    unsigned int t_path_waits,  // how many frames between current path index and next
     Trigger& t_trigger)
     : BaseTrap::BaseTrap(
           (t_path.empty()) ? t_start_x : t_start_x + t_path[0].x(),

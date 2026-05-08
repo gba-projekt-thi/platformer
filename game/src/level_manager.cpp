@@ -65,12 +65,14 @@ void LevelManager::load(const LevelData& level) {
     for (int i = 0; i < level.platform_count; i++) {
         const PlatformData& p = level.platforms[i];
 
-        auto sprite = level.sprite_item_platform.create_sprite(p.x, p.y);
-        sprite.set_tiles(level.sprite_item_platform.tiles_item().create_tiles(
-            p.sprite_index));
+        int count = p.sprite.tiles_item().graphics_count(); // to check for out of bound errors
+
+        auto sprite = p.sprite.create_sprite(p.x, p.y);
+        sprite.set_tiles(p.sprite.tiles_item().create_tiles(
+            p.sprite_index % count));
 
         _platforms.push_back(bn::move(sprite));
-        _platform_bodies.emplace_back(p.x, p.y, 16, 16, Cfg::Layer::PLATFORM);
+        _platform_bodies.emplace_back(p.x, p.y,_platforms.back().dimensions().width(), _platforms.back().dimensions().height() , Cfg::Layer::PLATFORM);
     }
 
     // Create trigger regions that will activate moving traps. //must before any

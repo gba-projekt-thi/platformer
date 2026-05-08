@@ -8,7 +8,8 @@ enum class TrapType { BASE, MOVING, PATH };
 struct PlatformData {
     int x;
     int y;
-    int sprite_index;
+    const bn::sprite_item sprite;
+    int sprite_index; 
 };
 
 struct TriggerData {
@@ -63,7 +64,6 @@ struct LevelData {
     const TrapData* traps;
     int trap_count;
 
-    const bn::sprite_item sprite_item_platform;
     const bn::regular_bg_item back_ground;
     const bn::music_item music;
 

@@ -17,8 +17,12 @@ constexpr bn::fixed_point FIGURE_8_PATH[] = {
     bn::fixed_point(-100, 0),  bn::fixed_point(-92, -21),
     bn::fixed_point(-71, -30), bn::fixed_point(-38, -21)};
 
-constexpr PlatformData level0_platforms[] =
-    {{-96, 60, 0}, {-80, 60, 1}, {-48, 60, 2}, {-16, 60, 3}, {0, 40, 0}};
+constexpr PlatformData level0_platforms[] = {
+    {-96, 60, bn::sprite_items::platformslvl1, 0},
+    {-80, 60, bn::sprite_items::platformslvl1, 1},
+    {-48, 60, bn::sprite_items::platformslvl1, 2},
+    {-16, 60, bn::sprite_items::platformslvl1, 3},
+    {0, 40, bn::sprite_items::platformslvl1, 0}};
 
 constexpr TriggerData level0_triggers[] = {{-50, 30, 30, 30}};
 
@@ -27,32 +31,39 @@ constexpr TrapData level0_traps[] = {
      TRAP_GRAPHICS_INDEXES_3, -0.1, 0.1, 1, 5, 0, NO_PATH_TRAP, 1},
     {TrapType::BASE, -20, -20, 32, 32, bn::sprite_items::bubbles, 26,
      TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, 0, -1, NO_PATH_TRAP, 1},
-    {TrapType::PATH, 0, 0, 32, 32, bn::sprite_items::bubbles, 5,
-     TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, 0, 0, FIGURE_8_PATH, 20}};
+    {TrapType::PATH, 0, 0, 32, 32, bn::sprite_items::bubbles, 10,
+     TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, 0, 0, FIGURE_8_PATH, 10}};
 
 const LevelData LEVEL_0 = {
     level0_platforms,
-    5,
+    sizeof(level0_platforms) / sizeof(PlatformData),
     level0_triggers,
     1,
     level0_traps,
     3,
-    bn::sprite_items::platformslvl1,
     bn::regular_bg_items::level1,
     bn::music_items::level1,
     {-96, 0},
     {32, 0}};
 
 constexpr PlatformData level1_platforms[] = {
-    {-96, 60, 0}, {-80, 60, 1}, {-48, 60, 3}, {-16, 60, 0},
-    {-16, 44, 2}, {32, 60, 1},  {48, 60, 1},  {64, 60, 0},
-    {80, 60, 1},  {96, 60, 0},  {112, 60, 2}};
+    {-96, 60, bn::sprite_items::platformslvl1, 0},
+    {-80, 60, bn::sprite_items::platformslvl1, 1},
+    {-48, 60, bn::sprite_items::platformslvl1, 3},
+    {-16, 60, bn::sprite_items::platformslvl1, 0},
+    {-16, 44, bn::sprite_items::platformslvl1, 2},
+    {32, 60, bn::sprite_items::platformslvl1, 1},
+    {48, 60, bn::sprite_items::platformslvl1, 1},
+    {64, 60, bn::sprite_items::platformslvl1, 0},
+    {80, 60, bn::sprite_items::platformslvl1, 1},
+    {96, 60, bn::sprite_items::platformslvl1, 0},
+    {112, 60, bn::sprite_items::platformslvl1, 2}};
 
 constexpr TriggerData level1_triggers[] = {{80, 30, 32, 30}};
 
 constexpr TrapData level1_traps[] = {
     {TrapType::MOVING, 80, -32, 32, 32, bn::sprite_items::bubbles, 26,
-     TRAP_GRAPHICS_INDEXES_3, 0.0, 4, 4, 5, 0, FIGURE_8_PATH, 1},
+     TRAP_GRAPHICS_INDEXES_3, 0.0, 4, 4, 5, 0, NO_PATH_TRAP, 1},
     {TrapType::BASE, -48, 8, 32, 32, bn::sprite_items::bubbles, 26,
      TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, 0, -1, NO_PATH_TRAP, 1},
     {TrapType::BASE, -64, 60, 16, 16, bn::sprite_items::connector16x16, 16,
@@ -62,22 +73,24 @@ constexpr TrapData level1_traps[] = {
 
 const LevelData LEVEL_1 = {
     level1_platforms,
-    11,
+    sizeof(level1_platforms) / sizeof(PlatformData),
     level1_triggers,
     1,
     level1_traps,
     4,
-    bn::sprite_items::platformslvl1,
     bn::regular_bg_items::level1,
     bn::music_items::level1,
     {-96, 0},
     {112, 40}};
 
 constexpr PlatformData level2_platforms[] = {
-    {-96, -16, 1}, {-72, 40, 2},
-    {-24, 40, 0},  /*{-8, 40, 0}, {8, 40, 0},*/ {24, 40, 0},
-    {64, 24, 1},   {96, 16, 1},
-    {112, 16, 1}};
+    {-96, -16, bn::sprite_items::platformslvl2, 1},
+    {-72, 40, bn::sprite_items::platformslvl2, 2},
+    {-24, 40, bn::sprite_items::platformslvl2, 0},
+    {24, 40, bn::sprite_items::platformslvl2, 0},
+    {64, 24, bn::sprite_items::platformslvl2, 1},
+    {96, 16, bn::sprite_items::platformslvl2, 1},
+    {112, 16, bn::sprite_items::platformslvl2, 1}};
 
 constexpr TrapData level2_traps[] = {
     {TrapType::BASE, -112, -16, 16, 16, bn::sprite_items::pipe16x16, 26,
@@ -93,39 +106,37 @@ constexpr TriggerData level2_triggers[] = {{-48, 16, 32, 40}};
 
 const LevelData LEVEL_2 = {
     level2_platforms,
-    7,
+    sizeof(level2_platforms) / sizeof(PlatformData),
 
     level2_triggers,
     1,
 
     level2_traps,
     4,
-
-    bn::sprite_items::platformslvl2,
     bn::regular_bg_items::level2,
     bn::music_items::level2,
 
     {-96, -32},
     {104, 0}};
-/*
+
 constexpr PlatformData level3_platforms[] = {
     // --- Nebel ---
-    { -80, -32, &bn::sprite_items_nebel, 0 },
-    { -48, -32, &bn::sprite_items_nebel, 0 },
-    { -16, -32, &bn::sprite_items_nebel, 0 },
-    {  16, -32, &bn::sprite_items_nebel, 0 },
+    { -80, -32, bn::sprite_items::nebel, 0 },
+    { -48, -32, bn::sprite_items::nebel, 0 },
+    { -16, -32, bn::sprite_items::nebel, 0 },
+    {  16, -32, bn::sprite_items::nebel, 0 },
 
-    { -80,  32, &bn::sprite_items_nebel, 0 },
-    { -48,  32, &bn::sprite_items_nebel, 0 },
-    { -16,  32, &bn::sprite_items_nebel, 0 },
-    {  16,  32, &bn::sprite_items_nebel, 0 },
-    {  48,  32, &bn::sprite_items_nebel, 0 },
+    { -80,  32, bn::sprite_items::nebel, 0 },
+    { -48,  32, bn::sprite_items::nebel, 0 },
+    { -16,  32, bn::sprite_items::nebel, 0 },
+    {  16,  32, bn::sprite_items::nebel, 0 },
+    {  48,  32, bn::sprite_items::nebel, 0 },
 
     // --- Baumstämme ---
-    { -48,  64, &bn::sprite_items_baumstamm, 0 },
-    { -16,  64, &bn::sprite_items_baumstamm, 0 },
-    {  32,  64, &bn::sprite_items_baumstamm, 0 },
-    {  64,  64, &bn::sprite_items_baumstamm, 2 }
+    { -48,  64, bn::sprite_items::baumstamm, 0 },
+    { -16,  64, bn::sprite_items::baumstamm, 0 },
+    {  32,  64, bn::sprite_items::baumstamm, 0 },
+    {  64,  64, bn::sprite_items::baumstamm, 2 }
 };
 
 const LevelData LEVEL_3 = {
@@ -138,10 +149,9 @@ const LevelData LEVEL_3 = {
     nullptr,
     0,
 
-    bn::sprite_items_level3,
     bn::regular_bg_items::level3,
     bn::music_items::level1,
 
     {-80, -64},
     {64, 32}
-};*/
+};
