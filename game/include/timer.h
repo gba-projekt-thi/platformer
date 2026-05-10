@@ -27,11 +27,13 @@ class TimerHUD {
 
    private:
     void refresh();
+    void set_digit(int index, int value);
 
     const Timer& _timer;
 
     bn::vector<bn::sprite_ptr, 16> _sprites;
     bn::vector<bn::sprite_tiles_ptr, 11> _cached_tiles;
 
+    int _displayed_digits[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
     bool _visible = true;
 };

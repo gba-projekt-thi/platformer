@@ -73,12 +73,19 @@ void TimerHUD::refresh() {
 
     int colon = 10;  // Index for ":"
 
-    _sprites[0].set_tiles(_cached_tiles[m1]);
-    _sprites[1].set_tiles(_cached_tiles[m2]);
-    _sprites[2].set_tiles(_cached_tiles[colon]);
-    _sprites[3].set_tiles(_cached_tiles[s1]);
-    _sprites[4].set_tiles(_cached_tiles[s2]);
-    _sprites[5].set_tiles(_cached_tiles[colon]);
-    _sprites[6].set_tiles(_cached_tiles[c1]);
-    _sprites[7].set_tiles(_cached_tiles[c2]);
+    set_digit(0, m1);
+    set_digit(1, m2);
+    set_digit(2, colon);
+    set_digit(3, s1);
+    set_digit(4, s2);
+    set_digit(5, colon);
+    set_digit(6, c1);
+    set_digit(7, c2);
+}
+
+void TimerHUD::set_digit(int index, int value) {
+    if (_displayed_digits[index] != value) {
+        _displayed_digits[index] = value;
+        _sprites[index].set_tiles(_cached_tiles[value]);
+    }
 }
