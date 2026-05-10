@@ -39,8 +39,7 @@ Player::Player(
       deathCounterHud(deathCounterTextGen, deathCounter),
 
       timer(),
-      timerTextGen(common::fixed_8x16_sprite_font),
-      timerHud(timerTextGen, timer),
+      timerHud(timer),
 
       restart_x(in_start_x),
       restart_y(in_start_y),

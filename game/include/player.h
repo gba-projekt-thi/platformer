@@ -7,7 +7,6 @@
 #include "bn_sprite_items_ente.h"
 #include "bn_sprite_text_generator.h"
 #include "bn_vector.h"
-#include "common_fixed_8x16_sprite_font.h"
 #include "common_variable_8x16_sprite_font.h"
 
 #include "cfg.h"
@@ -66,7 +65,6 @@ class Player : public PhysicsBody {
 
     // Timer UI
     Timer timer;
-    bn::sprite_text_generator timerTextGen;
     TimerHUD timerHud;
 
     // Respawn position

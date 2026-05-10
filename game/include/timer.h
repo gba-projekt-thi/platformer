@@ -1,9 +1,9 @@
 #pragma once
 
-#include <bn_sprite_text_generator.h>
-#include <bn_string.h>
 #include <bn_vector.h>
+#include "bn_sprite_items_common_fixed_8x16_font.h"
 #include "bn_sprite_ptr.h"
+#include "bn_sprite_tiles_ptr.h"
 
 #include "cfg.h"
 
@@ -19,7 +19,7 @@ class Timer {
 
 class TimerHUD {
    public:
-    TimerHUD(bn::sprite_text_generator& text_gen, const Timer& timer);
+    TimerHUD(const Timer& timer);
 
     void update();
     void set_visible(bool visible);
@@ -28,8 +28,10 @@ class TimerHUD {
    private:
     void refresh();
 
-    bn::sprite_text_generator& _text_gen;
     const Timer& _timer;
+
     bn::vector<bn::sprite_ptr, 16> _sprites;
+    bn::vector<bn::sprite_tiles_ptr, 11> _cached_tiles;
+
     bool _visible = true;
 };

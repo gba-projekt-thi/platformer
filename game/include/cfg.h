@@ -48,7 +48,7 @@ inline constexpr unsigned int COUNT_LEN = 8;
 }  // namespace DeathCounter
 
 namespace Timer {
-inline constexpr int X = 45;
+inline constexpr int X = 50;
 inline constexpr int Y = -70;
 }  // namespace Timer
 

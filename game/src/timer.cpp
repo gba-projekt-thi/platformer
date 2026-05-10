@@ -12,9 +12,23 @@ unsigned int Timer::counted_frames() const {
     return _counted_frames;
 }
 
-TimerHUD::TimerHUD(bn::sprite_text_generator& text_gen, const Timer& timer)
-    : _text_gen(text_gen), _timer(timer) {
-    // Initialize HUD
+TimerHUD::TimerHUD(const Timer& timer) : _timer(timer) {
+    const auto& font_item = bn::sprite_items::common_fixed_8x16_font;
+    const auto& font_tiles = font_item.tiles_item();
+
+    // Cache numbers 0 - 9
+    for (int i = 0; i <= 9; i++) {
+        _cached_tiles.push_back(font_tiles.create_tiles(15 + i));
+    }
+    // Cache ":" symbol
+    _cached_tiles.push_back(font_tiles.create_tiles(25));
+
+    // Initialize text sprites
+    for (int i = 0; i < 8; i++) {
+        _sprites.push_back(font_item.create_sprite(
+            Cfg::Timer::X + (i * 8), Cfg::Timer::Y, 15));
+    }
+
     refresh();
 }
 
@@ -31,9 +45,12 @@ void TimerHUD::set_visible(bool visible) {
     }
 
     _visible = visible;
-    if (!_visible) {
-        _sprites.clear();
-    } else {
+
+    for (auto& sprite : _sprites) {
+        sprite.set_visible(_visible);
+    }
+
+    if (_visible) {
         refresh();
     }
 }
@@ -43,27 +60,25 @@ bool TimerHUD::visible() const {
 }
 
 void TimerHUD::refresh() {
-    _sprites.clear();
-
     const unsigned int minutes = _timer.counted_frames() / 3600;
-    const unsigned int seconds = _timer.counted_frames() / 60 % 60;
-    const unsigned int millis = _timer.counted_frames() * 5 / 3 % 100;
+    const unsigned int seconds = (_timer.counted_frames() / 60) % 60;
+    const unsigned int centis = (_timer.counted_frames() * 100 / 60) % 100;
 
-    bn::string<16> text;
+    int m1 = (minutes / 10) % 10;
+    int m2 = minutes % 10;
+    int s1 = (seconds / 10) % 10;
+    int s2 = seconds % 10;
+    int c1 = (centis / 10) % 10;
+    int c2 = centis % 10;
 
-    if (minutes < 10)
-        text += "0";
-    text += bn::to_string<8>(minutes);
-    text += ":";
+    int colon = 10;  // Index for ":"
 
-    if (seconds < 10)
-        text += "0";
-    text += bn::to_string<2>(seconds);
-    text += ":";
-
-    if (millis < 10)
-        text += "0";
-    text += bn::to_string<2>(millis);
-
-    _text_gen.generate(Cfg::Timer::X, Cfg::Timer::Y, text, _sprites);
+    _sprites[0].set_tiles(_cached_tiles[m1]);
+    _sprites[1].set_tiles(_cached_tiles[m2]);
+    _sprites[2].set_tiles(_cached_tiles[colon]);
+    _sprites[3].set_tiles(_cached_tiles[s1]);
+    _sprites[4].set_tiles(_cached_tiles[s2]);
+    _sprites[5].set_tiles(_cached_tiles[colon]);
+    _sprites[6].set_tiles(_cached_tiles[c1]);
+    _sprites[7].set_tiles(_cached_tiles[c2]);
 }
