@@ -47,6 +47,11 @@ inline constexpr unsigned int STRING_LEN = 16;
 inline constexpr unsigned int COUNT_LEN = 8;
 }  // namespace DeathCounter
 
+namespace Timer {
+inline constexpr int X = 45;
+inline constexpr int Y = -70;
+}  // namespace Timer
+
 namespace Level {
 namespace Limits {
 inline constexpr unsigned int PLATFORMS = 32;

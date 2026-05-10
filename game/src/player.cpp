@@ -38,6 +38,10 @@ Player::Player(
       deathCounterTextGen(common::variable_8x16_sprite_font),
       deathCounterHud(deathCounterTextGen, deathCounter),
 
+      timer(),
+      timerTextGen(common::fixed_8x16_sprite_font),
+      timerHud(timerTextGen, timer),
+
       restart_x(in_start_x),
       restart_y(in_start_y),
 
@@ -91,6 +95,13 @@ void Player::update() {
     if (jump_buffer_timer > 0) {
         jump_buffer_timer--;
     }
+
+    // Update timer
+    if (bn::keypad::select_pressed()) {
+        timerHud.set_visible(!timerHud.visible());
+    }
+    timer.tick();
+    timerHud.update();
 }
 
 // sets spawnpoint

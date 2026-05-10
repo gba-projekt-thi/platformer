@@ -7,12 +7,14 @@
 #include "bn_sprite_items_ente.h"
 #include "bn_sprite_text_generator.h"
 #include "bn_vector.h"
+#include "common_fixed_8x16_sprite_font.h"
 #include "common_variable_8x16_sprite_font.h"
 
 #include "cfg.h"
 #include "death_counter.h"
 #include "physics_body.h"
 #include "sprite.h"
+#include "timer.h"
 
 class Player : public PhysicsBody {
    public:
@@ -61,6 +63,11 @@ class Player : public PhysicsBody {
     DeathCounter deathCounter;
     bn::sprite_text_generator deathCounterTextGen;
     DeathCounterHUD deathCounterHud;
+
+    // Timer UI
+    Timer timer;
+    bn::sprite_text_generator timerTextGen;
+    TimerHUD timerHud;
 
     // Respawn position
     bn::fixed restart_x;
