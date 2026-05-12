@@ -6,10 +6,35 @@ void Timer::reset() {
 
 void Timer::tick() {
     ++_counted_frames;
+
+    _centis = (_counted_frames * 5) / 3;
+
+    if (_counted_frames >= 60) {
+        _counted_frames = 0;
+        _centis = 0;
+        ++_seconds;
+
+        if (_seconds >= 60) {
+            _seconds = 0;
+            ++_minutes;
+        }
+    }
 }
 
 unsigned int Timer::counted_frames() const {
     return _counted_frames;
+}
+
+unsigned int Timer::centis() const {
+    return _centis;
+}
+
+unsigned int Timer::seconds() const {
+    return _seconds;
+}
+
+unsigned int Timer::minutes() const {
+    return _minutes;
 }
 
 TimerHUD::TimerHUD(const Timer& timer) : _timer(timer) {
@@ -60,16 +85,26 @@ bool TimerHUD::visible() const {
 }
 
 void TimerHUD::refresh() {
-    const unsigned int minutes = _timer.counted_frames() / 3600;
-    const unsigned int seconds = (_timer.counted_frames() / 60) % 60;
-    const unsigned int centis = (_timer.counted_frames() * 100 / 60) % 100;
+    unsigned int m1 = 0;
+    unsigned int m2 = _timer.minutes();
+    while (m2 >= 10) {
+        m2 -= 10;
+        ++m1;
+    }
 
-    int m1 = (minutes / 10) % 10;
-    int m2 = minutes % 10;
-    int s1 = (seconds / 10) % 10;
-    int s2 = seconds % 10;
-    int c1 = (centis / 10) % 10;
-    int c2 = centis % 10;
+    unsigned int s1 = 0;
+    unsigned int s2 = _timer.seconds();
+    while (s2 >= 10) {
+        s2 -= 10;
+        ++s1;
+    }
+
+    unsigned int c1 = 0;
+    unsigned int c2 = _timer.centis();
+    while (c2 >= 10) {
+        c2 -= 10;
+        ++c1;
+    }
 
     int colon = 10;  // Index for ":"
 

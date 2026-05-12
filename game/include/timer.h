@@ -10,11 +10,17 @@
 class Timer {
    private:
     unsigned int _counted_frames = 0;
+    unsigned int _centis = 0;
+    unsigned int _seconds = 0;
+    unsigned int _minutes = 0;
 
    public:
     void reset();
     void tick();
     unsigned int counted_frames() const;
+    unsigned int centis() const;
+    unsigned int seconds() const;
+    unsigned int minutes() const;
 };
 
 class TimerHUD {
