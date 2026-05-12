@@ -35,6 +35,7 @@ class LevelManager {
     bn::optional<bn::regular_bg_ptr> _back_ground;
     Player* _player;
     bn::optional<Door> _door;
+    bn::vector<bn::sprite_ptr, 64> _pause_sprites;
     // Main loop for the currently loaded level.
     void _run();
 };

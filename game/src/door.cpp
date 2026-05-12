@@ -1,7 +1,7 @@
 #include "door.h"
 
 Door::Door(bn::fixed in_x, bn::fixed in_y)
-    : PhysicsBody(in_x, in_y, 32, 32, Cfg::Layer::TRAP, Cfg::Layer::PLAYER, 0),
+    : PhysicsBody(in_x, in_y, 6, 8, Cfg::Layer::TRAP, Cfg::Layer::PLAYER, 0),
       door_sprite(
           bn::sprite_items::door32x32.create_sprite(in_x, in_y),
           in_x,
@@ -19,6 +19,7 @@ Door::Door(bn::fixed in_x, bn::fixed in_y)
               10,
               12)) {
     // The door is a static physics body and animated sprite.
+    door_sprite.sprite().set_z_order(Cfg::ZOrder::DOOR);
     this->sprite = &door_sprite;
 }
 
