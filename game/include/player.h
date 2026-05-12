@@ -13,6 +13,7 @@
 #include "death_counter.h"
 #include "physics_body.h"
 #include "sprite.h"
+#include "timer.h"
 
 class Player : public PhysicsBody {
    public:
@@ -61,6 +62,10 @@ class Player : public PhysicsBody {
     DeathCounter deathCounter;
     bn::sprite_text_generator deathCounterTextGen;
     DeathCounterHUD deathCounterHud;
+
+    // Timer UI
+    Timer timer;
+    TimerHUD timerHud;
 
     // Respawn position
     bn::fixed restart_x;
