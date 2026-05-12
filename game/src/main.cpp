@@ -29,7 +29,10 @@
 
 // Level 3
 #include "bn_sprite_items_baumstamm.h"
+#include "bn_sprite_items_branch32x16.h"
+#include "bn_sprite_items_mushroom32x32.h"
 #include "bn_sprite_items_nebel.h"
+#include "bn_sprite_items_slithermanarms32x32.h"
 
 // Wallpapers
 #include "bn_regular_bg_items_level1.h"
