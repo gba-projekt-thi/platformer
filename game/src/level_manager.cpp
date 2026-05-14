@@ -37,7 +37,8 @@ void LevelManager::load(const LevelData& level) {
     _door.emplace(level.door.x, level.door.y);
 
     // Start the level-specific background music.
-    level.music.play();
+    _music.emplace(level.music);
+    bn::music::play(*_music);
 
     _back_ground.reset();
     _back_ground.emplace(level.back_ground.create_bg(0, 0));
@@ -168,6 +169,10 @@ void LevelManager::_run() {
             prev_paused = paused;
             for (auto& sprite : _pause_sprites)
                 sprite.set_visible(paused);
+            if (paused)
+                bn::music::pause();
+            else
+                bn::music::resume();
         }
 
         if (paused) {

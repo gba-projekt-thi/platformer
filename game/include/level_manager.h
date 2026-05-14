@@ -2,6 +2,8 @@
 
 #include "bn_core.h"
 #include "bn_dmg_music_item.h"
+#include "bn_music.h"
+#include "bn_music_items.h"
 #include "bn_regular_bg_item.h"
 #include "bn_regular_bg_ptr.h"
 #include "bn_sprite_item.h"
@@ -35,6 +37,7 @@ class LevelManager {
     bn::optional<bn::regular_bg_ptr> _back_ground;
     Player* _player;
     bn::optional<Door> _door;
+    bn::optional<bn::music_item> _music;
     bn::vector<bn::sprite_ptr, 64> _pause_sprites;
     // Main loop for the currently loaded level.
     void _run();
