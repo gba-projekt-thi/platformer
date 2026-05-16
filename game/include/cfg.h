@@ -64,4 +64,24 @@ inline constexpr unsigned int PATH_TRAPS = 8;
 }  // namespace Level
 
 inline constexpr unsigned int MAX_ANIMATION_FRAMES = 8;
+
+namespace ZOrder {
+inline constexpr int PAUSE_MENU = -100;
+inline constexpr int DEATH_COUNTER = -100;
+inline constexpr int TIMER = -100;
+inline constexpr int DOOR = 1;
+}  // namespace ZOrder
+
+namespace PauseMenu {
+inline constexpr int X = -30;
+inline constexpr int Y_0 = -20;
+inline constexpr int Y_1 = -4;
+inline constexpr int Y_2 = 12;
+}  // namespace PauseMenu
+namespace Sleep {
+inline constexpr int DEATH = 20;           // 0.33s
+inline constexpr int DOOR_REACHED = 60;    // 1s
+inline constexpr int FINISHED_GAME = 600;  // 10s
+}  // namespace Sleep
+
 }  // namespace Cfg

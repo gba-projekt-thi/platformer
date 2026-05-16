@@ -6,11 +6,28 @@ void LevelManager::startGame(
     // Store the player object for level updates.
     _player = player;
 
+    _pause_sprites.clear();
+    bn::sprite_text_generator text_gen(common::variable_8x16_sprite_font);
+    text_gen.set_z_order(Cfg::ZOrder::PAUSE_MENU);  // total foreground
+    text_gen.generate(
+        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_0, "Paused", _pause_sprites);
+    text_gen.generate(
+        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_1, "Continue: Start",
+        _pause_sprites);
+    text_gen.generate(
+        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_2, "Die: Select", _pause_sprites);
+
+    // hide menu
+    for (bn::sprite_ptr& sprite : _pause_sprites)
+        sprite.set_visible(false);
+
     // Load and run each level in sequence.
     for (const auto& level : levels) {
         load(level);
         _run();
     }
+    for (int i = 0; i < Cfg::Sleep::FINISHED_GAME; ++i)  // sleep 2s
+        bn::core::update();
 }
 
 void LevelManager::load(const LevelData& level) {
@@ -20,7 +37,8 @@ void LevelManager::load(const LevelData& level) {
     _door.emplace(level.door.x, level.door.y);
 
     // Start the level-specific background music.
-    level.music.play();
+    _music.emplace(level.music);
+    bn::music::play(*_music);
 
     _back_ground.reset();
     _back_ground.emplace(level.back_ground.create_bg(0, 0));
@@ -65,14 +83,17 @@ void LevelManager::load(const LevelData& level) {
     for (int i = 0; i < level.platform_count; i++) {
         const PlatformData& p = level.platforms[i];
 
-        int count = p.sprite.tiles_item().graphics_count(); // to check for out of bound errors
+        int count = p.sprite.tiles_item()
+                        .graphics_count();  // to check for out of bound errors
 
         auto sprite = p.sprite.create_sprite(p.x, p.y);
-        sprite.set_tiles(p.sprite.tiles_item().create_tiles(
-            p.sprite_index % count));
+        sprite.set_tiles(
+            p.sprite.tiles_item().create_tiles(p.sprite_index % count));
 
         _platforms.push_back(bn::move(sprite));
-        _platform_bodies.emplace_back(p.x, p.y,_platforms.back().dimensions().width(), _platforms.back().dimensions().height() , Cfg::Layer::PLATFORM);
+        _platform_bodies.emplace_back(
+            p.x, p.y, _platforms.back().dimensions().width(),
+            _platforms.back().dimensions().height(), Cfg::Layer::PLATFORM);
     }
 
     // Create trigger regions that will activate moving traps. //must before any
@@ -136,8 +157,34 @@ void LevelManager::load(const LevelData& level) {
 
 void LevelManager::_run() {
     unsigned int last_death_ct = _player->get_deaths();
+    bool paused = false;
+    bool prev_paused = paused;
 
     while (true) {
+        if (bn::keypad::start_released()) {
+            paused = !paused;
+        }
+
+        if (prev_paused != paused) {
+            prev_paused = paused;
+            for (auto& sprite : _pause_sprites)
+                sprite.set_visible(paused);
+            if (paused)
+                bn::music::pause();
+            else
+                bn::music::resume();
+        }
+
+        if (paused) {
+            if (bn::keypad::select_released()) {
+                _player->death();
+                paused = false;
+            } else {
+                bn::core::update();
+                continue;
+            }
+        }
+
         // Physics update
         CollisionRegistry::instance().update_all();
         // Camera should not follow the player for now
@@ -146,6 +193,11 @@ void LevelManager::_run() {
         bn::core::update();
 
         if (_door && _door->reached()) {
+            for (int i = 0; i < Cfg::Sleep::DOOR_REACHED; ++i) {
+                _door->update();
+                bn::core::update();
+            }
+
             break;
         }
 
