@@ -1,3 +1,4 @@
 [submodule "extern/engine"]
 	path = extern/engine
 	url = https://github.com/gba-projekt-thi/engine.git
+	branch = master
