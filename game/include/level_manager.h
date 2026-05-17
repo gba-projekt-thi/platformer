@@ -21,24 +21,24 @@
 class LevelManager {
    public:
     // Start the game and sequentially run the provided levels.
-    void startGame(const bn::vector<LevelData, 16> levels, Player* player);
+    void start_game(const bn::vector<LevelData, 16> levels, Player* player);
     // Load a single level into memory and initialize its entities.
     void load(const LevelData& level);
 
    private:
     // TODO: figure out sizes that are reasonable
-    bn::vector<bn::sprite_ptr, Cfg::Level::Limits::PLATFORMS> _platforms;
-    bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES>
-        _platform_bodies;
-    bn::vector<Trigger, Cfg::Level::Limits::TRIGGERS> _triggers;
-    bn::vector<BaseTrap, Cfg::Level::Limits::BASE_TRAPS> _base_traps;
-    bn::vector<MovingTrap, Cfg::Level::Limits::MOVING_TRAPS> _moving_traps;
-    bn::vector<PathTrap, Cfg::Level::Limits::PATH_TRAPS> _path_traps;
-    bn::optional<bn::regular_bg_ptr> _back_ground;
-    Player* _player;
-    bn::optional<Door> _door;
-    bn::optional<bn::music_item> _music;
-    bn::vector<bn::sprite_ptr, 64> _pause_sprites;
+    bn::vector<bn::sprite_ptr, Cfg::Level::Limits::PLATFORMS> platforms;
+    bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES> platform_bodies;
+    bn::vector<Trigger, Cfg::Level::Limits::TRIGGERS> triggers;
+    bn::vector<BaseTrap, Cfg::Level::Limits::BASE_TRAPS> base_traps;
+    bn::vector<MovingTrap, Cfg::Level::Limits::MOVING_TRAPS> moving_traps;
+    bn::vector<PathTrap, Cfg::Level::Limits::PATH_TRAPS> path_traps;
+    bn::optional<bn::regular_bg_ptr> back_ground;
+    Player* player_ptr;
+    bn::optional<Door> door_ptr;
+    bn::optional<bn::music_item> music_ptr;
+    bn::vector<bn::sprite_ptr, 64> pause_sprites;
+
     // Main loop for the currently loaded level.
-    void _run();
+    void run();
 };

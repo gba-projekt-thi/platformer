@@ -1,15 +1,17 @@
 #pragma once
+
 #include "bn_fixed.h"
 #include "bn_music_items.h"
 #include "bn_span.h"
 
-enum class TrapType { BASE, MOVING, PATH };
+// Enum for trap types.
+enum class TrapType { Base, Moving, Path };
 
 struct PlatformData {
     int x;
     int y;
     const bn::sprite_item sprite;
-    int sprite_index; 
+    int sprite_index;
 };
 
 struct TriggerData {
@@ -31,7 +33,7 @@ struct TrapData {
     int sprite_waits;
     bn::span<const uint16_t> graphic_indexes;
 
-    // moving trap parameters
+    // Moving trap parameters
     bn::fixed velocity_x;
     bn::fixed velocity_y;
     bn::fixed max_vel;
@@ -39,7 +41,7 @@ struct TrapData {
 
     int trigger_index;  // which trigger this trap uses (-1 if none)
 
-    // path trap parameters
+    // Path trap parameters
     bn::span<const bn::fixed_point> path;
     unsigned int path_waits;
 };

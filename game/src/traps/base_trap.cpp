@@ -1,32 +1,33 @@
 #include "base_trap.h"
 
 BaseTrap::BaseTrap(
-    bn::fixed t_x,
-    bn::fixed t_y,
-    bn::fixed t_width,
-    bn::fixed t_height,
-    const bn::sprite_item& t_sprite,
-    int t_sprite_waits,
-    bn::span<const uint16_t> t_graphics_indexes,
-    uint16_t t_block,
-    bn::fixed t_max_vel)
+    bn::fixed x,
+    bn::fixed y,
+    bn::fixed width,
+    bn::fixed height,
+    const bn::sprite_item& sprite_item,
+    int sprite_waits,
+    bn::span<const uint16_t> graphics_indexes,
+    uint16_t block,
+    bn::fixed max_vel)
     : PhysicsBody(
-          t_x,
-          t_y,
-          t_width,
-          t_height,
+          x,
+          y,
+          width,
+          height,
           Cfg::Layer::TRAP,
           Cfg::Layer::PLAYER,
-          t_block,
-          t_max_vel),
-      trap_sprite(t_sprite.create_sprite(t_x, t_y), t_x, t_y),
-      graphics_indexes(t_graphics_indexes) {
+          block,
+          max_vel),
+      trap_sprite(sprite_item.create_sprite(x, y), x, y),
+      graphics_indexes(graphics_indexes) {
     this->sprite = &trap_sprite;
 
-    if (!t_graphics_indexes.empty())
+    if (!graphics_indexes.empty()) {
         action = bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES>::forever(
-            trap_sprite.sprite(), t_sprite_waits, t_sprite.tiles_item(),
+            trap_sprite.sprite(), sprite_waits, sprite_item.tiles_item(),
             graphics_indexes);
+    }
 }
 
 void BaseTrap::update() {

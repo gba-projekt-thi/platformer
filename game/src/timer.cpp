@@ -1,106 +1,111 @@
 #include "timer.h"
 
 void Timer::reset() {
-    _counted_frames = 0;
+    counted_frames = 0;
 }
 
 void Timer::tick() {
-    ++_counted_frames;
+    ++counted_frames;
 
-    _centis = (_counted_frames * 5) / 3;
+    centis = (counted_frames * 5) / 3;
 
-    if (_counted_frames >= 60) {
-        _counted_frames = 0;
-        _centis = 0;
-        ++_seconds;
+    if (counted_frames >= 60) {
+        counted_frames = 0;
+        centis = 0;
+        ++seconds;
 
-        if (_seconds >= 60) {
-            _seconds = 0;
-            ++_minutes;
+        if (seconds >= 60) {
+            seconds = 0;
+            ++minutes;
         }
     }
 }
 
-unsigned int Timer::counted_frames() const {
-    return _counted_frames;
+unsigned int Timer::counted_frames_value() const {
+    return counted_frames;
 }
 
-unsigned int Timer::centis() const {
-    return _centis;
+unsigned int Timer::centis_value() const {
+    return centis;
 }
 
-unsigned int Timer::seconds() const {
-    return _seconds;
+unsigned int Timer::seconds_value() const {
+    return seconds;
 }
 
-unsigned int Timer::minutes() const {
-    return _minutes;
+unsigned int Timer::minutes_value() const {
+    return minutes;
 }
 
-TimerHUD::TimerHUD(const Timer& timer) : _timer(timer) {
+TimerHud::TimerHud(const Timer& timer) : timer(timer) {
     const auto& font_item = bn::sprite_items::common_fixed_8x16_font;
+
     const auto& font_tiles = font_item.tiles_item();
 
     // Cache numbers 0 - 9
     for (int i = 0; i <= 9; i++) {
-        _cached_tiles.push_back(font_tiles.create_tiles(15 + i));
+        cached_tiles.push_back(font_tiles.create_tiles(15 + i));
     }
+
     // Cache ":" symbol
-    _cached_tiles.push_back(font_tiles.create_tiles(25));
+    cached_tiles.push_back(font_tiles.create_tiles(25));
 
     // Initialize text sprites
     for (int i = 0; i < 8; i++) {
-        _sprites.push_back(font_item.create_sprite(
+        sprites.push_back(font_item.create_sprite(
             Cfg::Timer::X + (i * 8), Cfg::Timer::Y, 15));
     }
 
     refresh();
 }
 
-void TimerHUD::update() {
+void TimerHud::update() {
     // Only update when timer visible
-    if (_visible) {
+    if (visible_flag) {
         refresh();
     }
 }
 
-void TimerHUD::set_visible(bool visible) {
-    if (_visible == visible) {
+void TimerHud::set_visible(bool visible) {
+    if (visible_flag == visible) {
         return;
     }
 
-    _visible = visible;
+    visible_flag = visible;
 
-    for (auto& sprite : _sprites) {
-        sprite.set_visible(_visible);
+    for (auto& sprite : sprites) {
+        sprite.set_visible(visible_flag);
     }
 
-    if (_visible) {
+    if (visible_flag) {
         refresh();
     }
 }
 
-bool TimerHUD::visible() const {
-    return _visible;
+bool TimerHud::visible() const {
+    return visible_flag;
 }
 
-void TimerHUD::refresh() {
+void TimerHud::refresh() {
     unsigned int m1 = 0;
-    unsigned int m2 = _timer.minutes();
+    unsigned int m2 = timer.minutes_value();
+
     while (m2 >= 10) {
         m2 -= 10;
         ++m1;
     }
 
     unsigned int s1 = 0;
-    unsigned int s2 = _timer.seconds();
+    unsigned int s2 = timer.seconds_value();
+
     while (s2 >= 10) {
         s2 -= 10;
         ++s1;
     }
 
     unsigned int c1 = 0;
-    unsigned int c2 = _timer.centis();
+    unsigned int c2 = timer.centis_value();
+
     while (c2 >= 10) {
         c2 -= 10;
         ++c1;
@@ -118,9 +123,10 @@ void TimerHUD::refresh() {
     set_digit(7, c2);
 }
 
-void TimerHUD::set_digit(int index, int value) {
-    if (_displayed_digits[index] != value) {
-        _displayed_digits[index] = value;
-        _sprites[index].set_tiles(_cached_tiles[value]);
+void TimerHud::set_digit(int index, int value) {
+    if (displayed_digits[index] != value) {
+        displayed_digits[index] = value;
+
+        sprites[index].set_tiles(cached_tiles[value]);
     }
 }
