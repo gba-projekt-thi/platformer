@@ -202,7 +202,9 @@ sudo chown -R $(whoami):$(whoami) build
 ## Contributing
 ### Linter
 Before every commit a short script runs to check if all files are using a consistent code style using clang-format and clang-tidy with pre-commit.
-This is only possible in the devcontainer or if you have [pre-commit](https://pre-commit.com), clang-format and clang-tidy installed on your system. 
+This is only possible in the devcontainer or if you have [pre-commit](https://pre-commit.com), clang-format and clang-tidy installed on your system.
+
+For full details on all pre-commit hooks, their purpose, and setup instructions, see the [Pre-Commit Hooks Documentation](docs/pre_commit_hooks.md).
 
 ## Links
 
