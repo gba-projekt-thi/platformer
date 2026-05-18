@@ -2,6 +2,9 @@
 
 void Timer::reset() {
     counted_frames = 0;
+    centis = 0;
+    seconds = 0;
+    minutes = 0;
 }
 
 void Timer::tick() {

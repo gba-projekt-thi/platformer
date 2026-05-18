@@ -11,7 +11,7 @@ Player::Player(
           width,
           height,
           Cfg::Layer::PLAYER,
-          Cfg::Layer::TRAP,
+          MASK,
           BLOCK),
 
       player_sprite(

@@ -1,7 +1,7 @@
 #include "door.h"
 
 Door::Door(bn::fixed x, bn::fixed y)
-    : PhysicsBody(x, y, 6, 8, Cfg::Layer::TRAP, Cfg::Layer::PLAYER, 0),
+    : PhysicsBody(x, y, 6, 8, Cfg::Layer::DOOR, Cfg::Layer::PLAYER, 0),
       door_sprite(bn::sprite_items::door32x32.create_sprite(x, y), x, y),
       action(bn::create_sprite_animate_action_forever(
           door_sprite.sprite(),
