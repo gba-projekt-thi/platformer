@@ -1,11 +1,9 @@
+#include "common_variable_8x16_sprite_font.h"
+
 #include "level_manager.h"
 
-void LevelManager::startGame(
-    const bn::vector<LevelData, 16> levels,
-    Player* player) {
-    // Store the player object for level updates.
-    _player = player;
-
+LevelManager::LevelManager(Player* player)
+    : _player(player), _paused(false), _prev_paused(false), _last_death_ct(0) {
     _pause_sprites.clear();
     bn::sprite_text_generator text_gen(common::variable_8x16_sprite_font);
     text_gen.set_z_order(Cfg::ZOrder::PAUSE_MENU);  // total foreground
@@ -17,23 +15,73 @@ void LevelManager::startGame(
     text_gen.generate(
         Cfg::PauseMenu::X, Cfg::PauseMenu::Y_2, "Die: Select", _pause_sprites);
 
-    // hide menu
     for (bn::sprite_ptr& sprite : _pause_sprites)
         sprite.set_visible(false);
+}
 
-    // Load and run each level in sequence.
-    for (const auto& level : levels) {
-        load(level);
-        _run();
+bool LevelManager::update() {
+    if (bn::keypad::start_released()) {
+        _paused = ! _paused;
     }
-    for (int i = 0; i < Cfg::Sleep::FINISHED_GAME; ++i)  // sleep 2s
-        bn::core::update();
+
+    if (_prev_paused != _paused) {
+        _prev_paused = _paused;
+        for (auto& sprite : _pause_sprites)
+            sprite.set_visible(_paused);
+        if (_paused)
+            bn::music::pause();
+        else
+            bn::music::resume();
+    }
+
+    if (_paused) {
+        if (bn::keypad::select_released()) {
+            _player->death();
+            _paused = false;
+        } else {
+            bn::core::update();
+            return false;
+        }
+    }
+
+    // Physics update
+    CollisionRegistry::instance().update_all();
+    // Camera should not follow the player for now
+    // Camera::instance().follow(player.x, player.y);
+    SpriteRegistry::instance().sync_all(Camera::instance());
+    bn::core::update();
+
+    if (_door && _door->reached()) {
+        for (int i = 0; i < Cfg::Sleep::DOOR_REACHED; ++i) {
+            _door->update();
+            bn::core::update();
+        }
+
+        return true;
+    }
+
+    if (_last_death_ct != _player->get_deaths()) {
+        _last_death_ct = _player->get_deaths();
+        for (auto& mv_trap : _moving_traps) {
+            mv_trap.reset();
+        }
+        for (auto& pth_trap : _path_traps) {
+            pth_trap.reset();
+        }
+    }
+
+    return false;
 }
 
 void LevelManager::load(const LevelData& level) {
     // Position the player and set the respawn point.
     _player->teleport_to(level.player_data.x, level.player_data.y);
     _player->set_spawn_point(level.player_data.x, level.player_data.y);
+    _last_death_ct = _player->get_deaths();
+    _paused = false;
+    _prev_paused = false;
+    for (bn::sprite_ptr& sprite : _pause_sprites)
+        sprite.set_visible(false);
     _door.emplace(level.door.x, level.door.y);
 
     // Start the level-specific background music.
@@ -151,65 +199,6 @@ void LevelManager::load(const LevelData& level) {
             BN_LOG(
                 "[ERROR] level_manager: trap variant not implemented, dont "
                 "forget the resets");
-        }
-    }
-}
-
-void LevelManager::_run() {
-    unsigned int last_death_ct = _player->get_deaths();
-    bool paused = false;
-    bool prev_paused = paused;
-
-    while (true) {
-        if (bn::keypad::start_released()) {
-            paused = !paused;
-        }
-
-        if (prev_paused != paused) {
-            prev_paused = paused;
-            for (auto& sprite : _pause_sprites)
-                sprite.set_visible(paused);
-            if (paused)
-                bn::music::pause();
-            else
-                bn::music::resume();
-        }
-
-        if (paused) {
-            if (bn::keypad::select_released()) {
-                _player->death();
-                paused = false;
-            } else {
-                bn::core::update();
-                continue;
-            }
-        }
-
-        // Physics update
-        CollisionRegistry::instance().update_all();
-        // Camera should not follow the player for now
-        // Camera::instance().follow(player.x, player.y);
-        SpriteRegistry::instance().sync_all(Camera::instance());
-        bn::core::update();
-
-        if (_door && _door->reached()) {
-            for (int i = 0; i < Cfg::Sleep::DOOR_REACHED; ++i) {
-                _door->update();
-                bn::core::update();
-            }
-
-            break;
-        }
-
-        // check for death and reset traps if detcted
-        if (last_death_ct != _player->get_deaths()) {
-            last_death_ct = _player->get_deaths();
-            for (auto& mv_trap : _moving_traps) {
-                mv_trap.reset();
-            }
-            for (auto& pth_trap : _path_traps) {
-                pth_trap.reset();
-            }
         }
     }
 }

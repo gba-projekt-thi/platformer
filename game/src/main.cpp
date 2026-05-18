@@ -1,7 +1,8 @@
 // Butano
 #include "bn_bg_palettes.h"
 #include "bn_core.h"
-#include "bn_vector.h"
+#include "bn_span.h"
+#include "bn_unique_ptr.h"
 
 // Engine team
 #include "collision_registry.h"
@@ -44,8 +45,50 @@
 #include "bn_music_items.h"
 
 // Levels
+#include "core_scene.h"
+#include "core_scene_manager.h"
 #include "level_manager.h"
 #include "levels.h"
+
+namespace {
+
+class LevelScene : public core::Scene {
+   public:
+    LevelScene(
+        Player& player,
+        bn::span<const LevelData> levels,
+        unsigned int level_index)
+        : _player(player),
+          _levels(levels),
+          _level_index(level_index),
+          _level_manager(&player) {
+    }
+
+    void init() override {
+        _level_manager.load(_levels[_level_index]);
+    }
+
+    void update() override {
+        if (_level_manager.update()) {
+            const unsigned int next_level_index = _level_index + 1u;
+            if (next_level_index < static_cast<unsigned int>(_levels.size())) {
+                core::SceneManager::instance().set_next_scene(
+                    bn::make_unique<LevelScene>(
+                        _player, _levels, next_level_index));
+            } else {
+                core::SceneManager::instance().clear();
+            }
+        }
+    }
+
+   private:
+    Player& _player;
+    bn::span<const LevelData> _levels;
+    unsigned int _level_index;
+    LevelManager _level_manager;
+};
+
+}  // namespace
 
 int main() {
     // Initialize the Butano engine core before using any rendering or input
@@ -53,18 +96,18 @@ int main() {
     bn::core::init();
 
     // Create the ordered level list for game progression.
-    bn::vector<LevelData, 16> levels;
-    levels.push_back(LEVEL_0);
-    levels.push_back(LEVEL_1);
-    levels.push_back(LEVEL_2);
-    levels.push_back(LEVEL_3);
+    const LevelData levels[] = {LEVEL_0, LEVEL_1, LEVEL_2, LEVEL_3};
 
     // Create the player entity and apply an offset for the sprite anchor point.
     Player player(0, 0, 8, 8);
 
-    // Initialize the level manager and begin the game loop.
-    static LevelManager level_manager __attribute__((section(".ewram")));
-    // move to ewram(slower, more space(=> more platforms tho?!)) to save stack
-    // usage
-    level_manager.startGame(levels, &player);
+    auto first_scene = bn::make_unique<LevelScene>(
+        player, bn::span<const LevelData>(levels), 0);
+    core::SceneManager::instance().set_next_scene(bn::move(first_scene));
+
+    while (core::SceneManager::instance().update()) {
+    }
+
+    for (int i = 0; i < Cfg::Sleep::FINISHED_GAME; ++i)  // sleep 2s
+        bn::core::update();
 }

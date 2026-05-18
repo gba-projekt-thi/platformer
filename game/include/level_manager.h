@@ -20,10 +20,11 @@
 
 class LevelManager {
    public:
-    // Start the game and sequentially run the provided levels.
-    void startGame(const bn::vector<LevelData, 16> levels, Player* player);
+    explicit LevelManager(Player* player);
     // Load a single level into memory and initialize its entities.
     void load(const LevelData& level);
+    // Advance the currently loaded level by one frame.
+    bool update();
 
    private:
     // TODO: figure out sizes that are reasonable
@@ -39,6 +40,7 @@ class LevelManager {
     bn::optional<Door> _door;
     bn::optional<bn::music_item> _music;
     bn::vector<bn::sprite_ptr, 64> _pause_sprites;
-    // Main loop for the currently loaded level.
-    void _run();
+    bool _paused;
+    bool _prev_paused;
+    unsigned int _last_death_ct;
 };
