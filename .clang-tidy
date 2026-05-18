@@ -6,6 +6,68 @@ Checks: >
   performance-*,
   readability-*
 
+CheckOptions:
+  # ===== Classes / Structs =====
+  - key: readability-identifier-naming.ClassCase
+    value: PascalCase
+
+  - key: readability-identifier-naming.StructCase
+    value: PascalCase
+
+  # ===== Enums =====
+  - key: readability-identifier-naming.EnumCase
+    value: PascalCase
+
+  - key: readability-identifier-naming.EnumConstantCase
+    value: PascalCase
+
+  # ===== Namespaces =====
+  - key: readability-identifier-naming.NamespaceCase
+    value: PascalCase
+
+  # ===== Functions / Methods =====
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+
+  - key: readability-identifier-naming.MethodCase
+    value: lower_case
+
+  - key: readability-identifier-naming.PublicMethodCase
+    value: lower_case
+
+  - key: readability-identifier-naming.PrivateMethodCase
+    value: lower_case
+
+  - key: readability-identifier-naming.ProtectedMethodCase
+    value: lower_case
+
+  # ===== Variables =====
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+
+  - key: readability-identifier-naming.LocalVariableCase
+    value: lower_case
+
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+
+  # ===== Constants =====
+  - key: readability-identifier-naming.ConstantCase
+    value: UPPER_CASE
+
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: UPPER_CASE
+
+  - key: readability-identifier-naming.StaticConstantCase
+    value: UPPER_CASE
+
+  # ===== Macros =====
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+
 ExtraArgs:
   - "-std=c++23"
   - "-Wno-unknown-argument"

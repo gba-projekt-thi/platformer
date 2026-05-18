@@ -6,13 +6,4 @@ repos:
     hooks:
       - id: clang-format
         args: [-i]
-
       - id: clang-tidy
-
-  - repo: local
-    hooks:
-      - id: cpp-naming-convention
-        name: C++ Naming Convention Check
-        entry: ./scripts/run_naming_check.sh
-        language: system
-        pass_filenames: false
