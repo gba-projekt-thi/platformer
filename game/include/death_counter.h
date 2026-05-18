@@ -16,6 +16,7 @@ class DeathCounter {
     void on_player_death();
     // Returns the current death count.
     unsigned int count() const;
+    void set_count(unsigned int count);
 };
 
 class DeathCounterHUD {

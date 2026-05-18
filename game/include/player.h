@@ -37,8 +37,10 @@ class Player : public PhysicsBody {
     void set_spawn_point(bn::fixed in_x, bn::fixed in_y);
     // teleport the player immediately to the given coordinate.
     void teleport_to(bn::fixed in_x, bn::fixed in_y);
-    // Get the count of player deaths.
+    // Get & Set the count of player deaths.
     unsigned int get_deaths() const;
+    void set_deaths(unsigned int deaths);
+    Timer& get_timer();
 
    private:
     // Sprite
