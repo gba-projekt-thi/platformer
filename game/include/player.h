@@ -17,9 +17,12 @@
 
 class Player : public PhysicsBody {
    public:
+    // Mask layer
+    static constexpr uint16_t MASK = Cfg::Layer::TRAP | Cfg::Layer::DOOR;
+
     // Collision layers for the player and other objects.
     static constexpr uint16_t BLOCK =
-        0xFFFF & ~Cfg::Layer::TRAP & ~Cfg::Layer::TRIGGER;
+        0xFFFF & ~Cfg::Layer::TRAP & ~Cfg::Layer::TRIGGER & ~Cfg::Layer::DOOR;
 
     Player(
         bn::fixed in_start_x,

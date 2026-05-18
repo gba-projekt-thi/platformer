@@ -36,11 +36,11 @@ constexpr TrapData level0_traps[] = {
 
 const LevelData LEVEL_0 = {
     level0_platforms,
-    sizeof(level0_platforms) / sizeof(PlatformData),
+    sizeof(level0_platforms) / sizeof(level0_platforms[0]),
     level0_triggers,
-    1,
+    sizeof(level0_triggers) / sizeof(level0_triggers[0]),
     level0_traps,
-    3,
+    sizeof(level0_traps) / sizeof(level0_traps[0]),
     bn::regular_bg_items::level1,
     bn::music_items::level1,
     {-96, 0},
@@ -73,11 +73,11 @@ constexpr TrapData level1_traps[] = {
 
 const LevelData LEVEL_1 = {
     level1_platforms,
-    sizeof(level1_platforms) / sizeof(PlatformData),
+    sizeof(level1_platforms) / sizeof(level1_platforms[0]),
     level1_triggers,
-    1,
+    sizeof(level1_triggers) / sizeof(level1_triggers[0]),
     level1_traps,
-    4,
+    sizeof(level1_traps) / sizeof(level1_traps[0]),
     bn::regular_bg_items::level1,
     bn::music_items::level1,
     {-96, 0},
@@ -106,13 +106,13 @@ constexpr TriggerData level2_triggers[] = {{-48, 16, 32, 40}};
 
 const LevelData LEVEL_2 = {
     level2_platforms,
-    sizeof(level2_platforms) / sizeof(PlatformData),
+    sizeof(level2_platforms) / sizeof(level2_platforms[0]),
 
     level2_triggers,
-    1,
+    sizeof(level2_triggers) / sizeof(level2_triggers[0]),
 
     level2_traps,
-    4,
+    sizeof(level2_traps) / sizeof(level2_traps[0]),
     bn::regular_bg_items::level2,
     bn::music_items::level2,
 
@@ -207,13 +207,13 @@ constexpr TrapData level3_traps[] = {
 
 const LevelData LEVEL_3 = {
     level3_platforms,
-    sizeof(level3_platforms) / sizeof(PlatformData),
+    sizeof(level3_platforms) / sizeof(level3_platforms[0]),
 
     level3_triggers,
-    2,
+    sizeof(level3_triggers) / sizeof(level3_triggers[0]),
 
     level3_traps,
-    4,
+    sizeof(level3_traps) / sizeof(level3_traps[0]),
 
     bn::regular_bg_items::level3,
     bn::music_items::level2,
