@@ -20,6 +20,7 @@ Door::Door(bn::fixed in_x, bn::fixed in_y)
               12)) {
     // The door is a static physics body and animated sprite.
     door_sprite.sprite().set_z_order(Cfg::ZOrder::DOOR);
+    door_sprite.sprite().set_blending_enabled(true);
     this->sprite = &door_sprite;
 }
 

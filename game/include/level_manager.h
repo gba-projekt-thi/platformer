@@ -27,6 +27,8 @@ class LevelManager {
     bool update();
 
    private:
+    void _init_pause_menu();
+
     // TODO: figure out sizes that are reasonable
     bn::vector<bn::sprite_ptr, Cfg::Level::Limits::PLATFORMS> _platforms;
     bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES>
@@ -40,6 +42,7 @@ class LevelManager {
     bn::optional<Door> _door;
     bn::optional<bn::music_item> _music;
     bn::vector<bn::sprite_ptr, 64> _pause_sprites;
+    bool _pause_menu_initialized = false;
     bool _paused;
     bool _prev_paused;
     unsigned int _last_death_ct;

@@ -5,8 +5,16 @@
 LevelManager::LevelManager(Player* player)
     : _player(player), _paused(false), _prev_paused(false), _last_death_ct(0) {
     _pause_sprites.clear();
+}
+
+void LevelManager::_init_pause_menu() {
+    if (_pause_menu_initialized) {
+        return;
+    }
+
     bn::sprite_text_generator text_gen(common::variable_8x16_sprite_font);
     text_gen.set_z_order(Cfg::ZOrder::PAUSE_MENU);  // total foreground
+    text_gen.set_blending_enabled(true);
     text_gen.generate(
         Cfg::PauseMenu::X, Cfg::PauseMenu::Y_0, "Paused", _pause_sprites);
     text_gen.generate(
@@ -15,8 +23,12 @@ LevelManager::LevelManager(Player* player)
     text_gen.generate(
         Cfg::PauseMenu::X, Cfg::PauseMenu::Y_2, "Die: Select", _pause_sprites);
 
-    for (bn::sprite_ptr& sprite : _pause_sprites)
+    for (bn::sprite_ptr& sprite : _pause_sprites) {
         sprite.set_visible(false);
+        sprite.set_blending_enabled(true);
+    }
+
+    _pause_menu_initialized = true;
 }
 
 bool LevelManager::update() {
@@ -74,6 +86,8 @@ bool LevelManager::update() {
 }
 
 void LevelManager::load(const LevelData& level) {
+    _init_pause_menu();
+
     // Position the player and set the respawn point.
     _player->teleport_to(level.player_data.x, level.player_data.y);
     _player->set_spawn_point(level.player_data.x, level.player_data.y);
@@ -91,6 +105,7 @@ void LevelManager::load(const LevelData& level) {
     _back_ground.reset();
     _back_ground.emplace(level.back_ground.create_bg(0, 0));
     _back_ground.value().set_priority(3);
+    _back_ground.value().set_blending_enabled(true);
 
     // Clear objects from the previous level before creating the new one.
     _platforms.clear();
@@ -137,6 +152,7 @@ void LevelManager::load(const LevelData& level) {
         auto sprite = p.sprite.create_sprite(p.x, p.y);
         sprite.set_tiles(
             p.sprite.tiles_item().create_tiles(p.sprite_index % count));
+        sprite.set_blending_enabled(true);
 
         _platforms.push_back(bn::move(sprite));
         _platform_bodies.emplace_back(

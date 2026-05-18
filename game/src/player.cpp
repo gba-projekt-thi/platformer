@@ -56,6 +56,8 @@ Player::Player(
       state(PlayerState::Idle) {
     // Link the physics body with the player sprite for rendering.
     sprite = &player_sprite;
+        player_sprite.sprite().set_blending_enabled(true);
+        deathCounterTextGen.set_blending_enabled(true);
 
     // Preload ALL tile frames once (ZERO runtime allocation)
     const auto& tiles = bn::sprite_items::ente.tiles_item();

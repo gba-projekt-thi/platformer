@@ -33,4 +33,8 @@ void DeathCounterHUD::refresh() {
     text += bn::to_string<Cfg::DeathCounter::COUNT_LEN>(_counter.count());
     _text_gen.generate(
         Cfg::DeathCounter::X, Cfg::DeathCounter::Y, text, _sprites);
+
+    for (bn::sprite_ptr& sprite : _sprites) {
+        sprite.set_blending_enabled(true);
+    }
 }

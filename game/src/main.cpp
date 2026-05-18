@@ -1,5 +1,7 @@
 // Butano
 #include "bn_bg_palettes.h"
+#include "bn_blending.h"
+#include "bn_colors.h"
 #include "bn_core.h"
 #include "bn_span.h"
 #include "bn_unique_ptr.h"
@@ -98,6 +100,10 @@ int main() {
     // Initialize the Butano engine core before using any rendering or input
     // features.
     bn::core::init();
+
+    // Configure global fade behavior once.
+    bn::blending::set_fade_color(bn::blending::fade_color_type::BLACK);
+    bn::blending::set_fade_alpha(0);
 
     // Create the ordered level list for game progression.
     const LevelData levels[] = {LEVEL_0, LEVEL_1, LEVEL_2, LEVEL_3};

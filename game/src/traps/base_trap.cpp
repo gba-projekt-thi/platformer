@@ -22,6 +22,7 @@ BaseTrap::BaseTrap(
       trap_sprite(t_sprite.create_sprite(t_x, t_y), t_x, t_y),
       graphics_indexes(t_graphics_indexes) {
     this->sprite = &trap_sprite;
+        trap_sprite.sprite().set_blending_enabled(true);
 
     if (!t_graphics_indexes.empty())
         action = bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES>::forever(
