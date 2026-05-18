@@ -118,6 +118,15 @@ unsigned int Player::get_deaths() const {
     return deathCounter.count();
 }
 
+void Player::set_deaths(unsigned int deaths) {
+    deathCounter.set_count(deaths);
+    deathCounterHud.update();
+}
+
+Timer& Player::get_timer() {
+    return timer;
+}
+
 // Horizontal input handling
 void Player::handle_horizontal_input() {
     if (bn::keypad::left_held()) {

@@ -40,6 +40,15 @@ unsigned int Timer::minutes() const {
     return _minutes;
 }
 
+void Timer::setAll(
+    unsigned int centis,
+    unsigned int seconds,
+    unsigned int minutes) {
+    _centis = centis;
+    _seconds = seconds;
+    _minutes = minutes;
+}
+
 TimerHUD::TimerHUD(const Timer& timer) : _timer(timer) {
     const auto& font_item = bn::sprite_items::common_fixed_8x16_font;
     const auto& font_tiles = font_item.tiles_item();

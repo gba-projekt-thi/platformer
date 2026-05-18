@@ -1,10 +1,19 @@
 #include "level_manager.h"
 
+LevelManager::LevelManager(DataManager data_manager)
+    : _data_manager(data_manager) {}
+
 void LevelManager::startGame(
     const bn::vector<LevelData, 16> levels,
     Player* player) {
     // Store the player object for level updates.
     _player = player;
+
+    Timer& timer = _player->get_timer();
+
+    auto& game_state = _data_manager.load();
+    player->set_deaths(game_state.deaths);
+    timer.setAll(game_state.centis, game_state.seconds, game_state.minutes);
 
     _pause_sprites.clear();
     bn::sprite_text_generator text_gen(common::variable_8x16_sprite_font);
@@ -22,9 +31,15 @@ void LevelManager::startGame(
         sprite.set_visible(false);
 
     // Load and run each level in sequence.
-    for (const auto& level : levels) {
+    for (int i = game_state.level; i < levels.size(); ++i) {
+        const auto& level = levels[i];
         load(level);
         _run();
+        game_state.level += 1;
+        game_state.centis = timer.centis();
+        game_state.seconds = timer.seconds();
+        game_state.minutes = timer.minutes();
+        _data_manager.save();
     }
     for (int i = 0; i < Cfg::Sleep::FINISHED_GAME; ++i)  // sleep 2s
         bn::core::update();
@@ -192,6 +207,7 @@ void LevelManager::_run() {
         SpriteRegistry::instance().sync_all(Camera::instance());
         bn::core::update();
 
+        // Door reached
         if (_door && _door->reached()) {
             for (int i = 0; i < Cfg::Sleep::DOOR_REACHED; ++i) {
                 _door->update();
@@ -204,6 +220,14 @@ void LevelManager::_run() {
         // check for death and reset traps if detcted
         if (last_death_ct != _player->get_deaths()) {
             last_death_ct = _player->get_deaths();
+            auto& game_state = _data_manager.load();
+            game_state.deaths = last_death_ct;
+            Timer& timer = _player->get_timer();
+            game_state.centis = timer.centis();
+            game_state.seconds = timer.seconds();
+            game_state.minutes = timer.minutes();
+
+            _data_manager.save();
             for (auto& mv_trap : _moving_traps) {
                 mv_trap.reset();
             }

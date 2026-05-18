@@ -21,6 +21,8 @@ class Timer {
     unsigned int centis() const;
     unsigned int seconds() const;
     unsigned int minutes() const;
+    void
+    setAll(unsigned int centis, unsigned int seconds, unsigned int minutes);
 };
 
 class TimerHUD {

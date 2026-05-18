@@ -63,7 +63,9 @@ int main() {
     Player player(0, 0, 8, 8);
 
     // Initialize the level manager and begin the game loop.
-    static LevelManager level_manager __attribute__((section(".ewram")));
+    static DataManager data_manager;
+    static LevelManager level_manager
+        __attribute__((section(".ewram"))) (data_manager);
     // move to ewram(slower, more space(=> more platforms tho?!)) to save stack
     // usage
     level_manager.startGame(levels, &player);

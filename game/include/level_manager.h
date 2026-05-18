@@ -11,7 +11,9 @@
 #include "bn_vector.h"
 
 #include "cfg.h"
+#include "data_manager.h"
 #include "door.h"
+#include "game_state.h"
 #include "level_structure.h"
 #include "moving_trap.h"
 #include "path_trap.h"
@@ -20,12 +22,14 @@
 
 class LevelManager {
    public:
+    LevelManager(DataManager data_manager);
     // Start the game and sequentially run the provided levels.
     void startGame(const bn::vector<LevelData, 16> levels, Player* player);
     // Load a single level into memory and initialize its entities.
     void load(const LevelData& level);
 
    private:
+    DataManager _data_manager;
     // TODO: figure out sizes that are reasonable
     bn::vector<bn::sprite_ptr, Cfg::Level::Limits::PLATFORMS> _platforms;
     bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES>
