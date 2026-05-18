@@ -1,23 +1,23 @@
 #include "player.h"
 
 Player::Player(
-    bn::fixed in_start_x,
-    bn::fixed in_start_y,
-    bn::fixed in_width,
-    bn::fixed in_height)
+    bn::fixed start_x,
+    bn::fixed start_y,
+    bn::fixed width,
+    bn::fixed height)
     : PhysicsBody(
-          in_start_x,
-          in_start_y,
-          in_width,
-          in_height,
+          start_x,
+          start_y,
+          width,
+          height,
           Cfg::Layer::PLAYER,
           Cfg::Layer::TRAP,
           BLOCK),
 
       player_sprite(
-          bn::sprite_items::ente.create_sprite(in_start_x, in_start_y),
-          in_start_x,
-          in_start_y),
+          bn::sprite_items::ente.create_sprite(start_x, start_y),
+          start_x,
+          start_y),
 
       walk_action(bn::create_sprite_animate_action_forever(
           player_sprite.sprite(),
@@ -26,7 +26,6 @@ Player::Player(
           Cfg::Player::RIGHT_FRAMES[0],
           Cfg::Player::RIGHT_FRAMES[1])),
 
-      // Jump animation using cached jump frames
       jump_action(bn::create_sprite_animate_action_forever(
           player_sprite.sprite(),
           Cfg::Player::WAIT_UPDATE,
@@ -34,24 +33,24 @@ Player::Player(
           Cfg::Player::JUMP_RIGHT_FRAMES[0],
           Cfg::Player::JUMP_RIGHT_FRAMES[1])),
 
-      deathCounter(),
-      deathCounterTextGen(common::variable_8x16_sprite_font),
-      deathCounterHud(deathCounterTextGen, deathCounter),
+      death_counter(),
+      death_counter_text_gen(common::variable_8x16_sprite_font),
+      death_counter_hud(death_counter_text_gen, death_counter),
 
       timer(),
-      timerHud(timer),
+      timer_hud(timer),
 
-      restart_x(in_start_x),
-      restart_y(in_start_y),
+      restart_x(start_x),
+      restart_y(start_y),
 
       acceleration(Cfg::Player::ACCELERATION),
       max_speed(Cfg::Player::MAX_SPEED),
       jump_speed(Cfg::Player::JUMP_SPEED),
       gravity(Cfg::Player::GRAVITY),
       max_fall_speed(Cfg::Player::MAX_FALL_SPEED),
-      deathHeight(Cfg::Player::DEATH_HEIGHT),
+      death_height(Cfg::Player::DEATH_HEIGHT),
 
-      onGround(true),
+      on_ground(true),
       facing(Facing::Forward),
       state(PlayerState::Idle) {
     // Link the physics body with the player sprite for rendering.
@@ -97,25 +96,26 @@ void Player::update() {
 
     // Update timer
     if (bn::keypad::select_pressed()) {
-        timerHud.set_visible(!timerHud.visible());
+        timer_hud.set_visible(!timer_hud.visible());
     }
     timer.tick();
-    timerHud.update();
+    timer_hud.update();
 }
 
 // sets spawnpoint
-void Player::set_spawn_point(bn::fixed in_x, bn::fixed in_y) {
-    restart_x = in_x;
-    restart_y = in_y;
+void Player::set_spawn_point(bn::fixed x, bn::fixed y) {
+    restart_x = x;
+    restart_y = y;
 }
-//
-void Player::teleport_to(bn::fixed in_x, bn::fixed in_y) {
+
+void Player::teleport_to(bn::fixed x, bn::fixed y) {
     set_velocity(0, 0);
-    pos.x = in_x;
-    pos.y = in_y;
+    pos.x = x;
+    pos.y = y;
 }
+
 unsigned int Player::get_deaths() const {
-    return deathCounter.count();
+    return death_counter.count();
 }
 
 // Horizontal input handling
@@ -149,9 +149,9 @@ void Player::handle_horizontal_input() {
 // Jump logic: perform jump when buffered input exists and the player is
 // grounded.
 void Player::handle_jump() {
-    if (jump_buffer_timer > 0 && onGround) {
+    if (jump_buffer_timer > 0 && on_ground) {
         set_velocity(vel_x, jump_speed);
-        onGround = false;
+        on_ground = false;
         jump_buffer_timer = 0;
         coyote_timer = 0;
     }
@@ -192,29 +192,29 @@ void Player::check_bounds() {
 // Determine if the player is grounded and manage coyote time.
 void Player::update_ground_state() {
     if (probe_bottom(BLOCK).any()) {
-        onGround = true;
+        on_ground = true;
         coyote_timer = Cfg::Player::COYOTE_FRAMES;
     } else {
         if (coyote_timer > 0) {
             coyote_timer--;
-            onGround = true;
+            on_ground = true;
         } else {
-            onGround = false;
+            on_ground = false;
         }
     }
 }
 
 // Fall below the death height triggers a respawn.
 void Player::check_death() {
-    if (pos.y > deathHeight) {
+    if (pos.y > death_height) {
         death();
     }
 }
 
 // Handle player death, increment the counter and respawn.
 void Player::death() {
-    deathCounter.on_player_death();
-    deathCounterHud.update();
+    death_counter.on_player_death();
+    death_counter_hud.update();
 
     set_velocity(0, 0);
 
@@ -226,7 +226,7 @@ void Player::death() {
 void Player::update_state() {
     PlayerState new_state;
 
-    if (!onGround) {
+    if (!on_ground) {
         new_state = (vel_y < 0) ? PlayerState::Jump : PlayerState::Fall;
     } else {
         // Hold down to enter the idle pose while grounded.
@@ -252,16 +252,16 @@ void Player::enter_state(PlayerState new_state) {
 void Player::update_animation() {
     bool moving = bn::keypad::left_held() || bn::keypad::right_held();
 
-    bool jumping = !onGround;
+    bool jumping = !on_ground;
 
     // Moving -> start walk animation instantly
-    if (moving && !wasMoving) {
+    if (moving && !was_moving) {
         walk_action.reset();
         walk_action.update();
     }
 
     // Jump started -> start jump animation instantly
-    if (jumping && !wasJumping) {
+    if (jumping && !was_jumping) {
         jump_action.reset();
         jump_action.update();
     }
@@ -272,7 +272,7 @@ void Player::update_animation() {
     }
 
     // Stop jump animation when grounded
-    if (!jumping && wasJumping) {
+    if (!jumping && was_jumping) {
         jump_action.reset();
 
         // Restore default ground frame after landing
@@ -281,20 +281,20 @@ void Player::update_animation() {
     }
 
     // BACK FRAME
-    if (onGround && bn::keypad::up_held()) {
+    if (on_ground && bn::keypad::up_held()) {
         player_sprite.sprite().set_tiles(cached_tiles[Cfg::Player::BACK_FRAME]);
 
-        wasMoving = moving;
-        wasJumping = jumping;
+        was_moving = moving;
+        was_jumping = jumping;
         return;
     }
 
     // JUMP ANIMATION
-    if (!onGround) {
+    if (!on_ground) {
         jump_action.update();
 
-        wasMoving = moving;
-        wasJumping = jumping;
+        was_moving = moving;
+        was_jumping = jumping;
         return;
     }
 
@@ -302,8 +302,8 @@ void Player::update_animation() {
     if (bn::keypad::down_held()) {
         player_sprite.sprite().set_tiles(cached_tiles[Cfg::Player::IDLE_FRAME]);
 
-        wasMoving = moving;
-        wasJumping = jumping;
+        was_moving = moving;
+        was_jumping = jumping;
         return;
     }
 
@@ -312,6 +312,6 @@ void Player::update_animation() {
         walk_action.update();
     }
 
-    wasMoving = moving;
-    wasJumping = jumping;
+    was_moving = moving;
+    was_jumping = jumping;
 }

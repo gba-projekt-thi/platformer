@@ -1,5 +1,6 @@
 #pragma once
-#include <cstdint>
+
+#include "cstdint"
 
 namespace Cfg {
 
@@ -78,6 +79,7 @@ inline constexpr int Y_0 = -20;
 inline constexpr int Y_1 = -4;
 inline constexpr int Y_2 = 12;
 }  // namespace PauseMenu
+
 namespace Sleep {
 inline constexpr int DEATH = 20;           // 0.33s
 inline constexpr int DOOR_REACHED = 60;    // 1s

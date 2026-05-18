@@ -53,11 +53,11 @@ int main() {
     bn::core::init();
 
     // Create the ordered level list for game progression.
-    bn::vector<LevelData, 16> levels;
-    levels.push_back(LEVEL_0);
-    levels.push_back(LEVEL_1);
-    levels.push_back(LEVEL_2);
-    levels.push_back(LEVEL_3);
+    bn::vector<LevelData, 16> level_list;
+    level_list.push_back(LEVEL_0);
+    level_list.push_back(LEVEL_1);
+    level_list.push_back(LEVEL_2);
+    level_list.push_back(LEVEL_3);
 
     // Create the player entity and apply an offset for the sprite anchor point.
     Player player(0, 0, 8, 8);
@@ -66,5 +66,5 @@ int main() {
     static LevelManager level_manager __attribute__((section(".ewram")));
     // move to ewram(slower, more space(=> more platforms tho?!)) to save stack
     // usage
-    level_manager.startGame(levels, &player);
+    level_manager.start_game(level_list, &player);
 }

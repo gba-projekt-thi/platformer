@@ -22,10 +22,10 @@ class Player : public PhysicsBody {
         0xFFFF & ~Cfg::Layer::TRAP & ~Cfg::Layer::TRIGGER;
 
     Player(
-        bn::fixed in_start_x,
-        bn::fixed in_start_y,
-        bn::fixed in_width,
-        bn::fixed in_height);
+        bn::fixed start_x,
+        bn::fixed start_y,
+        bn::fixed width,
+        bn::fixed height);
 
     // Main per-frame update for player motion and animation.
     void update() override;
@@ -34,9 +34,9 @@ class Player : public PhysicsBody {
     void death();
 
     // Set the current respawn location.
-    void set_spawn_point(bn::fixed in_x, bn::fixed in_y);
+    void set_spawn_point(bn::fixed x, bn::fixed y);
     // teleport the player immediately to the given coordinate.
-    void teleport_to(bn::fixed in_x, bn::fixed in_y);
+    void teleport_to(bn::fixed x, bn::fixed y);
     // Get the count of player deaths.
     unsigned int get_deaths() const;
 
@@ -55,17 +55,17 @@ class Player : public PhysicsBody {
     bn::sprite_animate_action<Cfg::Player::ANIMATION_FRAME_COUNT> jump_action;
 
     // Previous movement state tracking
-    bool wasMoving = false;
-    bool wasJumping = false;
+    bool was_moving = false;
+    bool was_jumping = false;
 
     // Death counter UI
-    DeathCounter deathCounter;
-    bn::sprite_text_generator deathCounterTextGen;
-    DeathCounterHUD deathCounterHud;
+    DeathCounter death_counter;
+    bn::sprite_text_generator death_counter_text_gen;
+    DeathCounterHUD death_counter_hud;
 
     // Timer UI
     Timer timer;
-    TimerHUD timerHud;
+    TimerHud timer_hud;
 
     // Respawn position
     bn::fixed restart_x;
@@ -77,10 +77,10 @@ class Player : public PhysicsBody {
     bn::fixed jump_speed;
     bn::fixed gravity;
     bn::fixed max_fall_speed;
-    int deathHeight;
+    int death_height;
 
     // Ground state
-    bool onGround;
+    bool on_ground;
 
     // Facing direction
     enum class Facing { Forward, Back, Left, Right };
