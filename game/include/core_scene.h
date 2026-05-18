@@ -1,13 +1,3 @@
 #pragma once
 
-namespace core {
-
-class Scene {
-   public:
-    virtual ~Scene() = default;
-
-    virtual void init() = 0;
-    virtual void update() = 0;
-};
-
-}  // namespace core
+#include "../../extern/engine/core/include/core_scene.h"

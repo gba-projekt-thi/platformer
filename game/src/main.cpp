@@ -52,6 +52,8 @@
 
 namespace {
 
+bool game_finished = false;
+
 class LevelScene : public core::Scene {
    public:
     LevelScene(
@@ -69,14 +71,15 @@ class LevelScene : public core::Scene {
     }
 
     void update() override {
-        if (_level_manager.update()) {
+        if (! _transition_requested && _level_manager.update()) {
+            _transition_requested = true;
             const unsigned int next_level_index = _level_index + 1u;
             if (next_level_index < static_cast<unsigned int>(_levels.size())) {
                 core::SceneManager::instance().set_next_scene(
                     bn::make_unique<LevelScene>(
                         _player, _levels, next_level_index));
             } else {
-                core::SceneManager::instance().clear();
+                game_finished = true;
             }
         }
     }
@@ -86,6 +89,7 @@ class LevelScene : public core::Scene {
     bn::span<const LevelData> _levels;
     unsigned int _level_index;
     LevelManager _level_manager;
+    bool _transition_requested = false;
 };
 
 }  // namespace
@@ -105,7 +109,8 @@ int main() {
         player, bn::span<const LevelData>(levels), 0);
     core::SceneManager::instance().set_next_scene(bn::move(first_scene));
 
-    while (core::SceneManager::instance().update()) {
+    while (! game_finished) {
+        core::SceneManager::instance().update();
     }
 
     for (int i = 0; i < Cfg::Sleep::FINISHED_GAME; ++i)  // sleep 2s
