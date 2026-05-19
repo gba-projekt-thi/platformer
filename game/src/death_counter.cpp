@@ -9,6 +9,10 @@ auto DeathCounter::count() const -> unsigned int {
     return _count;
 }
 
+void DeathCounter::set_count(unsigned int count) {
+    _count = count;
+}
+
 DeathCounterHUD::DeathCounterHUD(
     bn::sprite_text_generator& text_gen,
     const DeathCounter& counter)

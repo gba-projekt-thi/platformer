@@ -11,7 +11,7 @@ Player::Player(
           in_width,
           in_height,
           Cfg::Layer::PLAYER,
-          Cfg::Layer::TRAP,
+          MASK,
           BLOCK),
 
       player_sprite(
@@ -19,20 +19,22 @@ Player::Player(
           in_start_x,
           in_start_y),
 
-      walk_action(bn::create_sprite_animate_action_forever(
-          player_sprite.sprite(),
-          Cfg::Player::WAIT_UPDATE,
-          bn::sprite_items::ente.tiles_item(),
-          Cfg::Player::RIGHT_FRAMES[0],
-          Cfg::Player::RIGHT_FRAMES[1])),
+      walk_action(
+          bn::create_sprite_animate_action_forever(
+              player_sprite.sprite(),
+              Cfg::Player::WAIT_UPDATE,
+              bn::sprite_items::ente.tiles_item(),
+              Cfg::Player::RIGHT_FRAMES[0],
+              Cfg::Player::RIGHT_FRAMES[1])),
 
       // Jump animation using cached jump frames
-      jump_action(bn::create_sprite_animate_action_forever(
-          player_sprite.sprite(),
-          Cfg::Player::WAIT_UPDATE,
-          bn::sprite_items::ente.tiles_item(),
-          Cfg::Player::JUMP_RIGHT_FRAMES[0],
-          Cfg::Player::JUMP_RIGHT_FRAMES[1])),
+      jump_action(
+          bn::create_sprite_animate_action_forever(
+              player_sprite.sprite(),
+              Cfg::Player::WAIT_UPDATE,
+              bn::sprite_items::ente.tiles_item(),
+              Cfg::Player::JUMP_RIGHT_FRAMES[0],
+              Cfg::Player::JUMP_RIGHT_FRAMES[1])),
 
       deathCounter(),
       deathCounterTextGen(common::variable_8x16_sprite_font),
@@ -56,8 +58,8 @@ Player::Player(
       state(PlayerState::Idle) {
     // Link the physics body with the player sprite for rendering.
     sprite = &player_sprite;
-        player_sprite.sprite().set_blending_enabled(true);
-        deathCounterTextGen.set_blending_enabled(true);
+    player_sprite.sprite().set_blending_enabled(true);
+    deathCounterTextGen.set_blending_enabled(true);
 
     // Preload ALL tile frames once (ZERO runtime allocation)
     const auto& tiles = bn::sprite_items::ente.tiles_item();
@@ -118,6 +120,15 @@ void Player::teleport_to(bn::fixed in_x, bn::fixed in_y) {
 }
 unsigned int Player::get_deaths() const {
     return deathCounter.count();
+}
+
+void Player::set_deaths(unsigned int deaths) {
+    deathCounter.set_count(deaths);
+    deathCounterHud.update();
+}
+
+Timer& Player::get_timer() {
+    return timer;
 }
 
 // Horizontal input handling

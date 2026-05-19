@@ -2,6 +2,9 @@
 
 void Timer::reset() {
     _counted_frames = 0;
+    _centis = 0;
+    _seconds = 0;
+    _minutes = 0;
 }
 
 void Timer::tick() {
@@ -37,6 +40,15 @@ unsigned int Timer::minutes() const {
     return _minutes;
 }
 
+void Timer::setAll(
+    unsigned int centis,
+    unsigned int seconds,
+    unsigned int minutes) {
+    _centis = centis;
+    _seconds = seconds;
+    _minutes = minutes;
+}
+
 TimerHUD::TimerHUD(const Timer& timer) : _timer(timer) {
     const auto& font_item = bn::sprite_items::common_fixed_8x16_font;
     const auto& font_tiles = font_item.tiles_item();
@@ -50,7 +62,8 @@ TimerHUD::TimerHUD(const Timer& timer) : _timer(timer) {
 
     // Initialize text sprites
     for (int i = 0; i < 8; i++) {
-        auto sprite = font_item.create_sprite(Cfg::Timer::X + (i * 8), Cfg::Timer::Y, 15);
+        auto sprite =
+            font_item.create_sprite(Cfg::Timer::X + (i * 8), Cfg::Timer::Y, 15);
         sprite.set_blending_enabled(true);
         _sprites.push_back(bn::move(sprite));
     }

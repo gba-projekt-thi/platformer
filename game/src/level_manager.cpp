@@ -2,8 +2,18 @@
 
 #include "level_manager.h"
 
-LevelManager::LevelManager(Player* player)
-    : _player(player), _paused(false), _prev_paused(false), _last_death_ct(0) {
+LevelManager::LevelManager(Player* player, DataManager& data_manager)
+    : _player(player),
+      _paused(false),
+      _prev_paused(false),
+      _last_death_ct(0),
+      _data_manager(data_manager) {
+    // load last save
+    Timer& timer = _player->get_timer();
+    auto& game_state = _data_manager.load();
+    player->set_deaths(game_state.deaths);
+    timer.setAll(game_state.centis, game_state.seconds, game_state.minutes);
+
     _pause_sprites.clear();
 }
 
@@ -205,8 +215,19 @@ bool LevelManager::update() {
         return true;
     }
 
+    // check for death and reset traps if detcted
     if (_last_death_ct != _player->get_deaths()) {
         _last_death_ct = _player->get_deaths();
+
+        auto& game_state = _data_manager.load();
+        game_state.deaths = _last_death_ct;
+        Timer& timer = _player->get_timer();
+        game_state.centis = timer.centis();
+        game_state.seconds = timer.seconds();
+        game_state.minutes = timer.minutes();
+
+        _data_manager.save();
+
         for (auto& mv_trap : _moving_traps) {
             mv_trap.reset();
         }

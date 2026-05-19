@@ -17,9 +17,12 @@
 
 class Player : public PhysicsBody {
    public:
+    // Mask layer
+    static constexpr uint16_t MASK = Cfg::Layer::TRAP | Cfg::Layer::DOOR;
+
     // Collision layers for the player and other objects.
     static constexpr uint16_t BLOCK =
-        0xFFFF & ~Cfg::Layer::TRAP & ~Cfg::Layer::TRIGGER;
+        0xFFFF & ~Cfg::Layer::TRAP & ~Cfg::Layer::TRIGGER & ~Cfg::Layer::DOOR;
 
     Player(
         bn::fixed in_start_x,
@@ -37,8 +40,10 @@ class Player : public PhysicsBody {
     void set_spawn_point(bn::fixed in_x, bn::fixed in_y);
     // teleport the player immediately to the given coordinate.
     void teleport_to(bn::fixed in_x, bn::fixed in_y);
-    // Get the count of player deaths.
+    // Get & Set the count of player deaths.
     unsigned int get_deaths() const;
+    void set_deaths(unsigned int deaths);
+    Timer& get_timer();
 
    private:
     // Sprite

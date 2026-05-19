@@ -11,7 +11,9 @@
 #include "bn_vector.h"
 
 #include "cfg.h"
+#include "data_manager.h"
 #include "door.h"
+#include "game_state.h"
 #include "level_structure.h"
 #include "moving_trap.h"
 #include "path_trap.h"
@@ -20,7 +22,7 @@
 
 class LevelManager {
    public:
-    explicit LevelManager(Player* player);
+    explicit LevelManager(Player* player, DataManager& data_manager);
     // Load a single level into memory and initialize its entities.
     void load(const LevelData& level);
     // Advance the currently loaded level by one frame.
@@ -46,4 +48,5 @@ class LevelManager {
     bool _paused;
     bool _prev_paused;
     unsigned int _last_death_ct;
+    DataManager _data_manager;
 };

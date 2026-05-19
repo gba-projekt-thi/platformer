@@ -50,51 +50,10 @@
 #include "core_scene.h"
 #include "core_scene_manager.h"
 #include "level_manager.h"
+#include "level_scene.h"
 #include "levels.h"
 
-namespace {
-
-bool game_finished = false;
-
-class LevelScene : public core::Scene {
-   public:
-    LevelScene(
-        Player& player,
-        bn::span<const LevelData> levels,
-        unsigned int level_index)
-        : _player(player),
-          _levels(levels),
-          _level_index(level_index),
-          _level_manager(&player) {
-    }
-
-    void init() override {
-        _level_manager.load(_levels[_level_index]);
-    }
-
-    void update() override {
-        if (! _transition_requested && _level_manager.update()) {
-            _transition_requested = true;
-            const unsigned int next_level_index = _level_index + 1u;
-            if (next_level_index < static_cast<unsigned int>(_levels.size())) {
-                core::SceneManager::instance().set_next_scene(
-                    bn::make_unique<LevelScene>(
-                        _player, _levels, next_level_index));
-            } else {
-                game_finished = true;
-            }
-        }
-    }
-
-   private:
-    Player& _player;
-    bn::span<const LevelData> _levels;
-    unsigned int _level_index;
-    LevelManager _level_manager;
-    bool _transition_requested = false;
-};
-
-}  // namespace
+extern bool game_finished;
 
 int main() {
     // Initialize the Butano engine core before using any rendering or input
@@ -111,14 +70,30 @@ int main() {
     // Create the player entity and apply an offset for the sprite anchor point.
     Player player(0, 0, 8, 8);
 
+    // Initialize the level manager and begin the game loop.
+    static DataManager data_manager;
+
+#ifdef RESET_SAVED
+#pragma message( \
+    "make clean; make USERFLAGS=-DRESET_SAVED used to reset corrupted game state. After running game once it should be fine from now on without the flag")
+    data_manager.reset();
+    BN_LOG(
+        "make clean; make USERFLAGS=-DRESET_SAVED used to reset corrupted game "
+        "state. After running game once it should be fine from now on without "
+        "the flag");
+#endif
+
     auto first_scene = bn::make_unique<LevelScene>(
-        player, bn::span<const LevelData>(levels), 0);
+        player, bn::span<const LevelData>(levels), data_manager);
     core::SceneManager::instance().set_next_scene(bn::move(first_scene));
 
-    while (! game_finished) {
+    while (!game_finished) {
         core::SceneManager::instance().update();
     }
 
-    for (int i = 0; i < Cfg::Sleep::FINISHED_GAME; ++i)  // sleep 2s
+    for (int i = 0; i < Cfg::Sleep::FINISHED_GAME; ++i)  // sleep 10s
         bn::core::update();
+
+    // reset game after finishing bc of otherwise corrupted (game breaking) data
+    data_manager.reset();
 }
