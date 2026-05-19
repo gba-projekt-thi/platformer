@@ -31,60 +31,6 @@ void LevelManager::_init_pause_menu() {
     _pause_menu_initialized = true;
 }
 
-bool LevelManager::update() {
-    if (bn::keypad::start_released()) {
-        _paused = ! _paused;
-    }
-
-    if (_prev_paused != _paused) {
-        _prev_paused = _paused;
-        for (auto& sprite : _pause_sprites)
-            sprite.set_visible(_paused);
-        if (_paused)
-            bn::music::pause();
-        else
-            bn::music::resume();
-    }
-
-    if (_paused) {
-        if (bn::keypad::select_released()) {
-            _player->death();
-            _paused = false;
-        } else {
-            bn::core::update();
-            return false;
-        }
-    }
-
-    // Physics update
-    CollisionRegistry::instance().update_all();
-    // Camera should not follow the player for now
-    // Camera::instance().follow(player.x, player.y);
-    SpriteRegistry::instance().sync_all(Camera::instance());
-    bn::core::update();
-
-    if (_door && _door->reached()) {
-        for (int i = 0; i < Cfg::Sleep::DOOR_REACHED; ++i) {
-            _door->update();
-            bn::core::update();
-        }
-
-        return true;
-    }
-
-    if (_last_death_ct != _player->get_deaths()) {
-        _last_death_ct = _player->get_deaths();
-        for (auto& mv_trap : _moving_traps) {
-            mv_trap.reset();
-        }
-        for (auto& pth_trap : _path_traps) {
-            pth_trap.reset();
-        }
-    }
-
-    return false;
-}
-
 void LevelManager::load(const LevelData& level) {
     _init_pause_menu();
 
@@ -217,4 +163,57 @@ void LevelManager::load(const LevelData& level) {
                 "forget the resets");
         }
     }
+}
+
+bool LevelManager::update() {
+    if (bn::keypad::start_released()) {
+        _paused = !_paused;
+    }
+
+    if (_prev_paused != _paused) {
+        _prev_paused = _paused;
+        for (auto& sprite : _pause_sprites)
+            sprite.set_visible(_paused);
+        if (_paused)
+            bn::music::pause();
+        else
+            bn::music::resume();
+    }
+
+    if (_paused) {
+        if (bn::keypad::select_released()) {
+            _player->death();
+            _paused = false;
+        } else {
+            bn::core::update();
+            return false;
+        }
+    }
+
+    // Physics update
+    CollisionRegistry::instance().update_all();
+    // Camera should not follow the player for now
+    // Camera::instance().follow(player.x, player.y);
+    SpriteRegistry::instance().sync_all(Camera::instance());
+    bn::core::update();
+
+    if (_door && _door->reached()) {
+        for (int i = 0; i < Cfg::Sleep::DOOR_REACHED; ++i) {
+            _door->update();
+            bn::core::update();
+        }
+        return true;
+    }
+
+    if (_last_death_ct != _player->get_deaths()) {
+        _last_death_ct = _player->get_deaths();
+        for (auto& mv_trap : _moving_traps) {
+            mv_trap.reset();
+        }
+        for (auto& pth_trap : _path_traps) {
+            pth_trap.reset();
+        }
+    }
+
+    return false;
 }
