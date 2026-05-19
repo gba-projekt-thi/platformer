@@ -8,6 +8,7 @@ class DataManager {
    public:
     GameState& load();
     void save();
+    void reset();
 
    private:
     engine::save::SaveManager<GameState, 1> save_mgr;

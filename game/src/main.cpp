@@ -64,9 +64,20 @@ int main() {
 
     // Initialize the level manager and begin the game loop.
     static DataManager data_manager;
+#ifdef RESET_SAVED
+#pragma message( \
+    "make clean; make USERFLAGS=-DRESET_SAVED used to reset corrupted game state. After running game once it should be fine from now on without the flag")
+    data_manager.reset();
+    BN_LOG(
+        "make clean; make USERFLAGS=-DRESET_SAVED used to reset corrupted game "
+        "state. After running game once it should be fine from now on without "
+        "the flag");
+#endif
     static LevelManager level_manager
         __attribute__((section(".ewram"))) (data_manager);
     // move to ewram(slower, more space(=> more platforms tho?!)) to save stack
     // usage
     level_manager.startGame(levels, &player);
+    // reset game after finishing bc of otherwise corrupted (game breaking) data
+    data_manager.reset();
 }
