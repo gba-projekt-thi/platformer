@@ -10,3 +10,7 @@ GameState& DataManager::load() {
 void DataManager::save() {
     save_mgr.save(0, game_state);
 }
+void DataManager::reset() {
+    GameState empty{};
+    save_mgr.save(0, empty);
+}
