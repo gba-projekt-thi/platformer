@@ -76,9 +76,11 @@ struct TrapData {
 
     bn::sprite_item sprite;
 
-    int sprite_waits = 0;
+    // Frames to wait before advancing animation.
+    // Must be >= 1 when animation frames exist.
+    int animation_wait = 1;
 
-    // Animation frame indexes.
+    // Empty span = no animation.
     bn::span<const uint16_t> graphic_indexes;
 
     // Trigger index used by moving/path traps.

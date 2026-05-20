@@ -21,7 +21,8 @@ PathTrap::PathTrap(
           t_sprite_waits,
           t_graphics_indexes,
           t_blocking_layers,
-          0),
+          // PathTrap uses positional interpolation, not velocity.
+          Cfg::Physics::NO_MAX_VELOCITY),
       start_x(t_start_x),
       start_y(t_start_y),
       trigger(t_trigger),

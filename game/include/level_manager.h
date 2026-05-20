@@ -52,7 +52,6 @@ class LevelManager {
     // Resets all traps after player death.
     void _reset_traps();
 
-   private:
     bn::vector<bn::sprite_ptr, Cfg::Level::Limits::PLATFORMS> _platforms;
 
     bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES>

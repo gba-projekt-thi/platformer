@@ -235,7 +235,7 @@ void LevelManager::load(const LevelData& level) {
             case TrapType::BASE: {
                 _base_traps.emplace_back(
                     trap.x, trap.y, trap.width, trap.height, trap.sprite,
-                    trap.sprite_waits, trap.graphic_indexes, 0);
+                    trap.animation_wait, trap.graphic_indexes, 0);
 
                 break;
             }
@@ -245,8 +245,8 @@ void LevelManager::load(const LevelData& level) {
 
                 _moving_traps.emplace_back(
                     trap.x, trap.y, trap.width, trap.height, trap.sprite,
-                    trap.sprite_waits, trap.graphic_indexes, 0, trap.velocity_x,
-                    trap.velocity_y, trap.max_vel, trigger);
+                    trap.animation_wait, trap.graphic_indexes, 0,
+                    trap.velocity_x, trap.velocity_y, trap.max_vel, trigger);
 
                 break;
             }
@@ -256,7 +256,7 @@ void LevelManager::load(const LevelData& level) {
 
                 _path_traps.emplace_back(
                     trap.x, trap.y, trap.width, trap.height, trap.sprite,
-                    trap.sprite_waits, trap.graphic_indexes, 0, trap.path,
+                    trap.animation_wait, trap.graphic_indexes, 0, trap.path,
                     trap.path_waits, trigger);
 
                 break;
@@ -315,25 +315,6 @@ bool LevelManager::update() {
 
             return false;
         }
-    }
-
-    // -------------------------------------------------------------------------
-    // Trap Updates
-    //
-    // IMPORTANT:
-    // Movement must update BEFORE collision resolution.
-    // -------------------------------------------------------------------------
-
-    for (auto& trap : _base_traps) {
-        trap.update();
-    }
-
-    for (auto& trap : _moving_traps) {
-        trap.update();
-    }
-
-    for (auto& trap : _path_traps) {
-        trap.update();
     }
 
     // -------------------------------------------------------------------------

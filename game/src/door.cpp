@@ -28,14 +28,6 @@ Door::Door(bn::fixed in_x, bn::fixed in_y)
 }
 
 void Door::update() {
-    // Avoid animation updates when not visible.
-    //
-    // Small optimization:
-    // reduces animation processing when off-screen.
-    if (!door_sprite.sprite().visible()) {
-        return;
-    }
-
     action.update();
 }
 

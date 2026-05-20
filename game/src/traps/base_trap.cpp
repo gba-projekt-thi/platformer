@@ -6,7 +6,7 @@ BaseTrap::BaseTrap(
     bn::fixed t_width,
     bn::fixed t_height,
     const bn::sprite_item& t_sprite_item,
-    int t_sprite_waits,
+    int t_animation_wait,
     bn::span<const uint16_t> t_graphics_indexes,
     uint16_t t_blocking_layers,
     bn::fixed t_max_vel)
@@ -22,13 +22,16 @@ BaseTrap::BaseTrap(
       trap_sprite(t_sprite_item.create_sprite(t_x, t_y), t_x, t_y) {
     sprite = &trap_sprite;
 
-    trap_sprite.sprite().set_blending_enabled(true);
-
-    // Create animation only if animation frames exist.
+    // Empty graphics span means:
+    // this trap is static/non-animated.
     if (!t_graphics_indexes.empty()) {
+        BN_ASSERT(
+            t_animation_wait >= 1,
+            "Animated trap requires animation_wait >= 1");
+
         _animation_action =
             bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES>::forever(
-                trap_sprite.sprite(), t_sprite_waits,
+                trap_sprite.sprite(), t_animation_wait,
                 t_sprite_item.tiles_item(), t_graphics_indexes);
     }
 }
@@ -43,7 +46,6 @@ void BaseTrap::update() {
 void BaseTrap::on_enter(
     [[maybe_unused]] uint16_t hit_layers,
     StaticBody* body) {
-    // Only react to player collisions.
     if (body && (body->layers & Cfg::Layer::PLAYER)) {
         static_cast<Player*>(body)->death();
     }
