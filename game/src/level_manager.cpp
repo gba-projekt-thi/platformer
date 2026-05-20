@@ -1,23 +1,30 @@
+#include "common_variable_8x16_sprite_font.h"
+
 #include "level_manager.h"
 
-LevelManager::LevelManager(DataManager data_manager)
-    : _data_manager(data_manager) {}
-
-void LevelManager::startGame(
-    const bn::vector<LevelData, 16> levels,
-    Player* player) {
-    // Store the player object for level updates.
-    _player = player;
-
+LevelManager::LevelManager(Player* player, DataManager& data_manager)
+    : _player(player),
+      _paused(false),
+      _prev_paused(false),
+      _last_death_ct(0),
+      _data_manager(data_manager) {
+    // load last save
     Timer& timer = _player->get_timer();
-
     auto& game_state = _data_manager.load();
     player->set_deaths(game_state.deaths);
     timer.setAll(game_state.centis, game_state.seconds, game_state.minutes);
 
     _pause_sprites.clear();
+}
+
+void LevelManager::_init_pause_menu() {
+    if (_pause_menu_initialized) {
+        return;
+    }
+
     bn::sprite_text_generator text_gen(common::variable_8x16_sprite_font);
     text_gen.set_z_order(Cfg::ZOrder::PAUSE_MENU);  // total foreground
+    text_gen.set_blending_enabled(true);
     text_gen.generate(
         Cfg::PauseMenu::X, Cfg::PauseMenu::Y_0, "Paused", _pause_sprites);
     text_gen.generate(
@@ -26,29 +33,25 @@ void LevelManager::startGame(
     text_gen.generate(
         Cfg::PauseMenu::X, Cfg::PauseMenu::Y_2, "Die: Select", _pause_sprites);
 
-    // hide menu
-    for (bn::sprite_ptr& sprite : _pause_sprites)
+    for (bn::sprite_ptr& sprite : _pause_sprites) {
         sprite.set_visible(false);
-
-    // Load and run each level in sequence.
-    for (int i = game_state.level; i < levels.size(); ++i) {
-        const auto& level = levels[i];
-        load(level);
-        _run();
-        game_state.level += 1;
-        game_state.centis = timer.centis();
-        game_state.seconds = timer.seconds();
-        game_state.minutes = timer.minutes();
-        _data_manager.save();
+        sprite.set_blending_enabled(true);
     }
-    for (int i = 0; i < Cfg::Sleep::FINISHED_GAME; ++i)  // sleep 2s
-        bn::core::update();
+
+    _pause_menu_initialized = true;
 }
 
 void LevelManager::load(const LevelData& level) {
+    _init_pause_menu();
+
     // Position the player and set the respawn point.
     _player->teleport_to(level.player_data.x, level.player_data.y);
     _player->set_spawn_point(level.player_data.x, level.player_data.y);
+    _last_death_ct = _player->get_deaths();
+    _paused = false;
+    _prev_paused = false;
+    for (bn::sprite_ptr& sprite : _pause_sprites)
+        sprite.set_visible(false);
     _door.emplace(level.door.x, level.door.y);
 
     // Start the level-specific background music.
@@ -58,6 +61,7 @@ void LevelManager::load(const LevelData& level) {
     _back_ground.reset();
     _back_ground.emplace(level.back_ground.create_bg(0, 0));
     _back_ground.value().set_priority(3);
+    _back_ground.value().set_blending_enabled(true);
 
     // Clear objects from the previous level before creating the new one.
     _platforms.clear();
@@ -104,6 +108,7 @@ void LevelManager::load(const LevelData& level) {
         auto sprite = p.sprite.create_sprite(p.x, p.y);
         sprite.set_tiles(
             p.sprite.tiles_item().create_tiles(p.sprite_index % count));
+        sprite.set_blending_enabled(true);
 
         _platforms.push_back(bn::move(sprite));
         _platform_bodies.emplace_back(
@@ -170,70 +175,66 @@ void LevelManager::load(const LevelData& level) {
     }
 }
 
-void LevelManager::_run() {
-    unsigned int last_death_ct = _player->get_deaths();
-    bool paused = false;
-    bool prev_paused = paused;
+bool LevelManager::update() {
+    if (bn::keypad::start_released()) {
+        _paused = !_paused;
+    }
 
-    while (true) {
-        if (bn::keypad::start_released()) {
-            paused = !paused;
-        }
+    if (_prev_paused != _paused) {
+        _prev_paused = _paused;
+        for (auto& sprite : _pause_sprites)
+            sprite.set_visible(_paused);
+        if (_paused)
+            bn::music::pause();
+        else
+            bn::music::resume();
+    }
 
-        if (prev_paused != paused) {
-            prev_paused = paused;
-            for (auto& sprite : _pause_sprites)
-                sprite.set_visible(paused);
-            if (paused)
-                bn::music::pause();
-            else
-                bn::music::resume();
-        }
-
-        if (paused) {
-            if (bn::keypad::select_released()) {
-                _player->death();
-                paused = false;
-            } else {
-                bn::core::update();
-                continue;
-            }
-        }
-
-        // Physics update
-        CollisionRegistry::instance().update_all();
-        // Camera should not follow the player for now
-        // Camera::instance().follow(player.x, player.y);
-        SpriteRegistry::instance().sync_all(Camera::instance());
-        bn::core::update();
-
-        // Door reached
-        if (_door && _door->reached()) {
-            for (int i = 0; i < Cfg::Sleep::DOOR_REACHED; ++i) {
-                _door->update();
-                bn::core::update();
-            }
-
-            break;
-        }
-
-        // check for death and reset traps if detcted
-        if (last_death_ct != _player->get_deaths()) {
-            last_death_ct = _player->get_deaths();
-            auto& game_state = _data_manager.load();
-            game_state.deaths = last_death_ct;
-            Timer& timer = _player->get_timer();
-            game_state.centis = timer.centis();
-            game_state.seconds = timer.seconds();
-            game_state.minutes = timer.minutes();
-
-            _data_manager.save();
-            for (auto& mv_trap : _moving_traps) {
-                mv_trap.reset();
-            }
-            for (auto& pth_trap : _path_traps) {
-                pth_trap.reset();
-            }
+    if (_paused) {
+        if (bn::keypad::select_released()) {
+            _player->death();
+            _paused = false;
+        } else {
+            bn::core::update();
+            return false;
         }
     }
+
+    // Physics update
+    CollisionRegistry::instance().update_all();
+    // Camera should not follow the player for now
+    // Camera::instance().follow(player.x, player.y);
+    SpriteRegistry::instance().sync_all(Camera::instance());
+    bn::core::update();
+
+    if (_door && _door->reached()) {
+        for (int i = 0; i < Cfg::Sleep::DOOR_REACHED; ++i) {
+            _door->update();
+            bn::core::update();
+        }
+        return true;
+    }
+
+    // check for death and reset traps if detcted
+    if (_last_death_ct != _player->get_deaths()) {
+        _last_death_ct = _player->get_deaths();
+
+        auto& game_state = _data_manager.load();
+        game_state.deaths = _last_death_ct;
+        Timer& timer = _player->get_timer();
+        game_state.centis = timer.centis();
+        game_state.seconds = timer.seconds();
+        game_state.minutes = timer.minutes();
+
+        _data_manager.save();
+
+        for (auto& mv_trap : _moving_traps) {
+            mv_trap.reset();
+        }
+        for (auto& pth_trap : _path_traps) {
+            pth_trap.reset();
+        }
+    }
+
+    return false;
 }

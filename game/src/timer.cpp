@@ -62,8 +62,10 @@ TimerHUD::TimerHUD(const Timer& timer) : _timer(timer) {
 
     // Initialize text sprites
     for (int i = 0; i < 8; i++) {
-        _sprites.push_back(font_item.create_sprite(
-            Cfg::Timer::X + (i * 8), Cfg::Timer::Y, 15));
+        auto sprite =
+            font_item.create_sprite(Cfg::Timer::X + (i * 8), Cfg::Timer::Y, 15);
+        sprite.set_blending_enabled(true);
+        _sprites.push_back(bn::move(sprite));
     }
 
     refresh();
