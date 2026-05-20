@@ -5,37 +5,55 @@
 #include "bn_span.h"
 #include "bn_sprite_animate_actions.h"
 #include "bn_sprite_item.h"
-#include "bn_vector.h"
 
 #include "cfg.h"
 #include "physics_body.h"
 #include "player.h"
 #include "sprite.h"
 
+// ----------------------------------------------------------------------------
+// BaseTrap
+//
+// Base class for all harmful trap entities.
+//
+// Responsibilities:
+// - Collision handling against the player
+// - Optional sprite animation
+// - Sprite ownership/registration
+//
+// Derived classes:
+// - MovingTrap
+// - PathTrap
+// ----------------------------------------------------------------------------
 class BaseTrap : public PhysicsBody {
    public:
-    // Create a basic trap that can kill the player on contact.
     BaseTrap(
         bn::fixed t_x,
         bn::fixed t_y,
         bn::fixed t_width,
         bn::fixed t_height,
-        const bn::sprite_item& t_sprite,
+        const bn::sprite_item& t_sprite_item,
         int t_sprite_waits,
         bn::span<const uint16_t> t_graphics_indexes,
-        uint16_t t_block,
+        uint16_t t_blocking_layers,
         bn::fixed t_max_vel = 0);
 
-    // Animate the trap each frame.
     virtual void update() override;
-    // Handle player collision by triggering death.
-    virtual void on_enter(
-        [[maybe_unused]] uint16_t hit_layers,
-        StaticBody* body) override;
+
+    // Kill the player on collision.
+    virtual void on_enter(uint16_t hit_layers, StaticBody* body) override;
+
     virtual ~BaseTrap();
 
-   private:
+    // Reset trap state after player death or level restart.
+    virtual void reset() {}
+
+   protected:
+    // Sprite wrapper synchronized through SpriteRegistry.
     Sprite trap_sprite;
-    bn::optional<bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES>> action;
-    bn::span<const uint16_t> graphics_indexes;
+
+   private:
+    // Optional looping animation action.
+    bn::optional<bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES> >
+        _animation_action;
 };

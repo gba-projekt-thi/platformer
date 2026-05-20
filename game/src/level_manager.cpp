@@ -1,17 +1,22 @@
+// level_manager.cpp
+
 #include "common_variable_8x16_sprite_font.h"
 
 #include "level_manager.h"
 
 LevelManager::LevelManager(Player* player, DataManager& data_manager)
-    : _player(player),
-      _paused(false),
-      _prev_paused(false),
-      _last_death_ct(0),
-      _data_manager(data_manager) {
-    // load last save
+    : _player(player), _data_manager(data_manager) {
+    // -------------------------------------------------------------------------
+    // Restore persistent runtime state
+    // -------------------------------------------------------------------------
+
     Timer& timer = _player->get_timer();
-    auto& game_state = _data_manager.load();
-    player->set_deaths(game_state.deaths);
+
+    // Access already-loaded runtime state.
+    auto& game_state = _data_manager.state();
+
+    _player->set_deaths(game_state.deaths);
+
     timer.setAll(game_state.centis, game_state.seconds, game_state.minutes);
 
     _pause_sprites.clear();
@@ -23,217 +28,349 @@ void LevelManager::_init_pause_menu() {
     }
 
     bn::sprite_text_generator text_gen(common::variable_8x16_sprite_font);
-    text_gen.set_z_order(Cfg::ZOrder::PAUSE_MENU);  // total foreground
+
+    text_gen.set_z_order(Cfg::ZOrder::PAUSE_MENU);
+
     text_gen.set_blending_enabled(true);
+
     text_gen.generate(
         Cfg::PauseMenu::X, Cfg::PauseMenu::Y_0, "Paused", _pause_sprites);
+
     text_gen.generate(
         Cfg::PauseMenu::X, Cfg::PauseMenu::Y_1, "Continue: Start",
         _pause_sprites);
+
     text_gen.generate(
         Cfg::PauseMenu::X, Cfg::PauseMenu::Y_2, "Die: Select", _pause_sprites);
 
     for (bn::sprite_ptr& sprite : _pause_sprites) {
         sprite.set_visible(false);
+
         sprite.set_blending_enabled(true);
     }
 
     _pause_menu_initialized = true;
 }
 
+Trigger& LevelManager::_get_trigger(int trigger_index) {
+    const int trigger_count = _triggers.size();
+
+    if (trigger_index >= 0 && trigger_index < trigger_count) {
+        return _triggers[trigger_index];
+    }
+
+    BN_LOG(
+        "[ERROR] level_manager: "
+        "invalid trigger index, fallback to trigger 0");
+
+    return _triggers[0];
+}
+
+void LevelManager::_reset_traps() {
+    for (auto& trap : _moving_traps) {
+        trap.reset();
+    }
+
+    for (auto& trap : _path_traps) {
+        trap.reset();
+    }
+}
+
 void LevelManager::load(const LevelData& level) {
     _init_pause_menu();
 
-    // Position the player and set the respawn point.
-    _player->teleport_to(level.player_data.x, level.player_data.y);
-    _player->set_spawn_point(level.player_data.x, level.player_data.y);
-    _last_death_ct = _player->get_deaths();
+    // -------------------------------------------------------------------------
+    // Pause State
+    // -------------------------------------------------------------------------
+
     _paused = false;
+
     _prev_paused = false;
-    for (bn::sprite_ptr& sprite : _pause_sprites)
+
+    for (auto& sprite : _pause_sprites) {
         sprite.set_visible(false);
+    }
+
+    // -------------------------------------------------------------------------
+    // Player Spawn
+    // -------------------------------------------------------------------------
+
+    _player->teleport_to(level.player_data.x, level.player_data.y);
+
+    _player->set_spawn_point(level.player_data.x, level.player_data.y);
+
+    _last_death_ct = _player->get_deaths();
+
+    // -------------------------------------------------------------------------
+    // Door
+    // -------------------------------------------------------------------------
+
     _door.emplace(level.door.x, level.door.y);
 
-    // Start the level-specific background music.
+    // -------------------------------------------------------------------------
+    // Music
+    // -------------------------------------------------------------------------
+
     _music.emplace(level.music);
+
     bn::music::play(*_music);
 
-    _back_ground.reset();
-    _back_ground.emplace(level.back_ground.create_bg(0, 0));
-    _back_ground.value().set_priority(3);
-    _back_ground.value().set_blending_enabled(true);
+    // -------------------------------------------------------------------------
+    // Background
+    // -------------------------------------------------------------------------
 
-    // Clear objects from the previous level before creating the new one.
+    _background.reset();
+
+    _background.emplace(level.back_ground.create_bg(0, 0));
+
+    _background->set_priority(3);
+
+    _background->set_blending_enabled(true);
+
+    // -------------------------------------------------------------------------
+    // Clear Previous Level State
+    // -------------------------------------------------------------------------
+
     _platforms.clear();
+
     _platform_bodies.clear();
+
     _triggers.clear();
+
     _base_traps.clear();
+
     _moving_traps.clear();
+
     _path_traps.clear();
 
+    // -------------------------------------------------------------------------
+    // Validation
+    // -------------------------------------------------------------------------
+
     BN_ASSERT(
-        static_cast<unsigned int>(level.platform_count) <
-            Cfg::Level::Limits::PLATFORMS,
+        unsigned(level.platform_count) < Cfg::Level::Limits::PLATFORMS,
         "Too many platforms");
+
     BN_ASSERT(
-        static_cast<unsigned int>(level.trigger_count) <
-            Cfg::Level::Limits::TRIGGERS,
+        unsigned(level.trigger_count) < Cfg::Level::Limits::TRIGGERS,
         "Too many triggers");
 
-    unsigned int count_base_traps = 0;
-    unsigned int count_moving_traps = 0;
-    unsigned int count_path_traps = 0;
-    for (int i = 0; i < level.trap_count; i++) {
-        count_base_traps += (level.traps[i].type == TrapType::BASE);
-        count_moving_traps += (level.traps[i].type == TrapType::MOVING);
-        count_path_traps += (level.traps[i].type == TrapType::PATH);
+    unsigned base_trap_count = 0;
+
+    unsigned moving_trap_count = 0;
+
+    unsigned path_trap_count = 0;
+
+    for (int i = 0; i < level.trap_count; ++i) {
+        const TrapData& trap = level.traps[i];
+
+        base_trap_count += trap.type == TrapType::BASE;
+
+        moving_trap_count += trap.type == TrapType::MOVING;
+
+        path_trap_count += trap.type == TrapType::PATH;
     }
+
     BN_ASSERT(
-        count_base_traps < Cfg::Level::Limits::BASE_TRAPS,
+        base_trap_count < Cfg::Level::Limits::BASE_TRAPS,
         "Too many base traps");
+
     BN_ASSERT(
-        count_moving_traps < Cfg::Level::Limits::MOVING_TRAPS,
+        moving_trap_count < Cfg::Level::Limits::MOVING_TRAPS,
         "Too many moving traps");
+
     BN_ASSERT(
-        count_path_traps < Cfg::Level::Limits::PATH_TRAPS,
+        path_trap_count < Cfg::Level::Limits::PATH_TRAPS,
         "Too many path traps");
 
-    // Create platform sprites and collision bodies.
-    for (int i = 0; i < level.platform_count; i++) {
-        const PlatformData& p = level.platforms[i];
+    // -------------------------------------------------------------------------
+    // Platforms
+    // -------------------------------------------------------------------------
 
-        int count = p.sprite.tiles_item()
-                        .graphics_count();  // to check for out of bound errors
+    for (int i = 0; i < level.platform_count; ++i) {
+        const PlatformData& platform = level.platforms[i];
 
-        auto sprite = p.sprite.create_sprite(p.x, p.y);
-        sprite.set_tiles(
-            p.sprite.tiles_item().create_tiles(p.sprite_index % count));
+        const int graphics_count =
+            platform.sprite.tiles_item().graphics_count();
+
+        bn::sprite_ptr sprite =
+            platform.sprite.create_sprite(platform.x, platform.y);
+
+        sprite.set_tiles(platform.sprite.tiles_item().create_tiles(
+            platform.sprite_index % graphics_count));
+
         sprite.set_blending_enabled(true);
 
         _platforms.push_back(bn::move(sprite));
+
         _platform_bodies.emplace_back(
-            p.x, p.y, _platforms.back().dimensions().width(),
+            platform.x, platform.y, _platforms.back().dimensions().width(),
             _platforms.back().dimensions().height(), Cfg::Layer::PLATFORM);
     }
 
-    // Create trigger regions that will activate moving traps. //must before any
-    // refrencing also no touching it afterwards!
-    for (int i = 0; i < level.trigger_count; i++) {
-        const TriggerData& t = level.triggers[i];
+    // -------------------------------------------------------------------------
+    // Triggers
+    // -------------------------------------------------------------------------
 
-        _triggers.emplace_back(t.x, t.y, t.width, t.height);
+    for (int i = 0; i < level.trigger_count; ++i) {
+        const TriggerData& trigger = level.triggers[i];
+
+        _triggers.emplace_back(
+            trigger.x, trigger.y, trigger.width, trigger.height);
     }
 
-    // add one trigger thats always true in case of no trigger as a fallback
-    if (!_triggers.size())
+    // Fallback trigger prevents invalid references.
+    if (_triggers.empty()) {
         _triggers.emplace_back(1000, 1000, 0, 0, true);
+    }
 
-    // Instantiate traps based on level definitions.
-    for (int i = 0; i < level.trap_count; i++) {
-        const TrapData& t = level.traps[i];
+    // -------------------------------------------------------------------------
+    // Trap Construction
+    // -------------------------------------------------------------------------
 
-        if (t.type == TrapType::BASE) {
-            _base_traps.emplace_back(
-                t.x, t.y, t.width, t.height, t.sprite, t.sprite_waits,
-                t.graphic_indexes, 0);
-        } else if (t.type == TrapType::MOVING) {
-            // fallback to first trigger if invalid index
-            Trigger& trigger =
-                (t.trigger_index >= 0 && t.trigger_index < _triggers.size())
-                    ? _triggers[t.trigger_index]
-                    : _triggers[0];
+    for (int i = 0; i < level.trap_count; ++i) {
+        const TrapData& trap = level.traps[i];
 
-            if (!(t.trigger_index >= 0 && t.trigger_index < _triggers.size()))
+        switch (trap.type) {
+            case TrapType::BASE: {
+                _base_traps.emplace_back(
+                    trap.x, trap.y, trap.width, trap.height, trap.sprite,
+                    trap.animation_wait, trap.graphic_indexes, 0);
+
+                break;
+            }
+
+            case TrapType::MOVING: {
+                Trigger& trigger = _get_trigger(trap.trigger_index);
+
+                _moving_traps.emplace_back(
+                    trap.x, trap.y, trap.width, trap.height, trap.sprite,
+                    trap.animation_wait, trap.graphic_indexes, 0,
+                    trap.velocity_x, trap.velocity_y, trap.max_vel, trigger);
+
+                break;
+            }
+
+            case TrapType::PATH: {
+                Trigger& trigger = _get_trigger(trap.trigger_index);
+
+                _path_traps.emplace_back(
+                    trap.x, trap.y, trap.width, trap.height, trap.sprite,
+                    trap.animation_wait, trap.graphic_indexes, 0, trap.path,
+                    trap.path_waits, trigger);
+
+                break;
+            }
+
+            default:
+
                 BN_LOG(
-                    "[ERROR] level_manager: no valid trigger for trap found "
-                    "fallback to trigger 0");
+                    "[ERROR] level_manager: "
+                    "unimplemented trap type");
 
-            _moving_traps.emplace_back(
-                t.x, t.y, t.width, t.height, t.sprite, t.sprite_waits,
-                t.graphic_indexes, 0, t.velocity_x, t.velocity_y, t.max_vel,
-                t.range, trigger);
-        } else if (t.type == TrapType::PATH) {
-            // fallback to first trigger if invalid index
-            Trigger& trigger =
-                (t.trigger_index >= 0 && t.trigger_index < _triggers.size())
-                    ? _triggers[t.trigger_index]
-                    : _triggers[0];
-
-            if (!(t.trigger_index >= 0 && t.trigger_index < _triggers.size()))
-                BN_LOG(
-                    "[ERROR] level_manager: no valid trigger for trap found "
-                    "fallback to trigger 0");
-
-            _path_traps.emplace_back(
-                t.x, t.y, t.width, t.height, t.sprite, t.sprite_waits,
-                t.graphic_indexes, 0, t.path, t.path_waits, trigger);
-        } else {
-            BN_LOG(
-                "[ERROR] level_manager: trap variant not implemented, dont "
-                "forget the resets");
+                break;
         }
     }
 }
 
 bool LevelManager::update() {
+    // -------------------------------------------------------------------------
+    // Pause Toggle
+    // -------------------------------------------------------------------------
+
     if (bn::keypad::start_released()) {
         _paused = !_paused;
     }
 
+    // -------------------------------------------------------------------------
+    // Pause State Transition
+    // -------------------------------------------------------------------------
+
     if (_prev_paused != _paused) {
         _prev_paused = _paused;
-        for (auto& sprite : _pause_sprites)
+
+        for (auto& sprite : _pause_sprites) {
             sprite.set_visible(_paused);
-        if (_paused)
+        }
+
+        if (_paused) {
             bn::music::pause();
-        else
+        } else {
             bn::music::resume();
+        }
     }
 
+    // -------------------------------------------------------------------------
+    // Pause Logic
+    // -------------------------------------------------------------------------
+
     if (_paused) {
+        // Select intentionally kills player while paused.
         if (bn::keypad::select_released()) {
             _player->death();
+
             _paused = false;
         } else {
             bn::core::update();
+
             return false;
         }
     }
 
-    // Physics update
+    // -------------------------------------------------------------------------
+    // Physics
+    // -------------------------------------------------------------------------
+
     CollisionRegistry::instance().update_all();
-    // Camera should not follow the player for now
-    // Camera::instance().follow(player.x, player.y);
+
+    // -------------------------------------------------------------------------
+    // Rendering
+    // -------------------------------------------------------------------------
+
     SpriteRegistry::instance().sync_all(Camera::instance());
+
     bn::core::update();
+
+    // -------------------------------------------------------------------------
+    // Door Completion
+    // -------------------------------------------------------------------------
 
     if (_door && _door->reached()) {
         for (int i = 0; i < Cfg::Sleep::DOOR_REACHED; ++i) {
             _door->update();
+
             bn::core::update();
         }
+
         return true;
     }
 
-    // check for death and reset traps if detcted
+    // -------------------------------------------------------------------------
+    // Death Synchronization
+    // -------------------------------------------------------------------------
+
     if (_last_death_ct != _player->get_deaths()) {
         _last_death_ct = _player->get_deaths();
 
-        auto& game_state = _data_manager.load();
+        // Runtime state access only.
+        auto& game_state = _data_manager.state();
+
         game_state.deaths = _last_death_ct;
+
         Timer& timer = _player->get_timer();
+
         game_state.centis = timer.centis();
+
         game_state.seconds = timer.seconds();
+
         game_state.minutes = timer.minutes();
 
+        // NOTE:
+        // SRAM writes are relatively expensive.
+        // Consider batching saves later.
         _data_manager.save();
 
-        for (auto& mv_trap : _moving_traps) {
-            mv_trap.reset();
-        }
-        for (auto& pth_trap : _path_traps) {
-            pth_trap.reset();
-        }
+        _reset_traps();
     }
 
     return false;
