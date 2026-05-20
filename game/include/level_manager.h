@@ -2,6 +2,7 @@
 
 #include "bn_core.h"
 #include "bn_dmg_music_item.h"
+#include "bn_log.h"
 #include "bn_music.h"
 #include "bn_music_items.h"
 #include "bn_regular_bg_item.h"
@@ -9,6 +10,7 @@
 #include "bn_sprite_item.h"
 #include "bn_sprite_ptr.h"
 #include "bn_vector.h"
+#include "common_variable_8x16_sprite_font.h"
 
 #include "cfg.h"
 #include "data_manager.h"
