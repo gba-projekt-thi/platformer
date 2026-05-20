@@ -46,6 +46,13 @@ void LevelScene::update() {
     auto& game_state = _data_manager.state();
 
     game_state.level = next_level_index;
+
+    // IMPORTANT:
+    // Persist deaths during level transitions.
+    // Otherwise the next save can overwrite
+    // newer runtime death values.
+    game_state.deaths = _player.get_deaths();
+
     game_state.centis = timer.centis();
     game_state.seconds = timer.seconds();
     game_state.minutes = timer.minutes();
