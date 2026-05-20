@@ -2,30 +2,40 @@
 
 Door::Door(bn::fixed in_x, bn::fixed in_y)
     : PhysicsBody(in_x, in_y, 6, 8, Cfg::Layer::DOOR, Cfg::Layer::PLAYER, 0),
+
       door_sprite(
           bn::sprite_items::door32x32.create_sprite(in_x, in_y),
           in_x,
           in_y),
-      action(
-          bn::create_sprite_animate_action_forever(
-              door_sprite.sprite(),
-              8,
-              bn::sprite_items::door32x32.tiles_item(),
-              0,
-              2,
-              4,
-              6,
-              8,
-              10,
-              12)) {
-    // The door is a static physics body and animated sprite.
+
+      action(bn::create_sprite_animate_action_forever(
+          door_sprite.sprite(),
+          8,
+          bn::sprite_items::door32x32.tiles_item(),
+          0,
+          2,
+          4,
+          6,
+          8,
+          10,
+          12)) {
+    // Draw above most gameplay elements.
     door_sprite.sprite().set_z_order(Cfg::ZOrder::DOOR);
+
     door_sprite.sprite().set_blending_enabled(true);
+
     this->sprite = &door_sprite;
 }
 
 void Door::update() {
-    // Animate the door each frame.
+    // Avoid animation updates when not visible.
+    //
+    // Small optimization:
+    // reduces animation processing when off-screen.
+    if (!door_sprite.sprite().visible()) {
+        return;
+    }
+
     action.update();
 }
 

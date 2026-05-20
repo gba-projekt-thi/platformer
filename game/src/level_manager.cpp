@@ -6,14 +6,18 @@
 
 LevelManager::LevelManager(Player* player, DataManager& data_manager)
     : _player(player), _data_manager(data_manager) {
-    // Load persistent save state.
+    // -------------------------------------------------------------------------
+    // Restore persistent runtime state
+    // -------------------------------------------------------------------------
+
     Timer& timer = _player->get_timer();
 
-    auto& game_state = _data_manager.load();
+    // Access already-loaded runtime state.
+    auto& game_state = _data_manager.state();
 
     _player->set_deaths(game_state.deaths);
 
-    timer.setAll(game_state.centis, game_state.seconds, game_state.minutes);
+    timer.set_time(game_state.centis, game_state.seconds, game_state.minutes);
 
     _pause_sprites.clear();
 }
@@ -26,6 +30,7 @@ void LevelManager::_init_pause_menu() {
     bn::sprite_text_generator text_gen(common::variable_8x16_sprite_font);
 
     text_gen.set_z_order(Cfg::ZOrder::PAUSE_MENU);
+
     text_gen.set_blending_enabled(true);
 
     text_gen.generate(
@@ -40,6 +45,7 @@ void LevelManager::_init_pause_menu() {
 
     for (bn::sprite_ptr& sprite : _pause_sprites) {
         sprite.set_visible(false);
+
         sprite.set_blending_enabled(true);
     }
 
@@ -54,8 +60,8 @@ Trigger& LevelManager::_get_trigger(int trigger_index) {
     }
 
     BN_LOG(
-        "[ERROR] level_manager: invalid trigger index, "
-        "fallback to trigger 0");
+        "[ERROR] level_manager: "
+        "invalid trigger index, fallback to trigger 0");
 
     return _triggers[0];
 }
@@ -73,44 +79,68 @@ void LevelManager::_reset_traps() {
 void LevelManager::load(const LevelData& level) {
     _init_pause_menu();
 
-    // Reset pause state.
+    // -------------------------------------------------------------------------
+    // Pause State
+    // -------------------------------------------------------------------------
+
     _paused = false;
+
     _prev_paused = false;
 
     for (auto& sprite : _pause_sprites) {
         sprite.set_visible(false);
     }
 
-    // Reset player position and respawn point.
+    // -------------------------------------------------------------------------
+    // Player Spawn
+    // -------------------------------------------------------------------------
+
     _player->teleport_to(level.player_data.x, level.player_data.y);
 
     _player->set_spawn_point(level.player_data.x, level.player_data.y);
 
     _last_death_ct = _player->get_deaths();
 
-    // Door.
+    // -------------------------------------------------------------------------
+    // Door
+    // -------------------------------------------------------------------------
+
     _door.emplace(level.door.x, level.door.y);
 
-    // Music.
+    // -------------------------------------------------------------------------
+    // Music
+    // -------------------------------------------------------------------------
+
     _music.emplace(level.music);
+
     bn::music::play(*_music);
 
-    // Background.
+    // -------------------------------------------------------------------------
+    // Background
+    // -------------------------------------------------------------------------
+
     _background.reset();
 
     _background.emplace(level.back_ground.create_bg(0, 0));
 
     _background->set_priority(3);
+
     _background->set_blending_enabled(true);
 
-    // Clear previous level entities.
+    // -------------------------------------------------------------------------
+    // Clear Previous Level State
+    // -------------------------------------------------------------------------
+
     _platforms.clear();
+
     _platform_bodies.clear();
 
     _triggers.clear();
 
     _base_traps.clear();
+
     _moving_traps.clear();
+
     _path_traps.clear();
 
     // -------------------------------------------------------------------------
@@ -126,7 +156,9 @@ void LevelManager::load(const LevelData& level) {
         "Too many triggers");
 
     unsigned base_trap_count = 0;
+
     unsigned moving_trap_count = 0;
+
     unsigned path_trap_count = 0;
 
     for (int i = 0; i < level.trap_count; ++i) {
@@ -187,14 +219,13 @@ void LevelManager::load(const LevelData& level) {
             trigger.x, trigger.y, trigger.width, trigger.height);
     }
 
-    // Fallback trigger always active.
-    // Prevents invalid references.
+    // Fallback trigger prevents invalid references.
     if (_triggers.empty()) {
         _triggers.emplace_back(1000, 1000, 0, 0, true);
     }
 
     // -------------------------------------------------------------------------
-    // Traps
+    // Trap Construction
     // -------------------------------------------------------------------------
 
     for (int i = 0; i < level.trap_count; ++i) {
@@ -232,9 +263,11 @@ void LevelManager::load(const LevelData& level) {
             }
 
             default:
+
                 BN_LOG(
                     "[ERROR] level_manager: "
                     "unimplemented trap type");
+
                 break;
         }
     }
@@ -249,7 +282,10 @@ bool LevelManager::update() {
         _paused = !_paused;
     }
 
-    // Pause state changed.
+    // -------------------------------------------------------------------------
+    // Pause State Transition
+    // -------------------------------------------------------------------------
+
     if (_prev_paused != _paused) {
         _prev_paused = _paused;
 
@@ -269,7 +305,7 @@ bool LevelManager::update() {
     // -------------------------------------------------------------------------
 
     if (_paused) {
-        // Select kills player during pause.
+        // Select intentionally kills player while paused.
         if (bn::keypad::select_released()) {
             _player->death();
 
@@ -285,8 +321,7 @@ bool LevelManager::update() {
     // Trap Updates
     //
     // IMPORTANT:
-    // Update movement BEFORE collision resolution.
-    // Otherwise collisions use stale positions.
+    // Movement must update BEFORE collision resolution.
     // -------------------------------------------------------------------------
 
     for (auto& trap : _base_traps) {
@@ -316,7 +351,7 @@ bool LevelManager::update() {
     bn::core::update();
 
     // -------------------------------------------------------------------------
-    // Door / Level Complete
+    // Door Completion
     // -------------------------------------------------------------------------
 
     if (_door && _door->reached()) {
@@ -330,13 +365,14 @@ bool LevelManager::update() {
     }
 
     // -------------------------------------------------------------------------
-    // Death Detection / Save Update
+    // Death Synchronization
     // -------------------------------------------------------------------------
 
     if (_last_death_ct != _player->get_deaths()) {
         _last_death_ct = _player->get_deaths();
 
-        auto& game_state = _data_manager.load();
+        // Runtime state access only.
+        auto& game_state = _data_manager.state();
 
         game_state.deaths = _last_death_ct;
 
@@ -348,6 +384,9 @@ bool LevelManager::update() {
 
         game_state.minutes = timer.minutes();
 
+        // NOTE:
+        // SRAM writes are relatively expensive.
+        // Consider batching saves later.
         _data_manager.save();
 
         _reset_traps();
