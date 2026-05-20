@@ -1,61 +1,57 @@
 #include "path_trap.h"
 
 PathTrap::PathTrap(
-    bn::fixed start_x,
-    bn::fixed start_y,
-    bn::fixed width,
-    bn::fixed height,
-    const bn::sprite_item& sprite,
-    int sprite_waits,
-    bn::span<const uint16_t> animation_frames,
-    uint16_t block,
-    bn::span<const bn::fixed_point> path,
-    unsigned path_waits,
-    Trigger& trigger)
+    bn::fixed t_start_x,
+    bn::fixed t_start_y,
+    bn::fixed t_width,
+    bn::fixed t_height,
+    const bn::sprite_item& t_sprite_item,
+    int t_sprite_waits,
+    bn::span<const uint16_t> t_graphics_indexes,
+    uint16_t t_blocking_layers,
+    bn::span<const bn::fixed_point> t_path,
+    unsigned t_path_waits,
+    Trigger& t_trigger)
     : BaseTrap(
-          path.empty() ? start_x : start_x + path[0].x(),
-          path.empty() ? start_y : start_y + path[0].y(),
-          width,
-          height,
-          sprite,
-          sprite_waits,
-          animation_frames,
-          block,
-          100),
-      start_x(start_x),
-      start_y(start_y),
-      trigger(trigger),
-      path(path),
-      inverse_path_waits(path_waits > 0 ? bn::fixed(1) / path_waits : 0),
-      path_waits(path_waits) {}
+          t_path.empty() ? t_start_x : t_start_x + t_path[0].x(),
+          t_path.empty() ? t_start_y : t_start_y + t_path[0].y(),
+          t_width,
+          t_height,
+          t_sprite_item,
+          t_sprite_waits,
+          t_graphics_indexes,
+          t_blocking_layers,
+          0),
+      start_x(t_start_x),
+      start_y(t_start_y),
+      trigger(t_trigger),
+      path(t_path),
+      path_waits(t_path_waits) {}
 
 void PathTrap::update() {
     BaseTrap::update();
 
-    // Path movement disabled if:
-    // - trigger inactive
-    // - not enough path points
-    // - invalid wait duration
     if (!trigger.is_triggered() || path.size() < 2 || path_waits == 0) {
         return;
     }
 
     ++current_frame;
 
+    const unsigned path_size = unsigned(path.size());
+
     unsigned next_index = current_index + 1;
 
-    if (next_index >= path.size()) {
+    if (next_index >= path_size) {
         next_index = 0;
     }
 
-    // Cache references to reduce repeated span access.
+    // Linear interpolation ratio.
+    bn::fixed ratio = bn::fixed(current_frame) / path_waits;
+
     const bn::fixed_point& current = path[current_index];
     const bn::fixed_point& next = path[next_index];
 
-    // Multiplication is much cheaper than division on ARM7TDMI.
-    bn::fixed ratio = current_frame * inverse_path_waits;
-
-    // Linear interpolation between path nodes.
+    // Interpolate between path nodes.
     pos.x = start_x + current.x() + (next.x() - current.x()) * ratio;
 
     pos.y = start_y + current.y() + (next.y() - current.y()) * ratio;
@@ -73,11 +69,7 @@ void PathTrap::reset() {
     current_frame = 0;
     current_index = 0;
 
-    if (path.empty()) {
-        pos.x = start_x;
-        pos.y = start_y;
-    } else {
-        pos.x = start_x + path[0].x();
-        pos.y = start_y + path[0].y();
-    }
+    pos.x = path.empty() ? start_x : start_x + path[0].x();
+
+    pos.y = path.empty() ? start_y : start_y + path[0].y();
 }

@@ -3,41 +3,49 @@
 #include "base_trap.h"
 #include "trigger.h"
 
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // MovingTrap
 //
-// Trap accelerated by a trigger.
+// Trigger-activated trap using acceleration-based movement.
 //
-// Uses velocity/acceleration from PhysicsBody.
-// Good for falling spikes, launched hazards, etc.
-// -----------------------------------------------------------------------------
-class MovingTrap final : public BaseTrap {
+// Once triggered:
+// - Velocity increases every frame
+// - Movement handled by PhysicsBody
+//
+// Good for:
+// - Falling hazards
+// - Rising spikes
+// - Charging traps
+// ----------------------------------------------------------------------------
+class MovingTrap : public BaseTrap {
    public:
     MovingTrap(
-        bn::fixed start_x,
-        bn::fixed start_y,
-        bn::fixed width,
-        bn::fixed height,
-        const bn::sprite_item& sprite,
-        int sprite_waits,
-        bn::span<const uint16_t> animation_frames,
-        uint16_t block,
-        bn::fixed x_accel,
-        bn::fixed y_accel,
-        bn::fixed max_vel,
-        Trigger& trigger);
+        bn::fixed t_start_x,
+        bn::fixed t_start_y,
+        bn::fixed t_width,
+        bn::fixed t_height,
+        const bn::sprite_item& t_sprite_item,
+        int t_sprite_waits,
+        bn::span<const uint16_t> t_graphics_indexes,
+        uint16_t t_blocking_layers,
+        bn::fixed t_x_accel,
+        bn::fixed t_y_accel,
+        bn::fixed t_max_vel,
+        Trigger& t_trigger);
 
     void update() override;
 
-    // Resets trap state after player death/retry.
-    void reset();
+    void reset() override;
 
    private:
+    // Per-frame acceleration.
     bn::fixed x_accel;
     bn::fixed y_accel;
 
+    // Reset position.
     bn::fixed start_x;
     bn::fixed start_y;
 
+    // Activation trigger.
     Trigger& trigger;
 };

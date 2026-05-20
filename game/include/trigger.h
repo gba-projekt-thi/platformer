@@ -1,40 +1,31 @@
 #pragma once
 
-#include "bn_fixed.h"
-
 #include "cfg.h"
 #include "physics_body.h"
 
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Trigger
 //
-// Invisible collision volume used to activate gameplay events.
+// Invisible collision area used to activate traps.
 //
-// Typically linked to:
-// - traps
-// - moving platforms
-// - scripted events
-//
-// Trigger state is intentionally simple and lightweight.
-// -----------------------------------------------------------------------------
+// Trigger behavior:
+// - Activates when player enters collision area
+// - Can start enabled or disabled
+// - Resettable on death/restart
+// ----------------------------------------------------------------------------
 class Trigger : public PhysicsBody {
    public:
     Trigger(
-        bn::fixed start_x,
-        bn::fixed start_y,
-        bn::fixed width,
-        bn::fixed height,
-        bool default_on = false);
+        bn::fixed t_x,
+        bn::fixed t_y,
+        bn::fixed t_width,
+        bn::fixed t_height,
+        bool t_default_on = false);
 
     bool is_triggered() const;
 
     void on_enter(uint16_t hit_layers, StaticBody* body) override;
 
-    // Explicit state controls improve readability/debugging.
-    void activate();
-    void deactivate();
-
-    // Restores original startup state.
     void reset();
 
    private:

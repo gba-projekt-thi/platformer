@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include "bn_array.h"
+#include "bn_fixed.h"
 
 namespace Cfg {
 

@@ -11,48 +11,49 @@
 #include "player.h"
 #include "sprite.h"
 
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // BaseTrap
 //
-// Base damaging trap entity.
+// Base class for all harmful trap entities.
 //
 // Responsibilities:
-// - Collision with player
+// - Collision handling against the player
 // - Optional sprite animation
-// - Sprite ownership
+// - Sprite ownership/registration
 //
 // Derived classes:
 // - MovingTrap
 // - PathTrap
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 class BaseTrap : public PhysicsBody {
    public:
     BaseTrap(
-        bn::fixed x,
-        bn::fixed y,
-        bn::fixed width,
-        bn::fixed height,
-        const bn::sprite_item& sprite_item,
-        int sprite_waits,
-        bn::span<const uint16_t> graphics_indexes,
-        uint16_t blocking_layers,
-        bn::fixed max_vel = 0);
+        bn::fixed t_x,
+        bn::fixed t_y,
+        bn::fixed t_width,
+        bn::fixed t_height,
+        const bn::sprite_item& t_sprite_item,
+        int t_sprite_waits,
+        bn::span<const uint16_t> t_graphics_indexes,
+        uint16_t t_blocking_layers,
+        bn::fixed t_max_vel = 0);
 
     virtual void update() override;
 
+    // Kill the player on collision.
     virtual void on_enter(uint16_t hit_layers, StaticBody* body) override;
 
     virtual ~BaseTrap();
 
+    // Reset trap state after player death or level restart.
+    virtual void reset() {}
+
    protected:
+    // Sprite wrapper synchronized through SpriteRegistry.
     Sprite trap_sprite;
 
    private:
-    // Optional looping animation.
+    // Optional looping animation action.
     bn::optional<bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES> >
         _animation_action;
-
-    // Animation frame indexes.
-    // Could be removed later to reduce per-instance memory.
-    bn::span<const uint16_t> _graphics_indexes;
 };
