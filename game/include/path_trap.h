@@ -1,36 +1,50 @@
 #pragma once
 
 #include "base_trap.h"
-#include "bn_algorithm.h"
 #include "trigger.h"
 
-class PathTrap : public BaseTrap {
+// -----------------------------------------------------------------------------
+// PathTrap
+//
+// Moves along a looping path using linear interpolation.
+//
+// Optimized for GBA:
+// - Avoids division in update()
+// - Uses lightweight fixed-point interpolation
+// - Avoids dynamic allocation
+// -----------------------------------------------------------------------------
+class PathTrap final : public BaseTrap {
    public:
     PathTrap(
-        bn::fixed t_start_x,
-        bn::fixed t_start_y,
-        bn::fixed t_width,
-        bn::fixed t_height,
-        const bn::sprite_item& t_sprite,
-        int t_sprite_waits,
-        const bn::span<const uint16_t> t_graphics_indexes,
-        uint16_t t_block,
-        bn::span<const bn::fixed_point> t_path,
-        unsigned int t_path_waits,
-        Trigger& t_trigger);
+        bn::fixed start_x,
+        bn::fixed start_y,
+        bn::fixed width,
+        bn::fixed height,
+        const bn::sprite_item& sprite,
+        int sprite_waits,
+        bn::span<const uint16_t> animation_frames,
+        uint16_t block,
+        bn::span<const bn::fixed_point> path,
+        unsigned path_waits,
+        Trigger& trigger);
 
-
-    // Update trap movement and animation each frame.
     void update() override;
-    // Reset the trap and its trigger when the player dies.
+
     void reset();
 
    private:
     bn::fixed start_x;
     bn::fixed start_y;
+
     Trigger& trigger;
+
     bn::span<const bn::fixed_point> path;
-    unsigned int path_waits;
-    unsigned int current_frame;
-    unsigned int current_index;
+
+    // Cached reciprocal to avoid division every frame.
+    bn::fixed inverse_path_waits;
+
+    unsigned current_frame = 0;
+    unsigned current_index = 0;
+
+    unsigned path_waits = 1;
 };

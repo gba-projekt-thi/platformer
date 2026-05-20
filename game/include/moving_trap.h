@@ -1,38 +1,43 @@
 #pragma once
 
-#include <bn_fixed.h>
-#include <bn_math.h>
-#include <bn_vector.h>
-
 #include "base_trap.h"
 #include "trigger.h"
 
-class MovingTrap : public BaseTrap {
+// -----------------------------------------------------------------------------
+// MovingTrap
+//
+// Trap accelerated by a trigger.
+//
+// Uses velocity/acceleration from PhysicsBody.
+// Good for falling spikes, launched hazards, etc.
+// -----------------------------------------------------------------------------
+class MovingTrap final : public BaseTrap {
    public:
     MovingTrap(
-        bn::fixed t_start_x,
-        bn::fixed t_start_y,
-        bn::fixed t_width,
-        bn::fixed t_height,
-        const bn::sprite_item& t_sprite,
-        int t_sprite_waits,
-        const bn::span<const uint16_t> t_graphics_indexes,
-        uint16_t t_block,
-        bn::fixed t_x_accel,
-        bn::fixed t_y_accel,
-        bn::fixed t_max_vel,
-        bn::fixed t_range,
-        Trigger& t_trigger);
-    // Update trap movement and animation each frame.
+        bn::fixed start_x,
+        bn::fixed start_y,
+        bn::fixed width,
+        bn::fixed height,
+        const bn::sprite_item& sprite,
+        int sprite_waits,
+        bn::span<const uint16_t> animation_frames,
+        uint16_t block,
+        bn::fixed x_accel,
+        bn::fixed y_accel,
+        bn::fixed max_vel,
+        Trigger& trigger);
+
     void update() override;
-    // Reset the trap and its trigger when the player dies.
+
+    // Resets trap state after player death/retry.
     void reset();
 
    private:
     bn::fixed x_accel;
     bn::fixed y_accel;
-    bn::fixed range;  // unused
+
     bn::fixed start_x;
     bn::fixed start_y;
+
     Trigger& trigger;
 };

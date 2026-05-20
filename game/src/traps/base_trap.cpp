@@ -1,45 +1,51 @@
 #include "base_trap.h"
 
 BaseTrap::BaseTrap(
-    bn::fixed t_x,
-    bn::fixed t_y,
-    bn::fixed t_width,
-    bn::fixed t_height,
-    const bn::sprite_item& t_sprite,
-    int t_sprite_waits,
-    bn::span<const uint16_t> t_graphics_indexes,
-    uint16_t t_block,
-    bn::fixed t_max_vel)
+    bn::fixed x,
+    bn::fixed y,
+    bn::fixed width,
+    bn::fixed height,
+    const bn::sprite_item& sprite_item,
+    int sprite_waits,
+    bn::span<const uint16_t> graphics_indexes,
+    uint16_t blocking_layers,
+    bn::fixed max_vel)
     : PhysicsBody(
-          t_x,
-          t_y,
-          t_width,
-          t_height,
+          x,
+          y,
+          width,
+          height,
           Cfg::Layer::TRAP,
           Cfg::Layer::PLAYER,
-          t_block,
-          t_max_vel),
-      trap_sprite(t_sprite.create_sprite(t_x, t_y), t_x, t_y),
-      graphics_indexes(t_graphics_indexes) {
-    this->sprite = &trap_sprite;
-        trap_sprite.sprite().set_blending_enabled(true);
+          blocking_layers,
+          max_vel),
+      trap_sprite(sprite_item.create_sprite(x, y), x, y),
+      _graphics_indexes(graphics_indexes) {
+    sprite = &trap_sprite;
 
-    if (!t_graphics_indexes.empty())
-        action = bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES>::forever(
-            trap_sprite.sprite(), t_sprite_waits, t_sprite.tiles_item(),
-            graphics_indexes);
+    trap_sprite.sprite().set_blending_enabled(true);
+
+    if (!_graphics_indexes.empty()) {
+        _animation_action =
+            bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES>::forever(
+                trap_sprite.sprite(), sprite_waits, sprite_item.tiles_item(),
+                _graphics_indexes);
+    }
 }
 
 void BaseTrap::update() {
-    if (action) {
-        action->update();
+    if (_animation_action) {
+        _animation_action->update();
     }
 }
 
 void BaseTrap::on_enter(
     [[maybe_unused]] uint16_t hit_layers,
     StaticBody* body) {
-    static_cast<Player*>(body)->death();
+    // Traps only react to player collisions.
+    if (body && (body->layers & Cfg::Layer::PLAYER)) {
+        static_cast<Player*>(body)->death();
+    }
 }
 
 BaseTrap::~BaseTrap() {
