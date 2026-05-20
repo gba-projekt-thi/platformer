@@ -2,6 +2,7 @@
 
 #include "bn_core.h"
 #include "bn_dmg_music_item.h"
+#include "bn_log.h"
 #include "bn_music.h"
 #include "bn_music_items.h"
 #include "bn_regular_bg_item.h"

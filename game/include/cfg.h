@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include "bn_array.h"
 
 namespace Cfg {
 
@@ -25,10 +26,10 @@ inline constexpr bn::fixed GRAVITY = 0.22;
 inline constexpr int MAX_FALL_SPEED = 3;
 
 // Animations
-inline constexpr int RIGHT_FRAMES[2] = {0, 1};
-inline constexpr int LEFT_FRAMES[2] = {4, 5};
-inline constexpr int JUMP_RIGHT_FRAMES[2] = {2, 3};
-inline constexpr int JUMP_LEFT_FRAMES[2] = {6, 7};
+inline constexpr bn::array<int, 2> RIGHT_FRAMES = {0, 1};
+inline constexpr bn::array<int, 2> LEFT_FRAMES = {4, 5};
+inline constexpr bn::array<int, 2> JUMP_RIGHT_FRAMES = {2, 3};
+inline constexpr bn::array<int, 2> JUMP_LEFT_FRAMES = {6, 7};
 inline constexpr int IDLE_FRAME = 8;
 inline constexpr int BACK_FRAME = 9;
 inline constexpr int PLAYER_TILE_CACHE_SIZE = 10;
