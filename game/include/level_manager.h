@@ -8,6 +8,7 @@
 #include "bn_regular_bg_ptr.h"
 #include "bn_sprite_ptr.h"
 #include "bn_vector.h"
+#include "common_variable_8x16_sprite_font.h"
 
 #include "cfg.h"
 #include "data_manager.h"
@@ -53,34 +54,20 @@ class LevelManager {
     void _reset_traps();
 
     bn::vector<bn::sprite_ptr, Cfg::Level::Limits::PLATFORMS> _platforms;
-
     bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES>
         _platform_bodies;
-
     bn::vector<Trigger, Cfg::Level::Limits::TRIGGERS> _triggers;
-
     bn::vector<BaseTrap, Cfg::Level::Limits::BASE_TRAPS> _base_traps;
-
     bn::vector<MovingTrap, Cfg::Level::Limits::MOVING_TRAPS> _moving_traps;
-
     bn::vector<PathTrap, Cfg::Level::Limits::PATH_TRAPS> _path_traps;
-
     bn::optional<bn::regular_bg_ptr> _background;
-
     Player* _player;
-
     bn::optional<Door> _door;
-
     bn::optional<bn::music_item> _music;
-
     bn::vector<bn::sprite_ptr, 64> _pause_sprites;
-
     bool _pause_menu_initialized = false;
-
     bool _paused = false;
     bool _prev_paused = false;
-
     unsigned _last_death_ct = 0;
-
     DataManager _data_manager;
 };

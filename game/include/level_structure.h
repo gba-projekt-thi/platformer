@@ -26,9 +26,7 @@ enum class TrapType { BASE, MOVING, PATH };
 struct PlatformData {
     int x;
     int y;
-
     bn::sprite_item sprite;
-
     // Tile index inside sprite tileset.
     int sprite_index;
 };
@@ -41,10 +39,8 @@ struct PlatformData {
 struct TriggerData {
     int x;
     int y;
-
     int width;
     int height;
-
     // Optional:
     // Allows triggers to start already active.
     bool default_on = false;
@@ -67,18 +63,15 @@ struct TrapData {
     // -------------------------------------------------------------------------
 
     TrapType type;
-
     int x;
     int y;
-
     int width;
     int height;
-
     bn::sprite_item sprite;
 
     // Frames to wait before advancing animation.
     // Must be >= 1 when animation frames exist.
-    int animation_wait = 1;
+    int sprite_waits = 1;
 
     // Empty span = no animation.
     bn::span<const uint16_t> graphic_indexes;
@@ -142,7 +135,6 @@ struct LevelData {
     // -------------------------------------------------------------------------
 
     const PlatformData* platforms = nullptr;
-
     int platform_count = 0;
 
     // -------------------------------------------------------------------------
@@ -150,7 +142,6 @@ struct LevelData {
     // -------------------------------------------------------------------------
 
     const TriggerData* triggers = nullptr;
-
     int trigger_count = 0;
 
     // -------------------------------------------------------------------------
@@ -158,7 +149,6 @@ struct LevelData {
     // -------------------------------------------------------------------------
 
     const TrapData* traps = nullptr;
-
     int trap_count = 0;
 
     // -------------------------------------------------------------------------
@@ -166,7 +156,6 @@ struct LevelData {
     // -------------------------------------------------------------------------
 
     bn::regular_bg_item back_ground;
-
     bn::music_item music;
 
     // -------------------------------------------------------------------------
@@ -174,6 +163,5 @@ struct LevelData {
     // -------------------------------------------------------------------------
 
     PlayerData player_data;
-
     DoorData door;
 };

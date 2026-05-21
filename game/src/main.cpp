@@ -66,7 +66,6 @@ int main() {
 
     // Configure global fade behavior once.
     bn::blending::set_fade_color(bn::blending::fade_color_type::BLACK);
-
     bn::blending::set_fade_alpha(0);
 
     // -------------------------------------------------------------------------
@@ -90,9 +89,7 @@ int main() {
 
 #pragma message( \
     "make clean; make USERFLAGS=-DRESET_SAVED used to reset corrupted game state. After running game once it should be fine from now on without the flag")
-
     data_manager.reset();
-
     BN_LOG("Save data reset enabled via RESET_SAVED");
 
 #endif
@@ -114,7 +111,6 @@ int main() {
 
     auto first_scene = bn::make_unique<LevelScene>(
         player, bn::span<const LevelData>(levels), data_manager);
-
     core::SceneManager::instance().set_next_scene(bn::move(first_scene));
 
     // -------------------------------------------------------------------------

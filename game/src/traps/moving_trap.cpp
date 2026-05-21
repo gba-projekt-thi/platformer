@@ -31,7 +31,6 @@ MovingTrap::MovingTrap(
 
 void MovingTrap::update() {
     BaseTrap::update();
-
     // Accelerate once activated.
     if (trigger.is_triggered()) {
         inc_velocity(x_accel, y_accel);
@@ -40,9 +39,7 @@ void MovingTrap::update() {
 
 void MovingTrap::reset() {
     trigger.reset();
-
     set_velocity(0, 0);
-
     pos.x = start_x;
     pos.y = start_y;
 }

@@ -31,30 +31,24 @@ PathTrap::PathTrap(
 
 void PathTrap::update() {
     BaseTrap::update();
-
     if (!trigger.is_triggered() || path.size() < 2 || path_waits == 0) {
         return;
     }
 
     ++current_frame;
-
     const unsigned path_size = unsigned(path.size());
-
     unsigned next_index = current_index + 1;
-
     if (next_index >= path_size) {
         next_index = 0;
     }
 
     // Linear interpolation ratio.
     bn::fixed ratio = bn::fixed(current_frame) / path_waits;
-
     const bn::fixed_point& current = path[current_index];
     const bn::fixed_point& next = path[next_index];
 
     // Interpolate between path nodes.
     pos.x = start_x + current.x() + (next.x() - current.x()) * ratio;
-
     pos.y = start_y + current.y() + (next.y() - current.y()) * ratio;
 
     // Advance to next segment.
@@ -71,6 +65,5 @@ void PathTrap::reset() {
     current_index = 0;
 
     pos.x = path.empty() ? start_x : start_x + path[0].x();
-
     pos.y = path.empty() ? start_y : start_y + path[0].y();
 }

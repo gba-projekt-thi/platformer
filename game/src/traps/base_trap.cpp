@@ -28,7 +28,6 @@ BaseTrap::BaseTrap(
         BN_ASSERT(
             t_animation_wait >= 1,
             "Animated trap requires animation_wait >= 1");
-
         _animation_action =
             bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES>::forever(
                 trap_sprite.sprite(), t_animation_wait,

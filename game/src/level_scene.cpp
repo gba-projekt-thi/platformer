@@ -11,7 +11,6 @@ LevelScene::LevelScene(
 
       // Runtime state access only.
       _level_index(data_manager.state().level),
-
       _level_manager(&player, data_manager),
       _data_manager(data_manager),
       _transition_requested(false) {}
@@ -30,9 +29,7 @@ void LevelScene::update() {
     if (!_level_manager.update()) {
         return;
     }
-
     _transition_requested = true;
-
     const unsigned int next_level_index = _level_index + 1u;
 
     // Game completed.
@@ -44,7 +41,6 @@ void LevelScene::update() {
     // Save progression state.
     auto& timer = _player.get_timer();
     auto& game_state = _data_manager.state();
-
     game_state.level = next_level_index;
 
     // IMPORTANT:
@@ -52,11 +48,9 @@ void LevelScene::update() {
     // Otherwise the next save can overwrite
     // newer runtime death values.
     game_state.deaths = _player.get_deaths();
-
     game_state.centis = timer.centis();
     game_state.seconds = timer.seconds();
     game_state.minutes = timer.minutes();
-
     _data_manager.save();
 
     // Load next level scene.
