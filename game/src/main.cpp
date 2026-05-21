@@ -56,44 +56,84 @@
 extern bool game_finished;
 
 int main() {
+    // -------------------------------------------------------------------------
+    // Butan Initialization
     // Initialize the Butano engine core before using any rendering or input
     // features.
+    // -------------------------------------------------------------------------
+
     bn::core::init();
 
     // Configure global fade behavior once.
     bn::blending::set_fade_color(bn::blending::fade_color_type::BLACK);
     bn::blending::set_fade_alpha(0);
 
-    // Create the ordered level list for game progression.
+    // -------------------------------------------------------------------------
+    // Level List
+    // -------------------------------------------------------------------------
+
     const LevelData levels[] = {LEVEL_0, LEVEL_1, LEVEL_2, LEVEL_3};
 
+    // -------------------------------------------------------------------------
     // Create the player entity and apply an offset for the sprite anchor point.
+    // -------------------------------------------------------------------------
+
     Player player(0, 0, 8, 8);
 
     // Initialize the level manager and begin the game loop.
+    // Static lifetime prevents accidental destruction
+    // during scene transitions.
     static DataManager data_manager;
 
 #ifdef RESET_SAVED
+
 #pragma message( \
     "make clean; make USERFLAGS=-DRESET_SAVED used to reset corrupted game state. After running game once it should be fine from now on without the flag")
     data_manager.reset();
-    BN_LOG(
-        "make clean; make USERFLAGS=-DRESET_SAVED used to reset corrupted game "
-        "state. After running game once it should be fine from now on without "
-        "the flag");
+    BN_LOG("Save data reset enabled via RESET_SAVED");
+
 #endif
+
+    // -------------------------------------------------------------------------
+    // IMPORTANT:
+    // Restore SRAM save into runtime memory ONCE during boot.
+    //
+    // After this point:
+    // - gameplay uses runtime RAM state only
+    // - saves explicitly write back to SRAM
+    // -------------------------------------------------------------------------
+
+    data_manager.load_from_save();
+
+    // -------------------------------------------------------------------------
+    // Initial Scene
+    // -------------------------------------------------------------------------
 
     auto first_scene = bn::make_unique<LevelScene>(
         player, bn::span<const LevelData>(levels), data_manager);
     core::SceneManager::instance().set_next_scene(bn::move(first_scene));
 
+    // -------------------------------------------------------------------------
+    // Main Loop
+    // -------------------------------------------------------------------------
+
     while (!game_finished) {
         core::SceneManager::instance().update();
     }
 
-    for (int i = 0; i < Cfg::Sleep::FINISHED_GAME; ++i)  // sleep 10s
-        bn::core::update();
+    // -------------------------------------------------------------------------
+    // Ending Delay of 10s
+    // -------------------------------------------------------------------------
 
-    // reset game after finishing bc of otherwise corrupted (game breaking) data
+    for (int i = 0; i < Cfg::Sleep::FINISHED_GAME; ++i) {
+        bn::core::update();
+    }
+
+    // -------------------------------------------------------------------------
+    // Game Finished
+    //
+    // Reset save after full completion.
+    // -------------------------------------------------------------------------
+
     data_manager.reset();
 }
