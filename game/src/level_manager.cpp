@@ -88,8 +88,10 @@ void LevelManager::load(const LevelData& level) {
     // Music
     // -------------------------------------------------------------------------
 
-    _music.emplace(level.music);
-    bn::music::play(*_music);
+    if (!_music.has_value() || *_music != level.music) {
+        _music.emplace(level.music);
+        bn::music::play(*_music);
+    }
 
     // -------------------------------------------------------------------------
     // Background

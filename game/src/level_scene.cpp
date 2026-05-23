@@ -54,6 +54,8 @@ void LevelScene::update() {
     _data_manager.save();
 
     // Load next level scene.
-    core::SceneManager::instance().set_next_scene(
-        bn::make_unique<LevelScene>(_player, _levels, _data_manager));
+    _level_index = next_level_index;
+    _transition_requested = false;
+
+    this->init();
 }
