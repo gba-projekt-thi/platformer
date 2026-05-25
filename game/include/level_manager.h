@@ -18,6 +18,7 @@
 #include "moving_trap.h"
 #include "path_trap.h"
 #include "player.h"
+#include "reset_registry.h"
 #include "trigger.h"
 
 // -----------------------------------------------------------------------------
@@ -49,9 +50,6 @@ class LevelManager {
     // Returns a valid trigger reference.
     // Falls back to trigger[0] if invalid.
     Trigger& _get_trigger(int trigger_index);
-
-    // Resets all traps after player death.
-    void _reset_traps();
 
     bn::vector<bn::sprite_ptr, Cfg::Level::Limits::PLATFORMS> _platforms;
     bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES>

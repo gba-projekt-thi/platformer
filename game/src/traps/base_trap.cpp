@@ -33,6 +33,8 @@ BaseTrap::BaseTrap(
                 trap_sprite.sprite(), t_animation_wait,
                 t_sprite_item.tiles_item(), t_graphics_indexes);
     }
+
+    ResetRegistry::instance().register_resettable(this);
 }
 
 void BaseTrap::update() {
@@ -51,5 +53,6 @@ void BaseTrap::on_enter(
 }
 
 BaseTrap::~BaseTrap() {
+    ResetRegistry::instance().unregister_resettable(this);
     SpriteRegistry::instance().unregister_sprite(&trap_sprite);
 }

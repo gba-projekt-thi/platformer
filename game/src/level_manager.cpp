@@ -48,15 +48,6 @@ Trigger& LevelManager::_get_trigger(int trigger_index) {
     return _triggers[0];
 }
 
-void LevelManager::_reset_traps() {
-    for (auto& trap : _moving_traps) {
-        trap.reset();
-    }
-    for (auto& trap : _path_traps) {
-        trap.reset();
-    }
-}
-
 void LevelManager::load(const LevelData& level) {
     _init_pause_menu();
 
@@ -300,7 +291,7 @@ bool LevelManager::update() {
         // SRAM writes are relatively expensive.
         // Consider batching saves later.
         _data_manager.save();
-        _reset_traps();
+        ResetRegistry::instance().reset_all();
     }
     return false;
 }

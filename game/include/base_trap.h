@@ -9,6 +9,8 @@
 #include "cfg.h"
 #include "physics_body.h"
 #include "player.h"
+#include "reset_registry.h"
+#include "resettable.h"
 #include "sprite.h"
 
 // ----------------------------------------------------------------------------
@@ -25,7 +27,7 @@
 // - MovingTrap
 // - PathTrap
 // ----------------------------------------------------------------------------
-class BaseTrap : public PhysicsBody {
+class BaseTrap : public PhysicsBody, public Resettable {
    public:
     BaseTrap(
         bn::fixed t_x,
@@ -46,7 +48,7 @@ class BaseTrap : public PhysicsBody {
     virtual ~BaseTrap();
 
     // Reset trap state after player death or level restart.
-    virtual void reset() {}
+    void reset() override {}
 
    protected:
     // Sprite wrapper synchronized through SpriteRegistry.
