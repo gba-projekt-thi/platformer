@@ -11,7 +11,7 @@ LevelManager::LevelManager(Player* player, DataManager& data_manager)
     // Access already-loaded runtime state.
     auto& game_state = _data_manager.state();
     _player->set_deaths(game_state.deaths);
-    timer.setAll(game_state.centis, game_state.seconds, game_state.minutes);
+    timer.set_time(game_state.centis, game_state.seconds, game_state.minutes);
     _pause_sprites.clear();
 }
 
