@@ -58,17 +58,7 @@ void LevelManager::_reset_traps() {
 }
 
 void LevelManager::load(const LevelData& level) {
-    _init_pause_menu();
-
-    // -------------------------------------------------------------------------
-    // Pause State
-    // -------------------------------------------------------------------------
-
-    _paused = false;
-    _prev_paused = false;
-    for (auto& sprite : _pause_sprites) {
-        sprite.set_visible(false);
-    }
+    _pause_controller.reset();
 
     // -------------------------------------------------------------------------
     // Player Spawn
@@ -88,8 +78,10 @@ void LevelManager::load(const LevelData& level) {
     // Music
     // -------------------------------------------------------------------------
 
-    _music.emplace(level.music);
-    bn::music::play(*_music);
+    if (!_music.has_value() || *_music != level.music) {
+        _music.emplace(level.music);
+        bn::music::play(*_music);
+    }
 
     // -------------------------------------------------------------------------
     // Background
@@ -215,43 +207,15 @@ void LevelManager::load(const LevelData& level) {
 
 bool LevelManager::update() {
     // -------------------------------------------------------------------------
-    // Pause Toggle
+    // Pause
     // -------------------------------------------------------------------------
 
-    if (bn::keypad::start_released()) {
-        _paused = !_paused;
+    const auto pause_action = _pause_controller.update();
+    if (pause_action == PauseController::Action::DeathRequested) {
+        _player->death();
     }
-
-    // -------------------------------------------------------------------------
-    // Pause State Transition
-    // -------------------------------------------------------------------------
-
-    if (_prev_paused != _paused) {
-        _prev_paused = _paused;
-        for (auto& sprite : _pause_sprites) {
-            sprite.set_visible(_paused);
-        }
-
-        if (_paused) {
-            bn::music::pause();
-        } else {
-            bn::music::resume();
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // Pause Logic
-    // -------------------------------------------------------------------------
-
-    if (_paused) {
-        // Select intentionally kills player while paused.
-        if (bn::keypad::select_released()) {
-            _player->death();
-            _paused = false;
-        } else {
-            bn::core::update();
-            return false;
-        }
+    if (_pause_controller.paused()) {
+        return false;
     }
 
     // -------------------------------------------------------------------------

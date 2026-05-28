@@ -17,6 +17,7 @@
 #include "level_structure.h"
 #include "moving_trap.h"
 #include "path_trap.h"
+#include "pause_controller.h"
 #include "player.h"
 #include "trigger.h"
 
@@ -69,5 +70,6 @@ class LevelManager {
     bool _paused = false;
     bool _prev_paused = false;
     unsigned _last_death_ct = 0;
+    PauseController _pause_controller;
     DataManager _data_manager;
 };
