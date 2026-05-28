@@ -1,14 +1,12 @@
 #pragma once
 
 #include "bn_core.h"
-#include "bn_dmg_music_item.h"
 #include "bn_log.h"
 #include "bn_music.h"
 #include "bn_optional.h"
 #include "bn_regular_bg_ptr.h"
 #include "bn_sprite_ptr.h"
 #include "bn_vector.h"
-#include "common_variable_8x16_sprite_font.h"
 
 #include "cfg.h"
 #include "data_manager.h"
@@ -17,6 +15,7 @@
 #include "level_structure.h"
 #include "moving_trap.h"
 #include "path_trap.h"
+#include "pause_controller.h"
 #include "player.h"
 #include "trigger.h"
 
@@ -44,8 +43,6 @@ class LevelManager {
     bool update();
 
    private:
-    void _init_pause_menu();
-
     // Returns a valid trigger reference.
     // Falls back to trigger[0] if invalid.
     Trigger& _get_trigger(int trigger_index);
@@ -64,10 +61,7 @@ class LevelManager {
     Player* _player;
     bn::optional<Door> _door;
     bn::optional<bn::music_item> _music;
-    bn::vector<bn::sprite_ptr, 64> _pause_sprites;
-    bool _pause_menu_initialized = false;
-    bool _paused = false;
-    bool _prev_paused = false;
+    PauseController _pause_controller;
     unsigned _last_death_ct = 0;
     DataManager _data_manager;
 };

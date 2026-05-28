@@ -12,29 +12,6 @@ LevelManager::LevelManager(Player* player, DataManager& data_manager)
     auto& game_state = _data_manager.state();
     _player->set_deaths(game_state.deaths);
     timer.setAll(game_state.centis, game_state.seconds, game_state.minutes);
-    _pause_sprites.clear();
-}
-
-void LevelManager::_init_pause_menu() {
-    if (_pause_menu_initialized) {
-        return;
-    }
-    bn::sprite_text_generator text_gen(common::variable_8x16_sprite_font);
-    text_gen.set_z_order(Cfg::ZOrder::PAUSE_MENU);
-    text_gen.set_blending_enabled(true);
-
-    text_gen.generate(
-        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_0, "Paused", _pause_sprites);
-    text_gen.generate(
-        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_1, "Continue: Start",
-        _pause_sprites);
-    text_gen.generate(
-        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_2, "Die: Select", _pause_sprites);
-    for (bn::sprite_ptr& sprite : _pause_sprites) {
-        sprite.set_visible(false);
-        sprite.set_blending_enabled(true);
-    }
-    _pause_menu_initialized = true;
 }
 
 Trigger& LevelManager::_get_trigger(int trigger_index) {
@@ -58,17 +35,7 @@ void LevelManager::_reset_traps() {
 }
 
 void LevelManager::load(const LevelData& level) {
-    _init_pause_menu();
-
-    // -------------------------------------------------------------------------
-    // Pause State
-    // -------------------------------------------------------------------------
-
-    _paused = false;
-    _prev_paused = false;
-    for (auto& sprite : _pause_sprites) {
-        sprite.set_visible(false);
-    }
+    _pause_controller.reset();
 
     // -------------------------------------------------------------------------
     // Player Spawn
@@ -217,43 +184,15 @@ void LevelManager::load(const LevelData& level) {
 
 bool LevelManager::update() {
     // -------------------------------------------------------------------------
-    // Pause Toggle
+    // Pause
     // -------------------------------------------------------------------------
 
-    if (bn::keypad::start_released()) {
-        _paused = !_paused;
+    const auto pause_action = _pause_controller.update();
+    if (pause_action == PauseController::Action::DeathRequested) {
+        _player->death();
     }
-
-    // -------------------------------------------------------------------------
-    // Pause State Transition
-    // -------------------------------------------------------------------------
-
-    if (_prev_paused != _paused) {
-        _prev_paused = _paused;
-        for (auto& sprite : _pause_sprites) {
-            sprite.set_visible(_paused);
-        }
-
-        if (_paused) {
-            bn::music::pause();
-        } else {
-            bn::music::resume();
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // Pause Logic
-    // -------------------------------------------------------------------------
-
-    if (_paused) {
-        // Select intentionally kills player while paused.
-        if (bn::keypad::select_released()) {
-            _player->death();
-            _paused = false;
-        } else {
-            bn::core::update();
-            return false;
-        }
+    if (_pause_controller.paused()) {
+        return false;
     }
 
     // -------------------------------------------------------------------------
