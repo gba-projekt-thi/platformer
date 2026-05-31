@@ -35,7 +35,7 @@
 // -----------------------------------------------------------------------------
 class LevelManager {
    public:
-    explicit LevelManager(Player* player, DataManager& data_manager);
+    explicit LevelManager(Player& player, DataManager& data_manager);
 
     // Loads a level and initializes all entities.
     void load(const LevelData& level);
@@ -62,7 +62,7 @@ class LevelManager {
     bn::vector<MovingTrap, Cfg::Level::Limits::MOVING_TRAPS> _moving_traps;
     bn::vector<PathTrap, Cfg::Level::Limits::PATH_TRAPS> _path_traps;
     bn::optional<bn::regular_bg_ptr> _background;
-    Player* _player;
+    Player& _player;
     bn::optional<Door> _door;
     bn::optional<bn::music_item> _music;
     bn::vector<bn::sprite_ptr, 64> _pause_sprites;

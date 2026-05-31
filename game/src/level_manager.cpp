@@ -1,16 +1,16 @@
 #include "level_manager.h"
 
-LevelManager::LevelManager(Player* player, DataManager& data_manager)
+LevelManager::LevelManager(Player& player, DataManager& data_manager)
     : _player(player), _data_manager(data_manager) {
     // -------------------------------------------------------------------------
     // Restore persistent runtime state
     // -------------------------------------------------------------------------
 
-    Timer& timer = _player->get_timer();
+    Timer& timer = _player.get_timer();
 
     // Access already-loaded runtime state.
     auto& game_state = _data_manager.state();
-    _player->set_deaths(game_state.deaths);
+    _player.set_deaths(game_state.deaths);
     timer.set_time(game_state.centis, game_state.seconds, game_state.minutes);
     _pause_sprites.clear();
 }
@@ -64,9 +64,9 @@ void LevelManager::load(const LevelData& level) {
     // Player Spawn
     // -------------------------------------------------------------------------
 
-    _player->teleport_to(level.player_data.x, level.player_data.y);
-    _player->set_spawn_point(level.player_data.x, level.player_data.y);
-    _last_death_ct = _player->get_deaths();
+    _player.teleport_to(level.player_data.x, level.player_data.y);
+    _player.set_spawn_point(level.player_data.x, level.player_data.y);
+    _last_death_ct = _player.get_deaths();
 
     // -------------------------------------------------------------------------
     // Door
@@ -212,7 +212,7 @@ bool LevelManager::update() {
 
     const auto pause_action = _pause_controller.update();
     if (pause_action == PauseController::Action::DeathRequested) {
-        _player->death();
+        _player.death();
     }
     if (_pause_controller.paused()) {
         return false;
@@ -247,13 +247,13 @@ bool LevelManager::update() {
     // Death Synchronization
     // -------------------------------------------------------------------------
 
-    if (_last_death_ct != _player->get_deaths()) {
-        _last_death_ct = _player->get_deaths();
+    if (_last_death_ct != _player.get_deaths()) {
+        _last_death_ct = _player.get_deaths();
 
         // Runtime state access only.
         auto& game_state = _data_manager.state();
         game_state.deaths = _last_death_ct;
-        Timer& timer = _player->get_timer();
+        Timer& timer = _player.get_timer();
         game_state.centis = timer.centis();
         game_state.seconds = timer.seconds();
         game_state.minutes = timer.minutes();
