@@ -52,6 +52,7 @@
 #include "level_manager.h"
 #include "level_scene.h"
 #include "levels.h"
+#include "start_scene.h"
 
 extern bool game_finished;
 
@@ -95,21 +96,10 @@ int main() {
 #endif
 
     // -------------------------------------------------------------------------
-    // IMPORTANT:
-    // Restore SRAM save into runtime memory ONCE during boot.
-    //
-    // After this point:
-    // - gameplay uses runtime RAM state only
-    // - saves explicitly write back to SRAM
+    // Initial Scene: show Start / Save Slot selection first
     // -------------------------------------------------------------------------
 
-    data_manager.load_from_save();
-
-    // -------------------------------------------------------------------------
-    // Initial Scene
-    // -------------------------------------------------------------------------
-
-    auto first_scene = bn::make_unique<LevelScene>(
+    auto first_scene = bn::make_unique<StartScene>(
         player, bn::span<const LevelData>(levels), data_manager);
     core::SceneManager::instance().set_next_scene(bn::move(first_scene));
 

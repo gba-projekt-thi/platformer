@@ -81,6 +81,11 @@ inline constexpr int Y_1 = -4;
 inline constexpr int Y_2 = 12;
 }  // namespace PauseMenu
 
+namespace StartScreen {
+inline constexpr int X = -80;
+inline constexpr int Y = -10;
+}  // namespace StartScreen
+
 namespace Physics {
 inline constexpr bn::fixed NO_MAX_VELOCITY = 0;
 }
