@@ -8,13 +8,14 @@ extern bool game_finished;
 LevelScene::LevelScene(
     Player& player,
     bn::span<const LevelData> levels,
-    DataManager& data_manager)
+    DataManager& data_manager,
+    LevelManager& level_manager)
     : _player(player),
       _levels(levels),
 
       // Runtime state access only.
       _level_index(data_manager.state().level),
-      _level_manager(player, data_manager),
+      _level_manager(level_manager),
       _data_manager(data_manager),
       _transition_requested(false) {}
 
@@ -62,7 +63,7 @@ void LevelScene::update() {
           _levels[next_level_index].back_ground);
 
     auto next_scene = bn::make_unique<LevelScene>(
-        _player, _levels, _data_manager);
+        _player, _levels, _data_manager, _level_manager);
     core::AudioTransitionOptions audio_options;
     audio_options.fade_music = changes_world;
     core::SceneManager::instance().set_next_scene(

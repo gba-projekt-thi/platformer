@@ -236,10 +236,6 @@ bool LevelManager::update() {
     // -------------------------------------------------------------------------
 
     if (_door && _door->reached()) {
-        for (int i = 0; i < Cfg::Sleep::DOOR_REACHED; ++i) {
-            _door->update();
-            bn::core::update();
-        }
         return true;
     }
 

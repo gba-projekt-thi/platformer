@@ -18,7 +18,8 @@ class LevelScene : public core::Scene {
     LevelScene(
         Player& player,
         bn::span<const LevelData> levels,
-        DataManager& data_manager);
+        DataManager& data_manager,
+        LevelManager& level_manager);
     void init() override;
     void update() override;
 
@@ -26,7 +27,7 @@ class LevelScene : public core::Scene {
     Player& _player;
     bn::span<const LevelData> _levels;
     unsigned int _level_index;
-    LevelManager _level_manager;
+    LevelManager& _level_manager;
     DataManager& _data_manager;
 
     // Prevents multiple scene transitions.
