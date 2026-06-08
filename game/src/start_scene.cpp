@@ -4,6 +4,7 @@
 #include "bn_keypad.h"
 #include "bn_log.h"
 #include "bn_music_items.h"
+#include "bn_sprite_items_titel64x128.h"
 
 StartScene::StartScene(
     Player& player,
@@ -18,6 +19,23 @@ void StartScene::init() {
     // Hide the persistent player sprite while the start screen is visible.
     _player.set_visible(false);
     _player.set_hud_visible(false);
+
+    // Title graphics - two tiles placed at top right with spacing
+    _title_sprites.clear();
+    // Tile 0 at top right
+    bn::sprite_ptr title0 =
+        bn::sprite_items::titel64x128.create_sprite(-70, -50);
+    title0.set_tiles(
+        bn::sprite_items::titel64x128.tiles_item().create_tiles(0));
+    title0.set_blending_enabled(true);
+    _title_sprites.push_back(bn::move(title0));
+    // Tile 1 next to it with spacing
+    bn::sprite_ptr title1 =
+        bn::sprite_items::titel64x128.create_sprite(-6, -50);
+    title1.set_tiles(
+        bn::sprite_items::titel64x128.tiles_item().create_tiles(1));
+    title1.set_blending_enabled(true);
+    _title_sprites.push_back(bn::move(title1));
 
     // Background
     _bg.emplace(bn::regular_bg_items::startscreen.create_bg(0, 0));
