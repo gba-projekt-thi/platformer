@@ -11,7 +11,7 @@ LevelScene::LevelScene(
 
       // Runtime state access only.
       _level_index(data_manager.state().level),
-      _level_manager(&player, data_manager),
+      _level_manager(player, data_manager),
       _data_manager(data_manager),
       _transition_requested(false) {}
 
