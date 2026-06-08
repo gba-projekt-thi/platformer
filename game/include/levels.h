@@ -255,7 +255,7 @@ const LevelData LEVEL_3 = {
     sizeof(level3_traps) / sizeof(level3_traps[0]),
 
     bn::regular_bg_items::level3,
-    bn::music_items::level2,
+    bn::music_items::world3,
     // Player spawn
     {-96, 40},
     // Door position
