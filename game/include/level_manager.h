@@ -71,5 +71,5 @@ class LevelManager {
     bool _prev_paused = false;
     unsigned _last_death_ct = 0;
     PauseController _pause_controller;
-    DataManager _data_manager;
+    DataManager& _data_manager;
 };
