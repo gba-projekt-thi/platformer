@@ -1,4 +1,5 @@
 #include "level_manager.h"
+#include "trap_factory.h"
 
 LevelManager::LevelManager(Player& player, DataManager& data_manager)
     : _player(player), _pause_controller(), _data_manager(data_manager) {
@@ -14,7 +15,7 @@ LevelManager::LevelManager(Player& player, DataManager& data_manager)
     timer.set_time(game_state.centis, game_state.seconds, game_state.minutes);
 }
 
-Trigger& LevelManager::_get_trigger(int trigger_index) {
+Trigger& LevelManager::get_trigger(int trigger_index) {
     const int trigger_count = _triggers.size();
     if (trigger_index >= 0 && trigger_index < trigger_count) {
         return _triggers[trigger_index];
@@ -26,11 +27,8 @@ Trigger& LevelManager::_get_trigger(int trigger_index) {
 }
 
 void LevelManager::_reset_traps() {
-    for (auto& trap : _moving_traps) {
-        trap.reset();
-    }
-    for (auto& trap : _path_traps) {
-        trap.reset();
+    for (auto& trap : _traps) {
+        trap->reset();
     }
 }
 
@@ -76,9 +74,7 @@ void LevelManager::load(const LevelData& level) {
     _platforms.clear();
     _platform_bodies.clear();
     _triggers.clear();
-    _base_traps.clear();
-    _moving_traps.clear();
-    _path_traps.clear();
+    _traps.clear();
 
     // -------------------------------------------------------------------------
     // Validation
@@ -90,25 +86,9 @@ void LevelManager::load(const LevelData& level) {
     BN_ASSERT(
         unsigned(level.trigger_count) < Cfg::Level::Limits::TRIGGERS,
         "Too many triggers");
-    unsigned base_trap_count = 0;
-    unsigned moving_trap_count = 0;
-    unsigned path_trap_count = 0;
-
-    for (int i = 0; i < level.trap_count; ++i) {
-        const TrapData& trap = level.traps[i];
-        base_trap_count += trap.type == TrapType::BASE;
-        moving_trap_count += trap.type == TrapType::MOVING;
-        path_trap_count += trap.type == TrapType::PATH;
-    }
     BN_ASSERT(
-        base_trap_count < Cfg::Level::Limits::BASE_TRAPS,
-        "Too many base traps");
-    BN_ASSERT(
-        moving_trap_count < Cfg::Level::Limits::MOVING_TRAPS,
-        "Too many moving traps");
-    BN_ASSERT(
-        path_trap_count < Cfg::Level::Limits::PATH_TRAPS,
-        "Too many path traps");
+        unsigned(level.trap_count) < Cfg::Level::Limits::TOTAL_TRAPS,
+        "Too many traps");
 
     // -------------------------------------------------------------------------
     // Platforms
@@ -149,36 +129,7 @@ void LevelManager::load(const LevelData& level) {
     // -------------------------------------------------------------------------
 
     for (int i = 0; i < level.trap_count; ++i) {
-        const TrapData& trap = level.traps[i];
-        switch (trap.type) {
-            case TrapType::BASE: {
-                _base_traps.emplace_back(
-                    trap.x, trap.y, trap.width, trap.height, trap.sprite,
-                    trap.sprite_waits, trap.graphic_indexes, 0);
-                break;
-            }
-            case TrapType::MOVING: {
-                Trigger& trigger = _get_trigger(trap.trigger_index);
-                _moving_traps.emplace_back(
-                    trap.x, trap.y, trap.width, trap.height, trap.sprite,
-                    trap.sprite_waits, trap.graphic_indexes, 0, trap.velocity_x,
-                    trap.velocity_y, trap.max_vel, trigger);
-                break;
-            }
-            case TrapType::PATH: {
-                Trigger& trigger = _get_trigger(trap.trigger_index);
-                _path_traps.emplace_back(
-                    trap.x, trap.y, trap.width, trap.height, trap.sprite,
-                    trap.sprite_waits, trap.graphic_indexes, 0, trap.path,
-                    trap.path_waits, trigger);
-                break;
-            }
-            default:
-                BN_LOG(
-                    "[ERROR] level_manager: "
-                    "unimplemented trap type");
-                break;
-        }
+        _traps.push_back(TrapFactory::create(level.traps[i], *this));
     }
 }
 

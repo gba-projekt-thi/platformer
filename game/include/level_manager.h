@@ -7,6 +7,7 @@
 #include "bn_optional.h"
 #include "bn_regular_bg_ptr.h"
 #include "bn_sprite_ptr.h"
+#include "bn_unique_ptr.h"
 #include "bn_vector.h"
 #include "common_variable_8x16_sprite_font.h"
 
@@ -44,12 +45,12 @@ class LevelManager {
     // Returns true when level completed.
     bool update();
 
-   private:
-    void _init_pause_menu();
-
     // Returns a valid trigger reference.
     // Falls back to trigger[0] if invalid.
-    Trigger& _get_trigger(int trigger_index);
+    Trigger& get_trigger(int trigger_index);
+
+   private:
+    void _init_pause_menu();
 
     // Resets all traps after player death.
     void _reset_traps();
@@ -58,9 +59,8 @@ class LevelManager {
     bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES>
         _platform_bodies;
     bn::vector<Trigger, Cfg::Level::Limits::TRIGGERS> _triggers;
-    bn::vector<BaseTrap, Cfg::Level::Limits::BASE_TRAPS> _base_traps;
-    bn::vector<MovingTrap, Cfg::Level::Limits::MOVING_TRAPS> _moving_traps;
-    bn::vector<PathTrap, Cfg::Level::Limits::PATH_TRAPS> _path_traps;
+    bn::vector<bn::unique_ptr<BaseTrap>, Cfg::Level::Limits::TOTAL_TRAPS>
+        _traps;
     bn::optional<bn::regular_bg_ptr> _background;
     Player& _player;
     bn::optional<Door> _door;
