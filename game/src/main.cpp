@@ -99,8 +99,12 @@ int main() {
     // Initial Scene: show Start / Save Slot selection first
     // -------------------------------------------------------------------------
 
+    static LevelManager level_manager
+        __attribute__((section(".ewram"))) (player, data_manager);
+
     auto first_scene = bn::make_unique<StartScene>(
-        player, bn::span<const LevelData>(levels), data_manager);
+        player, bn::span<const LevelData>(levels), data_manager, level_manager);
+
     core::SceneManager::instance().set_next_scene(bn::move(first_scene));
 
     // -------------------------------------------------------------------------

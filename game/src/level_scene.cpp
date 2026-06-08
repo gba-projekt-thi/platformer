@@ -1,17 +1,21 @@
 #include "level_scene.h"
 
+#include "bn_core.h"
+#include "bn_unique_ptr.h"
+
 extern bool game_finished;
 
 LevelScene::LevelScene(
     Player& player,
     bn::span<const LevelData> levels,
-    DataManager& data_manager)
+    DataManager& data_manager,
+    LevelManager& level_manager)
     : _player(player),
       _levels(levels),
 
       // Runtime state access only.
       _level_index(data_manager.state().level),
-      _level_manager(player, data_manager),
+      _level_manager(level_manager),
       _data_manager(data_manager),
       _transition_requested(false) {}
 
@@ -24,6 +28,7 @@ void LevelScene::init() {
 void LevelScene::update() {
     // Prevent duplicate transitions.
     if (_transition_requested) {
+        bn::core::update();
         return;
     }
 
@@ -55,9 +60,14 @@ void LevelScene::update() {
     game_state.minutes = timer.minutes();
     _data_manager.save();
 
-    // Load next level scene.
-    _level_index = next_level_index;
-    _transition_requested = false;
+    const bool changes_world =
+        !(_levels[_level_index].back_ground ==
+          _levels[next_level_index].back_ground);
 
-    this->init();
+    auto next_scene = bn::make_unique<LevelScene>(
+        _player, _levels, _data_manager, _level_manager);
+    core::AudioTransitionOptions audio_options;
+    audio_options.fade_music = changes_world;
+    core::SceneManager::instance().set_next_scene(
+        bn::move(next_scene), audio_options);
 }

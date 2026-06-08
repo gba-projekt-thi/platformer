@@ -16,7 +16,8 @@ class StartScene : public core::Scene {
     StartScene(
         Player& player,
         bn::span<const LevelData> levels,
-        DataManager& data_manager);
+        DataManager& data_manager,
+        LevelManager& level_manager);
     void init() override;
     void update() override;
 
@@ -24,6 +25,7 @@ class StartScene : public core::Scene {
     Player& _player;
     bn::span<const LevelData> _levels;
     DataManager& _data_manager;
+    LevelManager& _level_manager;
 
     int _selected_slot;
     bool _transition_requested;

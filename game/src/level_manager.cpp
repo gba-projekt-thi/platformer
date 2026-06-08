@@ -3,6 +3,10 @@
 
 LevelManager::LevelManager(Player& player, DataManager& data_manager)
     : _player(player), _pause_controller(), _data_manager(data_manager) {
+    restoreHUD();
+}
+
+void LevelManager::restoreHUD() {
     // -------------------------------------------------------------------------
     // Restore persistent runtime state
     // -------------------------------------------------------------------------
@@ -164,10 +168,6 @@ bool LevelManager::update() {
     // -------------------------------------------------------------------------
 
     if (_door && _door->reached()) {
-        for (int i = 0; i < Cfg::Sleep::DOOR_REACHED; ++i) {
-            _door->update();
-            bn::core::update();
-        }
         return true;
     }
 

@@ -9,8 +9,12 @@
 StartScene::StartScene(
     Player& player,
     bn::span<const LevelData> levels,
-    DataManager& data_manager)
-    : _player(player), _levels(levels), _data_manager(data_manager) {
+    DataManager& data_manager,
+    LevelManager& level_manager)
+    : _player(player),
+      _levels(levels),
+      _data_manager(data_manager),
+      _level_manager(level_manager) {
     _selected_slot = 0;
     _transition_requested = false;
 }
@@ -119,9 +123,10 @@ void StartScene::update() {
             _data_manager.load_from_save();
 
             // Transition to level scene
-            auto next =
-                bn::make_unique<LevelScene>(_player, _levels, _data_manager);
+            auto next = bn::make_unique<LevelScene>(
+                _player, _levels, _data_manager, _level_manager);
             core::SceneManager::instance().set_next_scene(bn::move(next));
+            _level_manager.restoreHUD();
         }
     }
 

@@ -38,6 +38,9 @@ class LevelManager {
    public:
     explicit LevelManager(Player& player, DataManager& data_manager);
 
+    // restores hud (timer, counter, etc.)
+    void restoreHUD();
+
     // Loads a level and initializes all entities.
     void load(const LevelData& level);
 
