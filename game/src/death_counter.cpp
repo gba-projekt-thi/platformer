@@ -40,5 +40,17 @@ void DeathCounterHUD::refresh() {
 
     for (bn::sprite_ptr& sprite : _sprites) {
         sprite.set_blending_enabled(true);
+        sprite.set_visible(_visible);
     }
+}
+
+void DeathCounterHUD::set_visible(bool visible) {
+    _visible = visible;
+    for (bn::sprite_ptr& sprite : _sprites) {
+        sprite.set_visible(visible);
+    }
+}
+
+bool DeathCounterHUD::visible() const {
+    return _visible;
 }
