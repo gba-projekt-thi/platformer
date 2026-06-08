@@ -90,12 +90,15 @@ sudo apt-get install mgba-qt
 
 ```
 projectGBA/
+├── docs/                              # Documentation for the repository and game
 ├── game/                              # Example project
 ├── extern/engine/                     # Engine team (submodule)
 ├── extern/engine/extern/butano/       # Butano engine (submodule)
 ├── docker/                            # Docker build environment
 └── .devcontainer/                     # VS Code devcontainer config
 ```
+
+See `docs/game.md` for detailed game architecture, source layout, and level data information.
 
 ## Game Overview
 
