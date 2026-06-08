@@ -17,6 +17,8 @@ LevelScene::LevelScene(
 
 void LevelScene::init() {
     _level_manager.load(_levels[_level_index]);
+    _player.set_visible(true);
+    _player.set_hud_visible(true);
 }
 
 void LevelScene::update() {

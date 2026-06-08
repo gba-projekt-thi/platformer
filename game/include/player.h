@@ -40,6 +40,11 @@ class Player : public PhysicsBody {
     void set_spawn_point(bn::fixed in_x, bn::fixed in_y);
     // teleport the player immediately to the given coordinate.
     void teleport_to(bn::fixed in_x, bn::fixed in_y);
+    // Control player visibility while showing menu/UI.
+    void set_visible(bool visible);
+    [[nodiscard]] bool visible() const;
+    // Control HUD visibility for title screens.
+    void set_hud_visible(bool visible);
     // Get & Set the count of player deaths.
     unsigned int get_deaths() const;
     void set_deaths(unsigned int deaths);

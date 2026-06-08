@@ -65,11 +65,7 @@ class LevelManager {
     Player& _player;
     bn::optional<Door> _door;
     bn::optional<bn::music_item> _music;
-    bn::vector<bn::sprite_ptr, 64> _pause_sprites;
-    bool _pause_menu_initialized = false;
-    bool _paused = false;
-    bool _prev_paused = false;
     unsigned _last_death_ct = 0;
     PauseController _pause_controller;
-    DataManager _data_manager;
+    DataManager& _data_manager;
 };

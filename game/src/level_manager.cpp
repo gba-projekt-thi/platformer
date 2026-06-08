@@ -2,7 +2,7 @@
 #include "trap_factory.h"
 
 LevelManager::LevelManager(Player& player, DataManager& data_manager)
-    : _player(player), _data_manager(data_manager) {
+    : _player(player), _pause_controller(), _data_manager(data_manager) {
     // -------------------------------------------------------------------------
     // Restore persistent runtime state
     // -------------------------------------------------------------------------
@@ -13,29 +13,6 @@ LevelManager::LevelManager(Player& player, DataManager& data_manager)
     auto& game_state = _data_manager.state();
     _player.set_deaths(game_state.deaths);
     timer.set_time(game_state.centis, game_state.seconds, game_state.minutes);
-    _pause_sprites.clear();
-}
-
-void LevelManager::_init_pause_menu() {
-    if (_pause_menu_initialized) {
-        return;
-    }
-    bn::sprite_text_generator text_gen(common::variable_8x16_sprite_font);
-    text_gen.set_z_order(Cfg::ZOrder::PAUSE_MENU);
-    text_gen.set_blending_enabled(true);
-
-    text_gen.generate(
-        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_0, "Paused", _pause_sprites);
-    text_gen.generate(
-        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_1, "Continue: Start",
-        _pause_sprites);
-    text_gen.generate(
-        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_2, "Die: Select", _pause_sprites);
-    for (bn::sprite_ptr& sprite : _pause_sprites) {
-        sprite.set_visible(false);
-        sprite.set_blending_enabled(true);
-    }
-    _pause_menu_initialized = true;
 }
 
 Trigger& LevelManager::get_trigger(int trigger_index) {
