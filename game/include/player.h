@@ -43,6 +43,8 @@ class Player : public PhysicsBody {
     // Control player visibility while showing menu/UI.
     void set_visible(bool visible);
     [[nodiscard]] bool visible() const;
+    // Control HUD visibility for title screens.
+    void set_hud_visible(bool visible);
     // Get & Set the count of player deaths.
     unsigned int get_deaths() const;
     void set_deaths(unsigned int deaths);

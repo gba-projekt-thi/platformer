@@ -26,6 +26,9 @@ class DeathCounterHUD {
         const DeathCounter& counter);
     // Update the HUD if the death count has changed.
     void update();
+    // Control visibility of HUD sprites.
+    void set_visible(bool visible);
+    [[nodiscard]] bool visible() const;
 
    private:
     void refresh();
@@ -34,4 +37,5 @@ class DeathCounterHUD {
     const DeathCounter& _counter;
     bn::vector<bn::sprite_ptr, Cfg::DeathCounter::STRING_LEN> _sprites;
     uint32_t _last_count;
+    bool _visible = true;
 };

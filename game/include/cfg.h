@@ -84,6 +84,7 @@ inline constexpr int Y_2 = 12;
 namespace StartScreen {
 inline constexpr int X = -80;
 inline constexpr int Y = -10;
+inline constexpr int SAVE_SLOT_COUNT = 3;
 }  // namespace StartScreen
 
 namespace Physics {

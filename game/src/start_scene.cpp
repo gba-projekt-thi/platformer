@@ -17,6 +17,7 @@ StartScene::StartScene(
 void StartScene::init() {
     // Hide the persistent player sprite while the start screen is visible.
     _player.set_visible(false);
+    _player.set_hud_visible(false);
 
     // Background
     _bg.emplace(bn::regular_bg_items::startscreen.create_bg(0, 0));
@@ -33,7 +34,7 @@ void StartScene::init() {
 
     // Initial render of slots
     _slot_sprites.clear();
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < Cfg::StartScreen::SAVE_SLOT_COUNT; ++i) {
         char buf[32];
         int pos = 0;
         buf[pos++] = (i == _selected_slot) ? '>' : ' ';
@@ -57,10 +58,13 @@ void StartScene::update() {
     if (!_transition_requested) {
         bool changed = false;
         if (bn::keypad::down_pressed()) {
-            _selected_slot = (_selected_slot + 1) % 3;
+            _selected_slot =
+                (_selected_slot + 1) % Cfg::StartScreen::SAVE_SLOT_COUNT;
             changed = true;
         } else if (bn::keypad::up_pressed()) {
-            _selected_slot = (_selected_slot + 3 - 1) % 3;
+            _selected_slot =
+                (_selected_slot + Cfg::StartScreen::SAVE_SLOT_COUNT - 1) %
+                Cfg::StartScreen::SAVE_SLOT_COUNT;
             changed = true;
         }
 
@@ -70,7 +74,7 @@ void StartScene::update() {
                 s.set_visible(false);
             }
             _slot_sprites.clear();
-            for (int i = 0; i < 3; ++i) {
+            for (int i = 0; i < Cfg::StartScreen::SAVE_SLOT_COUNT; ++i) {
                 char buf[32];
                 int pos = 0;
                 buf[pos++] = (i == _selected_slot) ? '>' : ' ';

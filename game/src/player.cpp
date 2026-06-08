@@ -141,6 +141,11 @@ bool Player::visible() const {
     return player_sprite.is_enabled();
 }
 
+void Player::set_hud_visible(bool visible) {
+    deathCounterHud.set_visible(visible);
+    timerHud.set_visible(visible);
+}
+
 // Horizontal input handling
 void Player::handle_horizontal_input() {
     if (bn::keypad::left_held()) {

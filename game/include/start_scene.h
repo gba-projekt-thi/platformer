@@ -27,6 +27,7 @@ class StartScene : public core::Scene {
 
     int _selected_slot;
     bool _transition_requested;
+    bn::vector<bn::sprite_ptr, 2> _title_sprites;
 
     // Graphics
     bn::optional<bn::regular_bg_ptr> _bg;
