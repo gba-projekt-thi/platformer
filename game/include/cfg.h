@@ -59,9 +59,7 @@ namespace Limits {
 inline constexpr unsigned int PLATFORMS = 32;
 inline constexpr unsigned int PLATFORM_BODIES = 32;
 inline constexpr unsigned int TRIGGERS = 16;
-inline constexpr unsigned int BASE_TRAPS = 16;
-inline constexpr unsigned int MOVING_TRAPS = 16;
-inline constexpr unsigned int PATH_TRAPS = 8;
+inline constexpr unsigned int TOTAL_TRAPS = 32;
 }  // namespace Limits
 }  // namespace Level
 
@@ -80,6 +78,12 @@ inline constexpr int Y_0 = -20;
 inline constexpr int Y_1 = -4;
 inline constexpr int Y_2 = 12;
 }  // namespace PauseMenu
+
+namespace StartScreen {
+inline constexpr int X = -80;
+inline constexpr int Y = -10;
+inline constexpr int SAVE_SLOT_COUNT = 3;
+}  // namespace StartScreen
 
 namespace Physics {
 inline constexpr bn::fixed NO_MAX_VELOCITY = 0;
