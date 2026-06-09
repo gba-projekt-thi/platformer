@@ -172,6 +172,18 @@ void Player::handle_horizontal_input() {
         // No horizontal input: apply friction to slow the player down.
         dec_velocity(acceleration, 0);
     }
+
+    bool moving = bn::keypad::left_held() || bn::keypad::right_held();
+    if (moving && onGround) {
+        if (_walk_sound_counter == 0) {
+            bn::sound_items::duck_step.play();
+        }
+        if (++_walk_sound_counter >= 10) {
+            _walk_sound_counter = 0;
+        }
+    } else {
+        _walk_sound_counter = 0;
+    }
 }
 
 // Jump logic: perform jump when buffered input exists and the player is
@@ -182,6 +194,8 @@ void Player::handle_jump() {
         onGround = false;
         jump_buffer_timer = 0;
         coyote_timer = 0;
+
+        bn::sound_items::jump.play();
     }
 
     // Cancel upward motion when hitting a ceiling.
@@ -248,6 +262,8 @@ void Player::death() {
 
     pos.x = restart_x;
     pos.y = restart_y;
+
+    bn::sound_items::duck_death.play();
 }
 
 // Update the player's state machine based on movement and grounding.

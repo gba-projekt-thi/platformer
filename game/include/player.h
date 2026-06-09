@@ -3,6 +3,7 @@
 #include "bn_fixed.h"
 #include "bn_keypad.h"
 #include "bn_log.h"
+#include "bn_sound_items.h"
 #include "bn_sprite_animate_actions.h"
 #include "bn_sprite_items_ente.h"
 #include "bn_sprite_text_generator.h"
@@ -103,6 +104,9 @@ class Player : public PhysicsBody {
     // Jump helpers
     int coyote_timer = 0;
     int jump_buffer_timer = 0;
+
+    // Walk sound helper
+    int _walk_sound_counter = 0;
 
     // Input & physics handlers
     void handle_horizontal_input();
