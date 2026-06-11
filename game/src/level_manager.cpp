@@ -109,8 +109,10 @@ void LevelManager::load(const LevelData& level) {
         sprite.set_blending_enabled(true);
         _platforms.push_back(bn::move(sprite));
         _platform_bodies.emplace_back(
-            platform.x, platform.y, _platforms.back().dimensions().width(),
-            _platforms.back().dimensions().height(), Cfg::Layer::PLATFORM);
+            platform.x, platform.y, platform.width, platform.height,
+            Cfg::Layer::PLATFORM);
+        _platform_bodies.back().pos.offset_x = platform.offset_x;
+        _platform_bodies.back().pos.offset_y = platform.offset_y;
     }
 
     // -------------------------------------------------------------------------
