@@ -54,7 +54,9 @@ PauseController::Action PauseController::update() {
 
         if (_paused) {
             bn::music::pause();
+            bn::sound_items::menu.play();
         } else {
+            bn::sound_items::cancel.play();
             bn::music::resume();
         }
     }

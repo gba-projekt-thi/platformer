@@ -1,5 +1,6 @@
 #pragma once
 
+#include "bn_sound_items.h"
 #include "bn_sprite_ptr.h"
 #include "bn_vector.h"
 

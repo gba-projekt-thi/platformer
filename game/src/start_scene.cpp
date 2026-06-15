@@ -83,11 +83,15 @@ void StartScene::update() {
             _selected_slot =
                 (_selected_slot + 1) % Cfg::StartScreen::SAVE_SLOT_COUNT;
             changed = true;
+
+            bn::sound_items::select.play();
         } else if (bn::keypad::up_pressed()) {
             _selected_slot =
                 (_selected_slot + Cfg::StartScreen::SAVE_SLOT_COUNT - 1) %
                 Cfg::StartScreen::SAVE_SLOT_COUNT;
             changed = true;
+
+            bn::sound_items::select.play();
         }
 
         if (changed) {
@@ -127,6 +131,8 @@ void StartScene::update() {
                 _player, _levels, _data_manager, _level_manager);
             core::SceneManager::instance().set_next_scene(bn::move(next));
             _level_manager.restoreHUD();
+
+            bn::sound_items::confirm.play();
         }
     }
 
