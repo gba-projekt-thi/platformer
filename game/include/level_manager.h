@@ -44,6 +44,9 @@ class LevelManager {
     // Loads a level and initializes all entities.
     void load(const LevelData& level);
 
+    // Unloads the current level and frees all temporary resources.
+    void unload();
+
     // Advances the simulation by one frame.
     // Returns true when level completed.
     bool update();

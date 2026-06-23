@@ -3,24 +3,25 @@
 #include "core_scene.h"
 #include "core_scene_manager.h"
 
+#include "bn_optional.h"
+#include "bn_regular_bg_ptr.h"
+#include "bn_span.h"
+#include "bn_unique_ptr.h"
+
+#include "cfg.h"
 #include "data_manager.h"
 #include "level_manager.h"
+#include "levels.h"
 #include "player.h"
+#include "start_scene.h"
 
-// TODO:
-// Replace with GameSession or SceneResult system.
-// Global mutable state becomes difficult to maintain
-// as the project scales.
-inline bool game_finished = false;
-
-class LevelScene : public core::Scene {
+class KissingScene : public core::Scene {
    public:
-    LevelScene(
+    KissingScene(
         Player& player,
         bn::span<const LevelData> levels,
         DataManager& data_manager,
         LevelManager& level_manager);
-    ~LevelScene() override;
 
     void init() override;
     void update() override;
@@ -28,10 +29,9 @@ class LevelScene : public core::Scene {
    private:
     Player& _player;
     bn::span<const LevelData> _levels;
-    unsigned int _level_index;
-    LevelManager& _level_manager;
     DataManager& _data_manager;
-
-    // Prevents multiple scene transitions.
+    LevelManager& _level_manager;
+    int _timer;
     bool _transition_requested;
+    bn::optional<bn::regular_bg_ptr> _bg;
 };

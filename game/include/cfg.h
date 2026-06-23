@@ -92,6 +92,7 @@ inline constexpr bn::fixed NO_MAX_VELOCITY = 0;
 namespace Sleep {
 inline constexpr int DEATH = 20;           // 0.33s
 inline constexpr int FINISHED_GAME = 600;  // 10s
+inline constexpr int KISSING_SCENE = 300;  // 5s
 }  // namespace Sleep
 
 }  // namespace Cfg

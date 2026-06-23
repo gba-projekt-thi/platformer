@@ -19,6 +19,10 @@ LevelScene::LevelScene(
       _data_manager(data_manager),
       _transition_requested(false) {}
 
+LevelScene::~LevelScene() {
+    _level_manager.unload();
+}
+
 void LevelScene::init() {
     _level_manager.load(_levels[_level_index]);
     _player.set_visible(true);
