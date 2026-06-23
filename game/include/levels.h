@@ -41,27 +41,27 @@ constexpr bn::fixed_point FIGURE_8_PATH[] = {
 
 constexpr PlatformData level0_platforms[] = {
 
-    {-96, 60, bn::sprite_items::platformslvl1, 0},
-    {-80, 60, bn::sprite_items::platformslvl1, 1},
-    {-48, 60, bn::sprite_items::platformslvl1, 2},
-    {-16, 60, bn::sprite_items::platformslvl1, 3},
+    {-96, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
+    {-80, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
+    {-48, 60, 16, 10, 0, 0, bn::sprite_items::platformslvl1, 2},
+    {-16, 60, 16, 14, 0, 0, bn::sprite_items::platformslvl1, 3},
 
-    {0, 40, bn::sprite_items::platformslvl1, 0}};
+    {0, 40, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0}};
 
 constexpr TriggerData level0_triggers[] = {{-50, 30, 30, 30}};
 
 constexpr TrapData level0_traps[] = {
 
     // Moving bubble trap.
-    {TrapType::MOVING, 10, 10, 32, 32, bn::sprite_items::bubbles, 26,
+    {TrapType::MOVING, 10, 10, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
      TRAP_GRAPHICS_INDEXES_3, 0, -0.1, 0.1, 1, NO_PATH_TRAP, 0},
 
     // Static bubble trap.
-    {TrapType::BASE, -20, -20, 32, 32, bn::sprite_items::bubbles, 26,
+    {TrapType::BASE, -20, -20, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
      TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Figure-8 path trap.
-    {TrapType::PATH, 0, 0, 32, 32, bn::sprite_items::bubbles, 10,
+    {TrapType::PATH, 0, 0, 32, 32, 0, 0, bn::sprite_items::bubbles, 10,
      TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, 0, FIGURE_8_PATH, 15}};
 
 const LevelData LEVEL_0 = {
@@ -88,37 +88,37 @@ const LevelData LEVEL_0 = {
 
 constexpr PlatformData level1_platforms[] = {
 
-    {-96, 60, bn::sprite_items::platformslvl1, 0},
-    {-80, 60, bn::sprite_items::platformslvl1, 1},
-    {-48, 60, bn::sprite_items::platformslvl1, 3},
+    {-96, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
+    {-80, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
+    {-48, 60, 16, 14, 0, 0, bn::sprite_items::platformslvl1, 3},
 
-    {-16, 60, bn::sprite_items::platformslvl1, 0},
-    {-16, 44, bn::sprite_items::platformslvl1, 2},
+    {-16, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
+    {-16, 44, 16, 10, 0, 0, bn::sprite_items::platformslvl1, 2},
 
-    {32, 60, bn::sprite_items::platformslvl1, 1},
-    {48, 60, bn::sprite_items::platformslvl1, 1},
+    {32, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
+    {48, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
 
-    {64, 60, bn::sprite_items::platformslvl1, 0},
-    {80, 60, bn::sprite_items::platformslvl1, 1},
-    {96, 60, bn::sprite_items::platformslvl1, 0},
-    {112, 60, bn::sprite_items::platformslvl1, 2}};
+    {64, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
+    {80, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
+    {96, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
+    {112, 60, 16, 10, 0, 0, bn::sprite_items::platformslvl1, 2}};
 
-constexpr TriggerData level1_triggers[] = {{80, 30, 32, 30}};
+constexpr TriggerData level1_triggers[] = {{80, 40, 32, 30}};
 
 constexpr TrapData level1_traps[] = {
 
     // Falling bubble trap.
-    {TrapType::MOVING, 80, -32, 32, 32, bn::sprite_items::bubbles, 26,
+    {TrapType::MOVING, 80, -32, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
      TRAP_GRAPHICS_INDEXES_3, 0, 0.0, 4, 4, NO_PATH_TRAP, 0},
 
-    {TrapType::BASE, -48, 8, 32, 32, bn::sprite_items::bubbles, 26,
+    {TrapType::BASE, -48, 8, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
      TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
-    {TrapType::BASE, -64, 60, 16, 16, bn::sprite_items::connector16x16, 16,
-     TRAP_GRAPHICS_INDEXES_8, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+    {TrapType::BASE, -64, 60, 16, 16, 0, 0, bn::sprite_items::connector16x16,
+     16, TRAP_GRAPHICS_INDEXES_8, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
-    {TrapType::BASE, -32, 60, 16, 16, bn::sprite_items::connector16x16, 16,
-     TRAP_GRAPHICS_INDEXES_8, -1, 0, 0, 0, NO_PATH_TRAP, 0}};
+    {TrapType::BASE, -32, 60, 16, 16, 0, 0, bn::sprite_items::connector16x16,
+     16, TRAP_GRAPHICS_INDEXES_8, -1, 0, 0, 0, NO_PATH_TRAP, 0}};
 
 const LevelData LEVEL_1 = {
 
@@ -144,28 +144,28 @@ const LevelData LEVEL_1 = {
 
 constexpr PlatformData level2_platforms[] = {
 
-    {-96, -16, bn::sprite_items::platformslvl2, 1},
-    {-72, 40, bn::sprite_items::platformslvl2, 2},
-    {-24, 40, bn::sprite_items::platformslvl2, 0},
-    {24, 40, bn::sprite_items::platformslvl2, 0},
-    {64, 24, bn::sprite_items::platformslvl2, 1},
-    {96, 16, bn::sprite_items::platformslvl2, 1},
-    {112, 16, bn::sprite_items::platformslvl2, 1}};
+    {-96, -16, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
+    {-72, 40, 16, 18, 0, 0, bn::sprite_items::platformslvl2, 2},
+    {-24, 40, 16, 11, 0, 0, bn::sprite_items::platformslvl2, 0},
+    {24, 40, 16, 11, 0, 0, bn::sprite_items::platformslvl2, 0},
+    {64, 24, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
+    {96, 16, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
+    {112, 16, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1}};
 
 constexpr TriggerData level2_triggers[] = {{-48, 16, 32, 40}};
 
 constexpr TrapData level2_traps[] = {
 
-    {TrapType::BASE, -112, -16, 16, 16, bn::sprite_items::pipe16x16, 26,
+    {TrapType::BASE, -112, -16, 12, 8, 0, 0, bn::sprite_items::pipe16x16, 26,
      TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
-    {TrapType::MOVING, -48, 88, 32, 32, bn::sprite_items::can32x32, 26,
+    {TrapType::MOVING, -48, 88, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
      TRAP_GRAPHICS_INDEXES_3, 0, 0.0, -3, 3, NO_PATH_TRAP, 0},
 
-    {TrapType::BASE, 0, 40, 32, 16, bn::sprite_items::rustynails32x16, 26,
+    {TrapType::BASE, 0, 40, 28, 16, 0, 0, bn::sprite_items::rustynails32x16, 26,
      TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
-    {TrapType::BASE, 80, 24, 16, 16, bn::sprite_items::pipe16x16, 26,
+    {TrapType::BASE, 80, 24, 12, 8, 0, 0, bn::sprite_items::pipe16x16, 26,
      TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0}};
 
 const LevelData LEVEL_2 = {
@@ -200,26 +200,26 @@ constexpr bn::fixed_point LEVEL3_BRANCH_PATH[] = {
 
 constexpr PlatformData level3_platforms[] = {
     // Start area
-    {-96, 64, bn::sprite_items::baumstamm, 0},
-    {-80, 64, bn::sprite_items::baumstamm, 1},
-    {-66, 64, bn::sprite_items::baumstamm, 2},
+    {-96, 64, 16, 8, 0, 0, bn::sprite_items::baumstamm, 0},
+    {-80, 64, 16, 8, 0, 0, bn::sprite_items::baumstamm, 1},
+    {-66, 64, 16, 8, 0, 0, bn::sprite_items::baumstamm, 2},
     // First jump section
-    {-24, 48, bn::sprite_items::nebel, 0},
-    {8, 32, bn::sprite_items::nebel, 0},
-    {64, 48, bn::sprite_items::baumstamm, 0},
-    {80, 48, bn::sprite_items::baumstamm, 1},
-    {96, 48, bn::sprite_items::baumstamm, 2},
+    {-24, 48, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {8, 32, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {64, 48, 16, 8, 0, 0, bn::sprite_items::baumstamm, 0},
+    {80, 48, 16, 8, 0, 0, bn::sprite_items::baumstamm, 1},
+    {96, 48, 16, 8, 0, 0, bn::sprite_items::baumstamm, 2},
     // Upper fog climb
-    {40, 16, bn::sprite_items::nebel, 0},
-    {-16, 0, bn::sprite_items::nebel, 0},
-    {-64, -8, bn::sprite_items::nebel, 0},
-    {-96, -24, bn::sprite_items::nebel, 0},
-    {-48, -40, bn::sprite_items::nebel, 0},
-    {8, -32, bn::sprite_items::nebel, 0},
+    {40, 16, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-16, 0, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-64, -8, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-96, -24, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-48, -40, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {8, -32, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
     // Final section
-    {56, -48, bn::sprite_items::baumstamm, 0},
-    {72, -48, bn::sprite_items::baumstamm, 1},
-    {88, -48, bn::sprite_items::baumstamm, 2},
+    {56, -48, 16, 8, 0, 0, bn::sprite_items::baumstamm, 0},
+    {72, -48, 16, 8, 0, 0, bn::sprite_items::baumstamm, 1},
+    {88, -48, 16, 8, 0, 0, bn::sprite_items::baumstamm, 2},
 };
 
 constexpr TriggerData level3_triggers[] = {
@@ -228,19 +228,20 @@ constexpr TriggerData level3_triggers[] = {
 
 constexpr TrapData level3_traps[] = {
     // Early mushroom forcing careful jump
-    {TrapType::BASE, 0, 48, 32, 32, bn::sprite_items::mushroom32x32, 16,
+    {TrapType::BASE, 0, 48, 32, 32, 0, 0, bn::sprite_items::mushroom32x32, 16,
      TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Slither arms rise upward after upper trigger
-    {TrapType::MOVING, 56, 96, 32, 32, bn::sprite_items::slithermanarms32x32, 8,
-     TRAP_GRAPHICS_INDEXES_3, 0, 0, -1.8, 3.3, NO_PATH_TRAP, 0},
+    {TrapType::MOVING, 56, 96, 32, 32, 0, 0,
+     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_3, 0, 0,
+     -1.8, 3.3, NO_PATH_TRAP, 0},
 
     // Branch patrol trap activated during upper climb
-    {TrapType::PATH, -16, -24, 32, 16, bn::sprite_items::branch32x16, 10,
+    {TrapType::PATH, -16, -24, 32, 16, 0, 0, bn::sprite_items::branch32x16, 10,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, 0, LEVEL3_BRANCH_PATH, 20},
 
     // Final mushroom guarding exit
-    {TrapType::BASE, 80, 48, 32, 32, bn::sprite_items::mushroom32x32, 16,
+    {TrapType::BASE, 80, 48, 32, 32, 0, 0, bn::sprite_items::mushroom32x32, 16,
      TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0}};
 
 const LevelData LEVEL_3 = {

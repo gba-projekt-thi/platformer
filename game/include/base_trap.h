@@ -32,6 +32,8 @@ class BaseTrap : public PhysicsBody {
         bn::fixed t_y,
         bn::fixed t_width,
         bn::fixed t_height,
+        bn::fixed t_offset_x,
+        bn::fixed t_offset_y,
         const bn::sprite_item& t_sprite_item,
         int t_sprite_waits,
         bn::span<const uint16_t> t_graphics_indexes,

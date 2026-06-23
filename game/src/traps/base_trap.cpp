@@ -5,14 +5,16 @@ BaseTrap::BaseTrap(
     bn::fixed t_y,
     bn::fixed t_width,
     bn::fixed t_height,
+    bn::fixed t_offset_x,
+    bn::fixed t_offset_y,
     const bn::sprite_item& t_sprite_item,
     int t_animation_wait,
     bn::span<const uint16_t> t_graphics_indexes,
     uint16_t t_blocking_layers,
     bn::fixed t_max_vel)
     : PhysicsBody(
-          t_x,
-          t_y,
+          t_x + t_offset_x,
+          t_y + t_offset_y,
           t_width,
           t_height,
           Cfg::Layer::TRAP,
