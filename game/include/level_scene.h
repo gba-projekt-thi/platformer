@@ -20,6 +20,8 @@ class LevelScene : public core::Scene {
         bn::span<const LevelData> levels,
         DataManager& data_manager,
         LevelManager& level_manager);
+    ~LevelScene() override;
+
     void init() override;
     void update() override;
 

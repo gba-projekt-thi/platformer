@@ -139,6 +139,16 @@ void LevelManager::load(const LevelData& level) {
     }
 }
 
+void LevelManager::unload() {
+    _background.reset();
+    _door.reset();
+    _music.reset();
+    _platforms.clear();
+    _platform_bodies.clear();
+    _triggers.clear();
+    _traps.clear();
+}
+
 bool LevelManager::update() {
     // -------------------------------------------------------------------------
     // Pause

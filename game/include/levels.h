@@ -1,5 +1,28 @@
 #pragma once
 
+#include "bn_fixed_point.h"
+#include "bn_music_items.h"
+#include "bn_regular_bg_items_level1.h"
+#include "bn_regular_bg_items_level2.h"
+#include "bn_regular_bg_items_level3.h"
+#include "bn_span.h"
+#include "bn_sprite_items_baumstamm.h"
+#include "bn_sprite_items_box32x32.h"
+#include "bn_sprite_items_branch32x16.h"
+#include "bn_sprite_items_bubbles.h"
+#include "bn_sprite_items_can32x32.h"
+#include "bn_sprite_items_connector16x16.h"
+#include "bn_sprite_items_door32x32.h"
+#include "bn_sprite_items_kugelfisch.h"
+#include "bn_sprite_items_ladder.h"
+#include "bn_sprite_items_mushroom32x32.h"
+#include "bn_sprite_items_nebel.h"
+#include "bn_sprite_items_pipe16x16.h"
+#include "bn_sprite_items_platformslvl1.h"
+#include "bn_sprite_items_platformslvl2.h"
+#include "bn_sprite_items_rustynails32x16.h"
+#include "bn_sprite_items_slithermanarms32x32.h"
+
 #include "level_structure.h"
 
 // -----------------------------------------------------------------------------
@@ -111,7 +134,7 @@ constexpr TrapData level1_traps[] = {
     {TrapType::MOVING, 80, -32, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
      TRAP_GRAPHICS_INDEXES_3, 0, 0.0, 4, 4, NO_PATH_TRAP, 0},
 
-    {TrapType::BASE, -48, 8, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
+    {TrapType::BASE, -48, 0, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
      TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
     {TrapType::BASE, -64, 60, 16, 16, 0, 0, bn::sprite_items::connector16x16,

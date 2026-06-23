@@ -38,6 +38,7 @@
 #include "bn_sprite_items_slithermanarms32x32.h"
 
 // Wallpapers
+#include "bn_regular_bg_items_kissingscene.h"
 #include "bn_regular_bg_items_level1.h"
 #include "bn_regular_bg_items_level2.h"
 #include "bn_regular_bg_items_level3.h"
@@ -49,6 +50,7 @@
 // Levels
 #include "core_scene.h"
 #include "core_scene_manager.h"
+#include "kissing_scene.h"
 #include "level_manager.h"
 #include "level_scene.h"
 #include "levels.h"
@@ -111,23 +113,23 @@ int main() {
     // Main Loop
     // -------------------------------------------------------------------------
 
-    while (!game_finished) {
-        core::SceneManager::instance().update();
+    while (true) {
+        while (!game_finished) {
+            core::SceneManager::instance().update();
+        }
+
+        // -------------------------------------------------------------------------
+        // After the final level completes, switch into a dedicated endgame
+        // scene instead of directly showing the kiss background from main.
+        // This ensures the previous level and its palettes are released first.
+        // -------------------------------------------------------------------------
+
+        auto kissing_scene = bn::make_unique<KissingScene>(
+            player, bn::span<const LevelData>(levels), data_manager,
+            level_manager);
+        core::SceneManager::instance().set_next_scene(bn::move(kissing_scene));
+
+        // Reset the completion flag so the next scene can run normally.
+        game_finished = false;
     }
-
-    // -------------------------------------------------------------------------
-    // Ending Delay of 10s
-    // -------------------------------------------------------------------------
-
-    for (int i = 0; i < Cfg::Sleep::FINISHED_GAME; ++i) {
-        bn::core::update();
-    }
-
-    // -------------------------------------------------------------------------
-    // Game Finished
-    //
-    // Reset save after full completion.
-    // -------------------------------------------------------------------------
-
-    data_manager.reset();
 }
