@@ -23,7 +23,7 @@ class StartScene : public core::Scene {
     void init() override;
     void update() override;
 
-    void test();
+    void animation();
 
    private:
     Player& _player;

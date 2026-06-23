@@ -148,14 +148,14 @@ void StartScene::update() {
         }
     }
 
-    test();
+    animation();
     // Process Butano core updates for the start screen.
     // This must run even during transition so audio fade commands are flushed.
     bn::core::update();
 }
 
 // random movement of the schnabel
-void StartScene::test() {
+void StartScene::animation() {
     int value = _random.get_int(100);
     if (value == 0)
         _schnabel_sprite->set_visible(true);
