@@ -4,6 +4,9 @@
 #include "bn_keypad.h"
 #include "bn_log.h"
 #include "bn_music_items.h"
+#include "bn_random.h"
+#include "bn_sprite_items_schnabel64x64.h"
+#include "bn_sprite_items_tail64x64.h"
 #include "bn_sprite_items_titel64x128.h"
 
 StartScene::StartScene(
@@ -45,6 +48,11 @@ void StartScene::init() {
     _bg.emplace(bn::regular_bg_items::startscreen.create_bg(0, 0));
     _bg->set_priority(3);
     _bg->set_blending_enabled(true);
+
+    // test update sprite
+    _schnabel_sprite = bn::sprite_items::schnabel64x64.create_sprite(93, -17);
+    _schnabel_sprite->set_blending_enabled(true);
+    _schnabel_sprite->set_bg_priority(0);
 
     // Text generator
     _text_gen.emplace(common::variable_8x16_sprite_font);
@@ -138,5 +146,16 @@ void StartScene::update() {
 
     // Process Butano core updates for the start screen.
     // This must run even during transition so audio fade commands are flushed.
+
+    test();
     bn::core::update();
+}
+
+void StartScene::test() {
+    int value = _random.get_int(100);
+    // _schnabel_sprite->set_visible(false);
+    if (value == 0)
+        _schnabel_sprite->set_visible(true);
+    if (value == 2)
+        _schnabel_sprite->set_visible(false);
 }
