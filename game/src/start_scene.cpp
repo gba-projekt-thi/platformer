@@ -49,7 +49,7 @@ void StartScene::init() {
     _bg->set_priority(3);
     _bg->set_blending_enabled(true);
 
-    // test update sprite
+    // screen animation
     _schnabel_sprite = bn::sprite_items::schnabel64x64.create_sprite(93, -17);
     _schnabel_sprite->set_blending_enabled(true);
     _schnabel_sprite->set_bg_priority(0);
@@ -144,13 +144,13 @@ void StartScene::update() {
         }
     }
 
+    test();
     // Process Butano core updates for the start screen.
     // This must run even during transition so audio fade commands are flushed.
-
-    test();
     bn::core::update();
 }
 
+// random movement of the schnabel
 void StartScene::test() {
     int value = _random.get_int(100);
     // _schnabel_sprite->set_visible(false);
