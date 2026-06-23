@@ -119,7 +119,9 @@ int main() {
         }
 
         // -------------------------------------------------------------------------
-        // Transition to kissing scene and return to start screen afterward.
+        // After the final level completes, switch into a dedicated endgame
+        // scene instead of directly showing the kiss background from main.
+        // This ensures the previous level and its palettes are released first.
         // -------------------------------------------------------------------------
 
         auto kissing_scene = bn::make_unique<KissingScene>(
@@ -127,6 +129,7 @@ int main() {
             level_manager);
         core::SceneManager::instance().set_next_scene(bn::move(kissing_scene));
 
+        // Reset the completion flag so the next scene can run normally.
         game_finished = false;
     }
 }

@@ -31,7 +31,14 @@ class KissingScene : public core::Scene {
     bn::span<const LevelData> _levels;
     DataManager& _data_manager;
     LevelManager& _level_manager;
+
+    // Countdown timer for showing the kiss scene before reverting to the
+    // start screen.
     int _timer;
+
+    // Prevent duplicate transition requests while the end scene is active.
     bool _transition_requested;
+
+    // Keeps the kiss background alive for the duration of the scene.
     bn::optional<bn::regular_bg_ptr> _bg;
 };

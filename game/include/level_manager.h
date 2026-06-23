@@ -45,6 +45,8 @@ class LevelManager {
     void load(const LevelData& level);
 
     // Unloads the current level and frees all temporary resources.
+    // This is used when transitioning to the final kiss scene to ensure the
+    // old level's palettes and sprites are released.
     void unload();
 
     // Advances the simulation by one frame.

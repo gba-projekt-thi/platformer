@@ -20,6 +20,9 @@ LevelScene::LevelScene(
       _transition_requested(false) {}
 
 LevelScene::~LevelScene() {
+    // Ensure all level-specific resources are released when the scene ends.
+    // This prevents BPP8 palette exhaustion when loading the endgame
+    // background.
     _level_manager.unload();
 }
 
