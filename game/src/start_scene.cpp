@@ -54,6 +54,10 @@ void StartScene::init() {
     _schnabel_sprite->set_blending_enabled(true);
     _schnabel_sprite->set_bg_priority(0);
 
+    // _tail_sprite = bn::sprite_items::tail64x64.create_sprite(-3, -7);
+    // _tail_sprite->set_blending_enabled(true);
+    // _tail_sprite->set_bg_priority(0);
+
     // Text generator
     _text_gen.emplace(common::variable_8x16_sprite_font);
     _text_gen->set_z_order(4);
@@ -153,9 +157,14 @@ void StartScene::update() {
 // random movement of the schnabel
 void StartScene::test() {
     int value = _random.get_int(100);
-    // _schnabel_sprite->set_visible(false);
     if (value == 0)
         _schnabel_sprite->set_visible(true);
     if (value == 2)
         _schnabel_sprite->set_visible(false);
+    /*
+    if(value == 5)
+    _tail_sprite->set_visible(true);
+    if(value == 20)
+    _tail_sprite->set_visible(false);
+    */
 }

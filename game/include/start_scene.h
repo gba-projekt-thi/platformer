@@ -38,6 +38,7 @@ class StartScene : public core::Scene {
     // Graphics
     bn::optional<bn::regular_bg_ptr> _bg;
     bn::optional<bn::sprite_ptr> _schnabel_sprite;
+    bn::optional<bn::sprite_ptr> _tail_sprite;
     bn::optional<bn::sprite_text_generator> _text_gen;
     bn::vector<bn::sprite_ptr, 64> _slot_sprites;
 
