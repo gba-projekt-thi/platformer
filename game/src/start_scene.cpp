@@ -4,6 +4,9 @@
 #include "bn_keypad.h"
 #include "bn_log.h"
 #include "bn_music_items.h"
+#include "bn_random.h"
+#include "bn_sprite_items_schnabel64x64.h"
+#include "bn_sprite_items_tail64x64.h"
 #include "bn_sprite_items_titel64x128.h"
 
 StartScene::StartScene(
@@ -45,6 +48,15 @@ void StartScene::init() {
     _bg.emplace(bn::regular_bg_items::startscreen.create_bg(0, 0));
     _bg->set_priority(3);
     _bg->set_blending_enabled(true);
+
+    // screen animation
+    _schnabel_sprite = bn::sprite_items::schnabel64x64.create_sprite(93, -17);
+    _schnabel_sprite->set_blending_enabled(true);
+    _schnabel_sprite->set_bg_priority(0);
+
+    // _tail_sprite = bn::sprite_items::tail64x64.create_sprite(-3, -7);
+    // _tail_sprite->set_blending_enabled(true);
+    // _tail_sprite->set_bg_priority(0);
 
     // Text generator
     _text_gen.emplace(common::variable_8x16_sprite_font);
@@ -136,7 +148,23 @@ void StartScene::update() {
         }
     }
 
+    animation();
     // Process Butano core updates for the start screen.
     // This must run even during transition so audio fade commands are flushed.
     bn::core::update();
+}
+
+// random movement of the schnabel
+void StartScene::animation() {
+    int value = _random.get_int(100);
+    if (value == 0)
+        _schnabel_sprite->set_visible(true);
+    if (value == 2)
+        _schnabel_sprite->set_visible(false);
+    /*
+    if(value == 5)
+    _tail_sprite->set_visible(true);
+    if(value == 20)
+    _tail_sprite->set_visible(false);
+    */
 }

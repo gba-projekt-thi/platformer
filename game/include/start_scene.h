@@ -11,6 +11,8 @@
 #include "bn_sprite_text_generator.h"
 #include "common_variable_8x16_sprite_font.h"
 
+#include "bn_random.h"
+
 class StartScene : public core::Scene {
    public:
     StartScene(
@@ -20,6 +22,8 @@ class StartScene : public core::Scene {
         LevelManager& level_manager);
     void init() override;
     void update() override;
+
+    void animation();
 
    private:
     Player& _player;
@@ -33,6 +37,10 @@ class StartScene : public core::Scene {
 
     // Graphics
     bn::optional<bn::regular_bg_ptr> _bg;
+    bn::optional<bn::sprite_ptr> _schnabel_sprite;
+    bn::optional<bn::sprite_ptr> _tail_sprite;
     bn::optional<bn::sprite_text_generator> _text_gen;
     bn::vector<bn::sprite_ptr, 64> _slot_sprites;
+
+    bn::random _random;
 };
