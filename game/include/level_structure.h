@@ -26,6 +26,10 @@ enum class TrapType { BASE, MOVING, PATH };
 struct PlatformData {
     int x;
     int y;
+    int width;
+    int height;
+    int offset_x;
+    int offset_y;
     bn::sprite_item sprite;
     // Tile index inside sprite tileset.
     int sprite_index;
@@ -67,6 +71,8 @@ struct TrapData {
     int y;
     int width;
     int height;
+    int offset_x;
+    int offset_y;
     bn::sprite_item sprite;
 
     // Frames to wait before advancing animation.

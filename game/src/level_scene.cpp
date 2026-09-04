@@ -18,6 +18,13 @@ LevelScene::LevelScene(
       _data_manager(data_manager),
       _session(session) {}
 
+LevelScene::~LevelScene() {
+    // Ensure all level-specific resources are released when the scene ends.
+    // This prevents BPP8 palette exhaustion when loading the endgame
+    // background.
+    _level_manager.unload();
+}
+
 void LevelScene::init() {
     _level_manager.load(_levels[_level_index]);
     _player.set_visible(true);

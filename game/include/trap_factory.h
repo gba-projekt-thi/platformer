@@ -17,17 +17,18 @@ inline auto create(const TrapData& trap_data, LevelManager& level_manager)
         case TrapType::BASE:
             return bn::make_unique<BaseTrap>(
                 trap_data.x, trap_data.y, trap_data.width, trap_data.height,
-                trap_data.sprite, trap_data.sprite_waits,
-                trap_data.graphic_indexes, 0);
+                trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
+                trap_data.sprite_waits, trap_data.graphic_indexes, 0);
 
         case TrapType::MOVING: {
             Trigger& trigger =
                 level_manager.get_trigger(trap_data.trigger_index);
             return bn::make_unique<MovingTrap>(
                 trap_data.x, trap_data.y, trap_data.width, trap_data.height,
-                trap_data.sprite, trap_data.sprite_waits,
-                trap_data.graphic_indexes, 0, trap_data.velocity_x,
-                trap_data.velocity_y, trap_data.max_vel, trigger);
+                trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
+                trap_data.sprite_waits, trap_data.graphic_indexes, 0,
+                trap_data.velocity_x, trap_data.velocity_y, trap_data.max_vel,
+                trigger);
         }
 
         case TrapType::PATH: {
@@ -35,9 +36,9 @@ inline auto create(const TrapData& trap_data, LevelManager& level_manager)
                 level_manager.get_trigger(trap_data.trigger_index);
             return bn::make_unique<PathTrap>(
                 trap_data.x, trap_data.y, trap_data.width, trap_data.height,
-                trap_data.sprite, trap_data.sprite_waits,
-                trap_data.graphic_indexes, 0, trap_data.path,
-                trap_data.path_waits, trigger);
+                trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
+                trap_data.sprite_waits, trap_data.graphic_indexes, 0,
+                trap_data.path, trap_data.path_waits, trigger);
         }
 
         default:
@@ -45,7 +46,7 @@ inline auto create(const TrapData& trap_data, LevelManager& level_manager)
                 "Unimplemented or invalid trap type passed to TrapFactory");
             // fallback
             return bn::make_unique<BaseTrap>(
-                0, 0, 0, 0, trap_data.sprite, trap_data.sprite_waits,
+                0, 0, 0, 0, 0, 0, trap_data.sprite, trap_data.sprite_waits,
                 trap_data.graphic_indexes, 0);
     }
 }

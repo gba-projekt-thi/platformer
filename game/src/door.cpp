@@ -1,7 +1,7 @@
 #include "door.h"
 
 Door::Door(bn::fixed in_x, bn::fixed in_y)
-    : PhysicsBody(in_x, in_y, 6, 8, Cfg::Layer::DOOR, Cfg::Layer::PLAYER, 0),
+    : PhysicsBody(in_x, in_y, 2, 2, Cfg::Layer::DOOR, Cfg::Layer::PLAYER, 0),
       door_sprite(
           bn::sprite_items::door32x32.create_sprite(in_x, in_y),
           in_x,
@@ -21,6 +21,7 @@ Door::Door(bn::fixed in_x, bn::fixed in_y)
     door_sprite.sprite().set_z_order(Cfg::ZOrder::DOOR);
     door_sprite.sprite().set_blending_enabled(true);
     this->sprite = &door_sprite;
+    this->shape_pos.offset_y = +6;
 }
 
 void Door::update() {
