@@ -38,13 +38,14 @@ PYTHON      	:=  python
 SOURCES     	:=  game/src game/src/traps extern/engine/core/src extern/engine/extern/butano/common/src extern/engine/src/save_system/src
 INCLUDES    	:=  game/include extern/engine/core/include extern/engine/extern/butano/common/include extern/engine/src/save_system/include
 DATA        	:=
-GRAPHICS_ROOT 	:= game/graphics
-GRAPHICS      	:= $(shell find $(GRAPHICS_ROOT) -type d) \ extern/engine/extern/butano/common/graphics
-#GRAPHICS 		:=  game/graphics game/graphics/global game/graphics/level1 game/graphics/level2 extern/engine/extern/butano/common/graphics
-AUDIO       	:=  game/audio extern/engine/extern/butano/common/audio
+# Prefer the canonical asset tree under game/assets, but accept the legacy
+# game/graphics and game/audio directories as a compatibility fallback.
+GRAPHICS_ROOT 	:= $(if $(wildcard game/assets/graphics),game/assets/graphics,game/graphics)
+GRAPHICS      	:= $(shell find $(GRAPHICS_ROOT) -type d 2>/dev/null) \ extern/engine/extern/butano/common/graphics
+AUDIO       	:=  $(if $(wildcard game/assets/audio),game/assets/audio,game/audio) extern/engine/extern/butano/common/audio
 AUDIOBACKEND	:=  maxmod
 AUDIOTOOL		:=  
-DMGAUDIO    	:=  game/dmg_audio extern/engine/extern/butano/common/dmg_audio
+DMGAUDIO    	:=  $(if $(wildcard game/assets/dmg_audio),game/assets/dmg_audio,game/dmg_audio) extern/engine/extern/butano/common/dmg_audio
 DMGAUDIOBACKEND	:=  default
 ROMTITLE    	:=  BUTANO SPRTS
 ROMCODE     	:=  SBTP
