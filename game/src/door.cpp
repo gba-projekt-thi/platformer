@@ -6,18 +6,17 @@ Door::Door(bn::fixed in_x, bn::fixed in_y)
           bn::sprite_items::door32x32.create_sprite(in_x, in_y),
           in_x,
           in_y),
-      action(
-          bn::create_sprite_animate_action_forever(
-              door_sprite.sprite(),
-              8,
-              bn::sprite_items::door32x32.tiles_item(),
-              0,
-              2,
-              4,
-              6,
-              8,
-              10,
-              12)) {
+      action(bn::create_sprite_animate_action_forever(
+          door_sprite.sprite(),
+          8,
+          bn::sprite_items::door32x32.tiles_item(),
+          0,
+          2,
+          4,
+          6,
+          8,
+          10,
+          12)) {
     // The door is a static physics body and animated sprite.
     door_sprite.sprite().set_z_order(Cfg::ZOrder::DOOR);
     door_sprite.sprite().set_blending_enabled(true);
@@ -35,7 +34,7 @@ void Door::on_enter(
     _reached = true;
 }
 
-bool Door::reached() const {
+auto Door::reached() const -> bool {
     return _reached;
 }
 

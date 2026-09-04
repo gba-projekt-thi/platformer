@@ -19,7 +19,7 @@ void LevelManager::restoreHUD() {
     timer.set_time(game_state.centis, game_state.seconds, game_state.minutes);
 }
 
-Trigger& LevelManager::get_trigger(int trigger_index) {
+auto LevelManager::get_trigger(int trigger_index) -> Trigger& {
     const int trigger_count = _triggers.size();
     if (trigger_index >= 0 && trigger_index < trigger_count) {
         return _triggers[trigger_index];
@@ -36,54 +36,38 @@ void LevelManager::_reset_traps() {
     }
 }
 
-void LevelManager::load(const LevelData& level) {
-    _pause_controller.reset();
-
-    // -------------------------------------------------------------------------
-    // Player Spawn
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.teleport_to(level.player_data.x, level.player_data.y);
     _player.set_spawn_point(level.player_data.x, level.player_data.y);
     _last_death_ct = _player.get_deaths();
+}
 
-    // -------------------------------------------------------------------------
-    // Door
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_door(const LevelData& level) {
     _door.emplace(level.door.x, level.door.y);
+}
 
-    // -------------------------------------------------------------------------
-    // Music
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_music(const LevelData& level) {
     if (!_music.has_value() || *_music != level.music) {
         _music.emplace(level.music);
         bn::music::play(*_music);
     }
+}
 
-    // -------------------------------------------------------------------------
-    // Background
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_background(const LevelData& level) {
     _background.reset();
     _background.emplace(level.back_ground.create_bg(0, 0));
     _background->set_priority(3);
     _background->set_blending_enabled(true);
+}
 
-    // -------------------------------------------------------------------------
-    // Clear Previous Level State
-    // -------------------------------------------------------------------------
-
+void LevelManager::_clear_runtime_state() {
     _platforms.clear();
     _platform_bodies.clear();
     _triggers.clear();
     _traps.clear();
+}
 
-    // -------------------------------------------------------------------------
-    // Validation
-    // -------------------------------------------------------------------------
-
+void LevelManager::_validate_level(const LevelData& level) {
     BN_ASSERT(
         unsigned(level.platform_count) < Cfg::Level::Limits::PLATFORMS,
         "Too many platforms");
@@ -93,11 +77,9 @@ void LevelManager::load(const LevelData& level) {
     BN_ASSERT(
         unsigned(level.trap_count) < Cfg::Level::Limits::TOTAL_TRAPS,
         "Too many traps");
+}
 
-    // -------------------------------------------------------------------------
-    // Platforms
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_platforms(const LevelData& level) {
     for (int i = 0; i < level.platform_count; ++i) {
         const PlatformData& platform = level.platforms[i];
         const int graphics_count =
@@ -112,32 +94,40 @@ void LevelManager::load(const LevelData& level) {
             platform.x, platform.y, _platforms.back().dimensions().width(),
             _platforms.back().dimensions().height(), Cfg::Layer::PLATFORM);
     }
+}
 
-    // -------------------------------------------------------------------------
-    // Triggers
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_triggers(const LevelData& level) {
     for (int i = 0; i < level.trigger_count; ++i) {
         const TriggerData& trigger = level.triggers[i];
         _triggers.emplace_back(
             trigger.x, trigger.y, trigger.width, trigger.height);
     }
 
-    // Fallback trigger prevents invalid references.
     if (_triggers.empty()) {
         _triggers.emplace_back(1000, 1000, 0, 0, true);
     }
+}
 
-    // -------------------------------------------------------------------------
-    // Trap Construction
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_traps(const LevelData& level) {
     for (int i = 0; i < level.trap_count; ++i) {
         _traps.push_back(TrapFactory::create(level.traps[i], *this));
     }
 }
 
-bool LevelManager::update() {
+void LevelManager::load(const LevelData& level) {
+    _pause_controller.reset();
+    _load_player_spawn(level);
+    _load_door(level);
+    _load_music(level);
+    _load_background(level);
+    _clear_runtime_state();
+    _validate_level(level);
+    _load_platforms(level);
+    _load_triggers(level);
+    _load_traps(level);
+}
+
+auto LevelManager::update() -> bool {
     // -------------------------------------------------------------------------
     // Pause
     // -------------------------------------------------------------------------

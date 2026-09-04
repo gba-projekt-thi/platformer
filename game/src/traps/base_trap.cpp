@@ -36,18 +36,25 @@ BaseTrap::BaseTrap(
 }
 
 void BaseTrap::update() {
-    // Update animation if enabled.
+    update_animation();
+}
+
+void BaseTrap::update_animation() {
     if (_animation_action) {
         _animation_action->update();
+    }
+}
+
+void BaseTrap::handle_player_collision(StaticBody* body) {
+    if ((body != nullptr) && ((body->layers & Cfg::Layer::PLAYER) != 0)) {
+        static_cast<Player*>(body)->death();
     }
 }
 
 void BaseTrap::on_enter(
     [[maybe_unused]] uint16_t hit_layers,
     StaticBody* body) {
-    if (body && (body->layers & Cfg::Layer::PLAYER)) {
-        static_cast<Player*>(body)->death();
-    }
+    handle_player_collision(body);
 }
 
 BaseTrap::~BaseTrap() {

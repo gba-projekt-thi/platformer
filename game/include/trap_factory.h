@@ -11,9 +11,8 @@ class LevelManager;
 namespace TrapFactory {
 // Factory function that translates TrapData into a concrete Trap
 // Defiend in header to allow inlining
-inline bn::unique_ptr<BaseTrap> create(
-    const TrapData& trap_data,
-    LevelManager& level_manager) {
+inline auto create(const TrapData& trap_data, LevelManager& level_manager)
+    -> bn::unique_ptr<BaseTrap> {
     switch (trap_data.type) {
         case TrapType::BASE:
             return bn::make_unique<BaseTrap>(

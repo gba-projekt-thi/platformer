@@ -7,14 +7,14 @@
 class PauseController {
    public:
     enum class Action { None, DeathRequested };
-    Action update();
+    auto update() -> Action;
 
-    bool paused() const;
+    [[nodiscard]] auto paused() const -> bool;
     void reset();
 
    private:
     void init_pause_menu();
-    void set_visible(bool);
+    void set_visible(bool /*visible*/);
 
     bool _paused = false;
     bool _pause_menu_initialized = false;

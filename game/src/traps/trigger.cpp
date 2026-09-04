@@ -17,7 +17,7 @@ Trigger::Trigger(
       triggered(t_default_on),
       default_on(t_default_on) {}
 
-bool Trigger::is_triggered() const {
+auto Trigger::is_triggered() const -> bool {
     return triggered;
 }
 

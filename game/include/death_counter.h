@@ -15,7 +15,7 @@ class DeathCounter {
     // Called whenever the player dies to increment the death count.
     void on_player_death();
     // Returns the current death count.
-    unsigned int count() const;
+    [[nodiscard]] auto count() const -> unsigned int;
     void set_count(unsigned int count);
 };
 
@@ -28,7 +28,7 @@ class DeathCounterHUD {
     void update();
     // Control visibility of HUD sprites.
     void set_visible(bool visible);
-    [[nodiscard]] bool visible() const;
+    [[nodiscard]] auto visible() const -> bool;
 
    private:
     void refresh();
@@ -36,6 +36,6 @@ class DeathCounterHUD {
     bn::sprite_text_generator& _text_gen;
     const DeathCounter& _counter;
     bn::vector<bn::sprite_ptr, Cfg::DeathCounter::STRING_LEN> _sprites;
-    uint32_t _last_count;
+    uint32_t _last_count{UINT32_MAX};
     bool _visible = true;
 };

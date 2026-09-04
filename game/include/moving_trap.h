@@ -38,6 +38,9 @@ class MovingTrap : public BaseTrap {
     void reset() override;
 
    private:
+    void apply_triggered_velocity();
+    void reset_to_start();
+
     // Per-frame acceleration.
     bn::fixed x_accel;
     bn::fixed y_accel;

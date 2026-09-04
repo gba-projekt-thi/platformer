@@ -16,7 +16,7 @@ void DeathCounter::set_count(unsigned int count) {
 DeathCounterHUD::DeathCounterHUD(
     bn::sprite_text_generator& text_gen,
     const DeathCounter& counter)
-    : _text_gen(text_gen), _counter(counter), _last_count(UINT32_MAX) {
+    : _text_gen(text_gen), _counter(counter) {
     _text_gen.set_z_order(Cfg::ZOrder::DEATH_COUNTER);  // total foreground
     // Initialize the HUD text when the HUD object is created.
     refresh();
@@ -51,6 +51,6 @@ void DeathCounterHUD::set_visible(bool visible) {
     }
 }
 
-bool DeathCounterHUD::visible() const {
+auto DeathCounterHUD::visible() const -> bool {
     return _visible;
 }

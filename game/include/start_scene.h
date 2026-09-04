@@ -17,15 +17,22 @@ class StartScene : public core::Scene {
         Player& player,
         bn::span<const LevelData> levels,
         DataManager& data_manager,
-        LevelManager& level_manager);
+        LevelManager& level_manager,
+        GameSession& session);
     void init() override;
     void update() override;
 
    private:
+    void _refresh_slot_text();
+    void _handle_selection_change();
+    void _handle_start_input();
+    void _start_selected_save();
+
     Player& _player;
     bn::span<const LevelData> _levels;
     DataManager& _data_manager;
     LevelManager& _level_manager;
+    GameSession& _session;
 
     int _selected_slot;
     bool _transition_requested;

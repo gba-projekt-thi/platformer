@@ -46,14 +46,24 @@ class LevelManager {
 
     // Advances the simulation by one frame.
     // Returns true when level completed.
-    bool update();
+    auto update() -> bool;
 
     // Returns a valid trigger reference.
     // Falls back to trigger[0] if invalid.
-    Trigger& get_trigger(int trigger_index);
+    auto get_trigger(int trigger_index) -> Trigger&;
 
    private:
     void _init_pause_menu();
+
+    void _load_player_spawn(const LevelData& level);
+    void _load_door(const LevelData& level);
+    void _load_music(const LevelData& level);
+    void _load_background(const LevelData& level);
+    void _clear_runtime_state();
+    static void _validate_level(const LevelData& level);
+    void _load_platforms(const LevelData& level);
+    void _load_triggers(const LevelData& level);
+    void _load_traps(const LevelData& level);
 
     // Resets all traps after player death.
     void _reset_traps();

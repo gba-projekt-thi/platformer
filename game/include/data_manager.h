@@ -18,13 +18,13 @@ class DataManager {
     void set_slot_index(int index);
 
     // Get currently selected slot index
-    int slot_index() const;
+    [[nodiscard]] auto slot_index() const -> int;
 
     // Mutable runtime state access.
-    [[nodiscard]] GameState& state();
+    [[nodiscard]] auto state() -> GameState&;
 
     // Read-only runtime state access.
-    [[nodiscard]] const GameState& state() const;
+    [[nodiscard]] auto state() const -> const GameState&;
 
     // Saves current runtime state into SRAM.
     void save();
@@ -33,6 +33,11 @@ class DataManager {
     void reset();
 
    private:
+    void _normalize_slot_index();
+    void _load_slot_state();
+    void _save_slot_state();
+    void _clear_runtime_state();
+
     // Support 3 save slots by default.
     engine::save::SaveManager<GameState, 3> _save_mgr;
 

@@ -29,17 +29,24 @@ MovingTrap::MovingTrap(
       start_y(t_start_y),
       trigger(t_trigger) {}
 
-void MovingTrap::update() {
-    BaseTrap::update();
-    // Accelerate once activated.
+void MovingTrap::apply_triggered_velocity() {
     if (trigger.is_triggered()) {
         inc_velocity(x_accel, y_accel);
     }
 }
 
-void MovingTrap::reset() {
-    trigger.reset();
+void MovingTrap::reset_to_start() {
     set_velocity(0, 0);
     pos.x = start_x;
     pos.y = start_y;
+}
+
+void MovingTrap::update() {
+    BaseTrap::update();
+    apply_triggered_velocity();
+}
+
+void MovingTrap::reset() {
+    trigger.reset();
+    reset_to_start();
 }

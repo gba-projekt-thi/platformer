@@ -49,11 +49,7 @@ Player::Player(
       jump_speed(Cfg::Player::JUMP_SPEED),
       gravity(Cfg::Player::GRAVITY),
       max_fall_speed(Cfg::Player::MAX_FALL_SPEED),
-      deathHeight(Cfg::Player::DEATH_HEIGHT),
-
-      onGround(true),
-      facing(Facing::Forward),
-      state(PlayerState::Idle) {
+      deathHeight(Cfg::Player::DEATH_HEIGHT) {
     // Link the physics body with the player sprite for rendering.
     sprite = &player_sprite;
     player_sprite.sprite().set_blending_enabled(true);
@@ -68,36 +64,37 @@ Player::Player(
 }
 
 void Player::update() {
-    // Handle left/right movement first.
+    update_input_buffer();
+    update_physics();
+    update_state();
+    update_animation();
+    update_hud();
+}
+
+void Player::update_input_buffer() {
     handle_horizontal_input();
 
-    // Store jump input in a buffer to allow forgiving timing.
     if (bn::keypad::a_pressed()) {
         jump_buffer_timer = Cfg::Player::JUMP_BUFFER_FRAMES;
     }
+}
 
-    // Apply continuous vertical motion effects.
+void Player::update_physics() {
     apply_gravity();
     apply_variable_jump();
     clamp_velocity();
-
-    // Keep the player inside bounds and detect death conditions.
     check_bounds();
     check_death();
 
     update_ground_state();
     handle_jump();
 
-    // Update the current animation and state machine.
-    update_state();
-    update_animation();
-
-    // Decrease jump buffer timer
     if (jump_buffer_timer > 0) {
         jump_buffer_timer--;
     }
+}
 
-    // Update timer
+void Player::update_hud() {
     if (bn::keypad::select_pressed()) {
         timerHud.set_visible(!timerHud.visible());
     }
@@ -116,7 +113,7 @@ void Player::teleport_to(bn::fixed in_x, bn::fixed in_y) {
     pos.x = in_x;
     pos.y = in_y;
 }
-unsigned int Player::get_deaths() const {
+auto Player::get_deaths() const -> unsigned int {
     return deathCounter.count();
 }
 
@@ -125,7 +122,7 @@ void Player::set_deaths(unsigned int deaths) {
     deathCounterHud.update();
 }
 
-Timer& Player::get_timer() {
+auto Player::get_timer() -> Timer& {
     return timer;
 }
 
@@ -137,7 +134,7 @@ void Player::set_visible(bool visible) {
     }
 }
 
-bool Player::visible() const {
+auto Player::visible() const -> bool {
     return player_sprite.is_enabled();
 }
 

@@ -65,15 +65,15 @@ void Timer::tick() {
     _centis = CENTI_TABLE[_frame_counter];
 }
 
-uint16_t Timer::centis() const {
+auto Timer::centis() const -> uint16_t {
     return _centis;
 }
 
-uint16_t Timer::seconds() const {
+auto Timer::seconds() const -> uint16_t {
     return _seconds;
 }
 
-uint16_t Timer::minutes() const {
+auto Timer::minutes() const -> uint16_t {
     return _minutes;
 }
 
@@ -134,7 +134,7 @@ void TimerHUD::set_visible(bool visible) {
     }
 }
 
-bool TimerHUD::visible() const {
+auto TimerHUD::visible() const -> bool {
     return _visible;
 }
 

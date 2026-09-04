@@ -54,14 +54,12 @@ inline constexpr int X = 50;
 inline constexpr int Y = -70;
 }  // namespace Timer
 
-namespace Level {
-namespace Limits {
+namespace Level::Limits {
 inline constexpr unsigned int PLATFORMS = 32;
 inline constexpr unsigned int PLATFORM_BODIES = 32;
 inline constexpr unsigned int TRIGGERS = 16;
 inline constexpr unsigned int TOTAL_TRAPS = 32;
-}  // namespace Limits
-}  // namespace Level
+}  // namespace Level::Limits
 
 inline constexpr unsigned int MAX_ANIMATION_FRAMES = 8;
 

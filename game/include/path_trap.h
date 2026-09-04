@@ -36,6 +36,9 @@ class PathTrap : public BaseTrap {
     void reset() override;
 
    private:
+    void update_path_motion();
+    void reset_position();
+
     // Base world position.
     bn::fixed start_x;
     bn::fixed start_y;

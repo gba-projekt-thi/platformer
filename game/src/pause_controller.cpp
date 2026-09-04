@@ -43,7 +43,7 @@ void PauseController::reset() {
     set_visible(false);
 }
 
-PauseController::Action PauseController::update() {
+auto PauseController::update() -> PauseController::Action {
     if (bn::keypad::start_pressed()) {
         _paused = !_paused;
     }
@@ -71,6 +71,6 @@ PauseController::Action PauseController::update() {
     return Action::None;
 }
 
-bool PauseController::paused() const {
+auto PauseController::paused() const -> bool {
     return _paused;
 }

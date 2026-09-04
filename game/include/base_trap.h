@@ -33,17 +33,17 @@ class BaseTrap : public PhysicsBody {
         bn::fixed t_width,
         bn::fixed t_height,
         const bn::sprite_item& t_sprite_item,
-        int t_sprite_waits,
+        int t_animation_wait,
         bn::span<const uint16_t> t_graphics_indexes,
         uint16_t t_blocking_layers,
         bn::fixed t_max_vel = 0);
 
-    virtual void update() override;
+    void update() override;
 
     // Kill the player on collision.
-    virtual void on_enter(uint16_t hit_layers, StaticBody* body) override;
+    void on_enter(uint16_t hit_layers, StaticBody* body) override;
 
-    virtual ~BaseTrap();
+    ~BaseTrap() override;
 
     // Reset trap state after player death or level restart.
     virtual void reset() {}
@@ -51,6 +51,9 @@ class BaseTrap : public PhysicsBody {
    protected:
     // Sprite wrapper synchronized through SpriteRegistry.
     Sprite trap_sprite;
+
+    void update_animation();
+    static void handle_player_collision(StaticBody* body);
 
    private:
     // Optional looping animation action.

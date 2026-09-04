@@ -3,13 +3,12 @@
 #include "bn_core.h"
 #include "bn_unique_ptr.h"
 
-extern bool game_finished;
-
 LevelScene::LevelScene(
     Player& player,
     bn::span<const LevelData> levels,
     DataManager& data_manager,
-    LevelManager& level_manager)
+    LevelManager& level_manager,
+    GameSession& session)
     : _player(player),
       _levels(levels),
 
@@ -17,7 +16,7 @@ LevelScene::LevelScene(
       _level_index(data_manager.state().level),
       _level_manager(level_manager),
       _data_manager(data_manager),
-      _transition_requested(false) {}
+      _session(session) {}
 
 void LevelScene::init() {
     _level_manager.load(_levels[_level_index]);
@@ -25,27 +24,9 @@ void LevelScene::init() {
     _player.set_hud_visible(true);
 }
 
-void LevelScene::update() {
-    // Prevent duplicate transitions.
-    if (_transition_requested) {
-        bn::core::update();
-        return;
-    }
+void LevelScene::_save_progress_for_next_level() {
+    const unsigned int next_level_index = _level_index + 1U;
 
-    // Wait until level completion.
-    if (!_level_manager.update()) {
-        return;
-    }
-    _transition_requested = true;
-    const unsigned int next_level_index = _level_index + 1u;
-
-    // Game completed.
-    if (next_level_index >= static_cast<unsigned int>(_levels.size())) {
-        game_finished = true;
-        return;
-    }
-
-    // Save progression state.
     auto& timer = _player.get_timer();
     auto& game_state = _data_manager.state();
     game_state.level = next_level_index;
@@ -59,15 +40,56 @@ void LevelScene::update() {
     game_state.seconds = timer.seconds();
     game_state.minutes = timer.minutes();
     _data_manager.save();
+}
 
+void LevelScene::_advance_to_next_level() {
+    const unsigned int next_level_index = _level_index + 1U;
     const bool changes_world =
         !(_levels[_level_index].back_ground ==
           _levels[next_level_index].back_ground);
 
     auto next_scene = bn::make_unique<LevelScene>(
-        _player, _levels, _data_manager, _level_manager);
+        _player, _levels, _data_manager, _level_manager, _session);
     core::AudioTransitionOptions audio_options;
     audio_options.fade_music = changes_world;
     core::SceneManager::instance().set_next_scene(
         bn::move(next_scene), audio_options);
+}
+
+void LevelScene::_finish_game() {
+    _session.finish();
+}
+
+void LevelScene::_update_completion_state() {
+    if (_transition_requested) {
+        return;
+    }
+
+    if (!_level_manager.update()) {
+        return;
+    }
+
+    _transition_requested = true;
+    const unsigned int next_level_index = _level_index + 1U;
+
+    if (next_level_index >= static_cast<unsigned int>(_levels.size())) {
+        _finish_game();
+        return;
+    }
+
+    _save_progress_for_next_level();
+    _advance_to_next_level();
+}
+
+void LevelScene::_handle_level_transition() {
+    if (_transition_requested) {
+        bn::core::update();
+        return;
+    }
+
+    _update_completion_state();
+}
+
+void LevelScene::update() {
+    _handle_level_transition();
 }

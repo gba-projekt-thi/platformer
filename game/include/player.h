@@ -43,13 +43,13 @@ class Player : public PhysicsBody {
     void teleport_to(bn::fixed in_x, bn::fixed in_y);
     // Control player visibility while showing menu/UI.
     void set_visible(bool visible);
-    [[nodiscard]] bool visible() const;
+    [[nodiscard]] auto visible() const -> bool;
     // Control HUD visibility for title screens.
     void set_hud_visible(bool visible);
     // Get & Set the count of player deaths.
-    unsigned int get_deaths() const;
+    [[nodiscard]] auto get_deaths() const -> unsigned int;
     void set_deaths(unsigned int deaths);
-    Timer& get_timer();
+    auto get_timer() -> Timer&;
 
    private:
     // Sprite
@@ -91,15 +91,15 @@ class Player : public PhysicsBody {
     int deathHeight;
 
     // Ground state
-    bool onGround;
+    bool onGround{true};
 
     // Facing direction
     enum class Facing { Forward, Back, Left, Right };
-    Facing facing;
+    Facing facing{Facing::Forward};
 
     // State machine
     enum class PlayerState { Idle, Run, Jump, Fall };
-    PlayerState state;
+    PlayerState state{PlayerState::Idle};
 
     // Jump helpers
     int coyote_timer = 0;
@@ -107,6 +107,11 @@ class Player : public PhysicsBody {
 
     // Walk sound helper
     int _walk_sound_counter = 0;
+
+    // Frame lifecycle helpers
+    void update_input_buffer();
+    void update_physics();
+    void update_hud();
 
     // Input & physics handlers
     void handle_horizontal_input();

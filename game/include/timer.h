@@ -20,9 +20,9 @@ class Timer {
     // Call once per frame (60 FPS).
     void tick();
 
-    [[nodiscard]] uint16_t centis() const;
-    [[nodiscard]] uint16_t seconds() const;
-    [[nodiscard]] uint16_t minutes() const;
+    [[nodiscard]] auto centis() const -> uint16_t;
+    [[nodiscard]] auto seconds() const -> uint16_t;
+    [[nodiscard]] auto minutes() const -> uint16_t;
 
     void set_time(uint16_t centis, uint16_t seconds, uint16_t minutes);
 
@@ -46,7 +46,7 @@ class TimerHUD {
 
     void set_visible(bool visible);
 
-    [[nodiscard]] bool visible() const;
+    [[nodiscard]] auto visible() const -> bool;
 
    private:
     void refresh();
@@ -54,7 +54,6 @@ class TimerHUD {
     // Changes a digit sprite only if needed.
     void set_digit(int index, int value);
 
-   private:
     const Timer& _timer;
 
     // 8 sprites:
