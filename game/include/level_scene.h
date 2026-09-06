@@ -16,6 +16,7 @@ class LevelScene : public core::Scene {
         DataManager& data_manager,
         LevelManager& level_manager,
         GameSession& session);
+    ~LevelScene() override;
     void init() override;
     void update() override;
 
