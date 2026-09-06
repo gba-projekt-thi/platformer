@@ -60,6 +60,28 @@ void LevelManager::_load_background(const LevelData& level) {
     _background->set_blending_enabled(true);
 }
 
+void LevelManager::unload() {
+    // Release all per-level VRAM/SRAM-adjacent resources: door, background,
+    // platforms, platform bodies, triggers and traps. Their destructors
+    // automatically unregister from CollisionRegistry / SpriteRegistry, so
+    // clearing/resetting the owning containers is sufficient.
+    //
+    // This is called every time a LevelScene is destroyed (both on
+    // level-to-level transitions and when the game finishes), which is why
+    // it must run BEFORE the next scene allocates its own background -
+    // otherwise the old level's BG palette stays resident and can exhaust
+    // the BPP8 palette budget when the endgame background loads.
+    //
+    // NOTE: `_music` is intentionally left untouched here. `_load_music()`
+    // compares the incoming level's track against `_music` to decide
+    // whether to restart playback; resetting it here would force an
+    // audible restart even when two consecutive levels share the same
+    // track.
+    _door.reset();
+    _background.reset();
+    _clear_runtime_state();
+}
+
 void LevelManager::_clear_runtime_state() {
     _platforms.clear();
     _platform_bodies.clear();
