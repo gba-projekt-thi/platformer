@@ -6,7 +6,7 @@ Checks: >
   performance-*,
   readability-*
 
-ExtraArgs:
+ExtraArgsBefore:
   - "-std=c++23"
   - "--target=arm-none-eabi"
   - "--sysroot=/opt/devkitpro/devkitARM/arm-none-eabi"
@@ -15,9 +15,9 @@ ExtraArgs:
   - "-Wno-unused-command-line-argument"
   - "-Wno-unqualified-std-cast-call"
   - "-isystem"
-  - "/opt/devkitpro/devkitARM/arm-none-eabi/include/c++/16.1.0"
+  - "/opt/devkitpro/devkitARM/arm-none-eabi/include/c++/current"
   - "-isystem"
-  - "/opt/devkitpro/devkitARM/arm-none-eabi/include/c++/16.1.0/arm-none-eabi"
+  - "/opt/devkitpro/devkitARM/arm-none-eabi/include/c++/current/arm-none-eabi"
   - "-isystem"
   - "/opt/devkitpro/devkitARM/arm-none-eabi/include"
   - "-I/workspace/game/include"
