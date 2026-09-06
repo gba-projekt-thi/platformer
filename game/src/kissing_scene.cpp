@@ -2,17 +2,18 @@
 
 #include "bn_core.h"
 #include "bn_music_items.h"
-#include "bn_regular_bg_items_kissingscene.h"
 
 KissingScene::KissingScene(
     Player& player,
     bn::span<const LevelData> levels,
     DataManager& data_manager,
-    LevelManager& level_manager)
+    LevelManager& level_manager,
+    GameSession& session)
     : _player(player),
       _levels(levels),
       _data_manager(data_manager),
       _level_manager(level_manager),
+      _session(session),
       _timer(Cfg::Sleep::KISSING_SCENE),
       _transition_requested(false) {}
 
@@ -47,7 +48,7 @@ void KissingScene::update() {
 
     // Return to the start scene as the next scene.
     auto restart_scene = bn::make_unique<StartScene>(
-        _player, _levels, _data_manager, _level_manager);
+        _player, _levels, _data_manager, _level_manager, _session);
     core::SceneManager::instance().set_next_scene(bn::move(restart_scene));
 
     // Play a confirmation sound when the transition begins.

@@ -4,6 +4,7 @@
 #include "core_scene_manager.h"
 
 #include "bn_optional.h"
+#include "bn_regular_bg_items_kissingscene.h"
 #include "bn_regular_bg_ptr.h"
 #include "bn_span.h"
 #include "bn_unique_ptr.h"
@@ -21,13 +22,15 @@ class KissingScene : public core::Scene {
         Player& player,
         bn::span<const LevelData> levels,
         DataManager& data_manager,
-        LevelManager& level_manager);
+        LevelManager& level_manager,
+        GameSession& session);
 
     void init() override;
     void update() override;
 
    private:
     Player& _player;
+    GameSession& _session;
     bn::span<const LevelData> _levels;
     DataManager& _data_manager;
     LevelManager& _level_manager;
