@@ -142,7 +142,10 @@ void LevelManager::load(const LevelData& level) {
 void LevelManager::unload() {
     _background.reset();
     _door.reset();
-    _music.reset();
+    // NOTE: _music is intentionally NOT reset here.
+    // Preserving it lets load() detect same-track transitions
+    // (see the `*_music != level.music` check) and avoid restarting
+    // the music on every level change.
     _platforms.clear();
     _platform_bodies.clear();
     _triggers.clear();
