@@ -1,47 +1,46 @@
 FROM ubuntu:24.04
 
-# Prevent apt from showing interactive prompts and configuration dialogs during package installation
-# This is a Docker best practice to ensure builds are fully non-interactive
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system prerequisites and tools
 RUN apt-get update && \
-    # Install wget (for downloading), apt-transport-https (for https apt sources), python3, git, pre-commit and cmake
-    apt-get install -y wget apt-transport-https python3 git pre-commit clang-format bear clang-tidy cmake make && \
-    # Create python symlink so 'python' command works
+    apt-get install -y wget apt-transport-https gnupg python3 git pre-commit bear cmake make && \
     ln -sf /usr/bin/python3 /usr/bin/python && \
-    # Clean up apt cache to reduce image size
     rm -rf /var/lib/apt/lists/*
 
-# Install devkitpro-pacman manually instead of using the install script
-# The official install script (https://apt.devkitpro.org/install-devkitpro-pacman)
-# runs apt-get install without -y flags, causing interactive prompts during build
-# We replicate the script's steps here with proper -y flags for non-interactive installation
+# Install clang-tidy-19 / clang-format-19 from the official LLVM apt repository.
+# Registered via update-alternatives so unversioned clang-tidy/clang-format calls
+# (used by the pre-commit hooks) keep working without hardcoding the version there.
+RUN wget -O /usr/local/share/keyring/llvm-snapshot.gpg.key https://apt.llvm.org/llvm-snapshot.gpg.key && \
+    gpg --dearmor -o /usr/local/share/keyring/llvm-snapshot.gpg /usr/local/share/keyring/llvm-snapshot.gpg.key && \
+    rm /usr/local/share/keyring/llvm-snapshot.gpg.key && \
+    echo "deb [signed-by=/usr/local/share/keyring/llvm-snapshot.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-19 main" > /etc/apt/sources.list.d/llvm-19.list && \
+    apt-get update && \
+    apt-get install -y clang-tidy-19 clang-format-19 && \
+    update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-19 100 && \
+    update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-19 100 && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN mkdir -p /usr/local/share/keyring/ && \
-    # Download and store devkitPro GPG key
     wget -U "dkp apt" -O /usr/local/share/keyring/devkitpro-pub.gpg https://apt.devkitpro.org/devkitpro-pub.gpg && \
-    # Add devkitPro apt repository
     echo "deb [signed-by=/usr/local/share/keyring/devkitpro-pub.gpg] https://apt.devkitpro.org stable main" > /etc/apt/sources.list.d/devkitpro.list && \
-    # Update package list with new repository and install devkitpro-pacman
     apt-get update && \
     apt-get install -y devkitpro-pacman && \
-    # Clean up apt cache to reduce image size
     rm -rf /var/lib/apt/lists/*
 
-# Set up devkitPro environment variables
 ENV DEVKITPRO=/opt/devkitpro
 ENV DEVKITARM=/opt/devkitpro/devkitARM
 ENV PATH=$DEVKITPRO/tools/bin:$DEVKITARM/bin:$PATH
 
-# Install GBA development toolchain using devkitPro pacman
-# Create /etc/mtab symlink required by pacman for filesystem mount point detection
 RUN ln -sf /proc/self/mounts /etc/mtab && \
     dkp-pacman -Syu --noconfirm && \
     dkp-pacman -S --noconfirm gba-dev
 
-# Install upstream mGBA 0.10.5 release
-# xvfb provides virtual framebuffer for headless GUI testing
-# pulseaudio provides null audio sink for headless audio
+# Version-independent symlink to the installed devkitARM GCC C++ headers,
+# referenced by .clang-tidy's isystem paths. Avoids hardcoding the GCC
+# version, which changes whenever dkp-pacman updates the toolchain.
+RUN GCC_CXX_DIR="$(basename "$(find /opt/devkitpro/devkitARM/arm-none-eabi/include/c++ -mindepth 1 -maxdepth 1 -type d | head -n1)")" && \
+    ln -sf "$GCC_CXX_DIR" /opt/devkitpro/devkitARM/arm-none-eabi/include/c++/current
+
 RUN apt-get update && \
     apt-get install -y xvfb pulseaudio sudo && \
     wget -O /tmp/mgba.tar.xz https://github.com/mgba-emu/mgba/releases/download/0.10.5/mGBA-0.10.5-ubuntu64-noble.tar.xz && \
@@ -50,9 +49,7 @@ RUN apt-get update && \
     apt-get install -y /tmp/mgba/*/*.deb && \
     rm -rf /var/lib/apt/lists/* /tmp/mgba /tmp/mgba.tar.xz
 
-# Grant passwordless sudo to the default ubuntu user
 RUN echo "ubuntu ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ubuntu && \
     chmod 0440 /etc/sudoers.d/ubuntu
 
 USER ubuntu
-
