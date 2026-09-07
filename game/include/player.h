@@ -6,15 +6,12 @@
 #include "bn_sound_items.h"
 #include "bn_sprite_animate_actions.h"
 #include "bn_sprite_items_ente.h"
-#include "bn_sprite_text_generator.h"
 #include "bn_vector.h"
-#include "common_variable_8x16_sprite_font.h"
 
 #include "cfg.h"
-#include "death_counter.h"
 #include "physics_body.h"
+#include "player_hud.h"
 #include "sprite.h"
-#include "timer.h"
 
 class Player : public PhysicsBody {
    public:
@@ -69,14 +66,8 @@ class Player : public PhysicsBody {
     bool wasMoving = false;
     bool wasJumping = false;
 
-    // Death counter UI
-    DeathCounter deathCounter;
-    bn::sprite_text_generator deathCounterTextGen;
-    DeathCounterHUD deathCounterHud;
-
-    // Timer UI
-    Timer timer;
-    TimerHUD timerHud;
+    // HUD (death counter + timer), extracted into its own component.
+    PlayerHud _hud;
 
     // Respawn position
     bn::fixed restart_x;

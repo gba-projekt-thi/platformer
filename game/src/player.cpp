@@ -34,12 +34,7 @@ Player::Player(
           Cfg::Player::JUMP_RIGHT_FRAMES[0],
           Cfg::Player::JUMP_RIGHT_FRAMES[1])),
 
-      deathCounter(),
-      deathCounterTextGen(common::variable_8x16_sprite_font),
-      deathCounterHud(deathCounterTextGen, deathCounter),
-
-      timer(),
-      timerHud(timer),
+      _hud(),
 
       restart_x(in_start_x),
       restart_y(in_start_y),
@@ -57,7 +52,6 @@ Player::Player(
     // Link the physics body with the player sprite for rendering.
     sprite = &player_sprite;
     player_sprite.sprite().set_blending_enabled(true);
-    deathCounterTextGen.set_blending_enabled(true);
 
     // Preload ALL tile frames once (ZERO runtime allocation)
     const auto& tiles = bn::sprite_items::ente.tiles_item();
@@ -97,12 +91,8 @@ void Player::update() {
         jump_buffer_timer--;
     }
 
-    // Update timer
-    if (bn::keypad::select_pressed()) {
-        timerHud.set_visible(!timerHud.visible());
-    }
-    timer.tick();
-    timerHud.update();
+    // Update HUD (timer ticks every frame; death counter redraws on change).
+    _hud.tick();
 }
 
 // sets spawnpoint
@@ -116,17 +106,17 @@ void Player::teleport_to(bn::fixed in_x, bn::fixed in_y) {
     pos.x = in_x;
     pos.y = in_y;
 }
+
 unsigned int Player::get_deaths() const {
-    return deathCounter.count();
+    return _hud.deaths();
 }
 
 void Player::set_deaths(unsigned int deaths) {
-    deathCounter.set_count(deaths);
-    deathCounterHud.update();
+    _hud.set_deaths(deaths);
 }
 
 Timer& Player::get_timer() {
-    return timer;
+    return _hud.timer();
 }
 
 void Player::set_visible(bool visible) {
@@ -142,8 +132,7 @@ bool Player::visible() const {
 }
 
 void Player::set_hud_visible(bool visible) {
-    deathCounterHud.set_visible(visible);
-    timerHud.set_visible(visible);
+    _hud.set_visible(visible);
 }
 
 // Horizontal input handling
@@ -255,8 +244,7 @@ void Player::check_death() {
 
 // Handle player death, increment the counter and respawn.
 void Player::death() {
-    deathCounter.on_player_death();
-    deathCounterHud.update();
+    _hud.on_player_death();
 
     set_velocity(0, 0);
 
