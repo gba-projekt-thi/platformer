@@ -10,12 +10,11 @@
 // - consistent ABI behavior on ARM
 struct GameState {
     int16_t level = 0;
-    int16_t deaths = 0;
+    uint16_t deaths = 0;  // unsigned: matches Player::set_deaths(unsigned int)
+                          // and LevelManager's unsigned _last_death_ct — avoids
+                          // silent narrowing to negative values.
 
     uint16_t centis = 0;
     uint16_t seconds = 0;
     uint16_t minutes = 0;
-
-    // Future:
-    // uint16_t collectables;
 };
