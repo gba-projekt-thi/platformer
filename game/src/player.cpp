@@ -34,8 +34,7 @@ Player::Player(
       deathHeight(Cfg::Player::DEATH_HEIGHT),
 
       onGround(true),
-      facing(Facing::Forward),
-      state(PlayerState::Idle) {
+      facing(Facing::Forward) {
     // Link the physics body with the player sprite for rendering.
     sprite = &player_sprite;
     player_sprite.sprite().set_blending_enabled(true);
@@ -62,8 +61,8 @@ void Player::update() {
     update_ground_state();
     handle_jump();
 
-    // Update the current animation and state machine.
-    update_state();
+    // Update the current movement state and animation.
+    _state_machine.update(onGround, vel_y);
     _animator.update(onGround);
 
     // Decrease jump buffer timer
@@ -232,30 +231,4 @@ void Player::death() {
     pos.y = restart_y;
 
     bn::sound_items::duck_death.play();
-}
-
-// Update the player's state machine based on movement and grounding.
-void Player::update_state() {
-    PlayerState new_state;
-
-    if (!onGround) {
-        new_state = (vel_y < 0) ? PlayerState::Jump : PlayerState::Fall;
-    } else {
-        // Hold down to enter the idle pose while grounded.
-        if (bn::keypad::down_held()) {
-            new_state = PlayerState::Idle;
-        } else {
-            // No input → stay in Run (but no animation update)
-            new_state = PlayerState::Run;
-        }
-    }
-
-    if (new_state != state) {
-        enter_state(new_state);
-    }
-}
-
-// Transition into a new player animation state.
-void Player::enter_state(PlayerState new_state) {
-    state = new_state;
 }
