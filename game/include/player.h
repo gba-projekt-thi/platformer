@@ -1,7 +1,6 @@
 #pragma once
 
 #include "bn_fixed.h"
-#include "bn_keypad.h"
 #include "bn_log.h"
 #include "bn_sound_items.h"
 #include "bn_sprite_items_ente.h"
@@ -10,10 +9,11 @@
 #include "physics_body.h"
 #include "player_animator.h"
 #include "player_hud.h"
+#include "player_locomotion.h"
 #include "player_state_machine.h"
 #include "sprite.h"
 
-class Player : public PhysicsBody {
+class Player : public PhysicsBody, private PlayerDeathHandler {
    public:
     // Mask layer
     static constexpr uint16_t MASK = Cfg::Layer::TRAP | Cfg::Layer::DOOR;
@@ -52,49 +52,23 @@ class Player : public PhysicsBody {
     // Sprite
     Sprite player_sprite;
 
+    // Physics/input, extracted into its own component.
+    PlayerLocomotion _locomotion;
+
     // Walk/jump animation, extracted into its own component.
     PlayerAnimator _animator;
 
     // HUD (death counter + timer), extracted into its own component.
     PlayerHud _hud;
 
-    // Respawn position
-    bn::fixed restart_x;
-    bn::fixed restart_y;
-
-    // Physics parameters
-    bn::fixed acceleration;
-    bn::fixed max_speed;
-    bn::fixed jump_speed;
-    bn::fixed gravity;
-    bn::fixed max_fall_speed;
-    int deathHeight;
-
-    // Ground state
-    bool onGround;
-
-    // Facing direction
-    enum class Facing { Forward, Back, Left, Right };
-    Facing facing;
-
     // Coarse movement state (Idle/Run/Jump/Fall), extracted into its own
     // component.
     PlayerStateMachine _state_machine;
 
-    // Jump helpers
-    int coyote_timer = 0;
-    int jump_buffer_timer = 0;
+    // Respawn position
+    bn::fixed restart_x;
+    bn::fixed restart_y;
 
-    // Walk sound helper
-    int _walk_sound_counter = 0;
-
-    // Input & physics handlers
-    void handle_horizontal_input();
-    void handle_jump();
-    void apply_gravity();
-    void apply_variable_jump();
-    void clamp_velocity();
-    void check_bounds();
-    void update_ground_state();
-    void check_death();
+    // PlayerDeathHandler
+    void on_locomotion_death() override { death(); }
 };
