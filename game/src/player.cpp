@@ -19,20 +19,7 @@ Player::Player(
           in_start_x,
           in_start_y),
 
-      walk_action(bn::create_sprite_animate_action_forever(
-          player_sprite.sprite(),
-          Cfg::Player::WAIT_UPDATE,
-          bn::sprite_items::ente.tiles_item(),
-          Cfg::Player::RIGHT_FRAMES[0],
-          Cfg::Player::RIGHT_FRAMES[1])),
-
-      // Jump animation using cached jump frames
-      jump_action(bn::create_sprite_animate_action_forever(
-          player_sprite.sprite(),
-          Cfg::Player::WAIT_UPDATE,
-          bn::sprite_items::ente.tiles_item(),
-          Cfg::Player::JUMP_RIGHT_FRAMES[0],
-          Cfg::Player::JUMP_RIGHT_FRAMES[1])),
+      _animator(player_sprite, bn::sprite_items::ente),
 
       _hud(),
 
@@ -52,13 +39,6 @@ Player::Player(
     // Link the physics body with the player sprite for rendering.
     sprite = &player_sprite;
     player_sprite.sprite().set_blending_enabled(true);
-
-    // Preload ALL tile frames once (ZERO runtime allocation)
-    const auto& tiles = bn::sprite_items::ente.tiles_item();
-
-    for (int i = 0; i < Cfg::Player::PLAYER_TILE_CACHE_SIZE; ++i) {
-        cached_tiles.push_back(tiles.create_tiles(i));
-    }
 }
 
 void Player::update() {
@@ -84,7 +64,7 @@ void Player::update() {
 
     // Update the current animation and state machine.
     update_state();
-    update_animation();
+    _animator.update(onGround);
 
     // Decrease jump buffer timer
     if (jump_buffer_timer > 0) {
@@ -278,72 +258,4 @@ void Player::update_state() {
 // Transition into a new player animation state.
 void Player::enter_state(PlayerState new_state) {
     state = new_state;
-}
-
-// Update the player sprite based on current state and input.
-void Player::update_animation() {
-    bool moving = bn::keypad::left_held() || bn::keypad::right_held();
-
-    bool jumping = !onGround;
-
-    // Moving -> start walk animation instantly
-    if (moving && !wasMoving) {
-        walk_action.reset();
-        walk_action.update();
-    }
-
-    // Jump started -> start jump animation instantly
-    if (jumping && !wasJumping) {
-        jump_action.reset();
-        jump_action.update();
-    }
-
-    // Stop walk animation when not moving
-    if (!moving) {
-        walk_action.reset();
-    }
-
-    // Stop jump animation when grounded
-    if (!jumping && wasJumping) {
-        jump_action.reset();
-
-        // Restore default ground frame after landing
-        player_sprite.sprite().set_tiles(
-            cached_tiles[Cfg::Player::RIGHT_FRAMES[0]]);
-    }
-
-    // BACK FRAME
-    if (onGround && bn::keypad::up_held()) {
-        player_sprite.sprite().set_tiles(cached_tiles[Cfg::Player::BACK_FRAME]);
-
-        wasMoving = moving;
-        wasJumping = jumping;
-        return;
-    }
-
-    // JUMP ANIMATION
-    if (!onGround) {
-        jump_action.update();
-
-        wasMoving = moving;
-        wasJumping = jumping;
-        return;
-    }
-
-    // IDLE FRAME
-    if (bn::keypad::down_held()) {
-        player_sprite.sprite().set_tiles(cached_tiles[Cfg::Player::IDLE_FRAME]);
-
-        wasMoving = moving;
-        wasJumping = jumping;
-        return;
-    }
-
-    // WALK ANIMATION
-    if (moving) {
-        walk_action.update();
-    }
-
-    wasMoving = moving;
-    wasJumping = jumping;
 }

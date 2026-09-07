@@ -4,12 +4,11 @@
 #include "bn_keypad.h"
 #include "bn_log.h"
 #include "bn_sound_items.h"
-#include "bn_sprite_animate_actions.h"
 #include "bn_sprite_items_ente.h"
-#include "bn_vector.h"
 
 #include "cfg.h"
 #include "physics_body.h"
+#include "player_animator.h"
 #include "player_hud.h"
 #include "sprite.h"
 
@@ -52,19 +51,8 @@ class Player : public PhysicsBody {
     // Sprite
     Sprite player_sprite;
 
-    // Cached tile handles (zero allocation at runtime)
-    bn::vector<bn::sprite_tiles_ptr, Cfg::Player::PLAYER_TILE_CACHE_SIZE>
-        cached_tiles;
-
-    // Walk animation action
-    bn::sprite_animate_action<Cfg::Player::ANIMATION_FRAME_COUNT> walk_action;
-
-    // Jump animation action
-    bn::sprite_animate_action<Cfg::Player::ANIMATION_FRAME_COUNT> jump_action;
-
-    // Previous movement state tracking
-    bool wasMoving = false;
-    bool wasJumping = false;
+    // Walk/jump animation, extracted into its own component.
+    PlayerAnimator _animator;
 
     // HUD (death counter + timer), extracted into its own component.
     PlayerHud _hud;
@@ -112,7 +100,4 @@ class Player : public PhysicsBody {
     // State machine
     void update_state();
     void enter_state(PlayerState new_state);
-
-    // Animation helpers
-    void update_animation();
 };
