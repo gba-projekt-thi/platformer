@@ -10,6 +10,7 @@
 #include "physics_body.h"
 #include "player_animator.h"
 #include "player_hud.h"
+#include "player_state_machine.h"
 #include "sprite.h"
 
 class Player : public PhysicsBody {
@@ -76,9 +77,9 @@ class Player : public PhysicsBody {
     enum class Facing { Forward, Back, Left, Right };
     Facing facing;
 
-    // State machine
-    enum class PlayerState { Idle, Run, Jump, Fall };
-    PlayerState state;
+    // Coarse movement state (Idle/Run/Jump/Fall), extracted into its own
+    // component.
+    PlayerStateMachine _state_machine;
 
     // Jump helpers
     int coyote_timer = 0;
@@ -96,8 +97,4 @@ class Player : public PhysicsBody {
     void check_bounds();
     void update_ground_state();
     void check_death();
-
-    // State machine
-    void update_state();
-    void enter_state(PlayerState new_state);
 };
