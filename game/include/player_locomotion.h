@@ -43,7 +43,7 @@ class PlayerLocomotion {
     // Player::update() ran it (including the mid-sequence death check).
     void update();
 
-    bool on_ground() const { return _onGround; }
+    bool on_ground() const { return _on_ground; }
     Facing facing() const { return _facing; }
 
    private:
@@ -62,22 +62,22 @@ class PlayerLocomotion {
     PlayerDeathHandler& _death_handler;
 
     // Physics parameters
-    bn::fixed acceleration = Cfg::Player::ACCELERATION;
-    bn::fixed max_speed = Cfg::Player::MAX_SPEED;
-    bn::fixed jump_speed = Cfg::Player::JUMP_SPEED;
-    bn::fixed gravity = Cfg::Player::GRAVITY;
-    bn::fixed max_fall_speed = Cfg::Player::MAX_FALL_SPEED;
-    int deathHeight = Cfg::Player::DEATH_HEIGHT;
+    bn::fixed _acceleration = Cfg::Player::ACCELERATION;
+    bn::fixed _max_speed = Cfg::Player::MAX_SPEED;
+    bn::fixed _jump_speed = Cfg::Player::JUMP_SPEED;
+    bn::fixed _gravity = Cfg::Player::GRAVITY;
+    bn::fixed _max_fall_speed = Cfg::Player::MAX_FALL_SPEED;
+    int _death_height = Cfg::Player::DEATH_HEIGHT;
 
     // Ground state
-    bool _onGround = true;
+    bool _on_ground = true;
 
     // Facing direction
     Facing _facing = Facing::Forward;
 
     // Jump helpers
-    int coyote_timer = 0;
-    int jump_buffer_timer = 0;
+    int _coyote_timer = 0;
+    int _jump_buffer_timer = 0;
 
     // Walk sound helper
     int _walk_sound_counter = 0;
