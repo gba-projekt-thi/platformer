@@ -39,21 +39,21 @@ class PathTrap : public BaseTrap {
 
    private:
     // Base world position.
-    bn::fixed start_x;
-    bn::fixed start_y;
+    bn::fixed _start_x;
+    bn::fixed _start_y;
 
     // Activation trigger.
-    Trigger& trigger;
+    Trigger& _trigger;
 
     // Relative movement path.
-    bn::span<const bn::fixed_point> path;
+    bn::span<const bn::fixed_point> _path;
 
     // Frames between nodes.
-    unsigned path_waits = 1;
+    unsigned _path_waits = 1;
 
     // Current interpolation frame.
-    unsigned current_frame = 0;
+    unsigned _current_frame = 0;
 
     // Current path node.
-    unsigned current_index = 0;
+    unsigned _current_index = 0;
 };
