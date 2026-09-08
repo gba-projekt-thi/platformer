@@ -20,6 +20,6 @@ class Door : public PhysicsBody {
 
    private:
     bool _reached = false;
-    Sprite door_sprite;
-    bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES> action;
+    Sprite _door_sprite;
+    bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES> _action;
 };
