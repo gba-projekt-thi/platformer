@@ -10,7 +10,8 @@ RUN apt-get update && \
 # Install clang-tidy-19 / clang-format-19 from the official LLVM apt repository.
 # Registered via update-alternatives so unversioned clang-tidy/clang-format calls
 # (used by the pre-commit hooks) keep working without hardcoding the version there.
-RUN wget -O /usr/local/share/keyring/llvm-snapshot.gpg.key https://apt.llvm.org/llvm-snapshot.gpg.key && \
+RUN mkdir -p /usr/local/share/keyring/ && \
+    wget -O /usr/local/share/keyring/llvm-snapshot.gpg.key https://apt.llvm.org/llvm-snapshot.gpg.key && \
     gpg --dearmor -o /usr/local/share/keyring/llvm-snapshot.gpg /usr/local/share/keyring/llvm-snapshot.gpg.key && \
     rm /usr/local/share/keyring/llvm-snapshot.gpg.key && \
     echo "deb [signed-by=/usr/local/share/keyring/llvm-snapshot.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-19 main" > /etc/apt/sources.list.d/llvm-19.list && \
