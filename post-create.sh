@@ -4,8 +4,7 @@ pre-commit install
 
 # Generate compile_commands.json for clang-tidy
 make clean
-bear -- make
+bear -- make -j1
 
 # Remove -mthumb-interwork line for clang-tidy compatability
 sed -i 's/"-mthumb-interwork",//g' compile_commands.json
-
