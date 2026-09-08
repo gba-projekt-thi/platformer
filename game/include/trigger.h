@@ -26,6 +26,6 @@ class Trigger : public PhysicsBody {
     void reset();
 
    private:
-    bool triggered;
-    bool default_on;
+    bool _triggered;
+    bool _default_on;
 };
