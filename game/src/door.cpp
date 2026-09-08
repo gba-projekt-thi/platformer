@@ -2,12 +2,12 @@
 
 Door::Door(bn::fixed in_x, bn::fixed in_y)
     : PhysicsBody(in_x, in_y, 2, 2, Cfg::Layer::DOOR, Cfg::Layer::PLAYER, 0),
-      door_sprite(
+      _door_sprite(
           bn::sprite_items::door32x32.create_sprite(in_x, in_y),
           in_x,
           in_y),
-      action(bn::create_sprite_animate_action_forever(
-          door_sprite.sprite(),
+      _action(bn::create_sprite_animate_action_forever(
+          _door_sprite.sprite(),
           8,
           bn::sprite_items::door32x32.tiles_item(),
           0,
@@ -17,16 +17,14 @@ Door::Door(bn::fixed in_x, bn::fixed in_y)
           8,
           10,
           12)) {
-    // The door is a static physics body and animated sprite.
-    door_sprite.sprite().set_z_order(Cfg::ZOrder::DOOR);
-    door_sprite.sprite().set_blending_enabled(true);
-    this->sprite = &door_sprite;
+    _door_sprite.sprite().set_z_order(Cfg::ZOrder::DOOR);
+    _door_sprite.sprite().set_blending_enabled(true);
+    this->sprite = &_door_sprite;
     this->shape_pos.offset_y = +6;
 }
 
 void Door::update() {
-    // Animate the door each frame.
-    action.update();
+    _action.update();
 }
 
 void Door::on_enter(
@@ -40,5 +38,5 @@ bool Door::reached() const {
 }
 
 Door::~Door() {
-    SpriteRegistry::instance().unregister_sprite(&door_sprite);
+    SpriteRegistry::instance().unregister_sprite(&_door_sprite);
 }
