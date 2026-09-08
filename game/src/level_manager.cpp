@@ -72,6 +72,19 @@ void LevelManager::load(const LevelData& level) {
     _background->set_blending_enabled(true);
 
     // -------------------------------------------------------------------------
+    // Camera
+    // -------------------------------------------------------------------------
+
+    // Player spawn point (set above via teleport_to) already reflects this
+    // level's start position, so seed the camera immediately - avoids a
+    // one-frame pop where the background/sprites render at the previous
+    // level's camera position before the first update() runs.
+    Camera::instance().init(level.world_width, level.world_height);
+    Camera::instance().follow(_player.pos.x, _player.pos.y);
+    _background->set_position(
+        Camera::instance().bg_x(), Camera::instance().bg_y());
+
+    // -------------------------------------------------------------------------
     // Clear Previous Level State
     // -------------------------------------------------------------------------
 
@@ -170,6 +183,16 @@ bool LevelManager::update() {
     // -------------------------------------------------------------------------
 
     CollisionRegistry::instance().update_all();
+
+    // -------------------------------------------------------------------------
+    // Camera
+    // -------------------------------------------------------------------------
+
+    Camera::instance().follow(_player.pos.x, _player.pos.y);
+    if (_background) {
+        _background->set_position(
+            Camera::instance().bg_x(), Camera::instance().bg_y());
+    }
 
     // -------------------------------------------------------------------------
     // Rendering
