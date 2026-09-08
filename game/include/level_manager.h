@@ -11,6 +11,7 @@
 #include "bn_vector.h"
 #include "common_variable_8x16_sprite_font.h"
 
+#include "camera.h"
 #include "cfg.h"
 #include "data_manager.h"
 #include "door.h"

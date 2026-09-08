@@ -170,4 +170,14 @@ struct LevelData {
 
     PlayerData player_data;
     DoorData door;
+
+    // -------------------------------------------------------------------------
+    // Camera
+    // -------------------------------------------------------------------------
+
+    // Full extents of the playable world, centered at (0,0). Values <= the
+    // screen size (240x160) keep the camera effectively static (current
+    // behavior); larger values enable real scrolling for that level.
+    bn::fixed world_width = 240;
+    bn::fixed world_height = 160;
 };
