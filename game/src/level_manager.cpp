@@ -115,12 +115,15 @@ void LevelManager::load(const LevelData& level) {
         const PlatformData& platform = level.platforms[i];
         const int graphics_count =
             platform.sprite.tiles_item().graphics_count();
-        bn::sprite_ptr sprite =
+        bn::sprite_ptr sprite_ptr =
             platform.sprite.create_sprite(platform.x, platform.y);
-        sprite.set_tiles(platform.sprite.tiles_item().create_tiles(
+        sprite_ptr.set_tiles(platform.sprite.tiles_item().create_tiles(
             platform.sprite_index % graphics_count));
-        sprite.set_blending_enabled(true);
-        _platforms.push_back(bn::move(sprite));
+        sprite_ptr.set_blending_enabled(true);
+
+        _platforms.push_back(bn::make_unique<Sprite>(
+            bn::move(sprite_ptr), platform.x, platform.y));
+
         _platform_bodies.emplace_back(
             platform.x, platform.y, platform.width, platform.height,
             Cfg::Layer::PLATFORM);

@@ -21,6 +21,7 @@
 #include "path_trap.h"
 #include "pause_controller.h"
 #include "player.h"
+#include "sprite.h"
 #include "trigger.h"
 
 // -----------------------------------------------------------------------------
@@ -74,7 +75,10 @@ class LevelManager {
     // Resets all traps after player death.
     void _reset_traps();
 
-    bn::vector<bn::sprite_ptr, Cfg::Level::Limits::PLATFORMS> _platforms;
+    // unique_ptr<Sprite> so each platform sprite keeps a stable address in
+    // SpriteRegistry, independent of bn::vector reallocations/clear().
+    bn::vector<bn::unique_ptr<Sprite>, Cfg::Level::Limits::PLATFORMS>
+        _platforms;
     bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES>
         _platform_bodies;
     bn::vector<Trigger, Cfg::Level::Limits::TRIGGERS> _triggers;
