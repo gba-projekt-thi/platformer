@@ -14,24 +14,24 @@ Player::Player(
           MASK,
           BLOCK),
 
-      player_sprite(
+      _player_sprite(
           bn::sprite_items::ente.create_sprite(in_start_x, in_start_y),
           in_start_x,
           in_start_y),
 
-      _locomotion(*this, player_sprite, BLOCK, *this),
+      _locomotion(*this, _player_sprite, BLOCK, *this),
 
-      _animator(player_sprite, bn::sprite_items::ente),
+      _animator(_player_sprite, bn::sprite_items::ente),
 
       _hud(),
 
       _state_machine(),
 
-      restart_x(in_start_x),
-      restart_y(in_start_y) {
+      _restart_x(in_start_x),
+      _restart_y(in_start_y) {
     // Link the physics body with the player sprite for rendering.
-    sprite = &player_sprite;
-    player_sprite.sprite().set_blending_enabled(true);
+    sprite = &_player_sprite;
+    _player_sprite.sprite().set_blending_enabled(true);
 }
 
 void Player::update() {
@@ -40,16 +40,14 @@ void Player::update() {
     _state_machine.update(_locomotion.on_ground(), vel_y);
     _animator.update(_locomotion.on_ground());
 
-    // Update HUD (timer ticks every frame; death counter redraws on change).
     _hud.tick();
 }
 
-// sets spawnpoint
 void Player::set_spawn_point(bn::fixed in_x, bn::fixed in_y) {
-    restart_x = in_x;
-    restart_y = in_y;
+    _restart_x = in_x;
+    _restart_y = in_y;
 }
-//
+
 void Player::teleport_to(bn::fixed in_x, bn::fixed in_y) {
     set_velocity(0, 0);
     pos.x = in_x;
@@ -70,28 +68,27 @@ Timer& Player::get_timer() {
 
 void Player::set_visible(bool visible) {
     if (visible) {
-        player_sprite.enable();
+        _player_sprite.enable();
     } else {
-        player_sprite.disable();
+        _player_sprite.disable();
     }
 }
 
 bool Player::visible() const {
-    return player_sprite.is_enabled();
+    return _player_sprite.is_enabled();
 }
 
 void Player::set_hud_visible(bool visible) {
     _hud.set_visible(visible);
 }
 
-// Handle player death, increment the counter and respawn.
 void Player::death() {
     _hud.on_player_death();
 
     set_velocity(0, 0);
 
-    pos.x = restart_x;
-    pos.y = restart_y;
+    pos.x = _restart_x;
+    pos.y = _restart_y;
 
     bn::sound_items::duck_death.play();
 }
