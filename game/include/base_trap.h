@@ -52,7 +52,7 @@ class BaseTrap : public PhysicsBody {
 
    protected:
     // Sprite wrapper synchronized through SpriteRegistry.
-    Sprite trap_sprite;
+    Sprite _trap_sprite;
 
    private:
     // Optional looping animation action.

@@ -21,8 +21,8 @@ BaseTrap::BaseTrap(
           Cfg::Layer::PLAYER,
           t_blocking_layers,
           t_max_vel),
-      trap_sprite(t_sprite_item.create_sprite(t_x, t_y), t_x, t_y) {
-    sprite = &trap_sprite;
+      _trap_sprite(t_sprite_item.create_sprite(t_x, t_y), t_x, t_y) {
+    sprite = &_trap_sprite;
 
     // Empty graphics span means:
     // this trap is static/non-animated.
@@ -32,7 +32,7 @@ BaseTrap::BaseTrap(
             "Animated trap requires animation_wait >= 1");
         _animation_action =
             bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES>::forever(
-                trap_sprite.sprite(), t_animation_wait,
+                _trap_sprite.sprite(), t_animation_wait,
                 t_sprite_item.tiles_item(), t_graphics_indexes);
     }
 }
@@ -53,5 +53,5 @@ void BaseTrap::on_enter(
 }
 
 BaseTrap::~BaseTrap() {
-    SpriteRegistry::instance().unregister_sprite(&trap_sprite);
+    SpriteRegistry::instance().unregister_sprite(&_trap_sprite);
 }
