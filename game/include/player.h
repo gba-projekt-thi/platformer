@@ -50,7 +50,7 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
 
    private:
     // Sprite
-    Sprite player_sprite;
+    Sprite _player_sprite;
 
     // Physics/input, extracted into its own component.
     PlayerLocomotion _locomotion;
@@ -66,8 +66,8 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
     PlayerStateMachine _state_machine;
 
     // Respawn position
-    bn::fixed restart_x;
-    bn::fixed restart_y;
+    bn::fixed _restart_x;
+    bn::fixed _restart_y;
 
     // PlayerDeathHandler
     void on_locomotion_death() override { death(); }
