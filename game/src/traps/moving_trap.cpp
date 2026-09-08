@@ -27,23 +27,22 @@ MovingTrap::MovingTrap(
           t_graphics_indexes,
           t_blocking_layers,
           t_max_vel),
-      x_accel(t_x_accel),
-      y_accel(t_y_accel),
-      start_x(t_start_x),
-      start_y(t_start_y),
-      trigger(t_trigger) {}
+      _x_accel(t_x_accel),
+      _y_accel(t_y_accel),
+      _start_x(t_start_x),
+      _start_y(t_start_y),
+      _trigger(t_trigger) {}
 
 void MovingTrap::update() {
     BaseTrap::update();
-    // Accelerate once activated.
-    if (trigger.is_triggered()) {
-        inc_velocity(x_accel, y_accel);
+    if (_trigger.is_triggered()) {
+        inc_velocity(_x_accel, _y_accel);
     }
 }
 
 void MovingTrap::reset() {
-    trigger.reset();
+    _trigger.reset();
     set_velocity(0, 0);
-    pos.x = start_x;
-    pos.y = start_y;
+    pos.x = _start_x;
+    pos.y = _start_y;
 }

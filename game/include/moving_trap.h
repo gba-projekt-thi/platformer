@@ -41,13 +41,13 @@ class MovingTrap : public BaseTrap {
 
    private:
     // Per-frame acceleration.
-    bn::fixed x_accel;
-    bn::fixed y_accel;
+    bn::fixed _x_accel;
+    bn::fixed _y_accel;
 
     // Reset position.
-    bn::fixed start_x;
-    bn::fixed start_y;
+    bn::fixed _start_x;
+    bn::fixed _start_y;
 
     // Activation trigger.
-    Trigger& trigger;
+    Trigger& _trigger;
 };
