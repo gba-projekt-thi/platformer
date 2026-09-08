@@ -14,20 +14,19 @@ Trigger::Trigger(
           Cfg::Layer::TRIGGER,
           Cfg::Layer::PLAYER,
           0),
-      triggered(t_default_on),
-      default_on(t_default_on) {}
+      _triggered(t_default_on),
+      _default_on(t_default_on) {}
 
 bool Trigger::is_triggered() const {
-    return triggered;
+    return _triggered;
 }
 
 void Trigger::on_enter(
     [[maybe_unused]] uint16_t hit_layers,
     [[maybe_unused]] StaticBody* body) {
-    // Activate trigger once entered.
-    triggered = !default_on;
+    _triggered = !_default_on;
 }
 
 void Trigger::reset() {
-    triggered = default_on;
+    _triggered = _default_on;
 }
