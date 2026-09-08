@@ -31,13 +31,13 @@ void PlayerAnimator::update(bool onGround) {
     bool jumping = !onGround;
 
     // Moving -> start walk animation instantly
-    if (moving && !_wasMoving) {
+    if (moving && !_was_moving) {
         _walk_action.reset();
         _walk_action.update();
     }
 
     // Jump started -> start jump animation instantly
-    if (jumping && !_wasJumping) {
+    if (jumping && !_was_jumping) {
         _jump_action.reset();
         _jump_action.update();
     }
@@ -48,7 +48,7 @@ void PlayerAnimator::update(bool onGround) {
     }
 
     // Stop jump animation when grounded
-    if (!jumping && _wasJumping) {
+    if (!jumping && _was_jumping) {
         _jump_action.reset();
 
         // Restore default ground frame after landing
@@ -59,8 +59,8 @@ void PlayerAnimator::update(bool onGround) {
     if (onGround && bn::keypad::up_held()) {
         _sprite.sprite().set_tiles(_cached_tiles[Cfg::Player::BACK_FRAME]);
 
-        _wasMoving = moving;
-        _wasJumping = jumping;
+        _was_moving = moving;
+        _was_jumping = jumping;
         return;
     }
 
@@ -68,8 +68,8 @@ void PlayerAnimator::update(bool onGround) {
     if (!onGround) {
         _jump_action.update();
 
-        _wasMoving = moving;
-        _wasJumping = jumping;
+        _was_moving = moving;
+        _was_jumping = jumping;
         return;
     }
 
@@ -77,8 +77,8 @@ void PlayerAnimator::update(bool onGround) {
     if (bn::keypad::down_held()) {
         _sprite.sprite().set_tiles(_cached_tiles[Cfg::Player::IDLE_FRAME]);
 
-        _wasMoving = moving;
-        _wasJumping = jumping;
+        _was_moving = moving;
+        _was_jumping = jumping;
         return;
     }
 
@@ -87,6 +87,6 @@ void PlayerAnimator::update(bool onGround) {
         _walk_action.update();
     }
 
-    _wasMoving = moving;
-    _wasJumping = jumping;
+    _was_moving = moving;
+    _was_jumping = jumping;
 }

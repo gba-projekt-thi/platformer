@@ -33,6 +33,6 @@ class PlayerAnimator {
     bn::sprite_animate_action<Cfg::Player::ANIMATION_FRAME_COUNT> _walk_action;
     bn::sprite_animate_action<Cfg::Player::ANIMATION_FRAME_COUNT> _jump_action;
 
-    bool _wasMoving = false;
-    bool _wasJumping = false;
+    bool _was_moving = false;
+    bool _was_jumping = false;
 };
