@@ -14,8 +14,12 @@ inline constexpr uint16_t DOOR = 0x0010;
 }  // namespace Layer
 
 namespace Screen {
-inline constexpr int HORIZONTAL_EDGE = 110;
-}
+inline constexpr int HORIZONTAL_EDGE = 110;  // default bounce edge for a
+                                             // 240-wide (non-scrolling)
+                                             // level = 240/2 - EDGE_MARGIN
+inline constexpr int EDGE_MARGIN = 10;       // margin kept from the true
+                                             // world edge, per level
+}  // namespace Screen
 
 namespace Player {
 // Physics

@@ -84,6 +84,12 @@ void LevelManager::load(const LevelData& level) {
     _background->set_position(
         Camera::instance().bg_x(), Camera::instance().bg_y());
 
+    // Bounce boundary must match this level's world width, not the fixed
+    // 240px screen default - otherwise the player hits an invisible wall
+    // at ±110 in any level wider than the screen.
+    _player.set_horizontal_bound(
+        level.world_width / 2 - Cfg::Screen::EDGE_MARGIN);
+
     // -------------------------------------------------------------------------
     // Clear Previous Level State
     // -------------------------------------------------------------------------
