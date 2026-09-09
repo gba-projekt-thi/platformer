@@ -37,11 +37,18 @@
 #include "bn_sprite_items_nebel.h"
 #include "bn_sprite_items_slithermanarms32x32.h"
 
+// World 4 (scrolling finale)
+#include "bn_sprite_items_brick16x16.h"
+#include "bn_sprite_items_mimic32x32.h"
+#include "bn_sprite_items_rostybar32x32.h"
+#include "bn_sprite_items_thwomp32x32.h"
+
 // Wallpapers
 #include "bn_regular_bg_items_kissingscene.h"
 #include "bn_regular_bg_items_level1.h"
 #include "bn_regular_bg_items_level2.h"
 #include "bn_regular_bg_items_level3.h"
+#include "bn_regular_bg_items_world4.h"
 #include "bn_regular_bg_ptr.h"
 
 // Music
@@ -75,7 +82,15 @@ int main() {
     // Level List
     // -------------------------------------------------------------------------
 
-    const LevelData levels[] = {LEVEL_0, LEVEL_1, LEVEL_2, LEVEL_3};
+    const LevelData levels[] = {
+        LEVEL_0,
+        LEVEL_1,
+        LEVEL_WORLD1_SCROLL,
+        LEVEL_2,
+        LEVEL_WORLD2_SCROLL,
+        LEVEL_3,
+        LEVEL_WORLD3_SCROLL,
+        LEVEL_WORLD4_SCROLL};
 
     // -------------------------------------------------------------------------
     // Create the player entity and apply an offset for the sprite anchor point.
