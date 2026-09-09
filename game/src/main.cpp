@@ -37,8 +37,22 @@
 #include "bn_sprite_items_nebel.h"
 #include "bn_sprite_items_slithermanarms32x32.h"
 
-// World 4 (scrolling finale)
+// World 4 (garden, scrolling)
+#include "bn_sprite_items_beet.h"
 #include "bn_sprite_items_brick16x16.h"
+#include "bn_sprite_items_bug16x16.h"
+#include "bn_sprite_items_flower1.h"
+#include "bn_sprite_items_flower2.h"
+#include "bn_sprite_items_flower3.h"
+#include "bn_sprite_items_korb.h"
+#include "bn_sprite_items_nest32x16.h"
+#include "bn_sprite_items_strauch32x32.h"
+
+// World 5 (dungeon, scrolling finale)
+#include "bn_sprite_items_axe64x32.h"
+#include "bn_sprite_items_barrel32x32.h"
+#include "bn_sprite_items_bars32x32.h"
+#include "bn_sprite_items_chest32x32.h"
 #include "bn_sprite_items_mimic32x32.h"
 #include "bn_sprite_items_rostybar32x32.h"
 #include "bn_sprite_items_thwomp32x32.h"
@@ -49,6 +63,7 @@
 #include "bn_regular_bg_items_level2.h"
 #include "bn_regular_bg_items_level3.h"
 #include "bn_regular_bg_items_world4.h"
+#include "bn_regular_bg_items_world5.h"
 #include "bn_regular_bg_ptr.h"
 
 // Music
@@ -90,7 +105,8 @@ int main() {
         LEVEL_WORLD2_SCROLL,
         LEVEL_3,
         LEVEL_WORLD3_SCROLL,
-        LEVEL_WORLD4_SCROLL};
+        LEVEL_WORLD4_SCROLL,
+        LEVEL_WORLD5_SCROLL};
 
     // -------------------------------------------------------------------------
     // Create the player entity and apply an offset for the sprite anchor point.

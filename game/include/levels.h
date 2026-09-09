@@ -6,26 +6,39 @@
 #include "bn_regular_bg_items_level2.h"
 #include "bn_regular_bg_items_level3.h"
 #include "bn_regular_bg_items_world4.h"
+#include "bn_regular_bg_items_world5.h"
 #include "bn_span.h"
+#include "bn_sprite_items_axe64x32.h"
+#include "bn_sprite_items_barrel32x32.h"
+#include "bn_sprite_items_bars32x32.h"
 #include "bn_sprite_items_baumstamm.h"
+#include "bn_sprite_items_beet.h"
 #include "bn_sprite_items_box32x32.h"
 #include "bn_sprite_items_branch32x16.h"
 #include "bn_sprite_items_brick16x16.h"
 #include "bn_sprite_items_bubbles.h"
+#include "bn_sprite_items_bug16x16.h"
 #include "bn_sprite_items_can32x32.h"
+#include "bn_sprite_items_chest32x32.h"
 #include "bn_sprite_items_connector16x16.h"
 #include "bn_sprite_items_door32x32.h"
+#include "bn_sprite_items_flower1.h"
+#include "bn_sprite_items_flower2.h"
+#include "bn_sprite_items_flower3.h"
+#include "bn_sprite_items_korb.h"
 #include "bn_sprite_items_kugelfisch.h"
 #include "bn_sprite_items_ladder.h"
 #include "bn_sprite_items_mimic32x32.h"
 #include "bn_sprite_items_mushroom32x32.h"
 #include "bn_sprite_items_nebel.h"
+#include "bn_sprite_items_nest32x16.h"
 #include "bn_sprite_items_pipe16x16.h"
 #include "bn_sprite_items_platformslvl1.h"
 #include "bn_sprite_items_platformslvl2.h"
 #include "bn_sprite_items_rostybar32x32.h"
 #include "bn_sprite_items_rustynails32x16.h"
 #include "bn_sprite_items_slithermanarms32x32.h"
+#include "bn_sprite_items_strauch32x32.h"
 #include "bn_sprite_items_thwomp32x32.h"
 
 #include "level_structure.h"
@@ -510,50 +523,47 @@ const LevelData LEVEL_WORLD3_SCROLL = {
     160};
 
 // =============================================================================
-// WORLD 4 SCROLL - new, first use of the World 4 asset set (world_width=528)
+// WORLD 4 SCROLL - garden theme (world_width=528)
 // =============================================================================
 
 constexpr PlatformData world4_scroll_platforms[] = {
 
-    {-248, 60, 16, 8, 0, 0, bn::sprite_items::brick16x16, 0},
-    {-232, 60, 16, 8, 0, 0, bn::sprite_items::brick16x16, 1},
-    {-216, 60, 16, 8, 0, 0, bn::sprite_items::brick16x16, 1},
-
-    {-176, 60, 16, 8, 0, 0, bn::sprite_items::brick16x16, 0},
-    {-136, 44, 16, 10, 0, 0, bn::sprite_items::brick16x16, 2},
-    {-96, 60, 16, 8, 0, 0, bn::sprite_items::brick16x16, 0},
-    {-56, 60, 16, 8, 0, 0, bn::sprite_items::brick16x16, 1},
-    {-16, 44, 16, 10, 0, 0, bn::sprite_items::brick16x16, 2},
-    {24, 28, 16, 10, 0, 0, bn::sprite_items::brick16x16, 2},
-    {64, 44, 16, 8, 0, 0, bn::sprite_items::brick16x16, 1},
-    {104, 60, 16, 8, 0, 0, bn::sprite_items::brick16x16, 0},
-    {144, 60, 16, 8, 0, 0, bn::sprite_items::brick16x16, 1},
-    {184, 44, 16, 10, 0, 0, bn::sprite_items::brick16x16, 2},
-    {224, 44, 16, 8, 0, 0, bn::sprite_items::brick16x16, 1},
-    {264, 60, 16, 8, 0, 0, bn::sprite_items::brick16x16, 0}};
+    {-248, 60, 32, 16, 0, 0, bn::sprite_items::beet, 0},
+    {-192, 60, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
+    {-160, 44, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
+    {-120, 60, 32, 16, 0, 0, bn::sprite_items::korb, 0},
+    {-64, 44, 16, 10, 0, 0, bn::sprite_items::flower3, 0},
+    {-32, 28, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
+    {8, 44, 32, 16, 0, 0, bn::sprite_items::beet, 0},
+    {64, 60, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
+    {104, 44, 32, 16, 0, 0, bn::sprite_items::korb, 0},
+    {152, 28, 16, 10, 0, 0, bn::sprite_items::flower3, 0},
+    {192, 44, 32, 16, 0, 0, bn::sprite_items::beet, 0},
+    {240, 60, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
+    {264, 60, 32, 16, 0, 0, bn::sprite_items::korb, 0}};
 
 constexpr TriggerData world4_scroll_triggers[] = {
-    {-96, 40, 32, 30},
-    {104, 40, 32, 30}};
+    {8, 44, 32, 16},
+    {176, 44, 32, 24}};
 
 constexpr TrapData world4_scroll_traps[] = {
 
-    // Falling thwomp, triggered by trigger 0.
-    {TrapType::MOVING, -96, -40, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
+    // Static ground hazard sitting in the gap after the start platform -
+    // clear of any platform, forces a full jump over the gap.
+    {TrapType::BASE, -216, 60, 24, 16, 0, 0, bn::sprite_items::nest32x16, 16,
+     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+
+    // Static bush hazard in a later gap.
+    {TrapType::BASE, -88, 44, 24, 24, 0, 0, bn::sprite_items::strauch32x32, 16,
+     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+
+    // Falling brick, released when trigger 0 fires.
+    {TrapType::MOVING, 64, -20, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0.0, 4, 4, NO_PATH_TRAP, 0},
 
-    {TrapType::BASE, -16, 20, 32, 32, 0, 0, bn::sprite_items::rostybar32x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
-
-    {TrapType::BASE, 64, 20, 32, 32, 0, 0, bn::sprite_items::mimic32x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
-
-    // Second falling thwomp, triggered by trigger 1.
-    {TrapType::MOVING, 104, -40, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, 1, 0.0, 4, 4, NO_PATH_TRAP, 0},
-
-    {TrapType::BASE, 224, 20, 32, 32, 0, 0, bn::sprite_items::rostybar32x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0}};
+    // Flying pest, drifts right once trigger 1 fires.
+    {TrapType::MOVING, 216, 20, 12, 12, 0, 0, bn::sprite_items::bug16x16, 1,
+     TRAP_GRAPHICS_INDEXES_0, 1, 1.2, 0, 2, NO_PATH_TRAP, 0}};
 
 const LevelData LEVEL_WORLD4_SCROLL = {
 
@@ -569,9 +579,73 @@ const LevelData LEVEL_WORLD4_SCROLL = {
     bn::regular_bg_items::world4,
     bn::music_items::world4,
     // Player spawn
-    {-248, 20},
+    {-248, 0},
     // Door position
-    {264, 20},
+    {264, 40},
     // World size (enables scrolling)
     528,
+    160};
+
+// =============================================================================
+// WORLD 5 SCROLL - dungeon theme, hardest/final level (world_width=624)
+// =============================================================================
+
+constexpr PlatformData world5_scroll_platforms[] = {
+
+    {-272, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {-216, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
+    {-176, 44, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {-128, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {-72, 44, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
+    {-24, 28, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {24, 44, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {80, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
+    {128, 44, 32, 16, 0, 0, bn::sprite_items::chest32x32, 0},
+    {176, 28, 16, 10, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {224, 44, 32, 16, 0, 0, bn::sprite_items::bars32x32, 0},
+    {272, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {296, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0}};
+
+constexpr TriggerData world5_scroll_triggers[] = {
+    {-176, 44, 32, 24},
+    {24, 44, 32, 24},
+    {176, 28, 32, 24}};
+
+constexpr TrapData world5_scroll_traps[] = {
+
+    // Swinging axe over the early gap, triggered by trigger 0.
+    {TrapType::MOVING, -152, 0, 32, 16, 0, 0, bn::sprite_items::axe64x32, 1,
+     TRAP_GRAPHICS_INDEXES_0, 0, 1.0, 0, 2, NO_PATH_TRAP, 0},
+
+    // Static rusty bar hazard in a mid gap - clear of any platform.
+    {TrapType::BASE, -48, 44, 24, 24, 0, 0, bn::sprite_items::rostybar32x32, 16,
+     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+
+    // Disguised mimic guarding a mid platform's approach gap.
+    {TrapType::BASE, 52, 44, 24, 24, 0, 0, bn::sprite_items::mimic32x32, 16,
+     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+
+    // Falling thwomp guarding the final stretch, triggered by trigger 2.
+    {TrapType::MOVING, 200, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
+     TRAP_GRAPHICS_INDEXES_0, 2, 0.0, 4, 4, NO_PATH_TRAP, 0}};
+
+const LevelData LEVEL_WORLD5_SCROLL = {
+
+    world5_scroll_platforms,
+    sizeof(world5_scroll_platforms) / sizeof(world5_scroll_platforms[0]),
+
+    world5_scroll_triggers,
+    sizeof(world5_scroll_triggers) / sizeof(world5_scroll_triggers[0]),
+
+    world5_scroll_traps,
+    sizeof(world5_scroll_traps) / sizeof(world5_scroll_traps[0]),
+
+    bn::regular_bg_items::world5,
+    bn::music_items::world5,
+    // Player spawn
+    {-272, 0},
+    // Door position
+    {296, 40},
+    // World size (enables scrolling)
+    624,
     160};
