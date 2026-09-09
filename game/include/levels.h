@@ -320,7 +320,6 @@ constexpr PlatformData world1_scroll_platforms[] = {
     {-112, 60, 16, 10, 0, 0, bn::sprite_items::platformslvl1, 2},
 
     {-80, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
-    {-64, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
     {-48, 44, 16, 10, 0, 0, bn::sprite_items::platformslvl1, 2},
 
     {-8, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
@@ -474,9 +473,8 @@ constexpr TriggerData world3_scroll_triggers[] = {{0, 40, 32, 24}};
 
 constexpr TrapData world3_scroll_traps[] = {
 
-    // Start guard.
-    {TrapType::BASE, -208, 64, 32, 32, 0, 0, bn::sprite_items::mushroom32x32,
-     16, TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+    {TrapType::BASE, -36, 48, 16, 16, 0, 0, bn::sprite_items::mushroom32x32, 16,
+     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Slither arms rise upward once the mid trigger fires.
     {TrapType::MOVING, 0, 96, 32, 32, 0, 0,
@@ -487,8 +485,7 @@ constexpr TrapData world3_scroll_traps[] = {
     {TrapType::PATH, 96, 32, 32, 16, 0, 0, bn::sprite_items::branch32x16, 10,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, 0, LEVEL3_BRANCH_PATH, 20},
 
-    // Final guard near the door.
-    {TrapType::BASE, 208, 0, 32, 32, 0, 0, bn::sprite_items::mushroom32x32, 16,
+    {TrapType::BASE, 168, 6, 12, 16, 0, 0, bn::sprite_items::mushroom32x32, 16,
      TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0}};
 
 const LevelData LEVEL_WORLD3_SCROLL = {
