@@ -16,7 +16,7 @@
 // MOVING -> Velocity/acceleration based trap
 // PATH   -> Path interpolation trap
 // -----------------------------------------------------------------------------
-enum class TrapType { BASE, MOVING, PATH };
+enum class TrapType { BASE, MOVING, PATH, CHASE };
 
 // -----------------------------------------------------------------------------
 // PlatformData
@@ -106,6 +106,16 @@ struct TrapData {
 
     // Frames required to move between path nodes.
     unsigned path_waits = 0;
+
+    // -------------------------------------------------------------------------
+    // ChaserTrap
+    // -------------------------------------------------------------------------
+
+    // How far behind (to the left of) the player the trap eases toward.
+    bn::fixed chase_follow_distance = 0;
+
+    // Max horizontal distance the trap closes per frame while chasing.
+    bn::fixed chase_speed = 0;
 };
 
 // -----------------------------------------------------------------------------
