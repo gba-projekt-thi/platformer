@@ -84,9 +84,17 @@ void LevelManager::load(const LevelData& level) {
     _background->set_position(
         Camera::instance().bg_x(), Camera::instance().bg_y());
 
+    // NOTE: The background is intentionally NOT repositioned with the
+    // camera. The current background art (level1/level2/level3/world4/
+    // world5) was authored as a single static 240x160 screen, not a wide
+    // seamlessly-tileable world backdrop - scrolling it wraps at the GBA
+    // tilemap block boundary and shows a visible seam. Until dedicated
+    // wide/tileable background art exists per scrolling level, the
+    // background stays screen-locked as a static backdrop while the
+    // foreground (player/platforms/traps/door) scrolls normally.
+
     // Bounce boundary must match this level's world width, not the fixed
-    // 240px screen default - otherwise the player hits an invisible wall
-    // at ±110 in any level wider than the screen.
+    // 240px screen default.
     _player.set_horizontal_bound(
         level.world_width / 2 - Cfg::Screen::EDGE_MARGIN);
 
@@ -198,10 +206,7 @@ bool LevelManager::update() {
     // -------------------------------------------------------------------------
 
     Camera::instance().follow(_player.pos.x, _player.pos.y);
-    if (_background) {
-        _background->set_position(
-            Camera::instance().bg_x(), Camera::instance().bg_y());
-    }
+    // Background stays screen-locked - see note in load()
 
     // -------------------------------------------------------------------------
     // Rendering
