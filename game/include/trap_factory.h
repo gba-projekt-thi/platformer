@@ -2,18 +2,17 @@
 
 #include "base_trap.h"
 #include "bn_unique_ptr.h"
+#include "chaser_trap.h"
+#include "level_manager.h"
 #include "level_structure.h"
 #include "moving_trap.h"
 #include "path_trap.h"
 
-class LevelManager;
-
 namespace TrapFactory {
 // Factory function that translates TrapData into a concrete Trap
-// Defiend in header to allow inlining
-inline bn::unique_ptr<BaseTrap> create(
-    const TrapData& trap_data,
-    LevelManager& level_manager) {
+// Defined in header to allow inlining
+inline auto create(const TrapData& trap_data, LevelManager& level_manager)
+    -> bn::unique_ptr<BaseTrap> {
     switch (trap_data.type) {
         case TrapType::BASE:
             return bn::make_unique<BaseTrap>(
@@ -42,10 +41,17 @@ inline bn::unique_ptr<BaseTrap> create(
                 trap_data.path, trap_data.path_waits, trigger);
         }
 
+        case TrapType::CHASE:
+            return bn::make_unique<ChaserTrap>(
+                trap_data.x, trap_data.y, trap_data.width, trap_data.height,
+                trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
+                trap_data.sprite_waits, trap_data.graphic_indexes, 0,
+                trap_data.chase_follow_distance, trap_data.chase_speed,
+                level_manager.player());
+
         default:
             BN_ERROR(
                 "Unimplemented or invalid trap type passed to TrapFactory");
-            // fallback
             return bn::make_unique<BaseTrap>(
                 0, 0, 0, 0, 0, 0, trap_data.sprite, trap_data.sprite_waits,
                 trap_data.graphic_indexes, 0);

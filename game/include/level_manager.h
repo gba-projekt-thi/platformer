@@ -60,6 +60,10 @@ class LevelManager {
     // Falls back to trigger[0] if invalid.
     auto get_trigger(int trigger_index) -> Trigger&;
 
+    // Returns the player, needed by traps (e.g. ChaserTrap) that track
+    // the player's position directly.
+    auto player() -> Player& { return _player; }
+
    private:
     void _load_player_spawn(const LevelData& level);
     void _load_door(const LevelData& level);
