@@ -82,6 +82,10 @@ void Player::set_hud_visible(bool visible) {
     _hud.set_visible(visible);
 }
 
+void Player::set_horizontal_bound(bn::fixed bound) {
+    _locomotion.set_horizontal_bound(bound);
+}
+
 void Player::death() {
     _hud.on_player_death();
 

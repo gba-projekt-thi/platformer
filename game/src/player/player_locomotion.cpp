@@ -117,10 +117,9 @@ void PlayerLocomotion::clamp_velocity() {
     }
 }
 
-// Bounce the player back when leaving the horizontal play area.
+// Bounce the player back when leaving the current level's play area.
 void PlayerLocomotion::check_bounds() {
-    if (_body.pos.x < -Cfg::Screen::HORIZONTAL_EDGE ||
-        _body.pos.x > Cfg::Screen::HORIZONTAL_EDGE) {
+    if (_body.pos.x < -_horizontal_bound || _body.pos.x > _horizontal_bound) {
         _body.set_velocity(-_body.vel_x, _body.vel_y);
     }
 }

@@ -43,6 +43,8 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
     [[nodiscard]] bool visible() const;
     // Control HUD visibility for title screens.
     void set_hud_visible(bool visible);
+    // Updates the horizontal bounce boundary for the current level.
+    void set_horizontal_bound(bn::fixed bound);
     // Get & Set the count of player deaths.
     unsigned int get_deaths() const;
     void set_deaths(unsigned int deaths);

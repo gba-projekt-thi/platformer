@@ -46,6 +46,11 @@ class PlayerLocomotion {
     bool on_ground() const { return _on_ground; }
     Facing facing() const { return _facing; }
 
+    // Updates the horizontal screen-bounce boundary to match the current
+    // level's world width (world_width/2 - Cfg::Screen::EDGE_MARGIN).
+    // Called by LevelManager::load() whenever a new level starts.
+    void set_horizontal_bound(bn::fixed bound) { _horizontal_bound = bound; }
+
    private:
     void handle_horizontal_input();
     void handle_jump();
@@ -81,4 +86,9 @@ class PlayerLocomotion {
 
     // Walk sound helper
     int _walk_sound_counter = 0;
+
+    // Horizontal screen-bounce boundary; updated per level by LevelManager
+    // to match that level's world_width (defaults to the legacy 240-wide
+    // screen bound so a freshly-constructed Player behaves as before).
+    bn::fixed _horizontal_bound = Cfg::Screen::HORIZONTAL_EDGE;
 };
