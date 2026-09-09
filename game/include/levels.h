@@ -413,7 +413,7 @@ constexpr PlatformData world2_scroll_platforms[] = {
 
     {144, 16, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
     {176, 0, 16, 8, 0, 0, bn::sprite_items::platformslvl2, 0},
-    {208, 0, 16, 8, 0, 0, bn::sprite_items::platformslvl2, 0}};
+    {200, 0, 16, 8, 0, 0, bn::sprite_items::platformslvl2, 0}};
 
 constexpr TriggerData world2_scroll_triggers[] = {
     {-48, 16, 32, 40},
@@ -450,9 +450,9 @@ const LevelData LEVEL_WORLD2_SCROLL = {
     bn::regular_bg_items::level2,
     bn::music_items::level2,
     // Player spawn
-    {-208, -32},
+    {-200, -32},
     // Door position
-    {208, -16},
+    {200, -16},
     // World size (enables scrolling)
     432,
     160};
@@ -469,7 +469,7 @@ constexpr PlatformData world3_scroll_platforms[] = {
 
     {-160, 48, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
     {-112, 32, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
-    {-64, 48, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-64, 42, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
 
     {-16, 64, 16, 8, 0, 0, bn::sprite_items::baumstamm, 0},
     {0, 64, 16, 8, 0, 0, bn::sprite_items::baumstamm, 1},
@@ -490,7 +490,7 @@ constexpr TrapData world3_scroll_traps[] = {
      TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Slither arms rise upward once the mid trigger fires.
-    {TrapType::MOVING, 0, 96, 32, 32, 0, 0,
+    {TrapType::MOVING, 24, 96, 32, 32, 0, 0,
      bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_3, 0, 0,
      -1.8, 3.3, NO_PATH_TRAP, 0},
 
@@ -498,7 +498,7 @@ constexpr TrapData world3_scroll_traps[] = {
     {TrapType::PATH, 96, 32, 32, 16, 0, 0, bn::sprite_items::branch32x16, 10,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, 0, LEVEL3_BRANCH_PATH, 20},
 
-    {TrapType::BASE, 168, 6, 12, 16, 0, 0, bn::sprite_items::mushroom32x32, 16,
+    {TrapType::BASE, 168, 6, 12, 16, 0, 0, bn::sprite_items::branch32x16, 16,
      TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0}};
 
 const LevelData LEVEL_WORLD3_SCROLL = {
@@ -554,15 +554,15 @@ constexpr TrapData world4_scroll_traps[] = {
      TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Static bush hazard in a later gap.
-    {TrapType::BASE, -88, 44, 24, 24, 0, 0, bn::sprite_items::strauch32x32, 16,
+    {TrapType::BASE, -88, 56, 24, 24, 0, 0, bn::sprite_items::strauch32x32, 16,
      TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Falling brick, released when trigger 0 fires.
-    {TrapType::MOVING, 64, -20, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
+    {TrapType::MOVING, 52, 60, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0.0, 4, 4, NO_PATH_TRAP, 0},
 
     // Flying pest, drifts right once trigger 1 fires.
-    {TrapType::MOVING, 216, 20, 12, 12, 0, 0, bn::sprite_items::bug16x16, 1,
+    {TrapType::MOVING, 192, 50, 12, 12, 0, 0, bn::sprite_items::bug16x16, 1,
      TRAP_GRAPHICS_INDEXES_0, 1, 1.2, 0, 2, NO_PATH_TRAP, 0}};
 
 const LevelData LEVEL_WORLD4_SCROLL = {
@@ -581,51 +581,57 @@ const LevelData LEVEL_WORLD4_SCROLL = {
     // Player spawn
     {-248, 0},
     // Door position
-    {264, 40},
+    {254, 40},
     // World size (enables scrolling)
     528,
     160};
 
 // =============================================================================
 // WORLD 5 SCROLL - dungeon theme, hardest/final level (world_width=624)
+// All platforms kept at y=60 (flat run) per request; gaps stay <=32px,
+// well inside the safe horizontal envelope even without any climb.
 // =============================================================================
 
 constexpr PlatformData world5_scroll_platforms[] = {
 
     {-272, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
     {-216, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
-    {-176, 44, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {-176, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
     {-128, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
-    {-72, 44, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
-    {-24, 28, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {24, 44, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {-72, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
+    {-24, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {24, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
     {80, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
-    {128, 44, 32, 16, 0, 0, bn::sprite_items::chest32x32, 0},
-    {176, 28, 16, 10, 0, 0, bn::sprite_items::barrel32x32, 0},
-    {224, 44, 32, 16, 0, 0, bn::sprite_items::bars32x32, 0},
+    {128, 60, 32, 16, 0, 0, bn::sprite_items::chest32x32, 0},
+    {176, 60, 16, 10, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {224, 60, 32, 16, 0, 0, bn::sprite_items::bars32x32, 0},
     {272, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
     {296, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0}};
 
 constexpr TriggerData world5_scroll_triggers[] = {
-    {-176, 44, 32, 24},
-    {24, 44, 32, 24},
-    {176, 28, 32, 24}};
+    // Fires just before the thwomp's drop zone near x=156.
+    {140, 48, 32, 24}};
 
 constexpr TrapData world5_scroll_traps[] = {
 
-    // Swinging axe over the early gap, triggered by trigger 0.
-    {TrapType::MOVING, -152, 0, 32, 16, 0, 0, bn::sprite_items::axe64x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, 0, 1.0, 0, 2, NO_PATH_TRAP, 0},
+    // Axe chases the player from behind - starts just left of the spawn
+    // point and only ever flies right, easing toward a position roughly
+    // 40px behind the player at up to 2.5px/frame. Standing still or
+    // moving left just widens the gap; running right is what closes it.
+    {TrapType::CHASE, -300, 20, 32, 16, 0, 0, bn::sprite_items::axe64x32, 1,
+     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0, 40, 2.5},
 
-    // Static rusty bar hazard in a mid gap - clear of any platform.
-    {TrapType::BASE, -48, 44, 24, 24, 0, 0, bn::sprite_items::rostybar32x32, 16,
+    // Static rusty bar hazard sitting in the first gap.
+    {TrapType::BASE, -240, 60, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
-    // Disguised mimic guarding a mid platform's approach gap.
-    {TrapType::BASE, 52, 44, 24, 24, 0, 0, bn::sprite_items::mimic32x32, 16,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+    // Disguised, animated mimic sitting in a mid gap (mimic32x32 has 8
+    // animation frames).
+    {TrapType::BASE, 56, 60, 16, 16, 0, 0, bn::sprite_items::mimic32x32, 16,
+     TRAP_GRAPHICS_INDEXES_8, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
-    // Falling thwomp guarding the final stretch, triggered by trigger 2.
+    // Falling thwomp guarding the approach to the final platforms,
+    // triggered by the single trigger above.
     {TrapType::MOVING, 200, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, 2, 0.0, 4, 4, NO_PATH_TRAP, 0}};
 
