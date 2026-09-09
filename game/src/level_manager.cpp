@@ -64,6 +64,17 @@ void LevelManager::load(const LevelData& level) {
 
     // -------------------------------------------------------------------------
     // Background
+    //
+    // Always created at its authored position (0,0) and NEVER repositioned
+    // afterwards - neither here nor in update(). The current background art
+    // (level1/level2/level3/world4/world5) was authored as a single static
+    // 240x160 screen, not a wide seamlessly-tileable world backdrop;
+    // repositioning it with the camera wraps it at the GBA tilemap block
+    // boundary (visible seam) and offsets it away from screen center in
+    // wide levels. Until dedicated wide/tileable background art exists per
+    // scrolling level, the background is a static backdrop while the
+    // foreground (player/platforms/traps/door) scrolls normally via
+    // SpriteRegistry.
     // -------------------------------------------------------------------------
 
     _background.reset();
@@ -75,23 +86,8 @@ void LevelManager::load(const LevelData& level) {
     // Camera
     // -------------------------------------------------------------------------
 
-    // Player spawn point (set above via teleport_to) already reflects this
-    // level's start position, so seed the camera immediately - avoids a
-    // one-frame pop where the background/sprites render at the previous
-    // level's camera position before the first update() runs.
     Camera::instance().init(level.world_width, level.world_height);
     Camera::instance().follow(_player.pos.x, _player.pos.y);
-    _background->set_position(
-        Camera::instance().bg_x(), Camera::instance().bg_y());
-
-    // NOTE: The background is intentionally NOT repositioned with the
-    // camera. The current background art (level1/level2/level3/world4/
-    // world5) was authored as a single static 240x160 screen, not a wide
-    // seamlessly-tileable world backdrop - scrolling it wraps at the GBA
-    // tilemap block boundary and shows a visible seam. Until dedicated
-    // wide/tileable background art exists per scrolling level, the
-    // background stays screen-locked as a static backdrop while the
-    // foreground (player/platforms/traps/door) scrolls normally.
 
     // Bounce boundary must match this level's world width, not the fixed
     // 240px screen default.
@@ -203,10 +199,13 @@ bool LevelManager::update() {
 
     // -------------------------------------------------------------------------
     // Camera
+    //
+    // Only the foreground (player/platforms/traps/door, via SpriteRegistry)
+    // follows the camera each frame. The background stays screen-locked -
+    // see the note in load().
     // -------------------------------------------------------------------------
 
     Camera::instance().follow(_player.pos.x, _player.pos.y);
-    // Background stays screen-locked - see note in load()
 
     // -------------------------------------------------------------------------
     // Rendering
