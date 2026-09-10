@@ -78,6 +78,20 @@ void LevelManager::load(const LevelData& level) {
     // -------------------------------------------------------------------------
 
     _background.reset();
+
+    // Force a full engine frame between releasing the previous background's
+    // tiles/palette and allocating the new one's. Without this, a normal
+    // level-to-level scene transition destroys the old background and
+    // creates the new one back-to-back within the same SceneManager::update()
+    // call (no bn::core::update() runs between LevelManager::unload() and
+    // load() during that transition), so the new background's VRAM write can
+    // land in the same uncommitted batch as the old one's pending release -
+    // observed as a level's background using stale palette colors from a
+    // previously loaded level's background (but only when reached via normal
+    // progression, not when loaded fresh from a save, where no prior
+    // background was ever allocated).
+    bn::core::update();
+
     _background.emplace(level.back_ground.create_bg(0, 0));
     _background->set_priority(3);
     _background->set_blending_enabled(true);

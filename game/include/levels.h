@@ -649,7 +649,7 @@ const LevelData LEVEL_WORLD5_SCROLL = {
     bn::regular_bg_items::world5,
     bn::music_items::world5,
     // Player spawn
-    {-272, 0},
+    {-272, 30},
     // Door position
     {296, 40},
     // World size (enables scrolling)
