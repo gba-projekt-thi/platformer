@@ -22,27 +22,22 @@
 				"ms-vscode.cmake-tools",
 				"twxs.cmake",
 				"eamodio.gitlens",
-				"ms-python.python"
+				"ms-python.python",
+				"Continue.continue"
 			]
 		}
 	},
-	// Privileged mode for GPU/DRI access and hardware rendering
-	"runArgs": ["--privileged"],
-	// X11 display forwarding
-	"initializeCommand": "xhost +local: 2>/dev/null || true",
 	"postCreateCommand": "${containerWorkspaceFolder}/post-create.sh",
 	"updateContentCommand": "${containerWorkspaceFolder}/post-create.sh",
+	// NOTE: No manual X11 mount, no "xhost", no "--privileged" needed here.
+	// The Dev Containers extension (Remote-WSL + WSLg) forwards X11/DISPLAY
+	// to the container automatically. A manual bind mount of /tmp/.X11-unix
+	// conflicts with that built-in forwarding (it shadows the read-only
+	// WSLg socket dir and blocks the extension's own socket setup, causing
+	// "listen EROFS: read-only file system /tmp/.X11-unix/X1").
 	"remoteEnv": {
-		"DISPLAY": "${localEnv:DISPLAY}",
 		"SDL_AUDIODRIVER": "dummy"
 	},
-	"mounts": [
-		{
-			"source": "/tmp/.X11-unix",
-			"target": "/tmp/.X11-unix",
-			"type": "bind"
-		}
-	],
 	// Set the default user
 	"remoteUser": "ubuntu",
 	"updateRemoteUserUID": true,
