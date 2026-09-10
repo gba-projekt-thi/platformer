@@ -14,6 +14,8 @@ inline constexpr uint16_t DOOR = 0x0010;
 }  // namespace Layer
 
 namespace Screen {
+inline constexpr int WIDTH = 240;
+inline constexpr int HEIGHT = 160;
 inline constexpr int HORIZONTAL_EDGE = 110;  // default bounce edge for a
                                              // 240-wide (non-scrolling)
                                              // level = 240/2 - EDGE_MARGIN
