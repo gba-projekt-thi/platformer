@@ -1,11 +1,15 @@
 #pragma once
 
+#include <cstdint>
+
 #include "bn_fixed.h"
 #include "bn_fixed_point.h"
 #include "bn_music_item.h"
 #include "bn_regular_bg_item.h"
 #include "bn_span.h"
 #include "bn_sprite_item.h"
+
+#include "cfg.h"
 
 // -----------------------------------------------------------------------------
 // TrapType
@@ -15,8 +19,9 @@
 // BASE   -> Static damaging trap
 // MOVING -> Velocity/acceleration based trap
 // PATH   -> Path interpolation trap
+// CHASE  -> Trails behind the player, closing in as they move right
 // -----------------------------------------------------------------------------
-enum class TrapType { BASE, MOVING, PATH, CHASE };
+enum class TrapType : uint8_t { BASE, MOVING, PATH, CHASE };
 
 // -----------------------------------------------------------------------------
 // PlatformData
@@ -186,8 +191,8 @@ struct LevelData {
     // -------------------------------------------------------------------------
 
     // Full extents of the playable world, centered at (0,0). Values <= the
-    // screen size (240x160) keep the camera effectively static (current
-    // behavior); larger values enable real scrolling for that level.
-    bn::fixed world_width = 240;
-    bn::fixed world_height = 160;
+    // screen size keep the camera effectively static (current behavior for
+    // the non-scrolling levels); larger values enable real scrolling.
+    bn::fixed world_width = Cfg::Screen::WIDTH;
+    bn::fixed world_height = Cfg::Screen::HEIGHT;
 };
