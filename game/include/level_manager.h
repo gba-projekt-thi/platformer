@@ -11,6 +11,7 @@
 #include "bn_vector.h"
 #include "common_variable_8x16_sprite_font.h"
 
+#include "base_trap.h"
 #include "camera.h"
 #include "cfg.h"
 #include "data_manager.h"
@@ -18,8 +19,6 @@
 #include "game_state.h"
 #include "i_resettable.h"
 #include "level_structure.h"
-#include "moving_trap.h"
-#include "path_trap.h"
 #include "pause_controller.h"
 #include "player.h"
 #include "save_sync_controller.h"
