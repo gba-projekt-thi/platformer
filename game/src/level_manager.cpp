@@ -54,32 +54,28 @@ void LevelManager::_save_progress() {
     _data_manager.save();
 }
 
-void LevelManager::load(const LevelData& level) {
-    _pause_controller.reset();
+// -----------------------------------------------------------------------------
+// load() stages
+// -----------------------------------------------------------------------------
 
-    // -------------------------------------------------------------------------
-    // Player Spawn
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.teleport_to(level.player_data.x, level.player_data.y);
     _player.set_spawn_point(level.player_data.x, level.player_data.y);
     _last_death_ct = _player.get_deaths();
+}
 
-    // -------------------------------------------------------------------------
-    // Door
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_door(const LevelData& level) {
     _door.emplace(level.door.x, level.door.y);
+}
 
-    // -------------------------------------------------------------------------
-    // Music
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_music(const LevelData& level) {
     if (!_music.has_value() || *_music != level.music) {
         _music.emplace(level.music);
         bn::music::play(*_music);
     }
+}
 
+void LevelManager::_load_background(const LevelData& level) {
     // -------------------------------------------------------------------------
     // Background
     //
@@ -113,11 +109,9 @@ void LevelManager::load(const LevelData& level) {
     _background.emplace(level.back_ground.create_bg(0, 0));
     _background->set_priority(3);
     _background->set_blending_enabled(true);
+}
 
-    // -------------------------------------------------------------------------
-    // Camera
-    // -------------------------------------------------------------------------
-
+void LevelManager::_setup_camera(const LevelData& level) {
     Camera::instance().init(level.world_width, level.world_height);
     Camera::instance().follow(_player.pos.x, _player.pos.y);
 
@@ -125,20 +119,16 @@ void LevelManager::load(const LevelData& level) {
     // 240px screen default.
     _player.set_horizontal_bound(
         level.world_width / 2 - Cfg::Screen::EDGE_MARGIN);
+}
 
-    // -------------------------------------------------------------------------
-    // Clear Previous Level State
-    // -------------------------------------------------------------------------
-
+void LevelManager::_clear_runtime_state() {
     _platforms.clear();
     _platform_bodies.clear();
     _triggers.clear();
     _traps.clear();
+}
 
-    // -------------------------------------------------------------------------
-    // Validation
-    // -------------------------------------------------------------------------
-
+void LevelManager::_validate_level(const LevelData& level) {
     BN_ASSERT(
         unsigned(level.platform_count) < Cfg::Level::Limits::PLATFORMS,
         "Too many platforms");
@@ -148,11 +138,9 @@ void LevelManager::load(const LevelData& level) {
     BN_ASSERT(
         unsigned(level.trap_count) < Cfg::Level::Limits::TOTAL_TRAPS,
         "Too many traps");
+}
 
-    // -------------------------------------------------------------------------
-    // Platforms
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_platforms(const LevelData& level) {
     for (int i = 0; i < level.platform_count; ++i) {
         const PlatformData& platform = level.platforms[i];
         const int graphics_count =
@@ -169,11 +157,9 @@ void LevelManager::load(const LevelData& level) {
         _platform_bodies.back().pos.offset_x = platform.offset_x;
         _platform_bodies.back().pos.offset_y = platform.offset_y;
     }
+}
 
-    // -------------------------------------------------------------------------
-    // Triggers
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_triggers(const LevelData& level) {
     for (int i = 0; i < level.trigger_count; ++i) {
         const TriggerData& trigger = level.triggers[i];
         _triggers.emplace_back(
@@ -184,14 +170,33 @@ void LevelManager::load(const LevelData& level) {
     if (_triggers.empty()) {
         _triggers.emplace_back(1000, 1000, 0, 0, true);
     }
+}
 
-    // -------------------------------------------------------------------------
-    // Trap Construction
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_traps(const LevelData& level) {
     for (int i = 0; i < level.trap_count; ++i) {
         _traps.push_back(TrapFactory::create(level.traps[i], *this));
     }
+}
+
+// -----------------------------------------------------------------------------
+// load()
+// -----------------------------------------------------------------------------
+
+void LevelManager::load(const LevelData& level) {
+    _pause_controller.reset();
+
+    _load_player_spawn(level);
+    _load_door(level);
+    _load_music(level);
+    _load_background(level);
+    _setup_camera(level);
+
+    _clear_runtime_state();
+    _validate_level(level);
+
+    _load_platforms(level);
+    _load_triggers(level);
+    _load_traps(level);
 }
 
 void LevelManager::unload() {
@@ -235,7 +240,7 @@ LevelManager::UpdateResult LevelManager::update() {
     //
     // Only the foreground (player/platforms/traps/door, via SpriteRegistry)
     // follows the camera each frame. The background stays screen-locked -
-    // see the note in load().
+    // see the note in _load_background().
     // -------------------------------------------------------------------------
 
     Camera::instance().follow(_player.pos.x, _player.pos.y);
