@@ -3,6 +3,8 @@
 #include "bn_core.h"
 #include "bn_unique_ptr.h"
 
+#include "start_scene.h"
+
 extern bool game_finished;
 
 LevelScene::LevelScene(
@@ -39,11 +41,27 @@ void LevelScene::update() {
         return;
     }
 
-    // Wait until level completion.
-    if (!_level_manager.update()) {
+    const LevelManager::UpdateResult result = _level_manager.update();
+    if (result == LevelManager::UpdateResult::None) {
         return;
     }
     _transition_requested = true;
+
+    // -------------------------------------------------------------------------
+    // Pause menu: back to the title screen.
+    // -------------------------------------------------------------------------
+
+    if (result == LevelManager::UpdateResult::ReturnToTitle) {
+        auto next_scene = bn::make_unique<StartScene>(
+            _player, _levels, _data_manager, _level_manager);
+        core::SceneManager::instance().set_next_scene(bn::move(next_scene));
+        return;
+    }
+
+    // -------------------------------------------------------------------------
+    // Door reached: advance to the next level (or finish the game).
+    // -------------------------------------------------------------------------
+
     const unsigned int next_level_index = _level_index + 1u;
 
     // Game completed.
