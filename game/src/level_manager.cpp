@@ -33,9 +33,9 @@ Trigger& LevelManager::get_trigger(int trigger_index) {
     return _triggers[0];
 }
 
-void LevelManager::_reset_traps() {
-    for (auto& trap : _traps) {
-        trap->reset();
+void LevelManager::_reset_entities() {
+    for (auto* entity : _resettables) {
+        entity->reset();
     }
 }
 
@@ -111,6 +111,7 @@ void LevelManager::_clear_runtime_state() {
     _platform_bodies.clear();
     _triggers.clear();
     _traps.clear();
+    _resettables.clear();
 }
 
 void LevelManager::_validate_level(const LevelData& level) {
@@ -160,6 +161,7 @@ void LevelManager::_load_triggers(const LevelData& level) {
 void LevelManager::_load_traps(const LevelData& level) {
     for (int i = 0; i < level.trap_count; ++i) {
         _traps.push_back(TrapFactory::create(level.traps[i], *this));
+        _resettables.push_back(_traps.back().get());
     }
 }
 
@@ -192,6 +194,7 @@ void LevelManager::unload() {
     _platform_bodies.clear();
     _triggers.clear();
     _traps.clear();
+    _resettables.clear();
 }
 
 LevelManager::UpdateResult LevelManager::update() {
@@ -249,7 +252,7 @@ LevelManager::UpdateResult LevelManager::update() {
     // -------------------------------------------------------------------------
 
     if (_save_sync.sync()) {
-        _reset_traps();
+        _reset_entities();
     }
     return UpdateResult::None;
 }

@@ -16,6 +16,7 @@
 #include "data_manager.h"
 #include "door.h"
 #include "game_state.h"
+#include "i_resettable.h"
 #include "level_structure.h"
 #include "moving_trap.h"
 #include "path_trap.h"
@@ -81,8 +82,11 @@ class LevelManager {
     void _load_triggers(const LevelData& level);
     void _load_traps(const LevelData& level);
 
-    // Resets all traps after player death.
-    void _reset_traps();
+    // Resets all resettable entities (currently: traps) after player
+    // death or a manual level restart. Iterates a generic list rather
+    // than _traps directly so future non-trap entity types can opt in
+    // without LevelManager needing to know their concrete type.
+    void _reset_entities();
 
     bn::vector<bn::sprite_ptr, Cfg::Level::Limits::PLATFORMS> _platforms;
     bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES>
@@ -90,6 +94,12 @@ class LevelManager {
     bn::vector<Trigger, Cfg::Level::Limits::TRIGGERS> _triggers;
     bn::vector<bn::unique_ptr<BaseTrap>, Cfg::Level::Limits::TOTAL_TRAPS>
         _traps;
+
+    // Non-owning view over every currently-loaded IResettable entity.
+    // Populated alongside _traps in _load_traps(); ownership stays with
+    // the owning container (_traps for now).
+    bn::vector<IResettable*, Cfg::Level::Limits::TOTAL_TRAPS> _resettables;
+
     bn::optional<bn::regular_bg_ptr> _background;
     Player& _player;
     bn::optional<Door> _door;
