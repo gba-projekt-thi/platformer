@@ -4,6 +4,12 @@
 #include "bn_music_items.h"
 #include "bn_regular_bg_items_kissingscene.h"
 
+#include "cfg.h"
+#include "data_manager.h"
+#include "level_manager.h"
+#include "player.h"
+#include "start_scene.h"
+
 KissingScene::KissingScene(
     Player& player,
     bn::span<const LevelData> levels,

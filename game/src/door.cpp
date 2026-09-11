@@ -1,5 +1,7 @@
 #include "door.h"
 
+#include "bn_sprite_items_door32x32.h"
+
 Door::Door(bn::fixed in_x, bn::fixed in_y)
     : PhysicsBody(in_x, in_y, 2, 2, Cfg::Layer::DOOR, Cfg::Layer::PLAYER, 0),
       _door_sprite(
