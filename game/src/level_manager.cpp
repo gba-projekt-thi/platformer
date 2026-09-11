@@ -36,6 +36,24 @@ void LevelManager::_reset_traps() {
     }
 }
 
+void LevelManager::_save_progress() {
+    // Runtime state access only. Deliberately does not touch
+    // game_state.level - callers that also advance to a new level update
+    // that separately (see LevelScene::update()).
+    auto& game_state = _data_manager.state();
+    game_state.deaths = _player.get_deaths();
+
+    Timer& timer = _player.get_timer();
+    game_state.centis = timer.centis();
+    game_state.seconds = timer.seconds();
+    game_state.minutes = timer.minutes();
+
+    // NOTE:
+    // SRAM writes are relatively expensive.
+    // Consider batching saves later.
+    _data_manager.save();
+}
+
 void LevelManager::load(const LevelData& level) {
     _pause_controller.reset();
 
@@ -139,15 +157,12 @@ void LevelManager::load(const LevelData& level) {
         const PlatformData& platform = level.platforms[i];
         const int graphics_count =
             platform.sprite.tiles_item().graphics_count();
-        bn::sprite_ptr sprite_ptr =
+        bn::sprite_ptr sprite =
             platform.sprite.create_sprite(platform.x, platform.y);
-        sprite_ptr.set_tiles(platform.sprite.tiles_item().create_tiles(
+        sprite.set_tiles(platform.sprite.tiles_item().create_tiles(
             platform.sprite_index % graphics_count));
-        sprite_ptr.set_blending_enabled(true);
-
-        _platforms.push_back(bn::make_unique<Sprite>(
-            bn::move(sprite_ptr), platform.x, platform.y));
-
+        sprite.set_blending_enabled(true);
+        _platforms.push_back(bn::move(sprite));
         _platform_bodies.emplace_back(
             platform.x, platform.y, platform.width, platform.height,
             Cfg::Layer::PLATFORM);
@@ -182,17 +197,14 @@ void LevelManager::load(const LevelData& level) {
 void LevelManager::unload() {
     _background.reset();
     _door.reset();
-    // NOTE: _music is intentionally NOT reset here.
-    // Preserving it lets load() detect same-track transitions
-    // (see the `*_music != level.music` check) and avoid restarting
-    // the music on every level change.
+    _music.reset();
     _platforms.clear();
     _platform_bodies.clear();
     _triggers.clear();
     _traps.clear();
 }
 
-bool LevelManager::update() {
+LevelManager::UpdateResult LevelManager::update() {
     // -------------------------------------------------------------------------
     // Pause
     // -------------------------------------------------------------------------
@@ -200,9 +212,16 @@ bool LevelManager::update() {
     const auto pause_action = _pause_controller.update();
     if (pause_action == PauseController::Action::DeathRequested) {
         _player.death();
+    } else if (
+        pause_action == PauseController::Action::ReturnToTitleRequested) {
+        // Persist progress before leaving to the title screen.
+        _last_death_ct = _player.get_deaths();
+        _save_progress();
+        return UpdateResult::ReturnToTitle;
     }
+
     if (_pause_controller.paused()) {
-        return false;
+        return UpdateResult::None;
     }
 
     // -------------------------------------------------------------------------
@@ -233,7 +252,7 @@ bool LevelManager::update() {
     // -------------------------------------------------------------------------
 
     if (_door && _door->reached()) {
-        return true;
+        return UpdateResult::LevelComplete;
     }
 
     // -------------------------------------------------------------------------
@@ -242,20 +261,8 @@ bool LevelManager::update() {
 
     if (_last_death_ct != _player.get_deaths()) {
         _last_death_ct = _player.get_deaths();
-
-        // Runtime state access only.
-        auto& game_state = _data_manager.state();
-        game_state.deaths = _last_death_ct;
-        Timer& timer = _player.get_timer();
-        game_state.centis = timer.centis();
-        game_state.seconds = timer.seconds();
-        game_state.minutes = timer.minutes();
-
-        // NOTE:
-        // SRAM writes are relatively expensive.
-        // Consider batching saves later.
-        _data_manager.save();
+        _save_progress();
         _reset_traps();
     }
-    return false;
+    return UpdateResult::None;
 }

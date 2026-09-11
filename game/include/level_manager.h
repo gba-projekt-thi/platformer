@@ -38,6 +38,13 @@
 // -----------------------------------------------------------------------------
 class LevelManager {
    public:
+    // Result of a single update() call.
+    //
+    // None          -> level keeps running (or is paused)
+    // LevelComplete -> the door was reached, advance to the next level
+    // ReturnToTitle -> the player chose "Title Screen" in the pause menu
+    enum class UpdateResult { None, LevelComplete, ReturnToTitle };
+
     explicit LevelManager(Player& player, DataManager& data_manager);
 
     // restores hud (timer, counter, etc.)
@@ -46,22 +53,18 @@ class LevelManager {
     // Loads a level and initializes all entities.
     void load(const LevelData& level);
 
-    // Unloads the current level and frees all temporary resources
-    // (background, door, platforms, triggers, traps). Called whenever a
-    // LevelScene is destroyed - on every level transition, not only when
-    // moving to the endgame scene - to keep VRAM/palette usage bounded.
+    // Unloads the current level and frees all temporary resources.
+    // This is used when transitioning to the final kiss scene to ensure the
+    // old level's palettes and sprites are released.
     void unload();
 
     // Advances the simulation by one frame.
-    // Returns true when level completed.
-    auto update() -> bool;
+    UpdateResult update();
 
     // Returns a valid trigger reference.
     // Falls back to trigger[0] if invalid.
-    auto get_trigger(int trigger_index) -> Trigger&;
+    Trigger& get_trigger(int trigger_index);
 
-    // Returns the player, needed by traps (e.g. ChaserTrap) that track
-    // the player's position directly.
     auto player() -> Player& { return _player; }
 
    private:
@@ -79,10 +82,12 @@ class LevelManager {
     // Resets all traps after player death.
     void _reset_traps();
 
-    // unique_ptr<Sprite> so each platform sprite keeps a stable address in
-    // SpriteRegistry, independent of bn::vector reallocations/clear().
-    bn::vector<bn::unique_ptr<Sprite>, Cfg::Level::Limits::PLATFORMS>
-        _platforms;
+    // Persists deaths/timer into the runtime save state without touching
+    // the current level index. Used both by death sync and by "return to
+    // title" from the pause menu.
+    void _save_progress();
+
+    bn::vector<bn::sprite_ptr, Cfg::Level::Limits::PLATFORMS> _platforms;
     bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES>
         _platform_bodies;
     bn::vector<Trigger, Cfg::Level::Limits::TRIGGERS> _triggers;

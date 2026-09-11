@@ -80,9 +80,9 @@ inline constexpr int DOOR = 1;
 
 namespace PauseMenu {
 inline constexpr int X = -30;
-inline constexpr int Y_0 = -20;
-inline constexpr int Y_1 = -4;
-inline constexpr int Y_2 = 12;
+inline constexpr int Y_TITLE = -28;
+inline constexpr int Y_OPTION_0 = -8;
+inline constexpr int OPTION_SPACING = 16;
 }  // namespace PauseMenu
 
 namespace StartScreen {
