@@ -6,14 +6,12 @@
 #include "bn_optional.h"
 #include "bn_regular_bg_ptr.h"
 #include "bn_span.h"
-#include "bn_unique_ptr.h"
 
-#include "cfg.h"
-#include "data_manager.h"
-#include "level_manager.h"
-#include "levels.h"
-#include "player.h"
-#include "start_scene.h"
+#include "level_structure.h"
+
+class Player;
+class DataManager;
+class LevelManager;
 
 class KissingScene : public core::Scene {
    public:

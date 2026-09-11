@@ -1,5 +1,7 @@
 #include "trigger.h"
 
+#include "cfg.h"
+
 Trigger::Trigger(
     bn::fixed t_x,
     bn::fixed t_y,

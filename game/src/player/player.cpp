@@ -1,5 +1,8 @@
 #include "player.h"
 
+#include "bn_sound_items.h"
+#include "bn_sprite_items_ente.h"
+
 Player::Player(
     bn::fixed in_start_x,
     bn::fixed in_start_y,

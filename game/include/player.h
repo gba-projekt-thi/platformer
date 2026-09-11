@@ -1,9 +1,6 @@
 #pragma once
 
 #include "bn_fixed.h"
-#include "bn_log.h"
-#include "bn_sound_items.h"
-#include "bn_sprite_items_ente.h"
 
 #include "cfg.h"
 #include "physics_body.h"
