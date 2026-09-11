@@ -1,8 +1,10 @@
 #pragma once
 
-#include "base_trap.h"
-#include "bn_sprite_items_door32x32.h"
+#include "bn_sprite_animate_actions.h"
+
 #include "cfg.h"
+#include "physics_body.h"
+#include "sprite.h"
 
 class Door : public PhysicsBody {
    public:
