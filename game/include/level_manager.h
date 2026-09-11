@@ -72,6 +72,7 @@ class LevelManager {
     void _load_door(const LevelData& level);
     void _load_music(const LevelData& level);
     void _load_background(const LevelData& level);
+    void _setup_camera(const LevelData& level);
 
     void _clear_runtime_state();
     static void _validate_level(const LevelData& level);
