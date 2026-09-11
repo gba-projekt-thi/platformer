@@ -21,6 +21,7 @@
 #include "path_trap.h"
 #include "pause_controller.h"
 #include "player.h"
+#include "save_sync_controller.h"
 #include "sprite.h"
 #include "trigger.h"
 
@@ -83,11 +84,6 @@ class LevelManager {
     // Resets all traps after player death.
     void _reset_traps();
 
-    // Persists deaths/timer into the runtime save state without touching
-    // the current level index. Used both by death sync and by "return to
-    // title" from the pause menu.
-    void _save_progress();
-
     bn::vector<bn::sprite_ptr, Cfg::Level::Limits::PLATFORMS> _platforms;
     bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES>
         _platform_bodies;
@@ -98,7 +94,7 @@ class LevelManager {
     Player& _player;
     bn::optional<Door> _door;
     bn::optional<bn::music_item> _music;
-    unsigned _last_death_ct = 0;
     PauseController _pause_controller;
     DataManager& _data_manager;
+    SaveSyncController _save_sync;
 };

@@ -2,7 +2,10 @@
 #include "trap_factory.h"
 
 LevelManager::LevelManager(Player& player, DataManager& data_manager)
-    : _player(player), _pause_controller(), _data_manager(data_manager) {
+    : _player(player),
+      _pause_controller(),
+      _data_manager(data_manager),
+      _save_sync(player, data_manager) {
     restoreHUD();
 }
 
@@ -36,24 +39,6 @@ void LevelManager::_reset_traps() {
     }
 }
 
-void LevelManager::_save_progress() {
-    // Runtime state access only. Deliberately does not touch
-    // game_state.level - callers that also advance to a new level update
-    // that separately (see LevelScene::update()).
-    auto& game_state = _data_manager.state();
-    game_state.deaths = _player.get_deaths();
-
-    Timer& timer = _player.get_timer();
-    game_state.centis = timer.centis();
-    game_state.seconds = timer.seconds();
-    game_state.minutes = timer.minutes();
-
-    // NOTE:
-    // SRAM writes are relatively expensive.
-    // Consider batching saves later.
-    _data_manager.save();
-}
-
 // -----------------------------------------------------------------------------
 // load() stages
 // -----------------------------------------------------------------------------
@@ -61,7 +46,7 @@ void LevelManager::_save_progress() {
 void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.teleport_to(level.player_data.x, level.player_data.y);
     _player.set_spawn_point(level.player_data.x, level.player_data.y);
-    _last_death_ct = _player.get_deaths();
+    _save_sync.reset_baseline();
 }
 
 void LevelManager::_load_door(const LevelData& level) {
@@ -220,8 +205,7 @@ LevelManager::UpdateResult LevelManager::update() {
     } else if (
         pause_action == PauseController::Action::ReturnToTitleRequested) {
         // Persist progress before leaving to the title screen.
-        _last_death_ct = _player.get_deaths();
-        _save_progress();
+        _save_sync.force_save();
         return UpdateResult::ReturnToTitle;
     }
 
@@ -264,9 +248,7 @@ LevelManager::UpdateResult LevelManager::update() {
     // Death Synchronization
     // -------------------------------------------------------------------------
 
-    if (_last_death_ct != _player.get_deaths()) {
-        _last_death_ct = _player.get_deaths();
-        _save_progress();
+    if (_save_sync.sync()) {
         _reset_traps();
     }
     return UpdateResult::None;
