@@ -2,9 +2,9 @@
 
 #include "bn_fixed_point.h"
 #include "bn_music_items.h"
-#include "bn_regular_bg_items_level1.h"
-#include "bn_regular_bg_items_level2.h"
-#include "bn_regular_bg_items_level3.h"
+#include "bn_regular_bg_items_world1.h"
+#include "bn_regular_bg_items_world2.h"
+#include "bn_regular_bg_items_world3.h"
 #include "bn_regular_bg_items_world4.h"
 #include "bn_regular_bg_items_world5.h"
 #include "bn_span.h"
@@ -33,8 +33,8 @@
 #include "bn_sprite_items_nebel.h"
 #include "bn_sprite_items_nest32x16.h"
 #include "bn_sprite_items_pipe16x16.h"
-#include "bn_sprite_items_platformslvl1.h"
-#include "bn_sprite_items_platformslvl2.h"
+#include "bn_sprite_items_platforms_world1.h"
+#include "bn_sprite_items_platforms_world2.h"
 #include "bn_sprite_items_rostybar32x32.h"
 #include "bn_sprite_items_rustynails32x16.h"
 #include "bn_sprite_items_slithermanarms32x32.h"
@@ -107,12 +107,12 @@ constexpr bn::fixed_point LEVEL3_BRANCH_PATH[] = {
 
 constexpr PlatformData level0_platforms[] = {
 
-    {-96, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
-    {-80, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
-    {-48, 60, 16, 10, 0, 0, bn::sprite_items::platformslvl1, 2},
-    {-16, 60, 16, 14, 0, 0, bn::sprite_items::platformslvl1, 3},
+    {-96, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {-80, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {-48, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
+    {-16, 60, 16, 14, 0, 0, bn::sprite_items::platforms_world1, 3},
 
-    {0, 40, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0}};
+    {0, 40, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0}};
 
 constexpr TriggerData level0_triggers[] = {{-50, 30, 30, 30}};
 
@@ -141,8 +141,8 @@ const LevelData LEVEL_0 = {
     level0_traps,
     sizeof(level0_traps) / sizeof(level0_traps[0]),
 
-    bn::regular_bg_items::level1,
-    bn::music_items::level1,
+    bn::regular_bg_items::world1,
+    bn::music_items::world1,
     // Player spawn
     {-96, 0},
     // Door position
@@ -154,20 +154,20 @@ const LevelData LEVEL_0 = {
 
 constexpr PlatformData level1_platforms[] = {
 
-    {-96, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
-    {-80, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
-    {-48, 60, 16, 14, 0, 0, bn::sprite_items::platformslvl1, 3},
+    {-96, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {-80, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {-48, 60, 16, 14, 0, 0, bn::sprite_items::platforms_world1, 3},
 
-    {-16, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
-    {-16, 44, 16, 10, 0, 0, bn::sprite_items::platformslvl1, 2},
+    {-16, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {-16, 44, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
 
-    {32, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
-    {48, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
+    {32, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {48, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
 
-    {64, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
-    {80, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
-    {96, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
-    {112, 60, 16, 10, 0, 0, bn::sprite_items::platformslvl1, 2}};
+    {64, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {80, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {96, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {112, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2}};
 
 constexpr TriggerData level1_triggers[] = {{80, 40, 32, 30}};
 
@@ -197,8 +197,8 @@ const LevelData LEVEL_1 = {
     level1_traps,
     sizeof(level1_traps) / sizeof(level1_traps[0]),
 
-    bn::regular_bg_items::level1,
-    bn::music_items::level1,
+    bn::regular_bg_items::world1,
+    bn::music_items::world1,
     // Player spawn
     {-96, 0},
     // Door position
@@ -210,13 +210,13 @@ const LevelData LEVEL_1 = {
 
 constexpr PlatformData level2_platforms[] = {
 
-    {-96, -16, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
-    {-72, 40, 16, 18, 0, 0, bn::sprite_items::platformslvl2, 2},
-    {-24, 40, 16, 11, 0, 0, bn::sprite_items::platformslvl2, 0},
-    {24, 40, 16, 11, 0, 0, bn::sprite_items::platformslvl2, 0},
-    {64, 24, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
-    {96, 16, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
-    {112, 16, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1}};
+    {-96, -16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-72, 40, 16, 18, 0, 0, bn::sprite_items::platforms_world2, 2},
+    {-24, 40, 16, 11, 0, 0, bn::sprite_items::platforms_world2, 0},
+    {24, 40, 16, 11, 0, 0, bn::sprite_items::platforms_world2, 0},
+    {64, 24, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {96, 16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {112, 16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1}};
 
 constexpr TriggerData level2_triggers[] = {{-48, 16, 32, 40}};
 
@@ -245,8 +245,8 @@ const LevelData LEVEL_2 = {
     level2_traps,
     sizeof(level2_traps) / sizeof(level2_traps[0]),
 
-    bn::regular_bg_items::level2,
-    bn::music_items::level2,
+    bn::regular_bg_items::world2,
+    bn::music_items::world2,
     // Player spawn
     {-96, -32},
     // Door position
@@ -313,7 +313,7 @@ const LevelData LEVEL_3 = {
     level3_traps,
     sizeof(level3_traps) / sizeof(level3_traps[0]),
 
-    bn::regular_bg_items::level3,
+    bn::regular_bg_items::world3,
     bn::music_items::world3,
     // Player spawn
     {-96, 40},
@@ -326,27 +326,27 @@ const LevelData LEVEL_3 = {
 
 constexpr PlatformData world1_scroll_platforms[] = {
 
-    {-176, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
-    {-160, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
-    {-144, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
-    {-128, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
-    {-112, 60, 16, 10, 0, 0, bn::sprite_items::platformslvl1, 2},
+    {-176, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {-160, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {-144, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {-128, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {-112, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
 
-    {-80, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
-    {-48, 44, 16, 10, 0, 0, bn::sprite_items::platformslvl1, 2},
+    {-80, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {-48, 44, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
 
-    {-8, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
-    {8, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
-    {24, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
-    {40, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
+    {-8, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {8, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {24, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {40, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
 
-    {80, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
-    {96, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0},
-    {112, 60, 16, 10, 0, 0, bn::sprite_items::platformslvl1, 2},
-    {128, 44, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
-    {144, 44, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 1},
-    {160, 60, 16, 10, 0, 0, bn::sprite_items::platformslvl1, 2},
-    {176, 60, 16, 8, 0, 0, bn::sprite_items::platformslvl1, 0}};
+    {80, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {96, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {112, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
+    {128, 44, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {144, 44, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {160, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
+    {176, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0}};
 
 constexpr TriggerData world1_scroll_triggers[] = {
     {-50, 30, 30, 30},
@@ -382,8 +382,8 @@ const LevelData LEVEL_WORLD1_SCROLL = {
     world1_scroll_traps,
     sizeof(world1_scroll_traps) / sizeof(world1_scroll_traps[0]),
 
-    bn::regular_bg_items::level1,
-    bn::music_items::level1,
+    bn::regular_bg_items::world1,
+    bn::music_items::world1,
     // Player spawn
     {-176, 0},
     // Door position
@@ -398,22 +398,22 @@ const LevelData LEVEL_WORLD1_SCROLL = {
 
 constexpr PlatformData world2_scroll_platforms[] = {
 
-    {-208, -16, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
-    {-184, -16, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
-    {-160, -16, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
-    {-136, -16, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
+    {-208, -16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-184, -16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-160, -16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-136, -16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
 
-    {-96, -16, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
-    {-72, 40, 16, 18, 0, 0, bn::sprite_items::platformslvl2, 2},
-    {-24, 40, 16, 11, 0, 0, bn::sprite_items::platformslvl2, 0},
-    {24, 40, 16, 11, 0, 0, bn::sprite_items::platformslvl2, 0},
-    {64, 24, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
-    {96, 16, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
-    {112, 16, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
+    {-96, -16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-72, 40, 16, 18, 0, 0, bn::sprite_items::platforms_world2, 2},
+    {-24, 40, 16, 11, 0, 0, bn::sprite_items::platforms_world2, 0},
+    {24, 40, 16, 11, 0, 0, bn::sprite_items::platforms_world2, 0},
+    {64, 24, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {96, 16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {112, 16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
 
-    {144, 16, 16, 6, 0, 0, bn::sprite_items::platformslvl2, 1},
-    {176, 0, 16, 8, 0, 0, bn::sprite_items::platformslvl2, 0},
-    {200, 0, 16, 8, 0, 0, bn::sprite_items::platformslvl2, 0}};
+    {144, 16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {176, 0, 16, 8, 0, 0, bn::sprite_items::platforms_world2, 0},
+    {200, 0, 16, 8, 0, 0, bn::sprite_items::platforms_world2, 0}};
 
 constexpr TriggerData world2_scroll_triggers[] = {
     {-48, 16, 32, 40},
@@ -447,8 +447,8 @@ const LevelData LEVEL_WORLD2_SCROLL = {
     world2_scroll_traps,
     sizeof(world2_scroll_traps) / sizeof(world2_scroll_traps[0]),
 
-    bn::regular_bg_items::level2,
-    bn::music_items::level2,
+    bn::regular_bg_items::world2,
+    bn::music_items::world2,
     // Player spawn
     {-200, -32},
     // Door position
@@ -512,7 +512,7 @@ const LevelData LEVEL_WORLD3_SCROLL = {
     world3_scroll_traps,
     sizeof(world3_scroll_traps) / sizeof(world3_scroll_traps[0]),
 
-    bn::regular_bg_items::level3,
+    bn::regular_bg_items::world3,
     bn::music_items::world3,
     // Player spawn
     {-224, 40},

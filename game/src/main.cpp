@@ -20,14 +20,14 @@
 #include "bn_sprite_items_connector16x16.h"
 #include "bn_sprite_items_door32x32.h"
 #include "bn_sprite_items_kugelfisch.h"
-#include "bn_sprite_items_platformslvl1.h"
+#include "bn_sprite_items_platforms_world1.h"
 
 // Level 2
 #include "bn_sprite_items_box32x32.h"
 #include "bn_sprite_items_can32x32.h"
 #include "bn_sprite_items_ladder.h"
 #include "bn_sprite_items_pipe16x16.h"
-#include "bn_sprite_items_platformslvl2.h"
+#include "bn_sprite_items_platforms_world2.h"
 #include "bn_sprite_items_rustynails32x16.h"
 
 // Level 3
@@ -59,9 +59,9 @@
 
 // Wallpapers
 #include "bn_regular_bg_items_kissingscene.h"
-#include "bn_regular_bg_items_level1.h"
-#include "bn_regular_bg_items_level2.h"
-#include "bn_regular_bg_items_level3.h"
+#include "bn_regular_bg_items_world1.h"
+#include "bn_regular_bg_items_world2.h"
+#include "bn_regular_bg_items_world3.h"
 #include "bn_regular_bg_items_world4.h"
 #include "bn_regular_bg_items_world5.h"
 #include "bn_regular_bg_ptr.h"
