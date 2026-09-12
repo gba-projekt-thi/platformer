@@ -1,4 +1,5 @@
 #include "base_trap.h"
+#include "player.h"
 
 BaseTrap::BaseTrap(
     bn::fixed t_x,
