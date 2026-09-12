@@ -3,15 +3,19 @@
 #include "core_scene.h"
 #include "core_scene_manager.h"
 
-#include "data_manager.h"
-#include "level_scene.h"
-#include "player.h"
-
-#include "bn_regular_bg_items_startscreen.h"
-#include "bn_sprite_text_generator.h"
-#include "common_variable_8x16_sprite_font.h"
-
+#include "bn_optional.h"
 #include "bn_random.h"
+#include "bn_regular_bg_ptr.h"
+#include "bn_span.h"
+#include "bn_sprite_ptr.h"
+#include "bn_sprite_text_generator.h"
+#include "bn_vector.h"
+
+#include "level_structure.h"
+
+class Player;
+class DataManager;
+class LevelManager;
 
 class StartScene : public core::Scene {
    public:

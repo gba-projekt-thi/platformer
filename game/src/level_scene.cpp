@@ -3,6 +3,9 @@
 #include "bn_core.h"
 #include "bn_unique_ptr.h"
 
+#include "data_manager.h"
+#include "level_manager.h"
+#include "player.h"
 #include "start_scene.h"
 
 extern bool game_finished;

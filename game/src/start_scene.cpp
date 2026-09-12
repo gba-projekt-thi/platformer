@@ -5,9 +5,19 @@
 #include "bn_log.h"
 #include "bn_music_items.h"
 #include "bn_random.h"
+#include "bn_regular_bg_items_startscreen.h"
+#include "bn_sound_items.h"
 #include "bn_sprite_items_schnabel64x64.h"
 #include "bn_sprite_items_tail64x64.h"
 #include "bn_sprite_items_titel64x128.h"
+
+#include "cfg.h"
+#include "common_variable_8x16_sprite_font.h"
+#include "data_manager.h"
+#include "level_manager.h"
+#include "level_scene.h"
+#include "player.h"
+#include "world_select_scene.h"
 
 StartScene::StartScene(
     Player& player,
@@ -145,6 +155,18 @@ void StartScene::update() {
             _level_manager.restoreHUD();
 
             bn::sound_items::confirm.play();
+        } else if (bn::keypad::b_pressed()) {
+            // Jump to world/level select instead of continuing normally.
+            _transition_requested = true;
+            _data_manager.set_slot_index(_selected_slot);
+            _data_manager.load_from_save();
+
+            auto next = bn::make_unique<WorldSelectScene>(
+                _player, _levels, _data_manager, _level_manager);
+            core::SceneManager::instance().set_next_scene(bn::move(next));
+            _level_manager.restoreHUD();
+
+            bn::sound_items::select.play();
         }
     }
 

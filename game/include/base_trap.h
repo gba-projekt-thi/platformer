@@ -9,7 +9,6 @@
 #include "cfg.h"
 #include "i_resettable.h"
 #include "physics_body.h"
-#include "player.h"
 #include "sprite.h"
 
 // ----------------------------------------------------------------------------

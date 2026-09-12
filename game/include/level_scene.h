@@ -3,9 +3,13 @@
 #include "core_scene.h"
 #include "core_scene_manager.h"
 
-#include "data_manager.h"
-#include "level_manager.h"
-#include "player.h"
+#include "bn_span.h"
+
+#include "level_structure.h"
+
+class Player;
+class DataManager;
+class LevelManager;
 
 // TODO:
 // Replace with GameSession or SceneResult system.
