@@ -16,20 +16,20 @@ shared across scenes and a set of **per-world** folders:
 ```mermaid
 graph TD
     G[graphics/] --> Glob[global/]
-    G --> L1[level1/]
-    G --> L2[level2/]
-    G --> L3[level3/]
-    G --> L4[level4/]
-    G --> L5[level5/]
+    G --> W1[world1/]
+    G --> W2[world2/]
+    G --> W3[world3/]
+    G --> W4[world4/]
+    G --> W5[world5/]
     Glob --> Door[Door sprite]
     Glob --> Duck[Duck sprite]
     Glob --> Kiss[Kiss scene backdrop]
     Glob --> Start[Start screen backdrop]
-    L1 --> T1[Ocean platforms, bubbles, connectors]
-    L2 --> T2[Factory platforms, pipes, cans, nails]
-    L3 --> T3[Forest trees, fog, mushrooms, branches]
-    L4 --> T4[Garden flowers, baskets, nests, bugs]
-    L5 --> T5[Dungeon barrels, bars, chests, mimics, axes, thwomps]
+    W1 --> T1[Bathtub platforms, bubbles, connectors]
+    W2 --> T2[Sewer system platforms, pipes, cans, nails]
+    W3 --> T3[Forest trees, fog, mushrooms, branches]
+    W4 --> T4[Village flowers, baskets, nests, bugs]
+    W5 --> T5[Dungeon barrels, bars, chests, mimics, axes, thwomps]
 ```
 
 ### Why split global vs. per-world?
