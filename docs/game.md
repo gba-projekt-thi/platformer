@@ -7,13 +7,20 @@ This document describes the `game/` project inside this repository, including th
 This repository contains a small Game Boy Advance platformer built with the Butano engine. The playable game lives in `game/` and uses global engine support from `extern/engine/`.
 
 The game includes:
-- A start/save selection scene
-- Multiple levels defined in code
-- Static and moving traps
+- A start/save selection scene with three save slots (level, deaths, and run timer persist to SRAM)
+- A world-select scene and a level-select scene for jumping directly to any already-reached world or level (reachable from the start screen by pressing B)
+- A sequence of themed worlds (ocean, factory, forest, garden, dungeon) defined in code
+- Four trap categories: static (base), trigger-activated moving, path-following patrol, and player-chasing hazards
 - Trigger zones that activate hazards
-- A door that advances the player to the next level
+- A door that advances the player to the next level, ending in a celebratory kiss scene
 - Music and tilemap backgrounds
-- A death counter HUD
+- A death counter and run timer HUD
+- A camera that follows the player across wider, scrolling worlds (single-screen worlds stay fixed)
+
+> This page is a quick map of the `game/` folder and its key files. For the
+> full conceptual documentation — architecture, gameplay, level design,
+> components, assets, workflow, system internals, extensibility, and a glossary —
+> see [`docs/index.md`](index.md).
 
 ## Build and Run
 
@@ -71,6 +78,19 @@ For headless or CI testing, use:
 - `game/include/start_scene.h` / `game/src/start_scene.cpp`
   - Implements the first scene shown to the player
   - Presents save slot / start selection logic
+  - Pressing B (instead of A) after picking a save slot opens the world-select scene
+
+- `game/include/world_select_scene.h` / `game/src/world_select_scene.cpp`
+  - Lists the worlds and lets the player jump directly to any world they have already reached (based on the loaded save slot's furthest level)
+  - Locked worlds are shown but cannot be entered; A opens the level-select scene for an unlocked world, B returns to `StartScene`
+
+- `game/include/level_select_scene.h` / `game/src/level_select_scene.cpp`
+  - Lists the individual levels belonging to the world chosen in `WorldSelectScene`
+  - Lets the player jump straight to any unlocked level (writing the chosen level to the save slot); B returns to `WorldSelectScene`
+
+- `game/include/world_index.h`
+  - Declares how the flat `levels[]` array in `game/src/main.cpp` is grouped into worlds for the world/level-select scenes
+  - This table is maintained by hand and must be kept in sync whenever the `levels[]` array changes
 
 - `game/include/level_scene.h` / `game/src/level_scene.cpp`
   - Implements actual level gameplay
@@ -105,6 +125,7 @@ To add or modify a level:
 2. Add or update `PlatformData`, `TriggerData`, and `TrapData`
 3. Set the level background and music items
 4. Update the `levels[]` array in `game/src/main.cpp` if you add new levels
+5. Update the `WorldIndex::WORLDS` table in `game/include/world_index.h` if you add, remove, or reorder levels, so the world/level-select scenes stay in sync with the flat `levels[]` array
 
 To add a new gameplay object:
 1. Define its interface in `game/include/`
