@@ -51,9 +51,13 @@ For headless or CI testing, use:
 ## Folder Structure
 
 `game/`
-- `audio/` — maxmod audio assets used by the game
+- `audio/` — maxmod audio assets used by the game (one track per world,
+  e.g. `world1.xm`–`world5.xm`, plus dedicated menu/start/end themes)
 - `dmg_audio/` — DMG audio assets for older sound support
-- `graphics/` — sprite and background graphics source files
+- `graphics/` — sprite and background graphics source files (organized as
+  a `global/` folder shared across worlds, plus one `world1/`–`world5/`
+  folder per themed world — see
+  [`docs/asset-management.md`](asset-management.md))
 - `include/` — game headers, level definitions, and shared data structures
 - `src/` — game logic implementation files
 
@@ -101,7 +105,15 @@ For headless or CI testing, use:
 
 - `game/include/trap_factory.h` and `game/src/traps/`
   - Define trap creation and trap behaviors
-  - Support base traps, moving traps, and path-following traps
+  - Support base traps, moving traps, path-following traps and chaser traps
+
+- `game/include/save_sync_controller.h` / `game/src/save_sync_controller.cpp`
+  - Implements `SaveSyncController`, which owns the runtime persistence policy for a level
+  - Watches the player's death counter and writes deaths/timer to SRAM via `DataManager` when it changes, or on demand via `force_save()`
+
+- `extern/engine/core/include/i_resettable.h`
+  - Declares `IResettable`, a minimal interface with a single `reset()` method
+  - Used by `LevelManager` to reset subsystems (such as traps) back to their level-start state after the player dies or the level restarts
 
 ## Game Data and Assets
 
