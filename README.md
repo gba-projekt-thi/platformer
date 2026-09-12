@@ -62,7 +62,7 @@ docker run --rm -v $(pwd):/workspace -w /workspace projectgba \
     bash -c "make"
 ```
 
-**Output:** `foo.gba` and `foo.elf`
+**Output:** `platformer.gba` and `platformer.elf`
 
 **Note:** If you try to build on your host system (outside the container), you'll get "command not found" errors because the ARM toolchain isn't installed there.
 
@@ -70,13 +70,13 @@ docker run --rm -v $(pwd):/workspace -w /workspace projectgba \
 
 ```bash
 # Interactive GUI (requires X11 forwarding or host installation)
-mgba-qt foo.gba
+mgba-qt platformer.gba
 
 # Headless testing (for CI, works in Docker)
-./test-rom.sh foo.gba
+./test-rom.sh platformer.gba
 
 # Helper script with options
-./run-gba.sh foo.gba [OPTIONS]
+./run-gba.sh platformer.gba [OPTIONS]
 #   -h, --headless  Run in headless mode (no GUI, for CI)
 #   -c, --console   Enable console output with debug logging
 ```
@@ -98,24 +98,32 @@ projectGBA/
 └── .devcontainer/                     # VS Code devcontainer config
 ```
 
-See `docs/game.md` for detailed game architecture, source layout, and level data information.
+See the [`docs/`](docs/) folder for the full documentation set — a conceptual
+overview of the game's architecture, gameplay, level design, components, assets,
+development workflow, system internals, extensibility, and a glossary. Start with
+[`docs/index.md`](docs/index.md). For a quick map of the `game/` folder and its
+key files, see [`docs/game.md`](docs/game.md).
 
 ## Game Overview
 
-This repository includes a small GBA platformer built with the Butano engine. The game currently features:
+This repository includes a small GBA platformer built with the Butano engine. You play as a duck hopping through themed worlds, dodging hazards, and reaching an exit door in each stage. The game currently features:
 
-- Two playable levels defined in `game/include/levels.h`
-- Level progression through a door at the end of each stage
+- A start screen with three save slots (level, deaths, and run timer persist to SRAM)
+- A world-select screen and a level-select screen for jumping directly to any already-reached world or level (press B on the start screen to reach them)
+- A sequence of themed worlds (ocean, factory, forest, garden, dungeon) defined in `game/include/levels.h`
+- Level progression through a door at the end of each stage, ending in a celebratory kiss scene
 - Platform placement and collision defined by level data
-- Trigger zones that activate moving traps when the player enters them
-- Moving traps that accelerate after being triggered and reset when the player dies
-- Static trap hazards and decorative tiles using Butano sprite items
-- Background music per level and tilemap backgrounds
-- A death counter HUD that updates every time the player respawns
+- Trigger zones that activate hazards when the player enters them
+- Four trap categories: static (base), trigger-activated moving, path-following patrol, and player-chasing hazards
+- Animated sprites (duck, door, mimics) and decorative tiles using Butano sprite items
+- Background music per world and tilemap backgrounds
+- A death counter and run timer HUD
 - Player movement with acceleration, maximum speed, gravity, and fall speed clamping
 - Jump mechanics with jump buffering and coyote time for more forgiving platforming
 - Variable jump height based on how long the jump button is held
-- A static camera (camera does not follow the player yet)
+- A camera that follows the player across wider, scrolling worlds (single-screen worlds stay fixed)
+
+For the full conceptual picture — architecture, gameplay, level design, components, assets, workflow, internals, and extensibility — see the [`docs/`](docs/) documentation set, starting with [`docs/index.md`](docs/index.md).
 
 ## Game Asset Layout
 
@@ -142,24 +150,25 @@ This workflow splits tasks between the dev container and your host system:
 1. **Build in dev container** (has the ARM toolchain):
    ```bash
    # Inside VS Code terminal (in dev container) or press Ctrl+Shift+B
-   cd src/sprites && make
+   # Run from the repository root (where the Makefile lives)
+   make
    ```
 
 2. **Run on host system** (avoids X11 display issues):
    ```bash
    # Open a terminal on your HOST (not in VS Code)
    # Install mGBA if needed: sudo apt-get install mgba-qt
-   mgba-qt foo.gba
+   mgba-qt platformer.gba
    ```
 
 3. **Debug with GDB** (split between host and container):
    ```bash
    # Terminal 1 (HOST): Start mGBA GUI with GDB stub on port 2345
-   mgba-qt -g foo.gba
+   mgba-qt -g platformer.gba
 
    # Terminal 2 (DEV CONTAINER): Connect ARM debugger
    # Must run from container because host doesn't have arm-none-eabi-gdb
-   arm-none-eabi-gdb foo.elf
+   arm-none-eabi-gdb platformer.elf
    (gdb) target remote host.docker.internal:2345
    (gdb) continue
    ```
@@ -182,7 +191,7 @@ All commands run automatically in the correct environment (container or host).
 
 For automated testing without GUI:
 ```bash
-./test-rom.sh foo.gba
+./test-rom.sh platformer.gba
 ```
 
 **Note:** GDB connection verified working. The container connects to host mGBA via `host.docker.internal:2345`.
