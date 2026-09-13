@@ -226,6 +226,21 @@ graph TD
     LM --> Sync[Save sync controller]
 ```
 
+### Resource management
+
+The level manager holds its collections in **fixed-capacity** containers sized
+to the maximum the game expects. This choice avoids heap fragmentation on a
+device where memory is precious and long play sessions must remain stable. On
+unload, every resource is explicitly released before the next stage loads, so
+the next stage's assets can claim the same sprite slots and palettes without
+contention.
+
+Platform sprites are wrapped in the shared **Sprite** type and registered with
+**SpriteRegistry** at load time — the same pattern used for the door and every
+trap. This is what lets platforms scroll correctly with the camera on wide
+levels; a raw sprite handle that bypasses this wrapper stays pinned to its
+initial screen position regardless of camera movement.
+
 ### Level lifecycle
 
 A stage goes through four phases:

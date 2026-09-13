@@ -12,15 +12,21 @@ than fighting it.
 
 ## Adding a new level
 
-Because stages are **data-driven**, adding one is mostly a data authoring task,
-not a code-writing task.
-
-```mermaid
-flowchart TD
-    A[Author stage data<br/>platforms, triggers, traps, spawn, door, world size, background, music] --> B[Register the stage in the level sequence]
-    B --> C[Build]
-    C --> D[Test clearability]
-```
+1. Because stages are **data-driven**, adding one is mostly a data authoring task,
+   not a code-writing task.
+2.
+   ```mermaid
+   flowchart TD
+      A[Author stage data<br/>platforms, triggers, traps, spawn, door, world size, background, music] --> B[Register the stage in the level sequence]
+      B --> C[Build]
+      C --> D[Test clearability]
+   ```
+3. **Author the trigger list.** Define the invisible rectangles that will
+   activate your timed hazards; optionally start one already active. Give a
+   trigger a stable `name` if any trap will bind to it — this keeps the
+   binding intact even if you later insert or reorder triggers in the same
+   level. Falling back to index-based binding is still supported for traps
+   that don't set a name.
 
 ### Conceptual steps
 

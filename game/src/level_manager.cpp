@@ -33,6 +33,22 @@ Trigger& LevelManager::get_trigger(int trigger_index) {
     return _triggers[0];
 }
 
+Trigger& LevelManager::get_trigger_by_name(const char* name) {
+    if (name != nullptr) {
+        for (Trigger& trigger : _triggers) {
+            const char* candidate = trigger.name();
+            if (candidate != nullptr &&
+                bn::string_view(candidate) == bn::string_view(name)) {
+                return trigger;
+            }
+        }
+    }
+    BN_LOG(
+        "[ERROR] level_manager: "
+        "trigger name not found, fallback to trigger 0");
+    return _triggers[0];
+}
+
 void LevelManager::_reset_entities() {
     for (auto* entity : _resettables) {
         entity->reset();
@@ -131,17 +147,29 @@ void LevelManager::_load_platforms(const LevelData& level) {
         const PlatformData& platform = level.platforms[i];
         const int graphics_count =
             platform.sprite.tiles_item().graphics_count();
-        bn::sprite_ptr sprite =
+
+        bn::sprite_ptr raw_sprite =
             platform.sprite.create_sprite(platform.x, platform.y);
-        sprite.set_tiles(platform.sprite.tiles_item().create_tiles(
+        raw_sprite.set_tiles(platform.sprite.tiles_item().create_tiles(
             platform.sprite_index % graphics_count));
-        sprite.set_blending_enabled(true);
-        _platforms.push_back(bn::move(sprite));
+        raw_sprite.set_blending_enabled(true);
+
+        // Wrap in the shared Sprite type - same pattern as Door and every
+        // trap. This is what registers the sprite with SpriteRegistry so
+        // sync_all() moves it in step with the camera each frame. A bare
+        // bn::sprite_ptr never gets touched again after creation and stays
+        // pinned to its initial screen position on scrolling levels.
+        auto wrapped_sprite = bn::make_unique<Sprite>(
+            bn::move(raw_sprite), platform.x, platform.y);
+
         _platform_bodies.emplace_back(
             platform.x, platform.y, platform.width, platform.height,
             Cfg::Layer::PLATFORM);
         _platform_bodies.back().pos.offset_x = platform.offset_x;
         _platform_bodies.back().pos.offset_y = platform.offset_y;
+        _platform_bodies.back().sprite = wrapped_sprite.get();
+
+        _platforms.push_back(bn::move(wrapped_sprite));
     }
 }
 
@@ -149,12 +177,13 @@ void LevelManager::_load_triggers(const LevelData& level) {
     for (int i = 0; i < level.trigger_count; ++i) {
         const TriggerData& trigger = level.triggers[i];
         _triggers.emplace_back(
-            trigger.x, trigger.y, trigger.width, trigger.height);
+            trigger.x, trigger.y, trigger.width, trigger.height,
+            trigger.default_on, trigger.name);
     }
 
     // Fallback trigger prevents invalid references.
     if (_triggers.empty()) {
-        _triggers.emplace_back(1000, 1000, 0, 0, true);
+        _triggers.emplace_back(1000, 1000, 0, 0, true, nullptr);
     }
 }
 
