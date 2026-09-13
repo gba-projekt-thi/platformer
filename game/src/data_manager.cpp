@@ -2,7 +2,20 @@
 
 void DataManager::load_from_save() {
     if (_save_mgr.is_slot_used(_slot_index)) {
-        _save_mgr.load(_slot_index, _game_state);
+        if (_save_mgr.load(_slot_index, _game_state) !=
+            engine::save::SaveResult::OK) {
+            // Incompatible/corrupt slot (e.g. a save written before
+            // furthest_level existed) - fall back to a clean state
+            // instead of silently keeping whatever was already in
+            // memory.
+            _game_state = {};
+        }
+    }
+
+    // Defensive: furthest_level must never trail the resume point.
+    // Guards against any legacy or otherwise inconsistent save data.
+    if (_game_state.furthest_level < _game_state.level) {
+        _game_state.furthest_level = _game_state.level;
     }
 }
 

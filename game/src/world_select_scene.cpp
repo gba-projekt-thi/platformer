@@ -24,7 +24,7 @@ WorldSelectScene::WorldSelectScene(
       _level_manager(level_manager) {}
 
 bool WorldSelectScene::_is_unlocked(int world_index) const {
-    const int furthest = _data_manager.state().level;
+    const int furthest = _data_manager.state().furthest_level;
     return WorldIndex::WORLDS[world_index].start_index <= furthest;
 }
 
