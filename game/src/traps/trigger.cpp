@@ -7,7 +7,8 @@ Trigger::Trigger(
     bn::fixed t_y,
     bn::fixed t_width,
     bn::fixed t_height,
-    bool t_default_on)
+    bool t_default_on,
+    const char* t_name)
     : PhysicsBody(
           t_x,
           t_y,
@@ -17,7 +18,8 @@ Trigger::Trigger(
           Cfg::Layer::PLAYER,
           0),
       _triggered(t_default_on),
-      _default_on(t_default_on) {}
+      _default_on(t_default_on),
+      _name(t_name) {}
 
 bool Trigger::is_triggered() const {
     return _triggered;

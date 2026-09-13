@@ -147,6 +147,11 @@ To add a new gameplay object:
 ## Notes
 
 - `game/` is the game-specific project code. It depends on Butano and shared engine code in `extern/engine/`.
+- `game/include/level_structure.h`
+  - `TriggerData::name` / `TrapData::trigger_name` allow binding a
+    MovingTrap/PathTrap to a trigger by stable identifier instead of raw
+    array index, via `LevelManager::get_trigger_by_name()`. Index-based
+    binding (`trigger_index`) remains supported as a fallback.
 - The root `Makefile` points `TARGET := platformer`, so the generated ROM is `platformer.gba`.
 
 ## Related Docs

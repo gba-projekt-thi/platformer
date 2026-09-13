@@ -22,7 +22,9 @@ inline auto create(const TrapData& trap_data, LevelManager& level_manager)
 
         case TrapType::MOVING: {
             Trigger& trigger =
-                level_manager.get_trigger(trap_data.trigger_index);
+                trap_data.trigger_name != nullptr
+                    ? level_manager.get_trigger_by_name(trap_data.trigger_name)
+                    : level_manager.get_trigger(trap_data.trigger_index);
             return bn::make_unique<MovingTrap>(
                 trap_data.x, trap_data.y, trap_data.width, trap_data.height,
                 trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
@@ -33,7 +35,9 @@ inline auto create(const TrapData& trap_data, LevelManager& level_manager)
 
         case TrapType::PATH: {
             Trigger& trigger =
-                level_manager.get_trigger(trap_data.trigger_index);
+                trap_data.trigger_name != nullptr
+                    ? level_manager.get_trigger_by_name(trap_data.trigger_name)
+                    : level_manager.get_trigger(trap_data.trigger_index);
             return bn::make_unique<PathTrap>(
                 trap_data.x, trap_data.y, trap_data.width, trap_data.height,
                 trap_data.offset_x, trap_data.offset_y, trap_data.sprite,

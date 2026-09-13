@@ -19,12 +19,16 @@ class Trigger : public PhysicsBody {
         bn::fixed t_y,
         bn::fixed t_width,
         bn::fixed t_height,
-        bool t_default_on = false);
+        bool t_default_on = false,
+        const char* t_name = nullptr);
     bool is_triggered() const;
     void on_enter(uint16_t hit_layers, StaticBody* body) override;
     void reset();
 
+    [[nodiscard]] const char* name() const { return _name; }
+
    private:
     bool _triggered;
     bool _default_on;
+    const char* _name;
 };

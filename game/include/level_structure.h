@@ -53,6 +53,13 @@ struct TriggerData {
     // Optional:
     // Allows triggers to start already active.
     bool default_on = false;
+
+    // Optional stable identifier, immune to reordering this level's trigger
+    // array. When set, traps should reference this trigger via
+    // TrapData::trigger_name instead of a raw array index (see
+    // TrapData::trigger_index for the legacy/fallback path). nullptr =
+    // unnamed; the trigger is then only reachable by index.
+    const char* name = nullptr;
 };
 
 // -----------------------------------------------------------------------------
@@ -89,6 +96,9 @@ struct TrapData {
 
     // Trigger index used by moving/path traps.
     // -1 means fallback trigger.
+    // Only used when trigger_name (below) is nullptr - kept as the legacy
+    // path and as the ultimate fallback target. Unused by TrapType::CHASE,
+    // which tracks the player directly instead of a trigger.
     int trigger_index = -1;
 
     // -------------------------------------------------------------------------
@@ -121,6 +131,18 @@ struct TrapData {
 
     // Max horizontal distance the trap closes per frame while chasing.
     bn::fixed chase_speed = 0;
+
+    // -------------------------------------------------------------------------
+    // Trigger binding (MovingTrap / PathTrap only)
+    // -------------------------------------------------------------------------
+
+    // Optional stable trigger identifier (see TriggerData::name). When set,
+    // TrapFactory resolves the trigger via LevelManager::get_trigger_by_name()
+    // instead of trigger_index above - reordering the level's trigger array
+    // no longer breaks this trap's binding. Must stay the LAST member so
+    // existing aggregate-init call sites in levels.h that omit it keep
+    // compiling unchanged (defaults to nullptr = use trigger_index instead).
+    const char* trigger_name = nullptr;
 };
 
 // -----------------------------------------------------------------------------

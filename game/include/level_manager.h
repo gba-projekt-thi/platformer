@@ -66,6 +66,12 @@ class LevelManager {
     // Falls back to trigger[0] if invalid.
     Trigger& get_trigger(int trigger_index);
 
+    // Returns the trigger whose TriggerData::name matches (linear scan -
+    // trivially cheap given Cfg::Level::Limits::TRIGGERS <= 16 and this is
+    // only ever called once per trap at level load, never per-frame).
+    // Falls back to get_trigger(-1) with a BN_LOG if no match is found.
+    Trigger& get_trigger_by_name(const char* name);
+
     auto player() -> Player& { return _player; }
 
    private:
@@ -87,7 +93,8 @@ class LevelManager {
     // without LevelManager needing to know their concrete type.
     void _reset_entities();
 
-    bn::vector<bn::sprite_ptr, Cfg::Level::Limits::PLATFORMS> _platforms;
+    bn::vector<bn::unique_ptr<Sprite>, Cfg::Level::Limits::PLATFORMS>
+        _platforms;
     bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES>
         _platform_bodies;
     bn::vector<Trigger, Cfg::Level::Limits::TRIGGERS> _triggers;
