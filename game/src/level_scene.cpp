@@ -77,6 +77,10 @@ void LevelScene::update() {
     auto& timer = _player.get_timer();
     auto& game_state = _data_manager.state();
     game_state.level = next_level_index;
+    if (next_level_index >
+        static_cast<unsigned int>(game_state.furthest_level)) {
+        game_state.furthest_level = static_cast<int16_t>(next_level_index);
+    }
 
     // IMPORTANT:
     // Persist deaths during level transitions.
