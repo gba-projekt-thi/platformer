@@ -73,6 +73,7 @@ void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.teleport_to(level.player_data.x, level.player_data.y);
     _player.set_spawn_point(level.player_data.x, level.player_data.y);
     _save_sync.reset_baseline();
+    _level_frame_count = 0;
 }
 
 void LevelManager::_load_door(const LevelData& level) {
@@ -254,6 +255,15 @@ LevelManager::UpdateResult LevelManager::update() {
     if (_pause_controller.paused()) {
         return UpdateResult::None;
     }
+
+    // Level clock: counts frames the level has actually been playable
+    // (i.e. not paused), used to compute this attempt's clear time for
+    // the best-time record. Deliberately NOT reset on death - matches
+    // the existing overall run Timer, which also keeps counting through
+    // deaths; a level's recorded time is its total time-to-clear
+    // including any retries within that attempt, not a speedrun-style
+    // per-segment split.
+    ++_level_frame_count;
 
     // -------------------------------------------------------------------------
     // Physics

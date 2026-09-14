@@ -6,6 +6,11 @@ treatment.
 
 ## A
 
+**AudioSettings** — Engine-level singleton holding the player's current
+music/SFX volume levels; read by the scene manager during fades and by SFX
+call sites via `play_sfx()`. See
+[Components — Audio System](components.md)
+
 **Accelerometer** — *not used.* (Listed here only to disambiguate: movement is
 input-driven, not motion-sensor-driven.)
 
@@ -14,6 +19,11 @@ advancing sprite frames based on movement state and facing. See
 [Components — Player System](components.md).
 
 ## B
+
+**Best time / personal record** — A level's fastest recorded clear time
+(frames from level load to door reached, not reset on death within an
+attempt), shown in the level-select screen and persisted per save slot
+across game completions. See [Components — Level Management](components.md).
 
 **Base trap** — A static, always-dangerous hazard. The simplest trap category;
 can still animate its sprite while remaining motionless. See
@@ -129,6 +139,12 @@ motionless while cycling animation frames. See
 
 **Moving trap** — A trigger-activated hazard driven by per-frame acceleration up
 to a max velocity. See [Components — Trap System](components.md).
+
+## O
+
+**Options menu** — The pause menu's embedded sub-menu for adjusting music
+and SFX volume, reachable without leaving gameplay. See
+[Components — Audio System](components.md).
 
 ## P
 

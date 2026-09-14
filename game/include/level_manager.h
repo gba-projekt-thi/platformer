@@ -74,6 +74,13 @@ class LevelManager {
 
     auto player() -> Player& { return _player; }
 
+    // Frames elapsed since this level was loaded, excluding time spent
+    // paused. Used by LevelScene to compute this attempt's clear time
+    // for the best-time record on reaching the door.
+    [[nodiscard]] unsigned level_frame_count() const {
+        return _level_frame_count;
+    }
+
    private:
     void _load_player_spawn(const LevelData& level);
     void _load_door(const LevelData& level);
@@ -113,4 +120,8 @@ class LevelManager {
     PauseController _pause_controller;
     DataManager& _data_manager;
     SaveSyncController _save_sync;
+
+    // See level_frame_count(). Reset in _load_player_spawn(), advanced
+    // once per non-paused frame in update().
+    unsigned _level_frame_count = 0;
 };

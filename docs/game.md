@@ -9,13 +9,15 @@ This repository contains a small Game Boy Advance platformer built with the Buta
 The game includes:
 - A start/save selection scene with three save slots (level, deaths, and run timer persist to SRAM)
 - A world-select scene and a level-select scene for jumping directly to any already-reached world or level (reachable from the start screen by pressing B)
+- Level-select also shows each unlocked level's personal-best clear time (mm:ss.cc), once one has been set
 - A sequence of themed worlds (ocean, factory, forest, garden, dungeon) defined in code
 - Four trap categories: static (base), trigger-activated moving, path-following patrol, and player-chasing hazards
 - Trigger zones that activate hazards
 - A door that advances the player to the next level, ending in a celebratory kiss scene
 - Music and tilemap backgrounds
 - A death counter and run timer HUD
-- A camera that follows the player across wider, scrolling worlds (single-screen worlds stay fixed)
+- A pause menu with Continue / Restart Level / Options / Title Screen; Options lets the player adjust music and SFX volume (0-4), persisted per save slot
+ - A camera that follows the player across wider, scrolling worlds (single-screen worlds stay fixed)
 
 > This page is a quick map of the `game/` folder and its key files. For the
 > full conceptual documentation — architecture, gameplay, level design,
@@ -107,6 +109,12 @@ For headless or CI testing, use:
   - Define trap creation and trap behaviors
   - Support base traps, moving traps, path-following traps and chaser traps
 
+- `game/include/level_structure.h`
+  - `TriggerData::name` / `TrapData::trigger_name` allow binding a
+    MovingTrap/PathTrap to a trigger by stable identifier instead of raw
+    array index, via `LevelManager::get_trigger_by_name()`. Index-based
+    binding (`trigger_index`) remains supported as a fallback.
+
 - `game/include/save_sync_controller.h` / `game/src/save_sync_controller.cpp`
   - Implements `SaveSyncController`, which owns the runtime persistence policy for a level
   - Watches the player's death counter and writes deaths/timer to SRAM via `DataManager` when it changes, or on demand via `force_save()`
@@ -114,6 +122,18 @@ For headless or CI testing, use:
 - `extern/engine/core/include/i_resettable.h`
   - Declares `IResettable`, a minimal interface with a single `reset()` method
   - Used by `LevelManager` to reset subsystems (such as traps) back to their level-start state after the player dies or the level restarts
+
+- `extern/engine/core/include/audio_settings.h`
+  - Declares `AudioSettings`, an engine-level singleton holding the player's music/SFX volume levels (0..4)
+  - Lives in the engine layer (not `game/include/`) because `core_scene_manager.cpp` reads it during fade transitions and the engine must not depend on game-side types
+  - Game code persists the chosen levels into `GameState::music_volume`/`sfx_volume` and restores them via `LevelManager::restoreHUD()`
+
+ - `game/include/pause_controller.h` / `game/src/pause_controller.cpp`
+  - Handles pause toggling and the pause menu (Continue / Restart Level / Options / Title Screen)
+  - Owns an embedded Options sub-menu (Up/Down selects Music/SFX, Left/Right adjusts the level, B returns and commits to SRAM once)
+
+- `game/include/timer.h` / `game/src/timer.cpp`
+  - Also declares `frames_to_time()`, a plain-division frame→mm:ss.cc converter used only when building level-select menu text (not in the per-frame HUD path, which keeps using `Timer`'s lookup tables)
 
 ## Game Data and Assets
 
@@ -147,11 +167,6 @@ To add a new gameplay object:
 ## Notes
 
 - `game/` is the game-specific project code. It depends on Butano and shared engine code in `extern/engine/`.
-- `game/include/level_structure.h`
-  - `TriggerData::name` / `TrapData::trigger_name` allow binding a
-    MovingTrap/PathTrap to a trigger by stable identifier instead of raw
-    array index, via `LevelManager::get_trigger_by_name()`. Index-based
-    binding (`trigger_index`) remains supported as a fallback.
 - The root `Makefile` points `TARGET := platformer`, so the generated ROM is `platformer.gba`.
 
 ## Related Docs

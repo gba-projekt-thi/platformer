@@ -11,6 +11,7 @@
 #include "level_manager.h"
 #include "level_scene.h"
 #include "player.h"
+#include "timer.h"
 #include "world_index.h"
 #include "world_select_scene.h"
 
@@ -51,11 +52,12 @@ void LevelSelectScene::_rebuild_menu() {
     _menu_sprites.clear();
 
     const WorldEntry& world = WorldIndex::WORLDS[_world_index];
+    const GameState& game_state = _data_manager.state();
 
     for (int i = 0; i < world.level_count; ++i) {
         const int absolute_index = world.start_index + i;
 
-        char buf[32];
+        char buf[40];
         int pos = 0;
         buf[pos++] = (i == _selected_index) ? '>' : ' ';
         buf[pos++] = ' ';
@@ -64,11 +66,27 @@ void LevelSelectScene::_rebuild_menu() {
             buf[pos++] = *p;
         }
         buf[pos++] = char('1' + i);
+
         if (!_is_unlocked(absolute_index)) {
             const char* locked = " (Locked)";
             for (const char* p = locked; *p; ++p) {
                 buf[pos++] = *p;
             }
+        } else if (
+            absolute_index < GameState::MAX_LEVELS &&
+            game_state.best_time_frames[absolute_index] > 0) {
+            // Append the personal-best clear time, e.g. " 01:23.45".
+            const FrameTime t =
+                frames_to_time(game_state.best_time_frames[absolute_index]);
+            buf[pos++] = ' ';
+            buf[pos++] = char('0' + (t.minutes / 10) % 10);
+            buf[pos++] = char('0' + t.minutes % 10);
+            buf[pos++] = ':';
+            buf[pos++] = char('0' + (t.seconds / 10) % 10);
+            buf[pos++] = char('0' + t.seconds % 10);
+            buf[pos++] = '.';
+            buf[pos++] = char('0' + (t.centis / 10) % 10);
+            buf[pos++] = char('0' + t.centis % 10);
         }
         buf[pos] = '\0';
 
