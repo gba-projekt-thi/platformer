@@ -65,10 +65,30 @@ void LevelScene::update() {
     // Door reached: advance to the next level (or finish the game).
     // -------------------------------------------------------------------------
 
+    // Record a new best-clear-time for the level just finished, before
+    // anything else touches game_state - covers both the "advance to
+    // next level" and "game completed" paths below, since both start
+    // from having reached this level's door.
+    if (_level_index < unsigned(GameState::MAX_LEVELS)) {
+        auto& game_state = _data_manager.state();
+        const unsigned frames = _level_manager.level_frame_count();
+        uint32_t& best = game_state.best_time_frames[_level_index];
+        if (best == 0 || frames < best) {
+            best = frames;
+        }
+    }
+
     const unsigned int next_level_index = _level_index + 1u;
 
     // Game completed.
     if (next_level_index >= static_cast<unsigned int>(_levels.size())) {
+        // Persist the best time recorded just above. Unlike the
+        // normal-progression path below, nothing else on this path
+        // calls save() - KissingScene later calls
+        // DataManager::reset(), which preserves best_time_frames
+        // across the reset, but this level's newly-set record still
+        // needs to reach SRAM first.
+        _data_manager.save();
         game_finished = true;
         return;
     }

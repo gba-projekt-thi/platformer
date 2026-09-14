@@ -32,8 +32,20 @@ void DataManager::save() {
 }
 
 void DataManager::reset() {
-    // Reset runtime state first.
+    // Preserve per-level best times across a full-game reset. They are
+    // personal records, not "current run" progress (level/deaths/timer),
+    // which is what this reset is meant to clear on finishing the game.
+    uint32_t best_times[GameState::MAX_LEVELS];
+    for (int i = 0; i < GameState::MAX_LEVELS; ++i) {
+        best_times[i] = _game_state.best_time_frames[i];
+    }
+
+    // Reset runtime state.
     _game_state = {};
+
+    for (int i = 0; i < GameState::MAX_LEVELS; ++i) {
+        _game_state.best_time_frames[i] = best_times[i];
+    }
 
     // Then persist the cleared save.
     _save_mgr.save(_slot_index, _game_state);

@@ -9,6 +9,13 @@
 // - smaller save size
 // - consistent ABI behavior on ARM
 struct GameState {
+    // Headroom above the current 9-level roster (see levels[] in
+    // main.cpp / WorldIndex::WORLDS). Bump if the game ever grows past
+    // this many levels. Independent from Cfg::Level::Limits, which caps
+    // per-level entity counts (platforms/triggers/traps), not level
+    // count.
+    static constexpr int MAX_LEVELS = 16;
+
     int16_t level = 0;
     uint16_t deaths = 0;  // unsigned: matches Player::set_deaths(unsigned int)
                           // and LevelManager's unsigned _last_death_ct — avoids
@@ -33,4 +40,13 @@ struct GameState {
     // LevelManager::restoreHUD().
     uint8_t music_volume = 4;
     uint8_t sfx_volume = 4;
+
+    // Per-level personal-best clear time, in frames (60 = 1 second),
+    // indexed by absolute level index (same indexing as the levels[]
+    // array in main.cpp and WorldIndex::WORLDS' start_index/level_count).
+    // 0 means "no record yet". Measured from level load to door reached
+    // and deliberately NOT reset on death within an attempt - see
+    // LevelManager::update()'s comment on _level_frame_count. Displayed
+    // via timer.h's frames_to_time().
+    uint32_t best_time_frames[MAX_LEVELS] = {};
 };

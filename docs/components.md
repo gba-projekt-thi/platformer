@@ -185,8 +185,25 @@ Two activation styles exist:
 - **Direct player tracking.** Chase traps read the player's position every
   frame and update their own position accordingly.
 
-The default trigger index for a trap can point to a fallback (index `-1`),
-letting a trap respond to a stage-level default rather than a specific zone.
+### Trigger lookup
+
+Triggers are referenced from trap data in one of two ways:
+
+- **By array index** (legacy/default) — a trap stores the trigger's position
+  in the level's trigger list. Simple, but fragile: inserting or reordering
+  triggers silently rebinds any trap whose index now points somewhere else.
+- **By stable name** — a trigger can optionally carry a name
+  (`TriggerData::name`); a trap then binds to it via
+  `TrapData::trigger_name`, resolved through
+  `LevelManager::get_trigger_by_name()`. This binding survives reordering the
+  trigger array, since it's a lookup by identity rather than position.
+
+Named lookup is a simple linear scan over the level's triggers — with a
+per-level cap of 16 and the lookup happening once per trap at level load
+(never per frame), this costs nothing worth measuring. New level content
+should prefer named triggers; existing levels using index-based binding
+continue to work unchanged, since `trigger_name` defaults to unset and falls
+back to the index path.
 
 ### Interactions with the player
 
@@ -250,10 +267,11 @@ A stage goes through four phases:
    bodies; create the triggers; construct each trap through the factory and add
    it to both the trap list and the resettable list; place the door; set the
    music and background; configure the camera bounds and horizontal bounce
-   boundary; set the player's spawn point; establish the save-sync baseline.
+   boundary; set the player's spawn point; establish the save-sync baseline;
+   reset the level's internal frame clock used for the best-time record.
 2. **Run (per frame).** Each frame the manager updates the pause controller,
-   the player, the traps, the door, and the save-sync controller, then reports
-   an outcome to the calling scene:
+   the level clock, the player, the traps, the door, and the save-sync
+   controller, then reports an outcome to the calling scene:
    - **None** — keep running (or paused).
    - **LevelComplete** — the door was reached; advance.
    - **ReturnToTitle** — the player chose "Title" from the pause menu.
@@ -305,6 +323,54 @@ device where memory is precious and long play sessions must remain stable. On
 unload, every resource is explicitly released before the next stage loads, so
 the next stage's assets can claim the same sprite slots and palettes without
 contention.
+
+---
+
+## 5.4 Audio System
+
+Sound is split across two independent volume levels the player can tune from
+the pause menu: **music** and **SFX**, each 0-4 (4 = full volume).
+
+```mermaid
+graph TD
+    AS[AudioSettings<br/>engine singleton]
+    AS --> Music[Music fades<br/>Scene Manager]
+    AS --> SFX[One-shot SFX<br/>play_sfx()]
+    PC[Pause Controller<br/>Options sub-menu] --> AS
+    AS --> GS[GameState<br/>music_volume / sfx_volume]
+```
+
+### AudioSettings
+
+`AudioSettings` is an **engine-level singleton** (alongside `Camera` and
+`SpriteRegistry`) holding the two current volume levels. It is
+theme-agnostic and knows nothing about save slots or menus — it just holds
+the current levels and exposes them as a `bn::fixed` scale factor
+(`music_scale()` / `sfx_scale()`) plus a `play_sfx()` helper that scales a
+one-shot sound effect (and no-ops at level 0 rather than calling `play(0)`).
+
+It lives in the shared engine layer rather than `game/include/` because the
+**core scene manager** reads `music_scale()` while computing fade progress,
+and the engine must not depend on game-side types (see
+[Project Architecture](architecture.md)'s dependency-direction rule).
+
+### Persistence
+
+The two levels are mirrored into `GameState::music_volume` /
+`GameState::sfx_volume` (per save slot) and restored into the
+`AudioSettings` singleton whenever a slot loads — `LevelManager::restoreHUD()`
+does this alongside the existing deaths/timer restoration, so it covers both
+the level manager's construction and `StartScene`'s post-load path.
+
+### The Options sub-menu
+
+The **pause controller** gained a fourth main-menu entry, **Options**, which
+switches into an embedded sub-menu rather than triggering a scene transition
+— adjusting sound never leaves gameplay. Up/Down selects Music or SFX,
+Left/Right steps the level by one, and B returns to the main pause menu. The
+change is written to SRAM once, on leaving the sub-menu, matching the
+project's general save-sync policy of writing only on meaningful,
+infrequent events rather than every keypress.
 
 ---
 

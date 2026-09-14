@@ -91,8 +91,13 @@ distinct identity.
 ### Save slots
 
 The player can choose among three **save slots** on the start screen. Each
-slot tracks the current stage, total deaths, and the run timer. Save data is
+slot tracks the current stage, total deaths, the run timer, the chosen
+music/SFX volume, and a personal-best clear time per level. Save data is
 stored to SRAM and loaded on boot.
+
+Per-level best times are treated as durable records rather than "current
+run" progress: finishing the entire game resets level/deaths/timer to start
+a fresh run, but best times survive that reset.
 
 ### Pause & recovery
 
@@ -100,6 +105,8 @@ During gameplay, opening the pause menu offers:
 
 - **Continue** — resume the current stage.
 - **Restart Level** — reset the current stage's traps and respawn the duck.
+- **Options** — adjust music and SFX volume (0-4), without leaving the
+  paused overlay. Persisted per save slot.
 - **Title Screen** — leave to the title (progress is saved).
 
 ## Level structure (player-facing view)

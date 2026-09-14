@@ -156,6 +156,13 @@ graph LR
 
 - **Game state** is a small, fixed-width record: current level, death count, and
   the run timer. Fixed-width fields keep the memory layout predictable on ARM.
+  `GameState` deliberately separates two concerns that used to be
+  conflated: `level` is the **resume point** (where a normal "Continue"
+  picks up), while `furthest_level` is the **unlock marker** the
+  World/Level Select scenes check against. Only real progression
+  (reaching a door) advances `furthest_level`; jumping to an earlier
+  level via Level Select only moves the resume point, so previously
+  unlocked levels stay selectable afterwards.
 - **Data manager** owns the runtime copy of the game state, the selected save
   slot (three slots), and the operations to load, save, and reset. It wraps a
   generic save manager that performs the actual SRAM reads/writes.
@@ -244,6 +251,7 @@ A few recurring patterns shape how pieces talk to each other:
 | Runtime state & slots | Data manager |
 | When-to-save policy | Save sync controller |
 | Menu & pause | Pause controller / Start scene |
+| Sound volume levels | AudioSettings singleton (engine layer) |
 | Viewport behavior | Camera (level-sized bounds) |
 | Persistent storage | Save manager → SRAM |
 
