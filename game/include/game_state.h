@@ -27,4 +27,10 @@ struct GameState {
     // SERIALIZE_ERROR due to the size mismatch) and DataManager falls
     // back to a fresh GameState{} rather than reading garbage.
     int16_t furthest_level = 0;
+
+    // Per-save-slot sound settings, 0..4 (4 = full volume). Must match
+    // AudioSettings::MAX_LEVEL - restored into that singleton via
+    // LevelManager::restoreHUD().
+    uint8_t music_volume = 4;
+    uint8_t sfx_volume = 4;
 };

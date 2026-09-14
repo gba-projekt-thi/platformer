@@ -1,9 +1,13 @@
 #include "level_manager.h"
+#include "audio_settings.h"
 #include "trap_factory.h"
 
 LevelManager::LevelManager(Player& player, DataManager& data_manager)
     : _player(player),
-      _pause_controller(),
+      // Constructor parameter used directly, not _data_manager - the
+      // member is declared *after* _pause_controller in the header, so
+      // referencing it here would read before it's initialized.
+      _pause_controller(data_manager),
       _data_manager(data_manager),
       _save_sync(player, data_manager) {
     restoreHUD();
@@ -20,6 +24,12 @@ void LevelManager::restoreHUD() {
     auto& game_state = _data_manager.state();
     _player.set_deaths(game_state.deaths);
     timer.set_time(game_state.centis, game_state.seconds, game_state.minutes);
+
+    // Sound settings are per-save-slot; restore them into the engine-level
+    // AudioSettings singleton whenever a slot is (re)loaded. Covers both
+    // this constructor and StartScene's post-load_from_save() call.
+    AudioSettings::instance().set_music_level(game_state.music_volume);
+    AudioSettings::instance().set_sfx_level(game_state.sfx_volume);
 }
 
 Trigger& LevelManager::get_trigger(int trigger_index) {
