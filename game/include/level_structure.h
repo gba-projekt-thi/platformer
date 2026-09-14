@@ -20,8 +20,10 @@
 // MOVING -> Velocity/acceleration based trap
 // PATH   -> Path interpolation trap
 // CHASE  -> Trails behind the player, closing in as they move right
+// AMBUSH -> Dormant until the player is horizontally close, then lunges
+//           once in one direction and returns to its start position
 // -----------------------------------------------------------------------------
-enum class TrapType : uint8_t { BASE, MOVING, PATH, CHASE };
+enum class TrapType : uint8_t { BASE, MOVING, PATH, CHASE, AMBUSH };
 
 // -----------------------------------------------------------------------------
 // PlatformData
@@ -143,6 +145,21 @@ struct TrapData {
     // existing aggregate-init call sites in levels.h that omit it keep
     // compiling unchanged (defaults to nullptr = use trigger_index instead).
     const char* trigger_name = nullptr;
+
+    // -------------------------------------------------------------------------
+    // AmbushTrap
+    // -------------------------------------------------------------------------
+
+    // Horizontal distance from the player at which the ambush triggers.
+    bn::fixed ambush_range = 0;
+
+    // Per-frame horizontal step while lunging. Sign gives the lunge
+    // direction (positive = right, negative = left); magnitude is also
+    // used as the return-to-start step speed.
+    bn::fixed ambush_speed = 0;
+
+    // Frames spent lunging before switching to the return phase.
+    unsigned ambush_duration = 0;
 };
 
 // -----------------------------------------------------------------------------
