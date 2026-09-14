@@ -1,8 +1,10 @@
 #include "kissing_scene.h"
 
+#include "audio_settings.h"
 #include "bn_core.h"
 #include "bn_music_items.h"
 #include "bn_regular_bg_items_kissingscene.h"
+#include "bn_sound_items.h"
 
 #include "cfg.h"
 #include "data_manager.h"
@@ -57,6 +59,6 @@ void KissingScene::update() {
     core::SceneManager::instance().set_next_scene(bn::move(restart_scene));
 
     // Play a confirmation sound when the transition begins.
-    bn::sound_items::confirm.play();
+    AudioSettings::instance().play_sfx(bn::sound_items::confirm);
     bn::core::update();
 }

@@ -1,6 +1,7 @@
 #include "start_scene.h"
 
 #include <cstdio>
+#include "audio_settings.h"
 #include "bn_keypad.h"
 #include "bn_log.h"
 #include "bn_music_items.h"
@@ -106,14 +107,14 @@ void StartScene::update() {
                 (_selected_slot + 1) % Cfg::StartScreen::SAVE_SLOT_COUNT;
             changed = true;
 
-            bn::sound_items::select.play();
+            AudioSettings::instance().play_sfx(bn::sound_items::select);
         } else if (bn::keypad::up_pressed()) {
             _selected_slot =
                 (_selected_slot + Cfg::StartScreen::SAVE_SLOT_COUNT - 1) %
                 Cfg::StartScreen::SAVE_SLOT_COUNT;
             changed = true;
 
-            bn::sound_items::select.play();
+            AudioSettings::instance().play_sfx(bn::sound_items::select);
         }
 
         if (changed) {
@@ -154,7 +155,7 @@ void StartScene::update() {
             core::SceneManager::instance().set_next_scene(bn::move(next));
             _level_manager.restoreHUD();
 
-            bn::sound_items::confirm.play();
+            AudioSettings::instance().play_sfx(bn::sound_items::confirm);
         } else if (bn::keypad::b_pressed()) {
             // Jump to world/level select instead of continuing normally.
             _transition_requested = true;
@@ -166,7 +167,7 @@ void StartScene::update() {
             core::SceneManager::instance().set_next_scene(bn::move(next));
             _level_manager.restoreHUD();
 
-            bn::sound_items::select.play();
+            AudioSettings::instance().play_sfx(bn::sound_items::select);
         }
     }
 

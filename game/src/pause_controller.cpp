@@ -46,6 +46,9 @@ void PauseController::_set_visible(bool visible) {
 }
 
 void PauseController::_rebuild_menu() {
+    // Rebuild the option text so the ">" cursor tracks the current
+    // selection, the same pattern used by the save-slot list in
+    // StartScene.
     for (bn::sprite_ptr& sprite : _menu_sprites) {
         sprite.set_visible(false);
     }
@@ -143,7 +146,8 @@ void PauseController::_change_option_level(int delta) {
         audio.set_sfx_level(uint8_t(level));
         state.sfx_volume = audio.sfx_level();
 
-        // Audible preview of the new SFX level.
+        // Audible preview at the just-set level, so raising SFX from 0
+        // is itself audible feedback.
         audio.play_sfx(bn::sound_items::select);
     }
 }
@@ -173,10 +177,10 @@ PauseController::Action PauseController::update() {
             _rebuild_menu();
             _set_visible(true);
             bn::music::pause();
-            bn::sound_items::menu.play();
+            AudioSettings::instance().play_sfx(bn::sound_items::menu);
         } else {
             _set_visible(false);
-            bn::sound_items::cancel.play();
+            AudioSettings::instance().play_sfx(bn::sound_items::cancel);
             bn::music::resume();
         }
     }
@@ -188,7 +192,7 @@ PauseController::Action PauseController::update() {
             if (bn::keypad::down_pressed() || bn::keypad::up_pressed()) {
                 _option_row = 1 - _option_row;
                 changed = true;
-                bn::sound_items::select.play();
+                AudioSettings::instance().play_sfx(bn::sound_items::select);
             } else if (bn::keypad::right_pressed()) {
                 _change_option_level(1);
                 changed = true;
@@ -208,7 +212,7 @@ PauseController::Action PauseController::update() {
                 _data_manager.save();
                 _showing_options = false;
                 _rebuild_menu();
-                bn::sound_items::cancel.play();
+                AudioSettings::instance().play_sfx(bn::sound_items::cancel);
             }
 
             bn::core::update();
@@ -220,12 +224,12 @@ PauseController::Action PauseController::update() {
         if (bn::keypad::down_pressed()) {
             _selected_index = (_selected_index + 1) % int(MenuOption::Count);
             selection_changed = true;
-            bn::sound_items::select.play();
+            AudioSettings::instance().play_sfx(bn::sound_items::select);
         } else if (bn::keypad::up_pressed()) {
             _selected_index = (_selected_index + int(MenuOption::Count) - 1) %
                               int(MenuOption::Count);
             selection_changed = true;
-            bn::sound_items::select.play();
+            AudioSettings::instance().play_sfx(bn::sound_items::select);
         }
 
         if (selection_changed) {
@@ -235,7 +239,7 @@ PauseController::Action PauseController::update() {
         if (bn::keypad::a_pressed()) {
             const MenuOption option = static_cast<MenuOption>(_selected_index);
 
-            bn::sound_items::confirm.play();
+            AudioSettings::instance().play_sfx(bn::sound_items::confirm);
 
             if (option == MenuOption::Options) {
                 // Stay paused, switch into the sub-menu - no Action

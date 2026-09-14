@@ -1,5 +1,6 @@
 #include "player_locomotion.h"
 
+#include "audio_settings.h"
 #include "bn_keypad.h"
 #include "bn_sound_items.h"
 
@@ -70,7 +71,7 @@ void PlayerLocomotion::handle_horizontal_input() {
     bool moving = bn::keypad::left_held() || bn::keypad::right_held();
     if (moving && _on_ground) {
         if (_walk_sound_counter == 0) {
-            bn::sound_items::duck_step.play();
+            AudioSettings::instance().play_sfx(bn::sound_items::duck_step);
         }
         if (++_walk_sound_counter >= 10) {
             _walk_sound_counter = 0;
@@ -89,7 +90,7 @@ void PlayerLocomotion::handle_jump() {
         _jump_buffer_timer = 0;
         _coyote_timer = 0;
 
-        bn::sound_items::jump.play();
+        AudioSettings::instance().play_sfx(bn::sound_items::jump);
     }
 
     // Cancel upward motion when hitting a ceiling.
