@@ -587,6 +587,74 @@ const LevelData LEVEL_WORLD4_SCROLL = {
     160};
 
 // =============================================================================
+// WORLD 4 SCROLL 2 - garden theme, second level (world_width=320)
+// Introduces AmbushTrap: a bug lurking in the gap between the korb
+// platforms that darts out once the duck gets close.
+// =============================================================================
+
+constexpr PlatformData world4b_scroll_platforms[] = {
+
+    {-144, 60, 32, 16, 0, 0, bn::sprite_items::beet, 0},
+    {-88, 60, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
+    {-48, 44, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
+    {0, 60, 32, 16, 0, 0, bn::sprite_items::korb, 0},
+    {56, 44, 16, 10, 0, 0, bn::sprite_items::flower3, 0},
+    {104, 60, 32, 16, 0, 0, bn::sprite_items::beet, 0},
+    {152, 60, 16, 10, 0, 0, bn::sprite_items::flower1, 0}};
+
+constexpr TrapData world4b_scroll_traps[] = {
+
+    // Static bush hazard right after the first platform.
+    {TrapType::BASE, -104, 56, 24, 24, 0, 0, bn::sprite_items::strauch32x32, 16,
+     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+
+    // Ambush bug lurking near the korb platform - lunges right once the
+    // duck comes within 40px, for 20 frames, then retreats and re-arms.
+    {TrapType::AMBUSH,
+     -16,
+     50,
+     12,
+     12,
+     0,
+     0,
+     bn::sprite_items::bug16x16,
+     1,
+     TRAP_GRAPHICS_INDEXES_0,
+     -1,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,  // chase_follow_distance / chase_speed (unused)
+     0,
+     0,
+     40,
+     1.5,
+     20}};
+
+const LevelData LEVEL_WORLD4_SCROLL_2 = {
+
+    world4b_scroll_platforms,
+    sizeof(world4b_scroll_platforms) / sizeof(world4b_scroll_platforms[0]),
+
+    nullptr,
+    0,
+
+    world4b_scroll_traps,
+    sizeof(world4b_scroll_traps) / sizeof(world4b_scroll_traps[0]),
+
+    bn::regular_bg_items::world4,
+    bn::music_items::world4,
+    // Player spawn
+    {-144, 0},
+    // Door position
+    {152, 40},
+    // World size (enables scrolling)
+    320,
+    160};
+
+// =============================================================================
 // WORLD 5 SCROLL - dungeon theme, hardest/final level (world_width=624)
 // All platforms kept at y=60 (flat run) per request; gaps stay <=32px,
 // well inside the safe horizontal envelope even without any climb.
@@ -654,4 +722,75 @@ const LevelData LEVEL_WORLD5_SCROLL = {
     {296, 40},
     // World size (enables scrolling)
     624,
+    160};
+
+// =============================================================================
+// WORLD 5 SCROLL 2 - dungeon theme, second level (world_width=380)
+// Introduces the AmbushTrap variant of the mimic: previously purely
+// decorative animation, it now actually lunges once the duck gets close.
+// =============================================================================
+
+constexpr PlatformData world5b_scroll_platforms[] = {
+
+    {-168, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {-112, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
+    {-72, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {-24, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {32, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
+    {80, 60, 32, 16, 0, 0, bn::sprite_items::chest32x32, 0},
+    {128, 60, 16, 10, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {176, 60, 32, 16, 0, 0, bn::sprite_items::bars32x32, 0}};
+
+constexpr TrapData world5b_scroll_traps[] = {
+
+    // Static rusty bar hazard in the first gap.
+    {TrapType::BASE, -140, 60, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
+     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+
+    // Ambush mimic disguised among the real chests - lunges left/right
+    // (negative speed = leftward) once the duck is within 36px, for 15
+    // frames, then retreats. Placed just before the last chest so it
+    // reads as "which chest is the fake one?".
+    {TrapType::AMBUSH,
+     56,
+     60,
+     16,
+     16,
+     0,
+     0,
+     bn::sprite_items::mimic32x32,
+     16,
+     TRAP_GRAPHICS_INDEXES_8,
+     -1,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     0,
+     36,
+     -2.0,
+     15}};
+
+const LevelData LEVEL_WORLD5_SCROLL_2 = {
+
+    world5b_scroll_platforms,
+    sizeof(world5b_scroll_platforms) / sizeof(world5b_scroll_platforms[0]),
+
+    nullptr,
+    0,
+
+    world5b_scroll_traps,
+    sizeof(world5b_scroll_traps) / sizeof(world5b_scroll_traps[0]),
+
+    bn::regular_bg_items::world5,
+    bn::music_items::world5,
+    // Player spawn
+    {-168, 30},
+    // Door position
+    {176, 40},
+    // World size (enables scrolling)
+    380,
     160};
