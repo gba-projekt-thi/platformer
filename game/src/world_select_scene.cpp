@@ -1,5 +1,6 @@
 #include "world_select_scene.h"
 
+#include "audio_settings.h"
 #include "bn_core.h"
 #include "bn_keypad.h"
 #include "bn_sound_items.h"
@@ -81,12 +82,12 @@ void WorldSelectScene::update() {
         if (bn::keypad::down_pressed()) {
             _selected_index = (_selected_index + 1) % WorldIndex::WORLD_COUNT;
             changed = true;
-            bn::sound_items::select.play();
+            AudioSettings::instance().play_sfx(bn::sound_items::select);
         } else if (bn::keypad::up_pressed()) {
             _selected_index = (_selected_index + WorldIndex::WORLD_COUNT - 1) %
                               WorldIndex::WORLD_COUNT;
             changed = true;
-            bn::sound_items::select.play();
+            AudioSettings::instance().play_sfx(bn::sound_items::select);
         }
 
         if (changed) {
@@ -102,9 +103,9 @@ void WorldSelectScene::update() {
                     _selected_index);
                 core::SceneManager::instance().set_next_scene(bn::move(next));
 
-                bn::sound_items::confirm.play();
+                AudioSettings::instance().play_sfx(bn::sound_items::confirm);
             } else {
-                bn::sound_items::cancel.play();
+                AudioSettings::instance().play_sfx(bn::sound_items::cancel);
             }
         } else if (bn::keypad::b_pressed()) {
             _transition_requested = true;
@@ -113,7 +114,7 @@ void WorldSelectScene::update() {
                 _player, _levels, _data_manager, _level_manager);
             core::SceneManager::instance().set_next_scene(bn::move(next));
 
-            bn::sound_items::cancel.play();
+            AudioSettings::instance().play_sfx(bn::sound_items::cancel);
         }
     }
 

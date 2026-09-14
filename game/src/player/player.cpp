@@ -1,5 +1,6 @@
 #include "player.h"
 
+#include "audio_settings.h"
 #include "bn_sound_items.h"
 #include "bn_sprite_items_ente.h"
 
@@ -97,5 +98,5 @@ void Player::death() {
     pos.x = _restart_x;
     pos.y = _restart_y;
 
-    bn::sound_items::duck_death.play();
+    AudioSettings::instance().play_sfx(bn::sound_items::duck_death);
 }
