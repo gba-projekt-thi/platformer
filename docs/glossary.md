@@ -6,6 +6,11 @@ treatment.
 
 ## A
 
+**Ambush trap** — A hazard that stays dormant until the player comes within
+range, then lunges once in a fixed direction and returns; punishes
+approaching disguised or similar-looking objects carelessly. See
+[Components — Trap System](components.md).
+
 **AudioSettings** — Engine-level singleton holding the player's current
 music/SFX volume levels; read by the scene manager during fades and by SFX
 call sites via `play_sfx()`. See

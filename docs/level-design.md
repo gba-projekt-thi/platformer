@@ -118,6 +118,17 @@ turns an otherwise-safe run into a forced march and belongs in the most
 intense, late-game stages. Because it ignores terrain, it flies freely over the
 layout, so use it where the duck must keep running right.
 
+### 5. The disguise (Ambush trap)
+
+A hazard that looks static (and can animate, like a chest mimic) until the
+duck gets within a configured range, at which point it lunges once and
+retreats. Unlike the timed release, its activation isn't authored via a
+trigger's placement - it's purely proximity, so the "reveal" always happens
+relative to the duck's own approach rather than a fixed spot on the map.
+Best used sparingly, among genuinely similar-looking static objects (a row
+of chests, a cluster of bushes), so the player learns to treat the whole
+group with caution rather than memorizing one exact tile.
+
 ## Trigger zones & their function
 
 Triggers are the stage's **director**: they decide *when* things happen.

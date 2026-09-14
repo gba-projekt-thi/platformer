@@ -14,7 +14,7 @@ than fighting it.
 
 1. Because stages are **data-driven**, adding one is mostly a data authoring task,
    not a code-writing task.
-2.
+2. 
    ```mermaid
    flowchart TD
       A[Author stage data<br/>platforms, triggers, traps, spawn, door, world size, background, music] --> B[Register the stage in the level sequence]
@@ -90,6 +90,10 @@ graph TD
    - If it follows a route, model it on the path trap.
    - If it watches the player, model it on the chase trap (which bypasses
      physics and reads the player directly).
+     - If it watches the player but should trigger a single bounded action
+     rather than continuous tracking, model it on the ambush trap (also
+     reads the player directly, but only to test a proximity threshold
+     before running a fixed, self-contained sequence).
    - If it is purely static, the base trap alone may suffice.
 4. **Teach the factory to construct your type** from a stage-data entry, wiring
    in its parameters and, if applicable, its linked trigger.

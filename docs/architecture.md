@@ -133,6 +133,7 @@ that base sit specialized behaviors:
 | **Moving** | Acceleration-driven once triggered. | Falling objects, rising hazards, charging traps. |
 | **Path** | Interpolates along a defined route. | Patrols, figure-8 motion, floating enemies. |
 | **Chase** | Trails the player, closing in as they advance. | Pressure hazards that punish standing still. |
+| **Ambush** | Dormant until the player is close, then a single fixed lunge. | Disguised hazards (e.g. mimics) that punish approaching carelessly. |
 
 Traps are built from **trap data** in the level definitions and are constructed
 through a **trap factory**, so the level manager just hands over data and gets

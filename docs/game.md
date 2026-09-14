@@ -10,8 +10,8 @@ The game includes:
 - A start/save selection scene with three save slots (level, deaths, and run timer persist to SRAM)
 - A world-select scene and a level-select scene for jumping directly to any already-reached world or level (reachable from the start screen by pressing B)
 - Level-select also shows each unlocked level's personal-best clear time (mm:ss.cc), once one has been set
-- A sequence of themed worlds (ocean, factory, forest, garden, dungeon) defined in code
-- Four trap categories: static (base), trigger-activated moving, path-following patrol, and player-chasing hazards
+- A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each with at least two levels, defined in code
+- Five trap categories: static (base), trigger-activated moving, path-following patrol, player-chasing, and proximity-triggered ambush hazards
 - Trigger zones that activate hazards
 - A door that advances the player to the next level, ending in a celebratory kiss scene
 - Music and tilemap backgrounds
