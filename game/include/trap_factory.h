@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ambush_trap.h"
 #include "base_trap.h"
 #include "bn_unique_ptr.h"
 #include "chaser_trap.h"
@@ -52,6 +53,14 @@ inline auto create(const TrapData& trap_data, LevelManager& level_manager)
                 trap_data.sprite_waits, trap_data.graphic_indexes, 0,
                 trap_data.chase_follow_distance, trap_data.chase_speed,
                 level_manager.player());
+
+        case TrapType::AMBUSH:
+            return bn::make_unique<AmbushTrap>(
+                trap_data.x, trap_data.y, trap_data.width, trap_data.height,
+                trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
+                trap_data.sprite_waits, trap_data.graphic_indexes, 0,
+                trap_data.ambush_range, trap_data.ambush_speed,
+                trap_data.ambush_duration, level_manager.player());
 
         default:
             BN_ERROR(
