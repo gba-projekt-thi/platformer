@@ -137,6 +137,7 @@ classDiagram
     MovingTrap --|> BaseTrap
     PathTrap --|> BaseTrap
     ChaserTrap --|> BaseTrap
+    AmbushTrap --|> BaseTrap
 ```
 
 ### Base responsibilities
@@ -159,6 +160,7 @@ The base trap owns:
 | **Moving** | Trigger-linked | Acceleration-driven once triggered | Timed hazards released mid-run. |
 | **Path** | Trigger-linked | Interpolates along defined waypoints | Patrols, sweeping hazards, figure-8 enemies. |
 | **Chase** | Watches the player | Moves to close the gap when the player advances | Pressure hazard that punishes hesitation. |
+| **Ambush** | Watches the player (proximity) | Lunges once in a fixed direction, then returns | Disguised hazards that punish getting too close. |
 
 ### Trap behaviors & characteristics
 
@@ -174,6 +176,13 @@ The base trap owns:
   position and drift rightward to keep a configured distance behind them, but
   only up to a maximum speed. Because they only ever move right, they never
   retreat — the duck must keep moving forward to stay ahead.
+- **Ambush traps** stay motionless (optionally animating, like a mimic) until
+  the player comes within a configured horizontal range. They then lunge
+  once in a fixed direction for a fixed duration, ease back to their start
+  position, and re-arm. Like chase traps they read the player's position
+  directly rather than reacting to a Trigger, but activation is
+  proximity-based rather than continuous tracking, and movement is a single
+  bounded lunge rather than an ongoing pursuit.
 
 ### Activation mechanisms
 
@@ -182,8 +191,11 @@ Two activation styles exist:
 - **Trigger-linked activation.** Moving and path traps reference a trigger by
   index. When the duck crosses into the trigger's invisible rectangle, the
   trigger flips "on" and any linked trap begins its behavior.
-- **Direct player tracking.** Chase traps read the player's position every
-  frame and update their own position accordingly.
+**Direct player tracking.** Chase and ambush traps read the player's
+  position every frame. Chase traps use it continuously to ease toward a
+  following distance; ambush traps only use it to test a proximity
+  threshold, then run a fixed, self-contained lunge sequence independent of
+  further player movement.
 
 ### Trigger lookup
 

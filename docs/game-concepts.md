@@ -78,11 +78,11 @@ The current world themes, in order, are:
 
 | Theme | Mood | Visual palette |
 |-------|------|----------------|
-| Ocean (World 1) | Calm introduction | Blue bubbles, platforms |
-| Factory (World 2) | Industrial hazards | Pipes, cans, rusty nails |
-| Forest (World 3) | Misty climb | Trees, fog, mushrooms, slither arms |
-| Garden (World 4) | Bright open spaces | Flowers, baskets, bugs, nests |
-| Dungeon (World 5) | Final gauntlet | Barrels, bars, chests, mimics, axes, thwomps |
+| Bathtub (World 1, 3 levels) | Calm introduction | Blue bubbles, platforms |
+| Sewerage (World 2, 2 levels) | Industrial hazards | Pipes, cans, rusty nails |
+| Forest (World 3, 2 levels) | Misty climb | Trees, fog, mushrooms, slither arms |
+| Village (World 4, 2 levels) | Bright open spaces | Flowers, baskets, bugs, nests, an ambush bug |
+| Dungeon (World 5, 2 levels) | Final gauntlet | Barrels, bars, chests, an ambush mimic, axes, thwomps |
 
 Each theme pairs a tilemap background, a music track, a set of themed trap
 sprites, and a platform tileset. This pairing is what gives each world its
@@ -136,6 +136,10 @@ From a player's perspective, traps come in a few recognizable kinds:
 - **Chasing hazards** trail behind the duck and close the gap only when the
   duck advances. Standing still or retreating does not make them retreat, so
   they punish hesitation. This pressure mechanic appears in the final world.
+- **Ambush hazards** look like harmless scenery (or a genuine decoration,
+  like a chest among other chests) until the duck gets close, then lunge
+  once and retreat. They punish approaching without care rather than
+  punishing hesitation.
 
 For the internal behavior of each, see [Components — Trap System](components.md).
 
