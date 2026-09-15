@@ -26,7 +26,7 @@
 #include "bn_sprite_items_flower2.h"
 #include "bn_sprite_items_flower3.h"
 #include "bn_sprite_items_korb.h"
-#include "bn_sprite_items_kugelfisch.h"
+#include "bn_sprite_items_kugelfisch16x16.h"
 #include "bn_sprite_items_ladder.h"
 #include "bn_sprite_items_mimic32x32.h"
 #include "bn_sprite_items_mushroom32x32.h"
@@ -611,7 +611,7 @@ constexpr TrapData world4b_scroll_traps[] = {
     // Ambush bug lurking near the korb platform - lunges right once the
     // duck comes within 40px, for 20 frames, then retreats and re-arms.
     {TrapType::AMBUSH,
-     -16,
+     12,
      50,
      12,
      12,
@@ -619,19 +619,19 @@ constexpr TrapData world4b_scroll_traps[] = {
      0,
      bn::sprite_items::bug16x16,
      1,
-     TRAP_GRAPHICS_INDEXES_0,
+     TRAP_GRAPHICS_INDEXES_3,
      -1,
      0,
      0,
      0,
      NO_PATH_TRAP,
      0,
-     0,  // chase_follow_distance / chase_speed (unused)
      0,
      0,
-     40,
+     nullptr,
+     110,
      1.5,
-     20}};
+     30}};
 
 const LevelData LEVEL_WORLD4_SCROLL_2 = {
 
@@ -662,19 +662,19 @@ const LevelData LEVEL_WORLD4_SCROLL_2 = {
 
 constexpr PlatformData world5_scroll_platforms[] = {
 
-    {-272, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {-272, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0},
     {-216, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
     {-176, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {-128, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {-128, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0},
     {-72, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
     {-24, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {24, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {24, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0},
     {80, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
     {128, 60, 32, 16, 0, 0, bn::sprite_items::chest32x32, 0},
-    {176, 60, 16, 10, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {176, 60, 16, 10, 0, 2, bn::sprite_items::barrel32x32, 0},
     {224, 60, 32, 16, 0, 0, bn::sprite_items::bars32x32, 0},
     {272, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {296, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0}};
+    {296, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0}};
 
 constexpr TriggerData world5_scroll_triggers[] = {
     // Fires just before the thwomp's drop zone near x=156.
@@ -732,13 +732,13 @@ const LevelData LEVEL_WORLD5_SCROLL = {
 
 constexpr PlatformData world5b_scroll_platforms[] = {
 
-    {-168, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {-168, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0},
     {-112, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
     {-72, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {-24, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {-24, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0},
     {32, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
-    {80, 60, 32, 16, 0, 0, bn::sprite_items::chest32x32, 0},
-    {128, 60, 16, 10, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {72, 60, 32, 16, 0, 0, bn::sprite_items::chest32x32, 0},
+    {128, 60, 16, 10, 0, 2, bn::sprite_items::barrel32x32, 0},
     {176, 60, 32, 16, 0, 0, bn::sprite_items::bars32x32, 0}};
 
 constexpr TrapData world5b_scroll_traps[] = {
@@ -752,7 +752,7 @@ constexpr TrapData world5b_scroll_traps[] = {
     // frames, then retreats. Placed just before the last chest so it
     // reads as "which chest is the fake one?".
     {TrapType::AMBUSH,
-     56,
+     48,
      60,
      16,
      16,
@@ -769,7 +769,7 @@ constexpr TrapData world5b_scroll_traps[] = {
      0,
      0,
      0,
-     0,
+     nullptr,
      36,
      -2.0,
      15}};
@@ -793,4 +793,539 @@ const LevelData LEVEL_WORLD5_SCROLL_2 = {
     {176, 40},
     // World size (enables scrolling)
     380,
+    160};
+
+// =============================================================================
+// WORLD 1 BOSS - "The Kugelfisch King" (world_width=480)
+// A Hollow-Knight-style dodge gauntlet: a patrolling bubble sweep overlays
+// the whole arena, four trigger-gated "attacks" fire in sequence as the
+// duck advances, and a disguised pufferfish punishes lingering too long
+// near the midpoint. Reaching the door on the right is "winning" the fight.
+// =============================================================================
+
+constexpr PlatformData world1_boss_platforms[] = {
+
+    {-224, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {-192, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {-160, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {-128, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
+    {-88, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {-56, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {-24, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {8, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
+    {48, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {80, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {112, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {144, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
+    {176, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {208, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {220, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0}};
+
+constexpr TriggerData world1_boss_triggers[] = {
+    {-160, 40, 32, 40, false, "wave1"},
+    {-50, 40, 32, 40, false, "wave2"},
+    {50, 40, 32, 40, false, "wave3"},
+    {150, 40, 32, 40, false, "wave4"}};
+
+constexpr TrapData world1_boss_traps[] = {
+
+    // Idle patrol - the boss's passive figure-8 drift, active the whole
+    // fight (Hollow Knight bosses rarely stand still between attacks).
+    {TrapType::PATH, -180, -10, 32, 32, 0, 0, bn::sprite_items::bubbles, 30,
+     TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, 0, FIGURE_8_PATH, 15},
+
+    // Attack 1: telegraphed overhead slam, drops once the duck enters wave1.
+    {TrapType::MOVING, -150, -40, 32, 32, 0, 0, bn::sprite_items::bubbles, 40,
+     TRAP_GRAPHICS_INDEXES_3, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "wave1"},
+
+    // Attack 2: charging pufferfish dash, triggered by wave2.
+    {TrapType::MOVING, 200, 50, 24, 16, 0, 0, bn::sprite_items::kugelfisch16x16,
+     30, TRAP_GRAPHICS_INDEXES_8, -1, -2.2, 0, 3, NO_PATH_TRAP, 0, 0, 0,
+     "wave2"},
+
+    // Mid-arena ambush: a smaller pufferfish disguised as scenery, lunges
+    // if the duck lingers nearby - punishes hesitation, not advancing.
+    {TrapType::AMBUSH,
+     40,
+     60,
+     16,
+     16,
+     0,
+     0,
+     bn::sprite_items::kugelfisch16x16,
+     10,
+     TRAP_GRAPHICS_INDEXES_8,
+     1,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     nullptr,
+     40,
+     1.5,
+     20},
+
+    // Attack 3: second overhead slam, triggered by wave3.
+    {TrapType::MOVING, 120, -40, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
+     TRAP_GRAPHICS_INDEXES_3, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "wave3"},
+
+    // Attack 4: final charge before the door, triggered by wave4.
+    {TrapType::MOVING, 260, 50, 24, 16, 0, 0, bn::sprite_items::kugelfisch16x16,
+     1, TRAP_GRAPHICS_INDEXES_8, -1, -2.5, 0, 3, NO_PATH_TRAP, 0, 0, 0,
+     "wave4"}};
+
+const LevelData LEVEL_WORLD1_BOSS = {
+
+    world1_boss_platforms,
+    sizeof(world1_boss_platforms) / sizeof(world1_boss_platforms[0]),
+
+    world1_boss_triggers,
+    sizeof(world1_boss_triggers) / sizeof(world1_boss_triggers[0]),
+
+    world1_boss_traps,
+    sizeof(world1_boss_traps) / sizeof(world1_boss_traps[0]),
+
+    bn::regular_bg_items::world1,
+    bn::music_items::world1,
+    // Player spawn
+    {-224, 30},
+    // Door position
+    {228, 40},
+    // World size (enables scrolling)
+    480,
+    160};
+
+// =============================================================================
+// WORLD 2 BOSS - "The Rusty Behemoth" (world_width=480)
+// =============================================================================
+
+constexpr PlatformData world2_boss_platforms[] = {
+
+    {-224, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-192, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-160, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-128, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-96, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-64, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-32, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {0, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {32, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {64, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {96, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {128, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {160, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {192, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {224, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1}};
+
+constexpr TriggerData world2_boss_triggers[] = {
+    {-150, 40, 32, 40, false, "wave1"},
+    {-50, 40, 32, 40, false, "wave2"},
+    {50, 40, 32, 40, false, "wave3"},
+    {150, 40, 32, 40, false, "wave4"}};
+
+constexpr TrapData world2_boss_traps[] = {
+
+    // Idle patrol: a rusty pipe swept back and forth across the corridor.
+    {TrapType::PATH, -180, 20, 12, 8, 0, 0, bn::sprite_items::pipe16x16, 10,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, 0, LEVEL3_BRANCH_PATH, 15},
+
+    // Attack 1: a can slams down from above, triggered by wave1.
+    {TrapType::MOVING, -145, -40, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
+     TRAP_GRAPHICS_INDEXES_8, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "wave1"},
+
+    // Attack 2: a second can charges in sideways, triggered by wave2.
+    {TrapType::MOVING, 200, 64, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
+     TRAP_GRAPHICS_INDEXES_8, -1, -2.0, 0, 3, NO_PATH_TRAP, 0, 0, 0, "wave2"},
+
+    // A crate disguised as scenery - punishes lingering mid-arena.
+    {TrapType::AMBUSH,
+     55,
+     65,
+     20,
+     20,
+     0,
+     0,
+     bn::sprite_items::box32x32,
+     1,
+     TRAP_GRAPHICS_INDEXES_8,
+     -1,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     nullptr,
+     20,
+     2.0,
+     18},
+
+    // Attack 3: second slam, triggered by wave3.
+    {TrapType::MOVING, 100, -40, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
+     TRAP_GRAPHICS_INDEXES_8, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "wave3"},
+
+    // A row of rusty nails, always dangerous - forces a precise landing
+    // right before the final attack.
+    {TrapType::BASE, 180, 65, 28, 16, 0, 0, bn::sprite_items::rustynails32x16,
+     26, TRAP_GRAPHICS_INDEXES_8, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+
+    // Attack 4: final charge before the door, triggered by wave4.
+    {TrapType::MOVING, 260, 60, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
+     TRAP_GRAPHICS_INDEXES_8, -1, -2.4, 0, 3.4, NO_PATH_TRAP, 0, 0, 0,
+     "wave4"}};
+
+const LevelData LEVEL_WORLD2_BOSS = {
+
+    world2_boss_platforms,
+    sizeof(world2_boss_platforms) / sizeof(world2_boss_platforms[0]),
+
+    world2_boss_triggers,
+    sizeof(world2_boss_triggers) / sizeof(world2_boss_triggers[0]),
+
+    world2_boss_traps,
+    sizeof(world2_boss_traps) / sizeof(world2_boss_traps[0]),
+
+    bn::regular_bg_items::world2,
+    bn::music_items::world2,
+    // Player spawn
+    {-224, 30},
+    // Door position
+    {228, 40},
+    // World size (enables scrolling)
+    480,
+    160};
+
+// =============================================================================
+// WORLD 3 BOSS - "Slitherman, Heart of the Forest" (world_width=520)
+// =============================================================================
+
+constexpr PlatformData world3_boss_platforms[] = {
+
+    {-240, 60, 16, 8, 0, 0, bn::sprite_items::baumstamm, 0},
+    {-208, 60, 16, 8, 0, 0, bn::sprite_items::baumstamm, 2},
+    {-176, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-128, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-80, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-32, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {16, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {64, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {112, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {160, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {208, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {236, 60, 16, 8, 0, 0, bn::sprite_items::baumstamm, 0},
+    {258, 60, 16, 8, 0, 0, bn::sprite_items::baumstamm, 1}};
+
+constexpr TriggerData world3_boss_triggers[] = {
+    {-160, 40, 32, 40, false, "wave1"},
+    {-40, 40, 32, 40, false, "wave2"},
+    {80, 40, 32, 40, false, "wave3"},
+    {200, 40, 32, 40, false, "wave4"}};
+
+constexpr TrapData world3_boss_traps[] = {
+
+    // Idle patrol: a branch sweeping the corridor throughout the fight.
+    {TrapType::PATH, -190, 0, 32, 16, 0, 0, bn::sprite_items::branch32x16, 10,
+     TRAP_GRAPHICS_INDEXES_8, 0, 0, 0, 0, LEVEL3_BRANCH_PATH, 20},
+
+    // Attack 1: an arm rises up out of the mist, triggered by wave1.
+    {TrapType::MOVING, -150, 96, 32, 32, 0, 0,
+     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, -1, 0,
+     -1.8, 3.3, NO_PATH_TRAP, 0, 0, 0, "wave1"},
+
+    // A disguised mushroom - punishes lingering near the middle of the
+    // arena instead of pressing forward.
+    {TrapType::AMBUSH,
+     25,
+     64,
+     24,
+     24,
+     0,
+     0,
+     bn::sprite_items::mushroom32x32,
+     1,
+     TRAP_GRAPHICS_INDEXES_8,
+     -1,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     nullptr,
+     3,
+     1.8,
+     10},
+
+    // Attack 2: a second arm, further along, triggered by wave2.
+    {TrapType::MOVING, -20, 96, 32, 32, 0, 0,
+     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, -1, 0,
+     -1.8, 3.3, NO_PATH_TRAP, 0, 0, 0, "wave2"},
+
+    // Attack 3: a third arm, triggered by wave3.
+    {TrapType::MOVING, 100, 96, 32, 32, 0, 0,
+     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, -1, 0,
+     -2.0, 3.6, NO_PATH_TRAP, 0, 0, 0, "wave3"},
+
+    // Attack 4: final arm right before the door, triggered by wave4.
+    {TrapType::MOVING, 220, 96, 32, 32, 0, 0,
+     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, -1, 0,
+     -2.2, 3.8, NO_PATH_TRAP, 0, 0, 0, "wave4"}};
+
+const LevelData LEVEL_WORLD3_BOSS = {
+
+    world3_boss_platforms,
+    sizeof(world3_boss_platforms) / sizeof(world3_boss_platforms[0]),
+
+    world3_boss_triggers,
+    sizeof(world3_boss_triggers) / sizeof(world3_boss_triggers[0]),
+
+    world3_boss_traps,
+    sizeof(world3_boss_traps) / sizeof(world3_boss_traps[0]),
+
+    bn::regular_bg_items::world3,
+    bn::music_items::world3,
+    // Player spawn
+    {-240, 30},
+    // Door position
+    {246, 40},
+    // World size (enables scrolling)
+    520,
+    160};
+
+// =============================================================================
+// WORLD 4 BOSS - "The Hive Queen" (world_width=480)
+// =============================================================================
+
+constexpr PlatformData world4_boss_platforms[] = {
+
+    {-224, 60, 32, 16, 0, 0, bn::sprite_items::beet, 0},
+    {-168, 60, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
+    {-128, 44, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
+    {-88, 60, 32, 16, 0, 0, bn::sprite_items::korb, 0},
+    {-56, 44, 16, 10, 0, 0, bn::sprite_items::flower3, 0},
+    {8, 60, 32, 16, 0, 0, bn::sprite_items::beet, 0},
+    {64, 44, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
+    {104, 60, 32, 16, 0, 0, bn::sprite_items::korb, 0},
+    {160, 60, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
+    {200, 60, 32, 16, 0, 0, bn::sprite_items::beet, 0}};
+
+constexpr TriggerData world4_boss_triggers[] = {
+    {-140, 40, 32, 40, false, "wave1"},
+    {-20, 40, 32, 40, false, "wave2"},
+    {90, 40, 32, 40, false, "wave3"}};
+
+constexpr TrapData world4_boss_traps[] = {
+
+    // The Hive Queen herself: a bug that trails the duck the whole fight,
+    // closing the gap whenever the duck advances - constant pressure, like
+    // an enrage timer forcing forward movement.
+    {TrapType::CHASE, -260, 20, 12, 12, 0, 0, bn::sprite_items::bug16x16, 1,
+     TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, NO_PATH_TRAP, 0, 50, 1.8},
+
+    // A bush disguised as scenery, lunging if the duck lingers near it.
+    {TrapType::AMBUSH,
+     -100,
+     56,
+     24,
+     24,
+     0,
+     0,
+     bn::sprite_items::strauch32x32,
+     16,
+     TRAP_GRAPHICS_INDEXES_0,
+     -1,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     nullptr,
+     30,
+     1.6,
+     20},
+
+    // Attack 1: a brick dive-bombs down, triggered by wave1.
+    {TrapType::MOVING, -140, -90, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
+     TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 5, 5, NO_PATH_TRAP, 0, 0, 0, "wave1"},
+
+    // Attack 2: a second dive-bomb, triggered by wave2.
+    {TrapType::MOVING, -20, -90, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
+     TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 5, 5, NO_PATH_TRAP, 0, 0, 0, "wave2"},
+
+    // A second, faster worker bug lunges in once the duck nears the door.
+    {TrapType::AMBUSH,
+     90,
+     50,
+     12,
+     12,
+     0,
+     0,
+     bn::sprite_items::bug16x16,
+     1,
+     TRAP_GRAPHICS_INDEXES_3,
+     -1,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     nullptr,
+     32,
+     2.2,
+     16},
+
+    // Attack 3: final dive-bomb right before the door, triggered by wave3.
+    {TrapType::MOVING, 100, -90, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
+     TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 4, 4.5, NO_PATH_TRAP, 0, 0, 0, "wave3"}};
+
+const LevelData LEVEL_WORLD4_BOSS = {
+
+    world4_boss_platforms,
+    sizeof(world4_boss_platforms) / sizeof(world4_boss_platforms[0]),
+
+    world4_boss_triggers,
+    sizeof(world4_boss_triggers) / sizeof(world4_boss_triggers[0]),
+
+    world4_boss_traps,
+    sizeof(world4_boss_traps) / sizeof(world4_boss_traps[0]),
+
+    bn::regular_bg_items::world4,
+    bn::music_items::world4,
+    // Player spawn
+    {-224, 0},
+    // Door position
+    {216, 40},
+    // World size (enables scrolling)
+    480,
+    160};
+
+// =============================================================================
+// WORLD 5 BOSS - "The Mimic Lord" (world_width=650)
+// The final gauntlet: the axe from World 5's first level returns, closer
+// and hungrier, while a trio of thwomps slam down in sequence and two
+// mimics lie in wait among the real chests.
+// =============================================================================
+
+constexpr PlatformData world5_boss_platforms[] = {
+
+    {-296, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0},
+    {-240, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
+    {-200, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {-152, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {-96, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
+    {-48, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {0, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0},
+    {56, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
+    {104, 60, 32, 16, 0, 0, bn::sprite_items::chest32x32, 0},
+    {152, 60, 16, 10, 0, 2, bn::sprite_items::barrel32x32, 0},
+    {200, 60, 32, 16, 0, 0, bn::sprite_items::bars32x32, 0},
+    {240, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {272, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0}};
+
+constexpr TriggerData world5_boss_triggers[] = {
+    {-180, 48, 32, 24, false, "wave1"},
+    {-80, 48, 32, 24, false, "wave2"},
+    {70, 48, 32, 24, false, "wave3"}};
+
+constexpr TrapData world5_boss_traps[] = {
+
+    // The Mimic Lord's axe - relentless, closer and faster than the one
+    // in the first World 5 level. Standing still is not an option.
+    {TrapType::CHASE, -324, 20, 32, 16, 0, 0, bn::sprite_items::axe64x32, 1,
+     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0, 28, 3.0},
+
+    // Static rusty bar in the first gap - always dangerous.
+    {TrapType::BASE, -264, 60, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
+     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+
+    // Attack 1: first thwomp slam, triggered by wave1.
+    {TrapType::MOVING, -175, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32,
+     1, TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 4, 5, NO_PATH_TRAP, 0, 0, 0, "wave1"},
+
+    // First mimic, disguised among the real chests.
+    {TrapType::AMBUSH,
+     24,
+     60,
+     16,
+     16,
+     0,
+     0,
+     bn::sprite_items::mimic32x32,
+     16,
+     TRAP_GRAPHICS_INDEXES_8,
+     -1,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     nullptr,
+     40,
+     -2.2,
+     16},
+
+    // Attack 2: second thwomp slam, triggered by wave2.
+    {TrapType::MOVING, -75, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
+     TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 4, 5, NO_PATH_TRAP, 0, 0, 0, "wave2"},
+
+    // Second mimic, closer to the door.
+    {TrapType::AMBUSH,
+     180,
+     60,
+     16,
+     16,
+     0,
+     0,
+     bn::sprite_items::mimic32x32,
+     16,
+     TRAP_GRAPHICS_INDEXES_8,
+     -1,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     nullptr,
+     36,
+     2.0,
+     15},
+
+    // Attack 3: final thwomp slam right before the door, triggered by
+    // wave3.
+    {TrapType::MOVING, 80, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
+     TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 4.5, 4.5, NO_PATH_TRAP, 0, 0, 0,
+     "wave3"}};
+
+const LevelData LEVEL_WORLD5_BOSS = {
+
+    world5_boss_platforms,
+    sizeof(world5_boss_platforms) / sizeof(world5_boss_platforms[0]),
+
+    world5_boss_triggers,
+    sizeof(world5_boss_triggers) / sizeof(world5_boss_triggers[0]),
+
+    world5_boss_traps,
+    sizeof(world5_boss_traps) / sizeof(world5_boss_traps[0]),
+
+    bn::regular_bg_items::world5,
+    bn::music_items::world5,
+    // Player spawn
+    {-296, 30},
+    // Door position
+    {284, 40},
+    // World size (enables scrolling)
+    650,
     160};

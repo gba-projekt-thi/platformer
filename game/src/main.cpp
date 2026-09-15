@@ -101,14 +101,19 @@ int main() {
         LEVEL_0,
         LEVEL_1,
         LEVEL_WORLD1_SCROLL,
+        LEVEL_WORLD1_BOSS,
         LEVEL_2,
         LEVEL_WORLD2_SCROLL,
+        LEVEL_WORLD2_BOSS,
         LEVEL_3,
         LEVEL_WORLD3_SCROLL,
+        LEVEL_WORLD3_BOSS,
         LEVEL_WORLD4_SCROLL,
         LEVEL_WORLD4_SCROLL_2,
+        LEVEL_WORLD4_BOSS,
         LEVEL_WORLD5_SCROLL,
-        LEVEL_WORLD5_SCROLL_2};
+        LEVEL_WORLD5_SCROLL_2,
+        LEVEL_WORLD5_BOSS};
 
     // -------------------------------------------------------------------------
     // Create the player entity and apply an offset for the sprite anchor point.
