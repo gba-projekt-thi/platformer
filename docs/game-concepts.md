@@ -78,11 +78,11 @@ The current world themes, in order, are:
 
 | Theme | Mood | Visual palette |
 |-------|------|----------------|
-| Bathtub (World 1, 3 levels) | Calm introduction | Blue bubbles, platforms |
-| Sewerage (World 2, 2 levels) | Industrial hazards | Pipes, cans, rusty nails |
-| Forest (World 3, 2 levels) | Misty climb | Trees, fog, mushrooms, slither arms |
-| Village (World 4, 2 levels) | Bright open spaces | Flowers, baskets, bugs, nests, an ambush bug |
-| Dungeon (World 5, 2 levels) | Final gauntlet | Barrels, bars, chests, an ambush mimic, axes, thwomps |
+| Bathtub (World 1, 4 levels incl. boss) | Calm introduction | Blue bubbles, platforms |
+| Sewerage (World 2, 3 levels incl. boss) | Industrial hazards | Pipes, cans, rusty nails |
+| Forest (World 3, 3 levels incl. boss) | Misty climb | Trees, fog, mushrooms, slither arms |
+| Village (World 4, 3 levels incl. boss) | Bright open spaces | Flowers, baskets, bugs, nests, an ambush bug |
+| Dungeon (World 5, 3 levels incl. boss) | Final gauntlet | Barrels, bars, chests, an ambush mimic, axes, thwomps |
 
 Each theme pairs a tilemap background, a music track, a set of themed trap
 sprites, and a platform tileset. This pairing is what gives each world its
@@ -156,6 +156,28 @@ Triggers let a single stage have multiple "moments": a falling brick released
 mid-jump, a hazard that rises as the duck climbs, a flying pest released later
 in the run. Without triggers, every moving hazard would be permanently active,
 which would be hard to design around and visually chaotic.
+
+## Boss levels
+
+Every world ends with a **boss level**: a single, mostly flat corridor
+where the challenge is entirely about reading and dodging a sequence of
+attacks rather than platforming, the way a Hollow Knight boss arena plays.
+
+- **Attack waves.** Invisible trigger zones fire hazards in sequence as
+  the duck advances - falling slams, charging dashes, or rising arms,
+  depending on the world's theme.
+- **A constant patrol.** One hazard (usually a sweeping `PATH` trap) is
+  active for the whole fight, so the arena never feels static between
+  triggered attacks.
+- **Punish lingering, not hesitating.** A mid-arena `AMBUSH` hazard,
+  disguised as scenery, lunges only if the duck stays close - it rewards
+  pressing on rather than camping a safe spot.
+- **An enrage pursuer (Worlds 4-5).** A `CHASE` hazard trails the duck for
+  the whole fight, closing the gap whenever the duck advances. It keeps
+  forward momentum mandatory in the two hardest boss fights.
+- **The door is the win condition.** There is no health bar or hit
+  count - reaching the door at the far end of the arena is "defeating"
+  the boss.
 
 ## Audio & visual identity
 

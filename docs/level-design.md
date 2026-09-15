@@ -129,6 +129,16 @@ Best used sparingly, among genuinely similar-looking static objects (a row
 of chests, a cluster of bushes), so the player learns to treat the whole
 group with caution rather than memorizing one exact tile.
 
+### 6. The gauntlet (Boss level)
+
+A whole-level pattern, not a single trap: a flat, readable corridor with
+several of the above patterns layered in sequence - a patrol hazard
+running throughout, trigger-gated attacks fired in waves as the duck
+advances, a mid-arena ambush punishing lingering, and (in the later
+worlds) a chase hazard keeping forward momentum mandatory. Used for the
+one boss level that closes out each world; see
+[Game Concepts — Boss levels](game-concepts.md#boss-levels).
+
 ## Trigger zones & their function
 
 Triggers are the stage's **director**: they decide *when* things happen.

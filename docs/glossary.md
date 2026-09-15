@@ -34,6 +34,12 @@ across game completions. See [Components — Level Management](components.md).
 can still animate its sprite while remaining motionless. See
 [Components — Trap System](components.md).
 
+**Boss level** — The single level that closes out each world: a flat,
+readable corridor combining several trap patterns (patrol, wave attacks,
+ambush, and - in the later worlds - a chase pursuer) into a
+Hollow-Knight-style dodge gauntlet. Reaching the door is the win
+condition. See [Game Concepts](game-concepts.md).
+
 **Blending / fade** — The engine's screen-fade feature used for smooth scene
 transitions. See [System Internals](system-internals.md).
 
