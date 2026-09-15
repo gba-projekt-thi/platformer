@@ -111,7 +111,7 @@ This repository includes a small GBA platformer built with the Butano engine. Yo
 - A start screen with three save slots (level, deaths, and run timer persist to SRAM)
 - A world-select screen and a level-select screen for jumping directly to any already-reached world or level (press B on the start screen to reach them)
 - Level-select shows each unlocked level's personal-best clear time once one has been recorded
-- A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each with at least two levels, defined in `game/include/levels.h`
+- A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each ending in a Hollow-Knight-style boss gauntlet level, defined in `game/include/levels.h` (16 levels total)
 - Level progression through a door at the end of each stage, ending in a celebratory kiss scene
 - Platform placement and collision defined by level data
 - Trigger zones that activate hazards when the player enters them
