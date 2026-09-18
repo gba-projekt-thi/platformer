@@ -84,7 +84,10 @@ hard-coded logic. See [Level Design](level-design.md).
 dead (fell off the world). See [Components — Player System](components.md).
 
 **Door** — The exit object that, when the duck reaches it, advances the game to
-the next stage. See [Components — Level Management](components.md).
+the next stage. Normally the animated door32x32 sprite, but the underlying
+collision/completion logic accepts any sprite and animation sequence,
+including a static one - used in World 5's finale, where the "door" is
+Susanne. See [Components — Level Management](components.md).
 
 ## E
 
