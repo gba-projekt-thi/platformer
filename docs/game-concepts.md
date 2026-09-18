@@ -159,7 +159,7 @@ which would be hard to design around and visually chaotic.
 
 ## Boss levels
 
-Every world ends with a **boss level**: a single, mostly flat corridor
+Every world's gameplay culminates in a **boss level**: a single, mostly flat corridor
 where the challenge is entirely about reading and dodging a sequence of
 attacks rather than platforming, the way a Hollow Knight boss arena plays.
 
@@ -178,6 +178,15 @@ attacks rather than platforming, the way a Hollow Knight boss arena plays.
 - **The door is the win condition.** There is no health bar or hit
   count - reaching the door at the far end of the arena is "defeating"
   the boss.
+
+### World 5's coda: the finale
+
+World 5 adds one more level after its boss - a deliberate tonal reset. No
+traps, no triggers, just a single unbroken walkway leading to Susanne. It
+exists purely to let the tension of the boss fight settle before the game's
+ending, the way a quiet epilogue follows a climax. Mechanically it's still
+"reach the door" - Susanne stands in for the door itself, so the same
+completion path applies, just without anything to dodge on the way there.
 
 ## Audio & visual identity
 

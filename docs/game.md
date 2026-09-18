@@ -10,10 +10,10 @@ The game includes:
 - A start/save selection scene with three save slots (level, deaths, and run timer persist to SRAM)
 - A world-select scene and a level-select scene for jumping directly to any already-reached world or level (reachable from the start screen by pressing B)
 - Level-select also shows each unlocked level's personal-best clear time (mm:ss.cc), once one has been set
-- A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each with at least two regular levels plus one boss level, defined in code (16 levels total)
+- A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each with at least two regular levels plus one boss level, defined in code (17 levels total). World 5 has an extra trap-free finale level after its boss.
 - Five trap categories: static (base), trigger-activated moving, path-following patrol, player-chasing, and proximity-triggered ambush hazards
 - Trigger zones that activate hazards
-- A door that advances the player to the next level, ending in a celebratory kiss scene
+- A door that advances the player to the next level, ending in a celebratory kiss scene (the door itself can be reskinned as a different, non-animated sprite for narrative moments - see World 5's finale)
 - Music and tilemap backgrounds
 - A death counter and run timer HUD
 - A pause menu with Continue / Restart Level / Options / Title Screen; Options lets the player adjust music and SFX volume (0-4), persisted per save slot

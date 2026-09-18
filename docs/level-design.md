@@ -20,7 +20,7 @@ Every stage is described by a single declarative definition that contains:
 | **Background** | The themed tilemap behind everything. |
 | **Music** | The stage's audio track. |
 | **Spawn point** | Where the duck appears at the start (and after death). |
-| **Door** | The exit that advances the game. |
+| **Door** | The exit that advances the game. Sprite, animation, and facing are all overridable per stage - not always a literal door (World 5's finale uses this for a narrative goal marker instead). |
 | **World size** | Determines whether the camera scrolls and sets the duck's bounce edges. |
 
 The same skeleton powers every world; only the contents and theme change.
@@ -205,6 +205,10 @@ graph LR
 5. **Mastery.** The final stage (dungeon) combines the full hazard vocabulary —
    static hazards, an animated mimic, a triggered thwomp, and a relentless
    chasing axe — into a climactic gauntlet.
+6. **Release.** After mastery, one last stage deliberately breaks the ramp:
+   World 5's finale is a trap-free walk to a reunion with Susanne. It isn't
+   a difficulty step at all - it's a resolution, giving the player a beat
+   to come down from the boss before the kiss scene.
 
 ### Guiding principles
 
