@@ -8,6 +8,7 @@
 #include "bn_sprite_items_chest32x32.h"
 #include "bn_sprite_items_mimic32x32.h"
 #include "bn_sprite_items_rostybar32x32.h"
+#include "bn_sprite_items_susanne16x16.h"
 #include "bn_sprite_items_thwomp32x32.h"
 
 #include "level_structure.h"
@@ -21,19 +22,19 @@
 
 constexpr PlatformData world5_scroll_platforms[] = {
 
-    {-272, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0},
+    {-272, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
     {-216, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
     {-176, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {-128, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0},
+    {-128, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
     {-72, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
     {-24, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {24, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0},
+    {24, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
     {80, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
     {128, 60, 32, 16, 0, 0, bn::sprite_items::chest32x32, 0},
-    {176, 60, 16, 10, 0, 2, bn::sprite_items::barrel32x32, 0},
+    {176, 70, 16, 10, 0, -10, bn::sprite_items::barrel32x32, 0},
     {224, 60, 32, 16, 0, 0, bn::sprite_items::bars32x32, 0},
     {272, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {296, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0}};
+    {296, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0}};
 
 constexpr TriggerData world5_scroll_triggers[] = {
     // Fires just before the thwomp's drop zone near x=156.
@@ -91,13 +92,13 @@ const LevelData LEVEL_WORLD5_SCROLL = {
 
 constexpr PlatformData world5b_scroll_platforms[] = {
 
-    {-168, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0},
+    {-168, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
     {-112, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
     {-72, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {-24, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0},
+    {-24, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
     {32, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
     {72, 60, 32, 16, 0, 0, bn::sprite_items::chest32x32, 0},
-    {128, 60, 16, 10, 0, 2, bn::sprite_items::barrel32x32, 0},
+    {128, 70, 16, 10, 0, -10, bn::sprite_items::barrel32x32, 0},
     {176, 60, 32, 16, 0, 0, bn::sprite_items::bars32x32, 0}};
 
 constexpr TrapData world5b_scroll_traps[] = {
@@ -163,19 +164,19 @@ const LevelData LEVEL_WORLD5_SCROLL_2 = {
 
 constexpr PlatformData world5_boss_platforms[] = {
 
-    {-296, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0},
+    {-296, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
     {-240, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
     {-200, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {-152, 60, 32, 16, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {-152, 60, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
     {-96, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
     {-48, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {0, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0},
+    {0, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
     {56, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
     {104, 60, 32, 16, 0, 0, bn::sprite_items::chest32x32, 0},
-    {152, 60, 16, 10, 0, 2, bn::sprite_items::barrel32x32, 0},
+    {152, 70, 16, 10, 0, -10, bn::sprite_items::barrel32x32, 0},
     {200, 60, 32, 16, 0, 0, bn::sprite_items::bars32x32, 0},
     {240, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {272, 60, 32, 16, 0, 2, bn::sprite_items::barrel32x32, 0}};
+    {272, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0}};
 
 constexpr TriggerData world5_boss_triggers[] = {
     {-180, 48, 32, 24, false, "wave1"},
@@ -274,4 +275,54 @@ const LevelData LEVEL_WORLD5_BOSS = {
     {284, 40},
     // World size (enables scrolling)
     650,
+    160};
+
+// =============================================================================
+// WORLD 5 FINALE - "Reunited" (world_width=360, 1.5 screens)
+// A quiet victory lap after the boss: one unbroken barrel32x32 walkway,
+// no traps of any kind, ending with Susanne waiting on the platform.
+// Walking up to her (the level's "door", rendered as a static susanne16x16
+// sprite instead of the usual animated door) ends the level - and since
+// this is the last entry in main.cpp's levels[] array, the game
+// transitions straight into KissingScene.
+// =============================================================================
+
+constexpr PlatformData world5_finale_platforms[] = {
+
+    {-160, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {-128, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {-96, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {-64, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {-32, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {0, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {32, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {64, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {96, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {128, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {160, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0}};
+
+const LevelData LEVEL_WORLD5_FINALE = {
+
+    world5_finale_platforms,
+    sizeof(world5_finale_platforms) / sizeof(world5_finale_platforms[0]),
+
+    // No triggers - nothing in this level needs one.
+    nullptr,
+    0,
+
+    // No traps, as requested - this is a walk, not a challenge.
+    nullptr,
+    0,
+
+    bn::regular_bg_items::world5,
+    bn::music_items::world5,
+    // Player spawn - left end of the walkway.
+    {-160, 30},
+    // Door position - Susanne, standing on the rightmost platform,
+    // animated through her own 8-frame loop and flipped to face left,
+    // toward the player approaching from spawn. Flip the last bool if she
+    // ends up facing the wrong way.
+    {160, 40, bn::sprite_items::susanne16x16, TRAP_GRAPHICS_INDEXES_8, 8, true},
+    // World size (1.5 screen widths)
+    360,
     160};

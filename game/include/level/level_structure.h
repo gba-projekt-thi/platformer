@@ -8,6 +8,7 @@
 #include "bn_regular_bg_item.h"
 #include "bn_span.h"
 #include "bn_sprite_item.h"
+#include "bn_sprite_items_door32x32.h"
 
 #include "cfg.h"
 
@@ -177,9 +178,28 @@ struct PlayerData {
 //
 // Level completion location.
 // -----------------------------------------------------------------------------
+// The default door32x32 asset's open-door animation: every other frame
+// across its tile strip. Sprites used as a DoorData override (e.g. a
+// narrative "goal" marker like Susanne) should pass their own
+// graphics_indexes sequence instead - this list is specific to
+// door32x32's frame layout and won't make sense for a different sprite.
+constexpr uint16_t DOOR32X32_GRAPHICS_INDEXES[] = {0, 2, 4, 6, 8, 10, 12};
+
 struct DoorData {
     bn::fixed x;
     bn::fixed y;
+
+    // Optional: overrides the default door32x32 sprite/animation/facing.
+    // Appended last so every existing level's aggregate-init
+    // `.door = {x, y}` keeps compiling unchanged. Used for narrative
+    // "goal" markers, e.g. the World 5 finale's reunion with Susanne.
+    bn::sprite_item sprite = bn::sprite_items::door32x32;
+    // Empty span = static/non-animated (same convention as TrapData's
+    // graphics_indexes / BaseTrap).
+    bn::span<const uint16_t> sprite_graphics_indexes =
+        DOOR32X32_GRAPHICS_INDEXES;
+    int sprite_animation_wait = 8;
+    bool sprite_flip_horizontal = false;
 };
 
 // -----------------------------------------------------------------------------

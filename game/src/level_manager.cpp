@@ -77,7 +77,10 @@ void LevelManager::_load_player_spawn(const LevelData& level) {
 }
 
 void LevelManager::_load_door(const LevelData& level) {
-    _door.emplace(level.door.x, level.door.y);
+    _door.emplace(
+        level.door.x, level.door.y, level.door.sprite,
+        level.door.sprite_graphics_indexes, level.door.sprite_animation_wait,
+        level.door.sprite_flip_horizontal);
 }
 
 void LevelManager::_load_music(const LevelData& level) {
