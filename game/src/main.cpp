@@ -8,6 +8,7 @@
 
 // Engine team
 #include "collision_registry.h"
+#include "log.h"
 #include "sprite.h"
 
 // Our team
@@ -132,7 +133,7 @@ int main() {
 #pragma message( \
     "make clean; make USERFLAGS=-DRESET_SAVED used to reset corrupted game state. After running game once it should be fine from now on without the flag")
     data_manager.reset();
-    BN_LOG("Save data reset enabled via RESET_SAVED");
+    BN_LOG_INFO(LogCategory::Save, "Save data reset enabled via RESET_SAVED");
 
 #endif
 
