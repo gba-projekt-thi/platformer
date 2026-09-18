@@ -2,7 +2,6 @@
 
 #include "bn_core.h"
 #include "bn_dmg_music_item.h"
-#include "bn_log.h"
 #include "bn_music.h"
 #include "bn_optional.h"
 #include "bn_regular_bg_ptr.h"
@@ -19,6 +18,7 @@
 #include "game_state.h"
 #include "i_resettable.h"
 #include "level_structure.h"
+#include "log.h"
 #include "pause_controller.h"
 #include "player.h"
 #include "save_sync_controller.h"

@@ -37,9 +37,8 @@ Trigger& LevelManager::get_trigger(int trigger_index) {
     if (trigger_index >= 0 && trigger_index < trigger_count) {
         return _triggers[trigger_index];
     }
-    BN_LOG(
-        "[ERROR] level_manager: "
-        "invalid trigger index, fallback to trigger 0");
+    BN_LOG_ERROR(
+        LogCategory::Level, "invalid trigger index, fallback to trigger 0");
     return _triggers[0];
 }
 
@@ -53,9 +52,8 @@ Trigger& LevelManager::get_trigger_by_name(const char* name) {
             }
         }
     }
-    BN_LOG(
-        "[ERROR] level_manager: "
-        "trigger name not found, fallback to trigger 0");
+    BN_LOG_ERROR(
+        LogCategory::Level, "trigger name not found, fallback to trigger 0");
     return _triggers[0];
 }
 
