@@ -11,12 +11,6 @@ class Player;
 class DataManager;
 class LevelManager;
 
-// TODO:
-// Replace with GameSession or SceneResult system.
-// Global mutable state becomes difficult to maintain
-// as the project scales.
-inline bool game_finished = false;
-
 class LevelScene : public core::Scene {
    public:
     LevelScene(

@@ -73,13 +73,12 @@
 // Levels
 #include "core_scene.h"
 #include "core_scene_manager.h"
+#include "game_session.h"
 #include "kissing_scene.h"
 #include "level_manager.h"
 #include "level_scene.h"
 #include "levels.h"
 #include "start_scene.h"
-
-extern bool game_finished;
 
 int main() {
     // -------------------------------------------------------------------------
@@ -154,7 +153,7 @@ int main() {
     // -------------------------------------------------------------------------
 
     while (true) {
-        while (!game_finished) {
+        while (!GameSession::instance().is_finished()) {
             core::SceneManager::instance().update();
         }
 
@@ -170,6 +169,6 @@ int main() {
         core::SceneManager::instance().set_next_scene(bn::move(kissing_scene));
 
         // Reset the completion flag so the next scene can run normally.
-        game_finished = false;
+        GameSession::instance().reset();
     }
 }
