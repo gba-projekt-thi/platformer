@@ -4,11 +4,10 @@
 #include "bn_unique_ptr.h"
 
 #include "data_manager.h"
+#include "game_session.h"
 #include "level_manager.h"
 #include "player.h"
 #include "start_scene.h"
-
-extern bool game_finished;
 
 LevelScene::LevelScene(
     Player& player,
@@ -89,7 +88,7 @@ void LevelScene::update() {
         // across the reset, but this level's newly-set record still
         // needs to reach SRAM first.
         _data_manager.save();
-        game_finished = true;
+        GameSession::instance().set_finished();
         return;
     }
 
