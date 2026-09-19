@@ -79,6 +79,10 @@ void AmbushTrap::update() {
             }
             break;
         }
+
+        default:
+            BN_LOG_ERROR(
+                LogCategory::Trap, "Not a defined state of AmbushTrap.");
     }
 
     // Direct position writes bypass PhysicsBody::move(), so sync the
