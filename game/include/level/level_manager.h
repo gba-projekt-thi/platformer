@@ -62,14 +62,12 @@ class LevelManager {
     // Advances the simulation by one frame.
     UpdateResult update();
 
-    // Returns a valid trigger reference.
-    // Falls back to trigger[0] if invalid.
-    Trigger& get_trigger(int trigger_index);
-
     // Returns the trigger whose TriggerData::name matches (linear scan -
     // trivially cheap given Cfg::Level::Limits::TRIGGERS <= 16 and this is
     // only ever called once per trap at level load, never per-frame).
-    // Falls back to get_trigger(-1) with a BN_LOG if no match is found.
+    // Falls back to trigger[0] with a BN_LOG_ERROR if no match is found -
+    // shouldn't happen now that every MOVING/PATH trap's trigger_name is
+    // set (see level_structure.h), but stays defensive.
     Trigger& get_trigger_by_name(const char* name);
 
     auto player() -> Player& { return _player; }

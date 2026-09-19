@@ -101,11 +101,12 @@ struct TrapData {
     // Empty span = no animation.
     bn::span<const uint16_t> graphic_indexes;
 
-    // Trigger index used by moving/path traps.
-    // -1 means fallback trigger.
-    // Only used when trigger_name (below) is nullptr - kept as the legacy
-    // path and as the ultimate fallback target. Unused by TrapType::CHASE,
-    // which tracks the player directly instead of a trigger.
+    // No longer read anywhere - every MOVING/PATH trap now binds via
+    // trigger_name below. Kept only so every existing level literal
+    // doesn't need a value removed; dropping this field would mean
+    // shifting every trap literal in levels_worldN.h left by one
+    // position - a much larger, riskier edit than this cleanup.
+    // Always -1 by convention in current level data.
     int trigger_index = -1;
 
     // -------------------------------------------------------------------------
@@ -143,12 +144,14 @@ struct TrapData {
     // Trigger binding (MovingTrap / PathTrap only)
     // -------------------------------------------------------------------------
 
-    // Optional stable trigger identifier (see TriggerData::name). When set,
-    // TrapFactory resolves the trigger via LevelManager::get_trigger_by_name()
-    // instead of trigger_index above - reordering the level's trigger array
-    // no longer breaks this trap's binding. Must stay the LAST member so
-    // existing aggregate-init call sites in levels.h that omit it keep
-    // compiling unchanged (defaults to nullptr = use trigger_index instead).
+    // Stable trigger identifier (see TriggerData::name) that every
+    // MOVING/PATH trap in every level now sets - TrapFactory always
+    // resolves via LevelManager::get_trigger_by_name(), never by raw
+    // index (see trigger_index above). Reordering a level's trigger
+    // array can no longer silently rebind a trap. Note this is NOT the
+    // struct's last field (AmbushTrap's fields below were appended
+    // after it) - it still needs a default for BASE/CHASE/AMBUSH
+    // literals, which never set it.
     const char* trigger_name = nullptr;
 
     // -------------------------------------------------------------------------
