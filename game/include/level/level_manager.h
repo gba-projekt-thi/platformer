@@ -79,6 +79,11 @@ class LevelManager {
         return _level_frame_count;
     }
 
+    // Forwards SaveSyncController::no_deaths_this_attempt() - see there.
+    [[nodiscard]] bool no_deaths_this_attempt() const {
+        return _save_sync.no_deaths_this_attempt();
+    }
+
    private:
     void _load_player_spawn(const LevelData& level);
     void _load_door(const LevelData& level);

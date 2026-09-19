@@ -49,4 +49,26 @@ struct GameState {
     // LevelManager::update()'s comment on _level_frame_count. Displayed
     // via timer.h's frames_to_time().
     uint32_t best_time_frames[MAX_LEVELS] = {};
+
+    // Bit i set = level i has been cleared at least once with zero
+    // deaths during that clearing attempt (see SaveSyncController::
+    // no_deaths_this_attempt()). Indexed the same as best_time_frames;
+    // a single uint32_t covers all MAX_LEVELS=24 bits with room to
+    // spare. Added in save schema version 3 - older saves fail to
+    // deserialize cleanly (same SERIALIZE_ERROR/fresh-GameState{}
+    // fallback as furthest_level's v2 addition, see above).
+    uint32_t no_death_clears = 0;
 };
+
+inline void set_no_death_clear(GameState& state, unsigned level_index) {
+    if (level_index < 32) {
+        state.no_death_clears |= (uint32_t(1) << level_index);
+    }
+}
+
+[[nodiscard]] inline bool has_no_death_clear(
+    const GameState& state,
+    unsigned level_index) {
+    return level_index < 32 &&
+           (state.no_death_clears & (uint32_t(1) << level_index)) != 0;
+}
