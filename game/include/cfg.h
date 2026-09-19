@@ -60,6 +60,11 @@ inline constexpr int X = 50;
 inline constexpr int Y = -70;
 }  // namespace Timer
 
+namespace NewBestBanner {
+inline constexpr int X = -40;
+inline constexpr int Y = -50;
+}  // namespace NewBestBanner
+
 namespace Level {
 namespace Limits {
 inline constexpr unsigned int PLATFORMS = 32;
