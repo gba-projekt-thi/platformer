@@ -14,6 +14,23 @@
 #include "start_scene.h"
 #include "world_index.h"
 
+namespace {
+// Appends the decimal digits of `value` into buf starting at *pos,
+// advancing *pos past the written digits. Not a hot path (menu build
+// only, same reasoning as frames_to_time()'s comment on plain division).
+void append_uint(char* buf, int* pos, unsigned int value) {
+    char digits[6];
+    int digit_count = 0;
+    do {
+        digits[digit_count++] = char('0' + (value % 10));
+        value /= 10;
+    } while (value > 0 && digit_count < 6);
+    while (digit_count > 0) {
+        buf[(*pos)++] = digits[--digit_count];
+    }
+}
+}  // namespace
+
 WorldSelectScene::WorldSelectScene(
     Player& player,
     bn::span<const LevelData> levels,
@@ -69,6 +86,43 @@ void WorldSelectScene::_rebuild_menu() {
             Cfg::StartScreen::X, Cfg::StartScreen::Y + i * 16, buf,
             _menu_sprites);
     }
+
+    // -------------------------------------------------------------------------
+    // Aggregate stats line, from already-tracked GameState fields only -
+    // no new save data. `deaths` is the running total for this save slot
+    // (not per-level); `Cleared` counts levels with a recorded best time.
+    // -------------------------------------------------------------------------
+
+    const GameState& game_state = _data_manager.state();
+    const int level_count = _levels.size();
+
+    int cleared = 0;
+    for (int i = 0; i < level_count && i < GameState::MAX_LEVELS; ++i) {
+        if (game_state.best_time_frames[i] > 0) {
+            ++cleared;
+        }
+    }
+
+    char stats_buf[40];
+    int spos = 0;
+    const char* deaths_label = "Deaths:";
+    for (const char* p = deaths_label; *p; ++p) {
+        stats_buf[spos++] = *p;
+    }
+    append_uint(stats_buf, &spos, game_state.deaths);
+
+    const char* cleared_label = "  Cleared:";
+    for (const char* p = cleared_label; *p; ++p) {
+        stats_buf[spos++] = *p;
+    }
+    append_uint(stats_buf, &spos, static_cast<unsigned int>(cleared));
+    stats_buf[spos++] = '/';
+    append_uint(stats_buf, &spos, static_cast<unsigned int>(level_count));
+    stats_buf[spos] = '\0';
+
+    _text_gen->generate(
+        Cfg::StartScreen::X, Cfg::StartScreen::Y + WorldIndex::WORLD_COUNT * 16,
+        stats_buf, _menu_sprites);
 
     for (bn::sprite_ptr& sprite : _menu_sprites) {
         sprite.set_blending_enabled(true);
