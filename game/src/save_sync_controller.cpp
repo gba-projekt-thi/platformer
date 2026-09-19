@@ -7,6 +7,11 @@ SaveSyncController::SaveSyncController(
 
 void SaveSyncController::reset_baseline() {
     _last_death_ct = _player.get_deaths();
+    _death_ct_at_load = _last_death_ct;
+}
+
+bool SaveSyncController::no_deaths_this_attempt() const {
+    return _player.get_deaths() == _death_ct_at_load;
 }
 
 bool SaveSyncController::sync() {

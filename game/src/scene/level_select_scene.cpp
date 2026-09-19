@@ -75,7 +75,9 @@ void LevelSelectScene::_rebuild_menu() {
         } else if (
             absolute_index < GameState::MAX_LEVELS &&
             game_state.best_time_frames[absolute_index] > 0) {
-            // Append the personal-best clear time, e.g. " 01:23.45".
+            // Append the personal-best clear time, e.g. " 01:23.45",
+            // plus a "*" if that level has ever been cleared without
+            // dying.
             const FrameTime t =
                 frames_to_time(game_state.best_time_frames[absolute_index]);
             buf[pos++] = ' ';
@@ -87,6 +89,9 @@ void LevelSelectScene::_rebuild_menu() {
             buf[pos++] = '.';
             buf[pos++] = char('0' + (t.centis / 10) % 10);
             buf[pos++] = char('0' + t.centis % 10);
+            if (has_no_death_clear(game_state, absolute_index)) {
+                buf[pos++] = '*';
+            }
         }
         buf[pos] = '\0';
 

@@ -39,6 +39,9 @@ void DataManager::reset() {
     for (int i = 0; i < GameState::MAX_LEVELS; ++i) {
         best_times[i] = _game_state.best_time_frames[i];
     }
+    // Same reasoning applies to no-death clear badges - personal
+    // achievement, not current-run progress.
+    const uint32_t no_death_clears = _game_state.no_death_clears;
 
     // Reset runtime state.
     _game_state = {};
@@ -46,6 +49,7 @@ void DataManager::reset() {
     for (int i = 0; i < GameState::MAX_LEVELS; ++i) {
         _game_state.best_time_frames[i] = best_times[i];
     }
+    _game_state.no_death_clears = no_death_clears;
 
     // Then persist the cleared save.
     _save_mgr.save(_slot_index, _game_state);

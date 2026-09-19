@@ -35,6 +35,11 @@ class SaveSyncController {
     // guarantee progress is saved (e.g. leaving to the title screen from
     // the pause menu).
     void force_save();
+    // True if the player's death count is unchanged since reset_baseline()
+    // was last called - i.e. this level attempt has had zero deaths so
+    // far. Independent of _last_death_ct below, which sync() advances
+    // after every death and so can't answer this on its own.
+    [[nodiscard]] bool no_deaths_this_attempt() const;
 
    private:
     void _save_progress();
@@ -42,4 +47,5 @@ class SaveSyncController {
     Player& _player;
     DataManager& _data_manager;
     unsigned _last_death_ct = 0;
+    unsigned _death_ct_at_load = 0;
 };

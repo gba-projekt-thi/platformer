@@ -97,6 +97,10 @@ void LevelScene::update() {
             best = frames;
             new_best = true;
         }
+
+        if (_level_manager.no_deaths_this_attempt()) {
+            set_no_death_clear(game_state, _level_index);
+        }
     }
 
     const unsigned int next_level_index = _level_index + 1u;
