@@ -57,11 +57,15 @@ struct TriggerData {
     // Allows triggers to start already active.
     bool default_on = false;
 
-    // Optional stable identifier, immune to reordering this level's trigger
-    // array. When set, traps should reference this trigger via
-    // TrapData::trigger_name instead of a raw array index (see
-    // TrapData::trigger_index for the legacy/fallback path). nullptr =
-    // unnamed; the trigger is then only reachable by index.
+    // Optional stable trigger identifier (see TriggerData::name). When set,
+    // TrapFactory resolves the trigger via LevelManager::get_trigger_by_name()
+    // instead of trigger_index above - reordering the level's trigger array
+    // no longer breaks this trap's binding. Not currently used by any level
+    // data (every existing MOVING/PATH trap still uses trigger_index; all
+    // level literals are positional). Note this is NOT the struct's last
+    // field (AmbushTrap's fields below were appended after it) - it just
+    // needs a default so positional literals that stop before it, i.e.
+    // every one today, keep compiling unchanged.
     const char* name = nullptr;
 };
 
