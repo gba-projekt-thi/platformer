@@ -38,7 +38,7 @@ constexpr PlatformData world5_scroll_platforms[] = {
 
 constexpr TriggerData world5_scroll_triggers[] = {
     // Fires just before the thwomp's drop zone near x=156.
-    {140, 48, 32, 24}};
+    {140, 48, 32, 24, false, "thwomp_gate"}};
 
 constexpr TrapData world5_scroll_traps[] = {
 
@@ -59,9 +59,10 @@ constexpr TrapData world5_scroll_traps[] = {
      TRAP_GRAPHICS_INDEXES_8, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Falling thwomp guarding the approach to the final platforms,
-    // triggered by the single trigger above.
+    // triggered by "thwomp_gate" above.
     {TrapType::MOVING, 200, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, 2, 0.0, 4, 4, NO_PATH_TRAP, 0}};
+     TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0,
+     "thwomp_gate"}};
 
 const LevelData LEVEL_WORLD5_SCROLL = {
 

@@ -36,8 +36,8 @@ constexpr PlatformData world4_scroll_platforms[] = {
     {264, 60, 32, 16, 0, 0, bn::sprite_items::korb, 0}};
 
 constexpr TriggerData world4_scroll_triggers[] = {
-    {8, 44, 32, 16},
-    {176, 44, 32, 24}};
+    {8, 44, 32, 16, false, "brick_release"},
+    {176, 44, 32, 24, false, "bug_release"}};
 
 constexpr TrapData world4_scroll_traps[] = {
 
@@ -50,13 +50,15 @@ constexpr TrapData world4_scroll_traps[] = {
     {TrapType::BASE, -88, 56, 24, 24, 0, 0, bn::sprite_items::strauch32x32, 16,
      TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
-    // Falling brick, released when trigger 0 fires.
+    // Falling brick, released when "brick_release" fires.
     {TrapType::MOVING, 52, 60, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
-     TRAP_GRAPHICS_INDEXES_0, 0, 0.0, 4, 4, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0,
+     "brick_release"},
 
-    // Flying pest, drifts right once trigger 1 fires.
+    // Flying pest, drifts right once "bug_release" fires.
     {TrapType::MOVING, 192, 50, 12, 12, 0, 0, bn::sprite_items::bug16x16, 1,
-     TRAP_GRAPHICS_INDEXES_0, 1, 1.2, 0, 2, NO_PATH_TRAP, 0}};
+     TRAP_GRAPHICS_INDEXES_0, -1, 1.2, 0, 2, NO_PATH_TRAP, 0, 0, 0,
+     "bug_release"}};
 
 const LevelData LEVEL_WORLD4_SCROLL = {
 

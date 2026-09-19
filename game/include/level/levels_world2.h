@@ -25,7 +25,8 @@ constexpr PlatformData level2_platforms[] = {
     {96, 16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
     {112, 16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1}};
 
-constexpr TriggerData level2_triggers[] = {{-48, 16, 32, 40}};
+constexpr TriggerData level2_triggers[] = {
+    {-48, 16, 32, 40, false, "can_release"}};
 
 constexpr TrapData level2_traps[] = {
 
@@ -33,7 +34,8 @@ constexpr TrapData level2_traps[] = {
      TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
     {TrapType::MOVING, -48, 88, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
-     TRAP_GRAPHICS_INDEXES_3, 0, 0.0, -3, 3, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_3, -1, 0.0, -3, 3, NO_PATH_TRAP, 0, 0, 0,
+     "can_release"},
 
     {TrapType::BASE, 0, 40, 28, 16, 0, 0, bn::sprite_items::rustynails32x16, 26,
      TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, NO_PATH_TRAP, 0},
@@ -83,8 +85,8 @@ constexpr PlatformData world2_scroll_platforms[] = {
     {200, 0, 16, 8, 0, 0, bn::sprite_items::platforms_world2, 0}};
 
 constexpr TriggerData world2_scroll_triggers[] = {
-    {-48, 16, 32, 40},
-    {160, 8, 32, 24}};
+    {-48, 16, 32, 40, false, "can_release1"},
+    {160, 8, 32, 24, false, "can_release2"}};
 
 constexpr TrapData world2_scroll_traps[] = {
 
@@ -92,7 +94,8 @@ constexpr TrapData world2_scroll_traps[] = {
      TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
     {TrapType::MOVING, -48, 88, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
-     TRAP_GRAPHICS_INDEXES_3, 0, 0.0, -3, 3, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_3, -1, 0.0, -3, 3, NO_PATH_TRAP, 0, 0, 0,
+     "can_release1"},
 
     {TrapType::BASE, 0, 40, 28, 16, 0, 0, bn::sprite_items::rustynails32x16, 26,
      TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, NO_PATH_TRAP, 0},
@@ -101,7 +104,8 @@ constexpr TrapData world2_scroll_traps[] = {
      TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
     {TrapType::MOVING, 160, -32, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
-     TRAP_GRAPHICS_INDEXES_3, 1, 0.0, -3, 3, NO_PATH_TRAP, 0}};
+     TRAP_GRAPHICS_INDEXES_3, -1, 0.0, -3, 3, NO_PATH_TRAP, 0, 0, 0,
+     "can_release2"}};
 
 const LevelData LEVEL_WORLD2_SCROLL = {
 
@@ -155,8 +159,10 @@ constexpr TriggerData world2_boss_triggers[] = {
 constexpr TrapData world2_boss_traps[] = {
 
     // Idle patrol: a rusty pipe swept back and forth across the corridor.
+    // Shares "wave1" with Attack 1 below - starts once the fight begins.
     {TrapType::PATH, -180, 20, 12, 8, 0, 0, bn::sprite_items::pipe16x16, 10,
-     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, 0, LEVEL3_BRANCH_PATH, 15},
+     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, LEVEL3_BRANCH_PATH, 15, 0, 0,
+     "wave1"},
 
     // Attack 1: a can slams down from above, triggered by wave1.
     {TrapType::MOVING, -145, -40, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,

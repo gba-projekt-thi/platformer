@@ -87,13 +87,15 @@ constexpr PlatformData level1_platforms[] = {
     {96, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
     {112, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2}};
 
-constexpr TriggerData level1_triggers[] = {{80, 40, 32, 30}};
+constexpr TriggerData level1_triggers[] = {
+    {80, 40, 32, 30, false, "fall_trigger"}};
 
 constexpr TrapData level1_traps[] = {
 
     // Falling bubble trap.
     {TrapType::MOVING, 80, -32, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
-     TRAP_GRAPHICS_INDEXES_3, 0, 0.0, 4, 4, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_3, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0,
+     "fall_trigger"},
 
     {TrapType::BASE, -48, 0, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
      TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, NO_PATH_TRAP, 0},
@@ -151,14 +153,14 @@ constexpr PlatformData world1_scroll_platforms[] = {
     {176, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0}};
 
 constexpr TriggerData world1_scroll_triggers[] = {
-    {-50, 30, 30, 30},
-    {130, 30, 30, 30}};
+    {-50, 30, 30, 30, false, "release1"},
+    {130, 30, 30, 30, false, "release2"}};
 
 constexpr TrapData world1_scroll_traps[] = {
 
-    // Falling bubble, triggered by trigger 0.
+    // Falling bubble, triggered by "release1".
     {TrapType::MOVING, 80, -32, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
-     TRAP_GRAPHICS_INDEXES_3, 0, 0.0, 4, 4, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_3, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "release1"},
 
     {TrapType::BASE, -48, 0, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
      TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, NO_PATH_TRAP, 0},
@@ -169,9 +171,11 @@ constexpr TrapData world1_scroll_traps[] = {
     {TrapType::BASE, -32, 60, 16, 16, 0, 0, bn::sprite_items::connector16x16,
      16, TRAP_GRAPHICS_INDEXES_8, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
-    // Second falling bubble in the extended section, triggered by trigger 1.
+    // Second falling bubble in the extended section, triggered by
+    // "release2".
     {TrapType::MOVING, 160, -32, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
-     TRAP_GRAPHICS_INDEXES_3, 1, 0.0, 4, 4, NO_PATH_TRAP, 0}};
+     TRAP_GRAPHICS_INDEXES_3, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0,
+     "release2"}};
 
 const LevelData LEVEL_WORLD1_SCROLL = {
 
@@ -230,8 +234,9 @@ constexpr TrapData world1_boss_traps[] = {
 
     // Idle patrol - the boss's passive figure-8 drift, active the whole
     // fight (Hollow Knight bosses rarely stand still between attacks).
+    // Shares "wave1" with Attack 1 below - starts once the fight begins.
     {TrapType::PATH, -180, -10, 32, 32, 0, 0, bn::sprite_items::bubbles, 30,
-     TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, 0, FIGURE_8_PATH, 15},
+     TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, FIGURE_8_PATH, 15, 0, 0, "wave1"},
 
     // Attack 1: telegraphed overhead slam, drops once the duck enters wave1.
     {TrapType::MOVING, -150, -40, 32, 32, 0, 0, bn::sprite_items::bubbles, 40,
