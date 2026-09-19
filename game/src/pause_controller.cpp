@@ -5,9 +5,11 @@
 #include "bn_keypad.h"
 #include "bn_music.h"
 #include "bn_sprite_text_generator.h"
+
 #include "cfg.h"
 #include "common_variable_8x16_sprite_font.h"
 #include "data_manager.h"
+#include "level_manager.h"
 
 namespace {
 constexpr const char* MENU_LABELS[4] = {
@@ -110,6 +112,31 @@ void PauseController::_rebuild_options_menu() {
             buf, _menu_sprites);
     }
 
+    // Hard Mode row - only shown once unlocked (see
+    // GameState::hard_mode_unlocked). Appended separately rather than
+    // folded into the loop above since it's a toggle, not a 0-4 level.
+    const GameState& state = _data_manager.state();
+    if (state.hard_mode_unlocked) {
+        char buf[24];
+        int pos = 0;
+        buf[pos++] = (_option_row == 2) ? '>' : ' ';
+        buf[pos++] = ' ';
+        const char* label = "Hard Mode < ";
+        for (const char* p = label; *p; ++p) {
+            buf[pos++] = *p;
+        }
+        const char* value = state.hard_mode_enabled ? "On >" : "Off >";
+        for (const char* p = value; *p; ++p) {
+            buf[pos++] = *p;
+        }
+        buf[pos] = '\0';
+
+        _text_gen->generate(
+            Cfg::PauseMenu::X,
+            Cfg::PauseMenu::Y_OPTION_0 + 2 * Cfg::PauseMenu::OPTION_SPACING,
+            buf, _menu_sprites);
+    }
+
     for (bn::sprite_ptr& sprite : _menu_sprites) {
         sprite.set_visible(_paused);
         sprite.set_blending_enabled(true);
@@ -135,7 +162,7 @@ void PauseController::_change_option_level(int delta) {
         // call directly here since the scene manager sits idle while
         // paused (no fade in progress to fight with).
         bn::music::set_volume(audio.music_scale());
-    } else {
+    } else if (_option_row == 1) {
         int level = int(audio.sfx_level()) + delta;
         if (level < 0) {
             level = 0;
@@ -149,6 +176,13 @@ void PauseController::_change_option_level(int delta) {
         // Audible preview at the just-set level, so raising SFX from 0
         // is itself audible feedback.
         audio.play_sfx(bn::sound_items::select);
+    } else {
+        // Hard Mode row - a toggle, not a 0-4 level; either direction
+        // flips it. Not saved here - PauseController commits to SRAM
+        // once, on leaving the Options sub-menu (see the b_pressed()
+        // handling in update()), same as Music/SFX.
+        state.hard_mode_enabled = !state.hard_mode_enabled;
+        AudioSettings::instance().play_sfx(bn::sound_items::select);
     }
 }
 
@@ -190,7 +224,11 @@ PauseController::Action PauseController::update() {
             bool changed = false;
 
             if (bn::keypad::down_pressed() || bn::keypad::up_pressed()) {
-                _option_row = 1 - _option_row;
+                const int row_count =
+                    _data_manager.state().hard_mode_unlocked ? 3 : 2;
+                _option_row = bn::keypad::down_pressed()
+                                  ? (_option_row + 1) % row_count
+                                  : (_option_row + row_count - 1) % row_count;
                 changed = true;
                 AudioSettings::instance().play_sfx(bn::sound_items::select);
             } else if (bn::keypad::right_pressed()) {
