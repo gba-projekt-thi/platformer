@@ -52,5 +52,7 @@ class LevelScene : public core::Scene {
     unsigned int _pending_next_level_index = 0;
 
     bn::optional<bn::sprite_text_generator> _banner_text_gen;
-    bn::vector<bn::sprite_ptr, 16> _banner_sprites;
+    // "New Best!" (9) + time e.g. "01:23.45" (8) + "Press A to
+    // continue" (19) = 36 chars, +headroom.
+    bn::vector<bn::sprite_ptr, 40> _banner_sprites;
 };
