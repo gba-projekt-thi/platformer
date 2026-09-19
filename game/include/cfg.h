@@ -61,7 +61,9 @@ inline constexpr int Y = -70;
 }  // namespace Timer
 
 namespace NewBestBanner {
-inline constexpr int X = -40;
+// X chosen to fit the longest line ("Press A to continue", ~152px)
+// roughly centered; the shorter lines above it sit left of center.
+inline constexpr int X = -76;
 inline constexpr int Y = -50;
 }  // namespace NewBestBanner
 
