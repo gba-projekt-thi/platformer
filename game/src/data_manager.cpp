@@ -42,6 +42,10 @@ void DataManager::reset() {
     // Same reasoning applies to no-death clear badges - personal
     // achievement, not current-run progress.
     const uint32_t no_death_clears = _game_state.no_death_clears;
+    // Achievement, not current-run progress - same reasoning as above.
+    // hard_mode_enabled (the toggle) is deliberately NOT preserved here,
+    // matching the audio volume settings' reset-to-default behavior.
+    const bool hard_mode_unlocked = _game_state.hard_mode_unlocked;
 
     // Reset runtime state.
     _game_state = {};
@@ -50,6 +54,7 @@ void DataManager::reset() {
         _game_state.best_time_frames[i] = best_times[i];
     }
     _game_state.no_death_clears = no_death_clears;
+    _game_state.hard_mode_unlocked = hard_mode_unlocked;
 
     // Then persist the cleared save.
     _save_mgr.save(_slot_index, _game_state);

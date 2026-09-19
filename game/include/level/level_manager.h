@@ -84,6 +84,15 @@ class LevelManager {
         return _save_sync.no_deaths_this_attempt();
     }
 
+    // Cfg::HardMode::SPEED_MULTIPLIER if the player has Hard Mode
+    // enabled, else 1 - used by TrapFactory to scale trap speed values
+    // at creation time.
+    [[nodiscard]] bn::fixed hard_mode_multiplier() const {
+        return _data_manager.state().hard_mode_enabled
+                   ? Cfg::HardMode::SPEED_MULTIPLIER
+                   : bn::fixed(1);
+    }
+
    private:
     void _load_player_spawn(const LevelData& level);
     void _load_door(const LevelData& level);

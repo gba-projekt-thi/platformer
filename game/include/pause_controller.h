@@ -51,7 +51,7 @@ class PauseController {
 
     // Options sub-menu state.
     bool _showing_options = false;
-    int _option_row = 0;  // 0 = Music, 1 = SFX
+    int _option_row = 0;  // 0 = Music, 1 = SFX, 2 = Hard Mode (once unlocked)
 
     bn::optional<bn::sprite_text_generator> _text_gen;
     bn::vector<bn::sprite_ptr, 8> _title_sprites;

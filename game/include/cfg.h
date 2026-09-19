@@ -67,6 +67,16 @@ inline constexpr int X = -76;
 inline constexpr int Y = -50;
 }  // namespace NewBestBanner
 
+namespace HardMode {
+// Applied to MOVING (velocity/max_vel), CHASE (chase_speed) and AMBUSH
+// (speed) trap values in TrapFactory::create() when GameState::
+// hard_mode_enabled is set. PATH traps are deliberately left alone -
+// their speed lives in path_waits (an unsigned frame count), which
+// needs its own division/rounding-edge-case handling; a separate
+// change if wanted later.
+inline constexpr bn::fixed SPEED_MULTIPLIER = 1.35;
+}  // namespace HardMode
+
 namespace Level {
 namespace Limits {
 inline constexpr unsigned int PLATFORMS = 32;

@@ -58,6 +58,21 @@ struct GameState {
     // deserialize cleanly (same SERIALIZE_ERROR/fresh-GameState{}
     // fallback as furthest_level's v2 addition, see above).
     uint32_t no_death_clears = 0;
+
+    // Personal achievement: set once the game has been completed (see
+    // LevelScene::_finalize_completion()), never cleared afterward -
+    // Hard Mode stays unlocked across future playthroughs on this slot.
+    // Preserved across DataManager::reset() like best_time_frames/
+    // no_death_clears above.
+    bool hard_mode_unlocked = false;
+
+    // Current-playthrough toggle (PauseController's Options sub-menu,
+    // only togglable once hard_mode_unlocked is true). Scales trap
+    // speed via LevelManager::hard_mode_multiplier() in
+    // TrapFactory::create(). NOT preserved across DataManager::reset() -
+    // resets to off like the audio volume settings, unlike the
+    // achievement flag above. Both added in save schema version 4.
+    bool hard_mode_enabled = false;
 };
 
 inline void set_no_death_clear(GameState& state, unsigned level_index) {

@@ -125,7 +125,7 @@ void LevelScene::update() {
 
 void LevelScene::_finalize_completion() {
     _transition_requested = true;
-
+    _data_manager.state().hard_mode_unlocked = true;
     // Persist the best time recorded in update(). Unlike
     // _finalize_advance(), nothing else on this path calls save() -
     // KissingScene later calls DataManager::reset(), which preserves
