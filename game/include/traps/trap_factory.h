@@ -11,18 +11,6 @@
 
 namespace TrapFactory {
 
-namespace detail {
-// Shared by MOVING/PATH - both resolve their trigger the same way,
-// preferring the name-based lookup when a level supplies one.
-inline auto resolve_trigger(
-    const TrapData& trap_data,
-    LevelManager& level_manager) -> Trigger& {
-    return trap_data.trigger_name != nullptr
-               ? level_manager.get_trigger_by_name(trap_data.trigger_name)
-               : level_manager.get_trigger(trap_data.trigger_index);
-}
-}  // namespace detail
-
 // Factory function that translates TrapData into a concrete Trap
 // Defined in header to allow inlining
 inline auto create(const TrapData& trap_data, LevelManager& level_manager)
@@ -36,7 +24,7 @@ inline auto create(const TrapData& trap_data, LevelManager& level_manager)
 
         case TrapType::MOVING: {
             Trigger& trigger =
-                detail::resolve_trigger(trap_data, level_manager);
+                level_manager.get_trigger_by_name(trap_data.trigger_name);
             return bn::make_unique<MovingTrap>(
                 trap_data.x, trap_data.y, trap_data.width, trap_data.height,
                 trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
@@ -47,7 +35,7 @@ inline auto create(const TrapData& trap_data, LevelManager& level_manager)
 
         case TrapType::PATH: {
             Trigger& trigger =
-                detail::resolve_trigger(trap_data, level_manager);
+                level_manager.get_trigger_by_name(trap_data.trigger_name);
             return bn::make_unique<PathTrap>(
                 trap_data.x, trap_data.y, trap_data.width, trap_data.height,
                 trap_data.offset_x, trap_data.offset_y, trap_data.sprite,

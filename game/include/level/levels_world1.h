@@ -18,7 +18,7 @@ constexpr PlatformData level0_platforms[] = {
 
     {-96, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
     {-80, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
-    {-48, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
+    {-48, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
     {-16, 60, 16, 14, 0, 0, bn::sprite_items::platforms_world1, 3},
 
     {0, 40, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0}};
@@ -77,7 +77,7 @@ constexpr PlatformData level1_platforms[] = {
     {-48, 60, 16, 14, 0, 0, bn::sprite_items::platforms_world1, 3},
 
     {-16, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
-    {-16, 44, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
+    {-16, 44, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
 
     {32, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
     {48, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
@@ -85,7 +85,7 @@ constexpr PlatformData level1_platforms[] = {
     {64, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
     {80, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
     {96, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
-    {112, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2}};
+    {112, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2}};
 
 constexpr TriggerData level1_triggers[] = {
     {80, 40, 32, 30, false, "fall_trigger"}};
@@ -134,10 +134,10 @@ constexpr PlatformData world1_scroll_platforms[] = {
     {-160, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
     {-144, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
     {-128, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
-    {-112, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
+    {-112, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
 
     {-80, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
-    {-48, 44, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
+    {-48, 44, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
 
     {-8, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
     {8, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
@@ -146,10 +146,10 @@ constexpr PlatformData world1_scroll_platforms[] = {
 
     {80, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
     {96, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
-    {112, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
+    {112, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
     {128, 44, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
     {144, 44, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
-    {160, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
+    {160, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
     {176, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0}};
 
 constexpr TriggerData world1_scroll_triggers[] = {
@@ -211,15 +211,15 @@ constexpr PlatformData world1_boss_platforms[] = {
     {-224, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
     {-192, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
     {-160, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
-    {-128, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
+    {-128, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
     {-88, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
     {-56, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
     {-24, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
-    {8, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
+    {8, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
     {48, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
     {80, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
     {112, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
-    {144, 60, 16, 10, 0, 0, bn::sprite_items::platforms_world1, 2},
+    {144, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
     {176, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
     {208, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
     {220, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0}};

@@ -32,16 +32,6 @@ void LevelManager::restoreHUD() {
     AudioSettings::instance().set_sfx_level(game_state.sfx_volume);
 }
 
-Trigger& LevelManager::get_trigger(int trigger_index) {
-    const int trigger_count = _triggers.size();
-    if (trigger_index >= 0 && trigger_index < trigger_count) {
-        return _triggers[trigger_index];
-    }
-    BN_LOG_ERROR(
-        LogCategory::Level, "invalid trigger index, fallback to trigger 0");
-    return _triggers[0];
-}
-
 Trigger& LevelManager::get_trigger_by_name(const char* name) {
     if (name != nullptr) {
         for (Trigger& trigger : _triggers) {
