@@ -23,21 +23,30 @@ constexpr PlatformData level0_platforms[] = {
 
     {0, 40, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0}};
 
-constexpr TriggerData level0_triggers[] = {{-50, 30, 30, 30}};
+// Named so both traps below can bind to it explicitly instead of via a
+// raw array index - see level0_traps' comments.
+constexpr TriggerData level0_triggers[] = {
+    {-50, 30, 30, 30, false, "level0_gate"}};
 
 constexpr TrapData level0_traps[] = {
 
-    // Moving bubble trap.
+    // Moving bubble trap. Shares the "level0_gate" trigger with the
+    // figure-8 path trap below - both activate together when the player
+    // enters level0_triggers[0]'s area (trigger-chain demo: one trigger,
+    // multiple traps, bound by name instead of a shared raw index).
     {TrapType::MOVING, 10, 10, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
-     TRAP_GRAPHICS_INDEXES_3, 0, -0.1, 0.1, 1, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_3, -1, -0.1, 0.1, 1, NO_PATH_TRAP, 0, 0, 0,
+     "level0_gate"},
 
     // Static bubble trap.
     {TrapType::BASE, -20, -20, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
      TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, NO_PATH_TRAP, 0},
 
-    // Figure-8 path trap.
+    // Figure-8 path trap. Shares "level0_gate" with the moving bubble
+    // trap above - see its comment.
     {TrapType::PATH, 0, 0, 32, 32, 0, 0, bn::sprite_items::bubbles, 10,
-     TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, 0, FIGURE_8_PATH, 15}};
+     TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, FIGURE_8_PATH, 15, 0, 0,
+     "level0_gate"}};
 
 const LevelData LEVEL_0 = {
 
