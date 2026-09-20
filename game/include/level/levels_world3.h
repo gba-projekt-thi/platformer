@@ -46,24 +46,24 @@ constexpr TriggerData level3_triggers[] = {
 constexpr TrapData level3_traps[] = {
     // Early mushroom forcing careful jump
     {TrapType::BASE, 0, 48, 32, 32, 0, 0, bn::sprite_items::mushroom32x32, 16,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Slither arms rise upward after upper trigger. Shares
     // "climb_trigger" with the branch patrol below (trigger-chain: one
     // trigger, two traps).
     {TrapType::MOVING, 56, 96, 32, 32, 0, 0,
-     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_3, -1, 0,
-     -1.8, 3.3, NO_PATH_TRAP, 0, 0, 0, "climb_trigger"},
+     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_3, 0, -1.8,
+     3.3, NO_PATH_TRAP, 0, 0, 0, "climb_trigger"},
 
     // Branch patrol trap activated during upper climb. Shares
     // "climb_trigger" with the slither arms above.
     {TrapType::PATH, -16, -24, 32, 16, 0, 0, bn::sprite_items::branch32x16, 10,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, LEVEL3_BRANCH_PATH, 20, 0, 0,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, LEVEL3_BRANCH_PATH, 20, 0, 0,
      "climb_trigger"},
 
     // Final mushroom guarding exit
     {TrapType::BASE, 80, 48, 32, 32, 0, 0, bn::sprite_items::mushroom32x32, 16,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0}};
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0}};
 
 const LevelData LEVEL_3 = {
 
@@ -114,22 +114,22 @@ constexpr TriggerData world3_scroll_triggers[] = {
 constexpr TrapData world3_scroll_traps[] = {
 
     {TrapType::BASE, -36, 48, 16, 16, 0, 0, bn::sprite_items::mushroom32x32, 16,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Slither arms rise upward once "mid_trigger" fires. Shares it with
     // the patrolling branch below (trigger-chain: one trigger, two traps).
     {TrapType::MOVING, 24, 96, 32, 32, 0, 0,
-     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_3, -1, 0,
-     -1.8, 3.3, NO_PATH_TRAP, 0, 0, 0, "mid_trigger"},
+     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_3, 0, -1.8,
+     3.3, NO_PATH_TRAP, 0, 0, 0, "mid_trigger"},
 
     // Patrolling branch hazard over the second climb. Shares
     // "mid_trigger" with the slither arms above.
     {TrapType::PATH, 96, 32, 32, 16, 0, 0, bn::sprite_items::branch32x16, 10,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, LEVEL3_BRANCH_PATH, 20, 0, 0,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, LEVEL3_BRANCH_PATH, 20, 0, 0,
      "mid_trigger"},
 
     {TrapType::BASE, 168, 6, 12, 16, 0, 0, bn::sprite_items::branch32x16, 16,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0}};
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0}};
 
 const LevelData LEVEL_WORLD3_SCROLL = {
 
@@ -183,13 +183,12 @@ constexpr TrapData world3_boss_traps[] = {
     // Idle patrol: a branch sweeping the corridor throughout the fight.
     // Shares "wave1" with Attack 1 below - starts once the fight begins.
     {TrapType::PATH, -190, 0, 32, 16, 0, 0, bn::sprite_items::branch32x16, 10,
-     TRAP_GRAPHICS_INDEXES_8, -1, 0, 0, 0, LEVEL3_BRANCH_PATH, 20, 0, 0,
-     "wave1"},
+     TRAP_GRAPHICS_INDEXES_8, 0, 0, 0, LEVEL3_BRANCH_PATH, 20, 0, 0, "wave1"},
 
     // Attack 1: an arm rises up out of the mist, triggered by wave1.
     {TrapType::MOVING, -150, 96, 32, 32, 0, 0,
-     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, -1, 0,
-     -1.8, 3.3, NO_PATH_TRAP, 0, 0, 0, "wave1"},
+     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, 0, -1.8,
+     3.3, NO_PATH_TRAP, 0, 0, 0, "wave1"},
 
     // A disguised mushroom - punishes lingering near the middle of the
     // arena instead of pressing forward.
@@ -203,7 +202,6 @@ constexpr TrapData world3_boss_traps[] = {
      bn::sprite_items::mushroom32x32,
      1,
      TRAP_GRAPHICS_INDEXES_8,
-     -1,
      0,
      0,
      0,
@@ -218,18 +216,18 @@ constexpr TrapData world3_boss_traps[] = {
 
     // Attack 2: a second arm, further along, triggered by wave2.
     {TrapType::MOVING, -20, 96, 32, 32, 0, 0,
-     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, -1, 0,
-     -1.8, 3.3, NO_PATH_TRAP, 0, 0, 0, "wave2"},
+     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, 0, -1.8,
+     3.3, NO_PATH_TRAP, 0, 0, 0, "wave2"},
 
     // Attack 3: a third arm, triggered by wave3.
     {TrapType::MOVING, 100, 96, 32, 32, 0, 0,
-     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, -1, 0,
-     -2.0, 3.6, NO_PATH_TRAP, 0, 0, 0, "wave3"},
+     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, 0, -2.0,
+     3.6, NO_PATH_TRAP, 0, 0, 0, "wave3"},
 
     // Attack 4: final arm right before the door, triggered by wave4.
     {TrapType::MOVING, 220, 96, 32, 32, 0, 0,
-     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, -1, 0,
-     -2.2, 3.8, NO_PATH_TRAP, 0, 0, 0, "wave4"}};
+     bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, 0, -2.2,
+     3.8, NO_PATH_TRAP, 0, 0, 0, "wave4"}};
 
 const LevelData LEVEL_WORLD3_BOSS = {
 

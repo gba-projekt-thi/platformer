@@ -117,10 +117,15 @@ For headless or CI testing, use:
   - Scales Moving/Chase/Ambush trap velocities by `LevelManager::hard_mode_multiplier()` at construction time; Path traps are left unscaled
 
 - `game/include/level_structure.h`
-  - `TriggerData::name` / `TrapData::trigger_name` allow binding a
-    MovingTrap/PathTrap to a trigger by stable identifier instead of raw
-    array index, via `LevelManager::get_trigger_by_name()`. Index-based
-    binding (`trigger_index`) remains supported as a fallback.
+  - `TriggerData::name` / `TrapData::trigger_name` bind a MovingTrap/PathTrap
+    to a trigger by stable identifier, resolved via
+    `LevelManager::get_trigger_by_name()`. This is the only binding
+    mechanism now - the legacy `trigger_index` (raw array-position) field
+    has been removed from `TrapData`, since every level had already
+    migrated to named binding and the field was never read
+  - Because binding is by name rather than position, one trigger can drive
+    several traps at once (a **trigger chain**) - see `level0_traps` in
+    `levels_world1.h` for an existing example
 
 - `game/include/save_sync_controller.h` / `game/src/save_sync_controller.cpp`
   - Implements `SaveSyncController`, which owns the runtime persistence policy for a level

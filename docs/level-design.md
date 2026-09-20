@@ -143,8 +143,11 @@ one boss level that closes out each world; see
 
 Triggers are the stage's **director**: they decide *when* things happen.
 
-- Each moving/path trap references a trigger by index. When the duck enters the
-  trigger's rectangle, every trap bound to that index activates.
+- Each moving/path trap references a trigger by its stable `name`. When the
+  duck enters the trigger's rectangle, every trap bound to that name
+  activates - so one trigger can fire several traps at once (a **trigger
+  chain**), which is how several levels pair a falling hazard with a patrol
+  or a second hazard on the same cue.
 - A trigger can start **already active**, so its hazards move from the moment
   the stage loads — useful for a constant patrol the duck must dodge from the
   start.

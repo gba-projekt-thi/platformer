@@ -194,8 +194,9 @@ The base trap owns:
 Two activation styles exist:
 
 - **Trigger-linked activation.** Moving and path traps reference a trigger by
-  index. When the duck crosses into the trigger's invisible rectangle, the
-  trigger flips "on" and any linked trap begins its behavior.
+  its stable name. When the duck crosses into the trigger's invisible
+  rectangle, the trigger flips "on" and every trap bound to that name begins
+  its behavior.
 **Direct player tracking.** Chase and ambush traps read the player's
   position every frame. Chase traps use it continuously to ease toward a
   following distance; ambush traps only use it to test a proximity
@@ -204,23 +205,23 @@ Two activation styles exist:
 
 ### Trigger lookup
 
-Triggers are referenced from trap data in one of two ways:
+A trigger can optionally carry a stable name (`TriggerData::name`); a trap
+binds to it via `TrapData::trigger_name`, resolved through
+`LevelManager::get_trigger_by_name()`. This is the *only* binding mechanism
+Moving/Path traps use - every one in every level sets `trigger_name`. Named
+lookup is a simple linear scan over the level's triggers — with a per-level
+cap of 16 and the lookup happening once per trap at level load (never per
+frame), this costs nothing worth measuring.
 
-- **By array index** (legacy/default) — a trap stores the trigger's position
-  in the level's trigger list. Simple, but fragile: inserting or reordering
-  triggers silently rebinds any trap whose index now points somewhere else.
-- **By stable name** — a trigger can optionally carry a name
-  (`TriggerData::name`); a trap then binds to it via
-  `TrapData::trigger_name`, resolved through
-  `LevelManager::get_trigger_by_name()`. This binding survives reordering the
-  trigger array, since it's a lookup by identity rather than position.
-
-Named lookup is a simple linear scan over the level's triggers — with a
-per-level cap of 16 and the lookup happening once per trap at level load
-(never per frame), this costs nothing worth measuring. New level content
-should prefer named triggers; existing levels using index-based binding
-continue to work unchanged, since `trigger_name` defaults to unset and falls
-back to the index path.
+An earlier version of `TrapData` also carried a raw `trigger_index` field for
+binding by array position, kept for a time so no existing level literal
+needed editing. It was never actually read (every level had already
+migrated to named binding) and has since been removed from the struct - see
+[Extensibility Guide](extensibility.md) for how to author a trigger today.
+Because binding is by identity rather than position, one trigger can freely
+activate several traps at once (a **trigger chain**): give each trap the
+same `trigger_name` and they all fire together, as `level0_traps` in
+`levels_world1.h` and several other levels already do.
 
 ### Interactions with the player
 

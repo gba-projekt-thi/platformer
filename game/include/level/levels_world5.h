@@ -47,22 +47,21 @@ constexpr TrapData world5_scroll_traps[] = {
     // 40px behind the player at up to 2.5px/frame. Standing still or
     // moving left just widens the gap; running right is what closes it.
     {TrapType::CHASE, -300, 20, 32, 16, 0, 0, bn::sprite_items::axe64x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0, 40, 2.5},
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 40, 2.5},
 
     // Static rusty bar hazard sitting in the first gap.
     {TrapType::BASE, -240, 60, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Disguised, animated mimic sitting in a mid gap (mimic32x32 has 8
     // animation frames).
     {TrapType::BASE, 56, 60, 16, 16, 0, 0, bn::sprite_items::mimic32x32, 16,
-     TRAP_GRAPHICS_INDEXES_8, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_8, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Falling thwomp guarding the approach to the final platforms,
     // triggered by "thwomp_gate" above.
     {TrapType::MOVING, 200, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0,
-     "thwomp_gate"}};
+     TRAP_GRAPHICS_INDEXES_0, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "thwomp_gate"}};
 
 const LevelData LEVEL_WORLD5_SCROLL = {
 
@@ -106,7 +105,7 @@ constexpr TrapData world5b_scroll_traps[] = {
 
     // Static rusty bar hazard in the first gap.
     {TrapType::BASE, -140, 60, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Ambush mimic disguised among the real chests - lunges left/right
     // (negative speed = leftward) once the duck is within 36px, for 15
@@ -122,7 +121,6 @@ constexpr TrapData world5b_scroll_traps[] = {
      bn::sprite_items::mimic32x32,
      16,
      TRAP_GRAPHICS_INDEXES_8,
-     -1,
      0,
      0,
      0,
@@ -189,15 +187,15 @@ constexpr TrapData world5_boss_traps[] = {
     // The Mimic Lord's axe - relentless, closer and faster than the one
     // in the first World 5 level. Standing still is not an option.
     {TrapType::CHASE, -324, 20, 32, 16, 0, 0, bn::sprite_items::axe64x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0, 28, 3.0},
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 28, 3.0},
 
     // Static rusty bar in the first gap - always dangerous.
     {TrapType::BASE, -264, 60, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Attack 1: first thwomp slam, triggered by wave1.
     {TrapType::MOVING, -175, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32,
-     1, TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 4, 5, NO_PATH_TRAP, 0, 0, 0, "wave1"},
+     1, TRAP_GRAPHICS_INDEXES_0, 0.0, 4, 5, NO_PATH_TRAP, 0, 0, 0, "wave1"},
 
     // First mimic, disguised among the real chests.
     {TrapType::AMBUSH,
@@ -210,7 +208,6 @@ constexpr TrapData world5_boss_traps[] = {
      bn::sprite_items::mimic32x32,
      16,
      TRAP_GRAPHICS_INDEXES_8,
-     -1,
      0,
      0,
      0,
@@ -225,7 +222,7 @@ constexpr TrapData world5_boss_traps[] = {
 
     // Attack 2: second thwomp slam, triggered by wave2.
     {TrapType::MOVING, -75, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 4, 5, NO_PATH_TRAP, 0, 0, 0, "wave2"},
+     TRAP_GRAPHICS_INDEXES_0, 0.0, 4, 5, NO_PATH_TRAP, 0, 0, 0, "wave2"},
 
     // Second mimic, closer to the door.
     {TrapType::AMBUSH,
@@ -238,7 +235,6 @@ constexpr TrapData world5_boss_traps[] = {
      bn::sprite_items::mimic32x32,
      16,
      TRAP_GRAPHICS_INDEXES_8,
-     -1,
      0,
      0,
      0,
@@ -254,8 +250,7 @@ constexpr TrapData world5_boss_traps[] = {
     // Attack 3: final thwomp slam right before the door, triggered by
     // wave3.
     {TrapType::MOVING, 80, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 4.5, 4.5, NO_PATH_TRAP, 0, 0, 0,
-     "wave3"}};
+     TRAP_GRAPHICS_INDEXES_0, 0.0, 4.5, 4.5, NO_PATH_TRAP, 0, 0, 0, "wave3"}};
 
 const LevelData LEVEL_WORLD5_BOSS = {
 

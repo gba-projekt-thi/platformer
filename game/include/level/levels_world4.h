@@ -44,21 +44,20 @@ constexpr TrapData world4_scroll_traps[] = {
     // Static ground hazard sitting in the gap after the start platform -
     // clear of any platform, forces a full jump over the gap.
     {TrapType::BASE, -216, 60, 24, 16, 0, 0, bn::sprite_items::nest32x16, 16,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Static bush hazard in a later gap.
     {TrapType::BASE, -88, 56, 24, 24, 0, 0, bn::sprite_items::strauch32x32, 16,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Falling brick, released when "brick_release" fires.
     {TrapType::MOVING, 52, 60, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0,
+     TRAP_GRAPHICS_INDEXES_0, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0,
      "brick_release"},
 
     // Flying pest, drifts right once "bug_release" fires.
     {TrapType::MOVING, 192, 50, 12, 12, 0, 0, bn::sprite_items::bug16x16, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 1.2, 0, 2, NO_PATH_TRAP, 0, 0, 0,
-     "bug_release"}};
+     TRAP_GRAPHICS_INDEXES_0, 1.2, 0, 2, NO_PATH_TRAP, 0, 0, 0, "bug_release"}};
 
 const LevelData LEVEL_WORLD4_SCROLL = {
 
@@ -101,7 +100,7 @@ constexpr TrapData world4b_scroll_traps[] = {
 
     // Static bush hazard right after the first platform.
     {TrapType::BASE, -104, 56, 24, 24, 0, 0, bn::sprite_items::strauch32x32, 16,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Ambush bug lurking near the korb platform - lunges right once the
     // duck comes within 40px, for 20 frames, then retreats and re-arms.
@@ -115,7 +114,6 @@ constexpr TrapData world4b_scroll_traps[] = {
      bn::sprite_items::bug16x16,
      1,
      TRAP_GRAPHICS_INDEXES_3,
-     -1,
      0,
      0,
      0,
@@ -177,7 +175,7 @@ constexpr TrapData world4_boss_traps[] = {
     // closing the gap whenever the duck advances - constant pressure, like
     // an enrage timer forcing forward movement.
     {TrapType::CHASE, -260, 20, 12, 12, 0, 0, bn::sprite_items::bug16x16, 1,
-     TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, NO_PATH_TRAP, 0, 50, 1.8},
+     TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, NO_PATH_TRAP, 0, 50, 1.8},
 
     // A bush disguised as scenery, lunging if the duck lingers near it.
     {TrapType::AMBUSH,
@@ -190,7 +188,6 @@ constexpr TrapData world4_boss_traps[] = {
      bn::sprite_items::strauch32x32,
      16,
      TRAP_GRAPHICS_INDEXES_0,
-     -1,
      0,
      0,
      0,
@@ -205,11 +202,11 @@ constexpr TrapData world4_boss_traps[] = {
 
     // Attack 1: a brick dive-bombs down, triggered by wave1.
     {TrapType::MOVING, -140, -90, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 5, 5, NO_PATH_TRAP, 0, 0, 0, "wave1"},
+     TRAP_GRAPHICS_INDEXES_0, 0.0, 5, 5, NO_PATH_TRAP, 0, 0, 0, "wave1"},
 
     // Attack 2: a second dive-bomb, triggered by wave2.
     {TrapType::MOVING, -20, -90, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 5, 5, NO_PATH_TRAP, 0, 0, 0, "wave2"},
+     TRAP_GRAPHICS_INDEXES_0, 0.0, 5, 5, NO_PATH_TRAP, 0, 0, 0, "wave2"},
 
     // A second, faster worker bug lunges in once the duck nears the door.
     {TrapType::AMBUSH,
@@ -222,7 +219,6 @@ constexpr TrapData world4_boss_traps[] = {
      bn::sprite_items::bug16x16,
      1,
      TRAP_GRAPHICS_INDEXES_3,
-     -1,
      0,
      0,
      0,
@@ -237,7 +233,7 @@ constexpr TrapData world4_boss_traps[] = {
 
     // Attack 3: final dive-bomb right before the door, triggered by wave3.
     {TrapType::MOVING, 100, -90, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
-     TRAP_GRAPHICS_INDEXES_0, -1, 0.0, 4, 4.5, NO_PATH_TRAP, 0, 0, 0, "wave3"}};
+     TRAP_GRAPHICS_INDEXES_0, 0.0, 4, 4.5, NO_PATH_TRAP, 0, 0, 0, "wave3"}};
 
 const LevelData LEVEL_WORLD4_BOSS = {
 
