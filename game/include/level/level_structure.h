@@ -57,12 +57,11 @@ struct TriggerData {
     // Allows triggers to start already active.
     bool default_on = false;
 
-    // Optional stable trigger identifier (see TriggerData::name). When set,
-    // TrapFactory resolves the trigger via LevelManager::get_trigger_by_name()
-    // instead of trigger_index above - reordering the level's trigger array
-    // no longer breaks this trap's binding. Not currently used by any level
-    // data (every existing MOVING/PATH trap still uses trigger_index; all
-    // level literals are positional). Note this is NOT the struct's last
+    // Optional stable trigger identifier. When set, TrapFactory resolves
+    // the trigger via LevelManager::get_trigger_by_name() instead of a raw
+    // array index, so reordering the level's trigger array never breaks a
+    // trap's binding. Every MOVING/PATH trap in every level sets this - see
+    // TrapData::trigger_name below. Note this is NOT the struct's last
     // field (AmbushTrap's fields below were appended after it) - it just
     // needs a default so positional literals that stop before it, i.e.
     // every one today, keep compiling unchanged.
@@ -101,14 +100,6 @@ struct TrapData {
     // Empty span = no animation.
     bn::span<const uint16_t> graphic_indexes;
 
-    // No longer read anywhere - every MOVING/PATH trap now binds via
-    // trigger_name below. Kept only so every existing level literal
-    // doesn't need a value removed; dropping this field would mean
-    // shifting every trap literal in levels_worldN.h left by one
-    // position - a much larger, riskier edit than this cleanup.
-    // Always -1 by convention in current level data.
-    int trigger_index = -1;
-
     // -------------------------------------------------------------------------
     // MovingTrap
     // -------------------------------------------------------------------------
@@ -145,13 +136,12 @@ struct TrapData {
     // -------------------------------------------------------------------------
 
     // Stable trigger identifier (see TriggerData::name) that every
-    // MOVING/PATH trap in every level now sets - TrapFactory always
-    // resolves via LevelManager::get_trigger_by_name(), never by raw
-    // index (see trigger_index above). Reordering a level's trigger
-    // array can no longer silently rebind a trap. Note this is NOT the
-    // struct's last field (AmbushTrap's fields below were appended
-    // after it) - it still needs a default for BASE/CHASE/AMBUSH
-    // literals, which never set it.
+    // MOVING/PATH trap in every level sets - TrapFactory always resolves
+    // it via LevelManager::get_trigger_by_name(), by identity rather than
+    // array position, so reordering a level's trigger array can never
+    // silently rebind a trap. Note this is NOT the struct's last field
+    // (AmbushTrap's fields below were appended after it) - it still needs
+    // a default for BASE/CHASE/AMBUSH literals, which never set it.
     const char* trigger_name = nullptr;
 
     // -------------------------------------------------------------------------

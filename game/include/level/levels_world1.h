@@ -35,18 +35,17 @@ constexpr TrapData level0_traps[] = {
     // enters level0_triggers[0]'s area (trigger-chain demo: one trigger,
     // multiple traps, bound by name instead of a shared raw index).
     {TrapType::MOVING, 10, 10, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
-     TRAP_GRAPHICS_INDEXES_3, -1, -0.1, 0.1, 1, NO_PATH_TRAP, 0, 0, 0,
+     TRAP_GRAPHICS_INDEXES_3, -0.1, 0.1, 1, NO_PATH_TRAP, 0, 0, 0,
      "level0_gate"},
 
     // Static bubble trap.
     {TrapType::BASE, -20, -20, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
-     TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Figure-8 path trap. Shares "level0_gate" with the moving bubble
     // trap above - see its comment.
     {TrapType::PATH, 0, 0, 32, 32, 0, 0, bn::sprite_items::bubbles, 10,
-     TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, FIGURE_8_PATH, 15, 0, 0,
-     "level0_gate"}};
+     TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, FIGURE_8_PATH, 15, 0, 0, "level0_gate"}};
 
 const LevelData LEVEL_0 = {
 
@@ -94,17 +93,16 @@ constexpr TrapData level1_traps[] = {
 
     // Falling bubble trap.
     {TrapType::MOVING, 80, -32, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
-     TRAP_GRAPHICS_INDEXES_3, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0,
-     "fall_trigger"},
+     TRAP_GRAPHICS_INDEXES_3, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "fall_trigger"},
 
     {TrapType::BASE, -48, 0, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
-     TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, NO_PATH_TRAP, 0},
 
     {TrapType::BASE, -64, 60, 16, 16, 0, 0, bn::sprite_items::connector16x16,
-     16, TRAP_GRAPHICS_INDEXES_8, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+     16, TRAP_GRAPHICS_INDEXES_8, 0, 0, 0, NO_PATH_TRAP, 0},
 
     {TrapType::BASE, -32, 60, 16, 16, 0, 0, bn::sprite_items::connector16x16,
-     16, TRAP_GRAPHICS_INDEXES_8, -1, 0, 0, 0, NO_PATH_TRAP, 0}};
+     16, TRAP_GRAPHICS_INDEXES_8, 0, 0, 0, NO_PATH_TRAP, 0}};
 
 const LevelData LEVEL_1 = {
 
@@ -160,22 +158,21 @@ constexpr TrapData world1_scroll_traps[] = {
 
     // Falling bubble, triggered by "release1".
     {TrapType::MOVING, 80, -32, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
-     TRAP_GRAPHICS_INDEXES_3, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "release1"},
+     TRAP_GRAPHICS_INDEXES_3, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "release1"},
 
     {TrapType::BASE, -48, 0, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
-     TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+     TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, NO_PATH_TRAP, 0},
 
     {TrapType::BASE, -64, 60, 16, 16, 0, 0, bn::sprite_items::connector16x16,
-     16, TRAP_GRAPHICS_INDEXES_8, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+     16, TRAP_GRAPHICS_INDEXES_8, 0, 0, 0, NO_PATH_TRAP, 0},
 
     {TrapType::BASE, -32, 60, 16, 16, 0, 0, bn::sprite_items::connector16x16,
-     16, TRAP_GRAPHICS_INDEXES_8, -1, 0, 0, 0, NO_PATH_TRAP, 0},
+     16, TRAP_GRAPHICS_INDEXES_8, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Second falling bubble in the extended section, triggered by
     // "release2".
     {TrapType::MOVING, 160, -32, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
-     TRAP_GRAPHICS_INDEXES_3, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0,
-     "release2"}};
+     TRAP_GRAPHICS_INDEXES_3, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "release2"}};
 
 const LevelData LEVEL_WORLD1_SCROLL = {
 
@@ -236,16 +233,15 @@ constexpr TrapData world1_boss_traps[] = {
     // fight (Hollow Knight bosses rarely stand still between attacks).
     // Shares "wave1" with Attack 1 below - starts once the fight begins.
     {TrapType::PATH, -180, -10, 32, 32, 0, 0, bn::sprite_items::bubbles, 30,
-     TRAP_GRAPHICS_INDEXES_3, -1, 0, 0, 0, FIGURE_8_PATH, 15, 0, 0, "wave1"},
+     TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, FIGURE_8_PATH, 15, 0, 0, "wave1"},
 
     // Attack 1: telegraphed overhead slam, drops once the duck enters wave1.
     {TrapType::MOVING, -150, -40, 32, 32, 0, 0, bn::sprite_items::bubbles, 40,
-     TRAP_GRAPHICS_INDEXES_3, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "wave1"},
+     TRAP_GRAPHICS_INDEXES_3, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "wave1"},
 
     // Attack 2: charging pufferfish dash, triggered by wave2.
     {TrapType::MOVING, 200, 50, 24, 16, 0, 0, bn::sprite_items::kugelfisch16x16,
-     30, TRAP_GRAPHICS_INDEXES_8, -1, -2.2, 0, 3, NO_PATH_TRAP, 0, 0, 0,
-     "wave2"},
+     30, TRAP_GRAPHICS_INDEXES_8, -2.2, 0, 3, NO_PATH_TRAP, 0, 0, 0, "wave2"},
 
     // Mid-arena ambush: a smaller pufferfish disguised as scenery, lunges
     // if the duck lingers nearby - punishes hesitation, not advancing.
@@ -259,7 +255,6 @@ constexpr TrapData world1_boss_traps[] = {
      bn::sprite_items::kugelfisch16x16,
      10,
      TRAP_GRAPHICS_INDEXES_8,
-     1,
      0,
      0,
      0,
@@ -274,12 +269,11 @@ constexpr TrapData world1_boss_traps[] = {
 
     // Attack 3: second overhead slam, triggered by wave3.
     {TrapType::MOVING, 120, -40, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
-     TRAP_GRAPHICS_INDEXES_3, -1, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "wave3"},
+     TRAP_GRAPHICS_INDEXES_3, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "wave3"},
 
     // Attack 4: final charge before the door, triggered by wave4.
     {TrapType::MOVING, 260, 50, 24, 16, 0, 0, bn::sprite_items::kugelfisch16x16,
-     1, TRAP_GRAPHICS_INDEXES_8, -1, -2.5, 0, 3, NO_PATH_TRAP, 0, 0, 0,
-     "wave4"}};
+     1, TRAP_GRAPHICS_INDEXES_8, -2.5, 0, 3, NO_PATH_TRAP, 0, 0, 0, "wave4"}};
 
 const LevelData LEVEL_WORLD1_BOSS = {
 
