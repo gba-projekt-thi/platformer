@@ -9,14 +9,16 @@ This repository contains a small Game Boy Advance platformer built with the Buta
 The game includes:
 - A start/save selection scene with three save slots (level, deaths, and run timer persist to SRAM)
 - A world-select scene and a level-select scene for jumping directly to any already-reached world or level (reachable from the start screen by pressing B)
-- Level-select also shows each unlocked level's personal-best clear time (mm:ss.cc), once one has been set
+- A world-select stats line ("Deaths: N  Cleared: X/Y") aggregated from the loaded save slot's existing death total and best-time records
+- Level-select also shows each unlocked level's personal-best clear time (mm:ss.cc), once one has been set, marked with a trailing `*` if that level has ever been cleared without a single death (a no-death clear)
 - A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each with at least two regular levels plus one boss level, defined in code (17 levels total). World 5 has an extra trap-free finale level after its boss.
 - Five trap categories: static (base), trigger-activated moving, path-following patrol, player-chasing, and proximity-triggered ambush hazards
 - Trigger zones that activate hazards
 - A door that advances the player to the next level, ending in a celebratory kiss scene (the door itself can be reskinned as a different, non-animated sprite for narrative moments - see World 5's finale)
+- A "New Best!" banner that holds the level-complete transition until acknowledged, whenever a level is cleared faster than its previous best time
 - Music and tilemap backgrounds
 - A death counter and run timer HUD
-- A pause menu with Continue / Restart Level / Options / Title Screen; Options lets the player adjust music and SFX volume (0-4), persisted per save slot
+- A pause menu with Continue / Restart Level / Options / Title Screen; Options lets the player adjust music and SFX volume (0-4), persisted per save slot, plus - once unlocked by completing the game - toggle Hard Mode, which speeds up Moving/Chase/Ambush trap velocities for a tougher replay
  - A camera that follows the player across wider, scrolling worlds (single-screen worlds stay fixed)
 
 > This page is a quick map of the `game/` folder and its key files. For the
@@ -80,6 +82,7 @@ For headless or CI testing, use:
 - `game/include/level_manager.h` / `game/src/level_manager.cpp`
   - Controls level transitions and scene switching
   - Manages game state across levels and save data
+  - Exposes `hard_mode_multiplier()`, read by the trap factory when constructing Moving/Chase/Ambush traps
 
 - `game/include/start_scene.h` / `game/src/start_scene.cpp`
   - Implements the first scene shown to the player
@@ -89,10 +92,12 @@ For headless or CI testing, use:
 - `game/include/world_select_scene.h` / `game/src/world_select_scene.cpp`
   - Lists the worlds and lets the player jump directly to any world they have already reached (based on the loaded save slot's furthest level)
   - Locked worlds are shown but cannot be entered; A opens the level-select scene for an unlocked world, B returns to `StartScene`
+  - Also renders the save slot's stats line (total deaths, levels cleared), computed from `GameState` at menu-build time
 
 - `game/include/level_select_scene.h` / `game/src/level_select_scene.cpp`
   - Lists the individual levels belonging to the world chosen in `WorldSelectScene`
   - Lets the player jump straight to any unlocked level (writing the chosen level to the save slot); B returns to `WorldSelectScene`
+  - Appends each unlocked level's best time and, if earned, a trailing `*` no-death-clear indicator
 
 - `game/include/world_index.h`
   - Declares how the flat `levels[]` array in `game/src/main.cpp` is grouped into worlds for the world/level-select scenes
@@ -101,13 +106,15 @@ For headless or CI testing, use:
 - `game/include/level_scene.h` / `game/src/level_scene.cpp`
   - Implements actual level gameplay
   - Handles player movement, collision, traps, and level completion
+  - Records new best-clear-times and no-death clears on reaching the door, and shows the "New Best!" banner (holding the scene transition) when a record is beaten
 
 - `game/include/player.h` / `game/src/player.cpp`
   - Implements player movement, jump behavior, gravity, and input handling
 
 - `game/include/trap_factory.h` and `game/src/traps/`
   - Define trap creation and trap behaviors
-  - Support base traps, moving traps, path-following traps and chaser traps
+  - Support base traps, moving traps, path-following traps, chaser traps, and ambush traps
+  - Scales Moving/Chase/Ambush trap velocities by `LevelManager::hard_mode_multiplier()` at construction time; Path traps are left unscaled
 
 - `game/include/level_structure.h`
   - `TriggerData::name` / `TrapData::trigger_name` allow binding a
@@ -118,6 +125,7 @@ For headless or CI testing, use:
 - `game/include/save_sync_controller.h` / `game/src/save_sync_controller.cpp`
   - Implements `SaveSyncController`, which owns the runtime persistence policy for a level
   - Watches the player's death counter and writes deaths/timer to SRAM via `DataManager` when it changes, or on demand via `force_save()`
+  - Tracks whether the death count has changed since the level's baseline (`no_deaths_this_attempt()`), which `LevelScene` reads to award a no-death clear badge on completion
 
 - `extern/engine/core/include/i_resettable.h`
   - Declares `IResettable`, a minimal interface with a single `reset()` method
@@ -130,10 +138,15 @@ For headless or CI testing, use:
 
  - `game/include/pause_controller.h` / `game/src/pause_controller.cpp`
   - Handles pause toggling and the pause menu (Continue / Restart Level / Options / Title Screen)
-  - Owns an embedded Options sub-menu (Up/Down selects Music/SFX, Left/Right adjusts the level, B returns and commits to SRAM once)
+  - Owns an embedded Options sub-menu (Up/Down selects Music/SFX/Hard Mode, Left/Right adjusts the level or flips the toggle, B returns and commits to SRAM once)
+  - The Hard Mode row only appears once `GameState::hard_mode_unlocked` is set for the loaded slot
 
 - `game/include/timer.h` / `game/src/timer.cpp`
-  - Also declares `frames_to_time()`, a plain-division frame→mm:ss.cc converter used only when building level-select menu text (not in the per-frame HUD path, which keeps using `Timer`'s lookup tables)
+  - Also declares `frames_to_time()`, a plain-division frame→mm:ss.cc converter used only when building level-select and new-best-banner text (not in the per-frame HUD path, which keeps using `Timer`'s lookup tables)
+
+- `game/include/game_state.h`
+  - Declares `GameState`, the fixed-width per-save-slot record: level, deaths, timer, `furthest_level`, audio levels, per-level `best_time_frames`, the `no_death_clears` bitmask, and `hard_mode_unlocked`/`hard_mode_enabled`
+  - Also declares `set_no_death_clear()`/`has_no_death_clear()`, the small bit-flag helpers `LevelScene` and `LevelSelectScene` use to set/read a level's no-death badge
 
 ## Game Data and Assets
 
@@ -148,7 +161,7 @@ Music and sound assets are stored in `game/audio/`.
 
 ### Save Data
 
-`game/src/main.cpp` references `DataManager` and save state handling via `data_manager.reset()` and save slot selection.
+`game/src/main.cpp` references `DataManager` and save state handling via `data_manager.reset()` and save slot selection. Best times, no-death-clear badges, and the Hard Mode unlock flag are deliberately preserved across `DataManager::reset()` (the full-game-completion reset), while the current run's level/deaths/timer and the Hard Mode on/off toggle are cleared, matching how audio volume settings reset.
 
 ## Extending the Game
 
@@ -158,6 +171,8 @@ To add or modify a level:
 3. Set the level background and music items
 4. Update the `levels[]` array in `game/src/main.cpp` if you add new levels
 5. Update the `WorldIndex::WORLDS` table in `game/include/world_index.h` if you add, remove, or reorder levels, so the world/level-select scenes stay in sync with the flat `levels[]` array
+
+New levels automatically participate in Hard Mode, best-time tracking, and no-death clears without any extra authoring - these are runtime/save-state systems, not per-level data.
 
 To add a new gameplay object:
 1. Define its interface in `game/include/`

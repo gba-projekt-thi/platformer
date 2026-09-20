@@ -1,8 +1,10 @@
 # Components
 
 This page gives a **conceptual deep-dive** into the three largest gameplay
-systems: the **Player System**, the **Trap System**, and **Level Management**.
-Each section describes responsibilities, states, and interactions — not code.
+systems: the **Player System**, the **Trap System**, and **Level Management**,
+plus the smaller **Audio System** and **Progress Feedback** systems built on
+top of them. Each section describes responsibilities, states, and
+interactions — not code.
 
 For the high-level view of how these fit together, see
 [Project Architecture](architecture.md).
@@ -103,6 +105,9 @@ stateDiagram-v2
   updated total.
 - The level manager uses a **generic reset interface** to put every trap back to
   its starting state, so a respawn always faces the same hazard layout.
+- Whether *any* death occurred during the current attempt is tracked
+  separately from the running total, feeding the **no-death clear** record
+  described under [Progress Feedback](#54-progress-feedback) below.
 
 The locomotion component does **not** own respawn logic itself. Instead it
 raises a death through a small **callback interface**, and the player entity
@@ -234,6 +239,24 @@ each. Traps return to their start positions, re-arm, and (for chase traps)
 forget their tracking history. This keeps respawn deterministic: the same stage
 layout faces the player each time.
 
+### Hard Mode speed scaling
+
+Moving, Chase, and Ambush traps read a **Hard Mode multiplier** from the level
+manager at construction time (`LevelManager::hard_mode_multiplier()`), which
+returns a configured scale factor when the loaded save slot has Hard Mode
+enabled, or `1` otherwise. The multiplier is applied once, in the **trap
+factory**, to the relevant velocity/speed parameters before the concrete trap
+type is constructed - it is not re-applied per frame, and it never touches
+the underlying level data itself. Path traps are deliberately excluded: their
+pacing is authored as a waypoint-to-waypoint frame count rather than a
+velocity, which would need separate handling to scale safely.
+
+Because the scaling happens at construction, toggling Hard Mode takes effect
+the next time a level loads (on Continue/Restart from the pause menu, or on
+the next level transition) rather than retroactively on already-placed traps
+mid-level. See [Game Concepts — Hard Mode](game-concepts.md#hard-mode) for the
+player-facing unlock/toggle flow.
+
 ---
 
 ## 5.3 Level Management
@@ -276,11 +299,14 @@ A stage goes through four phases:
 
 1. **Load.** The manager receives the stage's declarative data and builds the
    runtime world: place the platform sprites and register their collision
-   bodies; create the triggers; construct each trap through the factory and add
-   it to both the trap list and the resettable list; place the door; set the
-   music and background; configure the camera bounds and horizontal bounce
-   boundary; set the player's spawn point; establish the save-sync baseline;
-   reset the level's internal frame clock used for the best-time record.
+   bodies; create the triggers; construct each trap through the factory
+   (applying the Hard Mode multiplier where relevant - see
+   [Trap System](#hard-mode-speed-scaling) above) and add it to both the trap
+   list and the resettable list; place the door; set the music and
+   background; configure the camera bounds and horizontal bounce boundary;
+   set the player's spawn point; establish the save-sync baseline (including
+   the no-death-clear baseline); reset the level's internal frame clock used
+   for the best-time record.
 2. **Run (per frame).** Each frame the manager updates the pause controller,
    the level clock, the player, the traps, the door, and the save-sync
    controller, then reports an outcome to the calling scene:
@@ -288,7 +314,9 @@ A stage goes through four phases:
    - **LevelComplete** — the door was reached; advance.
    - **ReturnToTitle** — the player chose "Title" from the pause menu.
 3. **Reset (optional).** On player death or a manual restart, the manager walks
-   its resettable list, restoring traps to their initial states.
+   its resettable list, restoring traps to their initial states. A death also
+   disqualifies the current attempt from earning a no-death-clear badge (see
+   [Progress Feedback](#54-progress-feedback) below).
 4. **Unload.** When leaving the stage, the manager releases every resource —
    sprites, backgrounds, music — so the next scene starts with a clean pool.
 
@@ -316,7 +344,9 @@ A stage is defined by immutable, ROM-resident data describing:
 
 Keeping stage contents as static data means designers can add or tune stages
 without touching engine or gameplay code paths — see
-[Extensibility Guide](extensibility.md).
+[Extensibility Guide](extensibility.md). Hard Mode deliberately sits outside
+this list: it is a runtime multiplier applied at load time, not a property a
+stage's data ever encodes, so no stage needs a "hard mode variant" authored.
 
 ### Camera systems
 
@@ -327,18 +357,76 @@ and clamps to the world's edges. The same world-width value also sets the
 duck's horizontal bounce boundary, so the duck never leaves the intended play
 area.
 
-### Resource management
+---
 
-The level manager holds its collections in **fixed-capacity** containers sized
-to the maximum the game expects. This choice avoids heap fragmentation on a
-device where memory is precious and long play sessions must remain stable. On
-unload, every resource is explicitly released before the next stage loads, so
-the next stage's assets can claim the same sprite slots and palettes without
-contention.
+## 5.4 Progress Feedback
+
+Beyond the always-on HUD (death counter + timer), three smaller systems give
+the player feedback about their progress against their own past runs. All
+three read from fields already tracked in the per-slot save state - none
+needed a new persistent counter of their own.
+
+```mermaid
+graph TD
+    GS[GameState<br/>best_time_frames / no_death_clears]
+    LM[Level Manager] -->|records attempt result| LS[Level Scene]
+    LS -->|compares to stored best| GS
+    LS -->|beat it?| Banner[New Best banner]
+    LS -->|zero deaths this attempt?| Badge[No-death clear bit]
+    Badge --> GS
+    GS --> LSel[Level Select<br/>time + '*' badge]
+    GS --> WSel[World Select<br/>stats line]
+```
+
+### New Best banner
+
+When the door is reached, the level scene compares the just-finished
+attempt's frame count against that level's stored `best_time_frames` entry.
+If it's a new record (including the level's first-ever clear), the scene:
+
+1. Updates the stored best time.
+2. Holds the scene on a **"New Best!"** banner showing the new time
+   (mm:ss.cc) and a "Press A to continue" prompt, instead of transitioning
+   immediately.
+3. Only proceeds to the next level (or the kiss scene, on the final level)
+   once the player presses A or Start.
+
+The level-clear logic itself (advancing `level`/`furthest_level`, persisting
+deaths/timer) is unaffected by whether a banner shows - the banner only gates
+the *scene transition*, not whether progress was recorded.
+
+### No-death clears
+
+Separately from the running death total, the save-sync controller tracks
+whether the player's death count has changed since the level was loaded (or
+since the last reset/restart). If the duck reaches the door with that count
+unchanged - i.e. this specific attempt had zero deaths - the level scene sets
+a bit for that level in a `no_death_clears` bitmask (one bit per level,
+stored per save slot, same indexing as `best_time_frames`).
+
+This is a "have I ever done this" record, not a per-attempt flag: once set
+for a level, it stays set (it survives a full-game reset the same way
+`best_time_frames` does) even if a later attempt on that level does involve a
+death. Level Select reads the bit to append a trailing `*` to that level's
+best-time readout once it's been set.
+
+### World-select stats line
+
+World Select's menu already lists each world with a locked/unlocked state
+derived from `furthest_level`. Underneath that list, a single aggregate line
+is computed straight from the loaded save slot's existing fields:
+
+- **Deaths** — the slot's running total death count (not per-level).
+- **Cleared** — how many levels have a non-zero `best_time_frames` entry
+  (i.e. have been finished at least once), out of the total level count.
+
+Nothing new is written to the save for this line; it's a read-time
+aggregation over data the level-clear and death-tracking systems already
+maintain, rebuilt whenever the menu is (re)built.
 
 ---
 
-## 5.4 Audio System
+## 5.5 Audio System
 
 Sound is split across two independent volume levels the player can tune from
 the pause menu: **music** and **SFX**, each 0-4 (4 = full volume).
@@ -350,6 +438,8 @@ graph TD
     AS --> SFX[One-shot SFX<br/>play_sfx()]
     PC[Pause Controller<br/>Options sub-menu] --> AS
     AS --> GS[GameState<br/>music_volume / sfx_volume]
+    PC -->|once unlocked| HM[Hard Mode row]
+    HM --> GS2[GameState<br/>hard_mode_enabled]
 ```
 
 ### AudioSettings
@@ -372,17 +462,29 @@ The two levels are mirrored into `GameState::music_volume` /
 `GameState::sfx_volume` (per save slot) and restored into the
 `AudioSettings` singleton whenever a slot loads — `LevelManager::restoreHUD()`
 does this alongside the existing deaths/timer restoration, so it covers both
-the level manager's construction and `StartScene`'s post-load path.
+the level manager's construction and `StartScene`'s post-load path. Hard
+Mode's unlock/toggle fields live directly on `GameState` instead
+(`hard_mode_unlocked`, `hard_mode_enabled`), since - unlike volume - they have
+no engine-layer singleton counterpart to restore into; `LevelManager` reads
+`hard_mode_enabled` straight off the data manager's state whenever the trap
+factory needs the current multiplier.
 
 ### The Options sub-menu
 
-The **pause controller** gained a fourth main-menu entry, **Options**, which
-switches into an embedded sub-menu rather than triggering a scene transition
-— adjusting sound never leaves gameplay. Up/Down selects Music or SFX,
-Left/Right steps the level by one, and B returns to the main pause menu. The
-change is written to SRAM once, on leaving the sub-menu, matching the
-project's general save-sync policy of writing only on meaningful,
-infrequent events rather than every keypress.
+The **pause controller** has a main-menu entry, **Options**, which switches
+into an embedded sub-menu rather than triggering a scene transition —
+adjusting sound (or Hard Mode) never leaves gameplay. Up/Down selects a row,
+Left/Right steps Music/SFX by one level or flips the Hard Mode toggle, and B
+returns to the main pause menu. The change is written to SRAM once, on
+leaving the sub-menu, matching the project's general save-sync policy of
+writing only on meaningful, infrequent events rather than every keypress.
+
+The sub-menu always shows two rows (Music, SFX); a third **Hard Mode** row is
+appended only once `GameState::hard_mode_unlocked` is set for the loaded
+slot - see [Game Concepts — Hard Mode](game-concepts.md#hard-mode) for the
+unlock condition and gameplay effect, and
+[Trap System — Hard Mode speed scaling](#hard-mode-speed-scaling) above for
+how the toggle changes trap behavior.
 
 ---
 
