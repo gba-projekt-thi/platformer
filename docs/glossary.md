@@ -8,8 +8,8 @@ treatment.
 
 **Ambush trap** — A hazard that stays dormant until the player comes within
 range, then lunges once in a fixed direction and returns; punishes
-approaching disguised or similar-looking objects carelessly. See
-[Components — Trap System](components.md).
+approaching disguised or similar-looking objects carelessly. Speeds up under
+Hard Mode. See [Components — Trap System](components.md).
 
 **AudioSettings** — Engine-level singleton holding the player's current
 music/SFX volume levels; read by the scene manager during fades and by SFX
@@ -28,7 +28,9 @@ advancing sprite frames based on movement state and facing. See
 **Best time / personal record** — A level's fastest recorded clear time
 (frames from level load to door reached, not reset on death within an
 attempt), shown in the level-select screen and persisted per save slot
-across game completions. See [Components — Level Management](components.md).
+across game completions. Beating it triggers the
+[New Best banner](#new-best-banner). See
+[Components — Level Management](components.md).
 
 **Base trap** — A static, always-dangerous hazard. The simplest trap category;
 can still animate its sprite while remaining motionless. See
@@ -57,7 +59,7 @@ and clamps to the edges for wider (scrolling) worlds. See
 [Components — Level Management](components.md).
 
 **Chase trap** — A hazard that trails the player and closes in as they advance,
-but never retreats; punishes standing still. See
+but never retreats; punishes standing still. Speeds up under Hard Mode. See
 [Components — Trap System](components.md).
 
 **Collision layer** — A bitflag category (player, trap, platform, trigger, door)
@@ -115,7 +117,19 @@ because the hardware lacks a fast floating-point unit. See
 ## G
 
 **Game state** — The small, fixed-width persistent record (level, deaths,
-timer) stored per save slot. See [Architecture](architecture.md).
+timer, best times, no-death-clear badges, audio levels, Hard Mode
+unlock/toggle) stored per save slot. See [Architecture](architecture.md).
+
+## H
+
+**Hard Mode** — An unlockable, per-save-slot difficulty toggle: completing the
+game once permanently unlocks it, after which it can be switched on/off from
+the pause menu's Options sub-menu. While enabled, Moving, Chase, and Ambush
+trap speeds are scaled up via a multiplier applied at trap-construction time;
+Path traps are unaffected. The unlock persists across a full-game reset; the
+On/Off toggle itself resets to off, like the audio volume settings. See
+[Game Concepts — Hard Mode](game-concepts.md#hard-mode) and
+[Components — Trap System](components.md#hard-mode-speed-scaling).
 
 ## I
 
@@ -152,22 +166,38 @@ motionless while cycling animation frames. See
 [Components — Trap System](components.md).
 
 **Moving trap** — A trigger-activated hazard driven by per-frame acceleration up
-to a max velocity. See [Components — Trap System](components.md).
+to a max velocity. Speeds up under Hard Mode. See
+[Components — Trap System](components.md).
+
+## N
+
+**New Best banner** — An on-screen banner ("New Best!" plus the new time) shown
+when a level is cleared faster than its previously stored personal-best time.
+Holds the level-complete scene until the player presses A/Start, delaying the
+transition to the next level (not the record itself, which is saved
+immediately). See
+[Components — Progress Feedback](components.md#54-progress-feedback).
+
+**No-death clear** — A permanent, per-level, per-save-slot badge earned by
+clearing a level during an attempt with zero deaths. Shown as a trailing `*`
+next to that level's best time in Level Select; survives a full-game reset
+the same way best times do. See
+[Components — Progress Feedback](components.md#54-progress-feedback).
 
 ## O
 
 **Options menu** — The pause menu's embedded sub-menu for adjusting music
-and SFX volume, reachable without leaving gameplay. See
-[Components — Audio System](components.md).
+and SFX volume, and - once unlocked - toggling Hard Mode, reachable without
+leaving gameplay. See [Components — Audio System](components.md).
 
 ## P
 
 **Path trap** — A hazard that interpolates along a defined route of relative
-waypoints; used for patrols and figure-8 motion. See
+waypoints; used for patrols and figure-8 motion. Unaffected by Hard Mode. See
 [Components — Trap System](components.md).
 
 **Pause controller** — Handles pause toggling and the pause menu (continue /
-restart / title). See [Components](components.md).
+restart / options / title). See [Components](components.md).
 
 **Physics body** — The shared engine concept giving an entity position, motion,
 and collision-layer participation. Used by player, traps, triggers, platforms,
@@ -196,7 +226,8 @@ session, owned by the player HUD. See
 start screen. See [Game Concepts](game-concepts.md).
 
 **Save sync controller** — Owns the *when-to-save* policy; commits deaths/timer
-to SRAM only on meaningful changes (or when forced). See
+to SRAM only on meaningful changes (or when forced), and tracks whether the
+current level attempt has had zero deaths for the no-death-clear check. See
 [Architecture](architecture.md).
 
 **SRAM** — Battery-backed save memory; writes are slow and limited, motivating
@@ -209,6 +240,12 @@ instances are created from them at load and released at unload. See
 **State machine (Player)** — Tracks coarse movement state (idle / run / jump /
 fall). See [Components — Player System](components.md).
 
+**Stats line** — The single aggregate line ("Deaths: N  Cleared: X/Y") shown on
+World Select, computed at read time from the loaded save slot's existing
+death total and per-level best-time records - no separate counter is stored
+for it. See
+[Components — Progress Feedback](components.md#world-select-stats-line).
+
 ## T
 
 **Tracker module** — Compact pattern-based music format played back efficiently
@@ -219,7 +256,8 @@ the duck enters it; may start active or inactive. See
 [Level Design](level-design.md).
 
 **Trap factory** — The mechanism that constructs the correct trap subtype from a
-stage-data entry. See [Components — Trap System](components.md).
+stage-data entry, and applies the Hard Mode speed multiplier where relevant.
+See [Components — Trap System](components.md).
 
 **Trap** — Any hazard that kills the duck on contact. See
 [Components — Trap System](components.md).

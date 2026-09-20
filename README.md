@@ -110,7 +110,9 @@ This repository includes a small GBA platformer built with the Butano engine. Yo
 
 - A start screen with three save slots (level, deaths, and run timer persist to SRAM)
 - A world-select screen and a level-select screen for jumping directly to any already-reached world or level (press B on the start screen to reach them)
-- Level-select shows each unlocked level's personal-best clear time once one has been recorded
+- A world-select stats line showing total deaths and the number of levels cleared for the loaded save slot, computed from existing save data
+- Level-select shows each unlocked level's personal-best clear time once one has been recorded, marked with a `*` if that level has ever been cleared without a single death (a "no-death clear")
+- A "New Best!" banner shown on finishing a level faster than its stored personal-best time, held until the player presses A/Start to continue
 A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each culminating in a Hollow-Knight-style boss gauntlet level, defined across `game/include/level/levels_world1.h`-`levels_world5.h` (17 levels total). World 5 adds one more after its boss: a quiet, trap-free finale ending in a reunion with Susanne.
 - Level progression through a door at the end of each stage (occasionally a narrative stand-in for the door, like Susanne in World 5's finale), ending in a celebratory kiss scene
 - Platform placement and collision defined by level data
@@ -120,6 +122,7 @@ A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each 
 - Background music per world and tilemap backgrounds
 - A death counter and run timer HUD
 - Adjustable music/SFX volume via a pause-menu Options sub-menu, persisted per save slot
+- A Hard Mode toggle in the same Options sub-menu: unlocked the first time the game is completed, it speeds up Moving/Chase/Ambush trap velocities for a tougher replay (Path traps are unaffected). The unlock is a permanent, per-save achievement; the toggle itself resets to off like the audio settings
 - Player movement with acceleration, maximum speed, gravity, and fall speed clamping
 - Jump mechanics with jump buffering and coyote time for more forgiving platforming
 - Variable jump height based on how long the jump button is held

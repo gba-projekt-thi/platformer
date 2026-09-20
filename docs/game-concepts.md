@@ -25,7 +25,9 @@ flowchart LR
 
 The loop is short and forgiving: dying sends the duck back to the spawn point,
 the **death counter** increments, and the player retries immediately. The
-**run timer** keeps counting so speedrun-style play is measurable.
+**run timer** keeps counting so speedrun-style play is measurable, and a
+level's personal-best clear time is recorded (and flashed on-screen) whenever
+it's beaten - see [New Best banner](#new-best-banner) below.
 
 ## Player capabilities and controls
 
@@ -92,12 +94,14 @@ distinct identity.
 
 The player can choose among three **save slots** on the start screen. Each
 slot tracks the current stage, total deaths, the run timer, the chosen
-music/SFX volume, and a personal-best clear time per level. Save data is
-stored to SRAM and loaded on boot.
+music/SFX volume, the Hard Mode unlock/toggle state, a personal-best clear
+time per level, and a no-death-clear badge per level.
 
-Per-level best times are treated as durable records rather than "current
-run" progress: finishing the entire game resets level/deaths/timer to start
-a fresh run, but best times survive that reset.
+Per-level best times and no-death badges are treated as durable records
+rather than "current run" progress: finishing the entire game resets
+level/deaths/timer to start a fresh run, but best times, no-death badges, and
+the Hard Mode unlock all survive that reset (the Hard Mode *toggle* itself
+does not - see [Hard Mode](#hard-mode) below).
 
 ### Pause & recovery
 
@@ -106,8 +110,35 @@ During gameplay, opening the pause menu offers:
 - **Continue** — resume the current stage.
 - **Restart Level** — reset the current stage's traps and respawn the duck.
 - **Options** — adjust music and SFX volume (0-4), without leaving the
-  paused overlay. Persisted per save slot.
+  paused overlay. Persisted per save slot. Once Hard Mode has been unlocked
+  (see below), a third row lets the player toggle it on/off from here too.
 - **Title Screen** — leave to the title (progress is saved).
+
+### Hard Mode
+
+Hard Mode is an unlockable, per-save-slot difficulty toggle aimed at replay
+value once a save has already finished the game once:
+
+- **Unlock condition.** Completing the game (reaching the final door of
+  World 5's finale) permanently unlocks Hard Mode for that save slot. The
+  unlock is a one-way achievement flag - it is never re-locked, including
+  by starting a fresh run on the same slot.
+- **Toggling it.** Once unlocked, a "Hard Mode" row appears at the bottom of
+  the pause menu's Options sub-menu, alongside Music and SFX. Left/Right (or
+  either direction on the row) flips it On/Off; the change commits the same
+  way Music/SFX do - once, on leaving the sub-menu, not on every keypress.
+- **Effect.** While enabled, Moving, Chase, and Ambush traps move faster
+  (their velocities are scaled up). Path traps are deliberately unaffected,
+  since a patrol's speed is authored as a frame count between waypoints
+  rather than a velocity.
+- **Persistence.** The On/Off toggle itself resets to Off on a fresh
+  run/reset, the same way the audio volume settings do - only the *unlock*
+  is a permanent record.
+
+Hard Mode reuses the exact same level layouts, traps, and triggers; nothing
+about a stage's data changes. It exists purely as a value multiplier applied
+at trap-construction time, so it costs no extra level content or entity
+budget - see [Components — Trap System](components.md).
 
 ## Level structure (player-facing view)
 
@@ -140,6 +171,9 @@ From a player's perspective, traps come in a few recognizable kinds:
   like a chest among other chests) until the duck gets close, then lunge
   once and retreat. They punish approaching without care rather than
   punishing hesitation.
+
+Moving, Chase, and Ambush hazards all move faster when Hard Mode is enabled -
+see [Hard Mode](#hard-mode) above.
 
 For the internal behavior of each, see [Components — Trap System](components.md).
 
@@ -187,6 +221,8 @@ exists purely to let the tension of the boss fight settle before the game's
 ending, the way a quiet epilogue follows a climax. Mechanically it's still
 "reach the door" - Susanne stands in for the door itself, so the same
 completion path applies, just without anything to dodge on the way there.
+Reaching her is also what unlocks Hard Mode for the save slot - see
+[Hard Mode](#hard-mode) above.
 
 ## Audio & visual identity
 
@@ -218,12 +254,42 @@ A small **head-up display** shows:
 Both are owned by the player's HUD component and toggle visibility when the
 game is in a non-gameplay scene (e.g. title or kiss).
 
+## Progress feedback
+
+Beyond the per-frame HUD, a few moments call out progress explicitly:
+
+### New Best banner
+
+Finishing a level in less time than its previously stored personal-best
+freezes the level-clear moment on a "New Best!" banner, showing the new
+best-time (mm:ss.cc) and a "Press A to continue" prompt. The game only
+advances to the next stage (or to the kiss scene, on the final level) once
+the player acknowledges it with A or Start - the level clear itself is not
+delayed, only the transition that follows it.
+
+### No-death clears
+
+If a level is cleared during an attempt in which the duck never died even
+once, that level earns a permanent **no-death clear** badge for the save
+slot. Level Select marks it with a trailing `*` next to that level's
+best-time readout, so a fully clean clear is visually distinct from an
+ordinary one. Like best times, this badge survives a full-game reset.
+
+### World-select stats
+
+Pressing B on the start screen (see below) leads to World Select, which also
+shows a one-line summary for the loaded save slot: total deaths accumulated
+on that slot, and how many levels have a recorded best time out of the total
+level count. It's a quick "how am I doing on this save" readout, computed
+from data that's already being tracked - no separate counter is needed.
+
 ## Death, respawn, and difficulty
 
 Death is cheap: the duck respawns at the stage's spawn point with no lives
 system, and the death counter is the only penalty. This encourages experimentation
 and fast retries, which suits short stages. The difficulty therefore comes from
-trap timing and platform layout, not from limited attempts.
+trap timing and platform layout (and, once unlocked, Hard Mode's speed
+multiplier), not from limited attempts.
 
 ## Thematic personality
 
@@ -243,6 +309,9 @@ that clashes with it should be reconsidered or thematically adapted.
   legible.
 - **Thematic coherence.** Every element in a world should feel like it belongs
   to that world's theme.
+- **Replay without new content.** Hard Mode raises the ceiling for players who
+  already finished the game using the existing level roster, rather than
+  demanding new stages for every difficulty step.
 
 ## Related
 - [Index](index.md)
