@@ -213,13 +213,19 @@ attacks rather than platforming, the way a Hollow Knight boss arena plays.
   depending on the world's theme.
 - **A constant patrol.** One hazard (usually a sweeping `PATH` trap) is
   active for the whole fight, so the arena never feels static between
-  triggered attacks.
+  triggered attacks. World 3's non-boss scroll level raises this to two
+  patrols sweeping the identical route exactly out of phase with each
+  other - a taste of "more than one thing to track at once" before the
+  boss layers in everything else.
 - **Punish lingering, not hesitating.** A mid-arena `AMBUSH` hazard,
   disguised as scenery, lunges only if the duck stays close - it rewards
   pressing on rather than camping a safe spot.
 - **An enrage pursuer (Worlds 4-5).** A `CHASE` hazard trails the duck for
   the whole fight, closing the gap whenever the duck advances. It keeps
-  forward momentum mandatory in the two hardest boss fights.
+  forward momentum mandatory in the two hardest boss fights. World 4's
+  second scroll level gives it a gentler non-boss preview - paired with an
+  `AMBUSH` bug there, so pursuit pressure and dodge timing aren't both new
+  at once when the boss tightens both.
 - **The door is the win condition.** There is no health bar or hit
   count - reaching the door at the far end of the arena is "defeating"
   the boss.

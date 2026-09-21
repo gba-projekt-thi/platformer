@@ -119,13 +119,27 @@ to force the duck to time a crossing. Figure-8 and back-and-forth routes are
 both supported. A patrol can be gated behind a trigger so it only starts once
 the duck reaches the area it guards.
 
+**Variant - two phase-offset patrols.** A second `PATH` trap can run the
+*exact same route* as a first one, just starting from a different point in
+the loop, by giving it a rotated copy of the same waypoint array (same
+shape, same `path_waits`, same trigger, different starting index). The two
+then sweep in lockstep but permanently out of phase, periodically crossing
+rather than moving together - genuinely new difficulty from data alone, no
+new path shape or trap type. `LEVEL_WORLD3_SCROLL` does this with
+`LEVEL3_BRANCH_PATH` / `LEVEL3_BRANCH_PATH_PHASE2` (`levels_common.h`).
+
 ### 4. The pursuer (Chase trap)
 
 A hazard that trails the duck and closes in as they advance, but never retreats.
 This is a **pressure** mechanic: it punishes hesitation and standing still. It
 turns an otherwise-safe run into a forced march and belongs in the most
 intense, late-game stages. Because it ignores terrain, it flies freely over the
-layout, so use it where the duck must keep running right.
+layout, so use it where the duck must keep running right. It doesn't have to
+be boss-exclusive: `LEVEL_WORLD4_SCROLL_2` gives it a gentler first outing
+(more follow distance, lower speed) alongside an `AMBUSH` bug, so the World 4
+boss's much tighter chaser isn't the player's first time reading pursuit
+pressure and a lunging dodge at the same time - see [The gauntlet](#6-the-gauntlet-boss-level)
+below for how the boss escalates it.
 
 ### 5. The disguise (Ambush trap)
 

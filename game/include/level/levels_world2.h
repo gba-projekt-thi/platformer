@@ -102,8 +102,12 @@ constexpr TrapData world2_scroll_traps[] = {
     {TrapType::BASE, 80, 24, 12, 8, 0, 0, bn::sprite_items::pipe16x16, 26,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0},
 
+    // Same can, same trigger pattern as can_release1 above, retuned 20%
+    // faster (3 -> 3.6px/frame) now that the player has already met the
+    // slower version once in this level - reuses the existing sprite and
+    // MOVING behavior for a felt escalation from pure data, no new art.
     {TrapType::MOVING, 160, -32, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
-     TRAP_GRAPHICS_INDEXES_3, 0.0, -3, 3, NO_PATH_TRAP, 0, 0, 0,
+     TRAP_GRAPHICS_INDEXES_3, 0.0, -3.6, 3.6, NO_PATH_TRAP, 0, 0, 0,
      "can_release2"}};
 
 const LevelData LEVEL_WORLD2_SCROLL = {
