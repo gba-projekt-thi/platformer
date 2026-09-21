@@ -42,6 +42,9 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
     void set_hud_visible(bool visible);
     // Updates the horizontal bounce boundary for the current level.
     void set_horizontal_bound(bn::fixed bound);
+    // Per-level ground braking multiplier (1 = normal, <1 = slippery). See
+    // PlayerLocomotion::set_ground_friction().
+    void set_ground_friction(bn::fixed scale);
     // Get & Set the count of player deaths.
     unsigned int get_deaths() const;
     void set_deaths(unsigned int deaths);

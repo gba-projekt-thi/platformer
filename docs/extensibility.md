@@ -22,11 +22,15 @@ than fighting it.
       C --> D[Test clearability]
    ```
 3. **Author the trigger list.** Define the invisible rectangles that will
-   activate your timed hazards; optionally start one already active. Give a
-   trigger a stable `name` if any trap will bind to it — this keeps the
-   binding intact even if you later insert or reorder triggers in the same
-   level. Falling back to index-based binding is still supported for traps
-   that don't set a name.
+   activate your timed hazards; optionally start one already active. Give
+   every trigger a stable `name` - every MOVING/PATH trap binds to its
+   trigger by this name (via `TrapData::trigger_name`), never by array
+   position, so inserting or reordering triggers in the same level never
+   silently rebinds a trap. A single named trigger can activate more than
+   one trap at once - just point several traps' `trigger_name` at the same
+   trigger to build a trigger chain (see `level0_traps` in
+   `levels_world1.h` for a worked example: one trigger releases both a
+   falling hazard and a patrol).
 
 ### Conceptual steps
 
@@ -39,10 +43,10 @@ than fighting it.
 3. **Author the trigger list.** Define the invisible rectangles that will
    activate your timed hazards; optionally start one already active.
 4. **Author the trap list.** For each hazard, choose a trap type and provide its
-   appearance, optional animation, activation (trigger index, or direct player
-   tracking for a chase trap), and the behavior parameters its type needs
-   (acceleration for moving, waypoints for path, follow distance/speed for
-   chase).
+   appearance, optional animation, activation (a named trigger, or direct
+   player tracking for a chase/ambush trap), and the behavior parameters its
+   type needs (acceleration for moving, waypoints for path, follow
+   distance/speed for chase, range/speed/duration for ambush).
 5. **Set spawn, door, and world size.** The spawn is where the duck begins and
    respawns; the door is the exit; the world size determines whether the stage
    scrolls and sets the duck's horizontal bounce boundary.
@@ -127,6 +131,7 @@ graph TD
 | To change… | Modify |
 |------------|--------|
 | Movement speed, acceleration, gravity, jump strength, coyote/buffer frames, death height, screen-edge bounce | The **central player configuration** (physics values), then verify levels still clear |
+| How far the duck skids to a stop on one specific level (a slippery floor) | That level's `LevelData::ground_friction` - a per-level multiplier, no global config change needed |
 | How input becomes motion; ground detection; variable jump | **Locomotion** |
 | Which sprite frames appear for a state/facing | **Animator** and the player configuration's frame tables |
 | The coarse movement states and their transitions | **State machine** |
@@ -145,6 +150,15 @@ responsible approach:
 3. Update the documented spacing limits in the level-design material.
 4. Audit existing stages against the new envelope; adjust layouts that depended
    on the old one.
+
+`ACCELERATION` (ramp-up speed) is the one exception worth calling out: because
+`MAX_SPEED` dominates horizontal travel over any real distance, changing
+`ACCELERATION` alone barely moves the envelope and is safe to treat as a
+pure feel tweak rather than a full envelope re-derivation - it still climbs
+the same height and, if anything, reaches a hair further, never less.
+`DECELERATION` (braking) is a separate constant precisely so it can be tuned,
+or overridden per level via `ground_friction`, without touching the envelope
+at all - see [Level Design — Platform placement principles](level-design.md#platform-placement-principles).
 
 ### Adding a new player capability
 

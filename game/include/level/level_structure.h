@@ -251,4 +251,19 @@ struct LevelData {
     // the non-scrolling levels); larger values enable real scrolling.
     bn::fixed world_width = Cfg::Screen::WIDTH;
     bn::fixed world_height = Cfg::Screen::HEIGHT;
+
+    // -------------------------------------------------------------------------
+    // Feel
+    // -------------------------------------------------------------------------
+
+    // Multiplier on the duck's ground braking (Cfg::Player::DECELERATION),
+    // applied via Player::set_ground_friction() when the level loads.
+    // 1 = normal stopping (default, matches every level before this field
+    // existed). A value < 1 makes the level's floor slippery - the duck
+    // skids further before stopping - for level-to-level feel variation
+    // (e.g. a mossy World 3 forest floor) without touching acceleration,
+    // gravity, or jump speed, so it can never affect whether a platform or
+    // gap is reachable. Appended last so every existing level literal
+    // keeps compiling unchanged.
+    bn::fixed ground_friction = 1;
 };
