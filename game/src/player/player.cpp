@@ -90,6 +90,10 @@ void Player::set_horizontal_bound(bn::fixed bound) {
     _locomotion.set_horizontal_bound(bound);
 }
 
+void Player::set_ground_friction(bn::fixed scale) {
+    _locomotion.set_ground_friction(scale);
+}
+
 void Player::death() {
     _hud.on_player_death();
 

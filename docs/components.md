@@ -86,6 +86,26 @@ speed clamp, coyote/buffer frames, death height) live in a central
 configuration so designers can tune the feel in one place and have it propagate
 to every stage.
 
+### Ground friction
+
+Speeding up and braking are deliberately separate constants
+(`Cfg::Player::ACCELERATION` and `Cfg::Player::DECELERATION`), even though
+they used to share one value. Keeping them apart means either can be tuned
+without touching the other - most usefully, acceleration can be made
+snappier globally without also making braking snappier (which would quietly
+give every level more stopping precision than it was authored around).
+
+Braking is also the one movement value a level can override on its own:
+`LevelData::ground_friction` (default `1`) scales `DECELERATION` only,
+applied via `Player::set_ground_friction()` when the level loads. A value
+below `1` makes the floor slippery - the duck skids further before coming
+to a stop - which World 3's non-boss levels use for a mossy-forest feel.
+Because the override never touches acceleration, gravity, or jump speed,
+it cannot change how high or far a jump reaches; it only changes how
+precisely the duck can stop once it's on the ground. See
+[Level Design — Platform placement principles](level-design.md#platform-placement-principles)
+for why that distinction matters for level clearability.
+
 ### Death & respawn system
 
 Death is simple and forgiving:

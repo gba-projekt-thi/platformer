@@ -49,12 +49,12 @@ in advance. A fully-held jump reaches roughly:
 graph LR
     subgraph One jump envelope
       Climb[Max climb ~22px up]
-      Travel[Max horizontal travel ~50px]
+      Travel[Max horizontal travel ~54px]
     end
 ```
 
 Based on the central movement configuration, a single fully-held jump can climb
-about 22 pixels vertically and carry about 50 pixels horizontally. Descending is
+about 22 pixels vertically and carry about 54 pixels horizontally. Descending is
 essentially unconstrained in height as long as the duck stays above the death
 height and the horizontal gap remains inside the same envelope.
 
@@ -62,6 +62,15 @@ To stay **provably clearable**, the established convention is:
 
 - **Climbs ≤ 16px per jump.**
 - **Horizontal gaps ≤ 40px per jump.**
+
+Both limits are set well inside the *measured* envelope on purpose, so a
+comfortable margin survives small tuning passes to `Cfg::Player` - the
+envelope above already reflects the current values. A level's
+`ground_friction` (see [Extensibility Guide](extensibility.md)) never
+factors into this at all: it only scales how quickly the duck brakes while
+grounded, never acceleration, gravity, or jump speed, so a slippery floor
+can change how precisely a level plays without ever making a jump fall
+short of a platform it used to reach.
 
 These are deliberately *inside* the measured envelope (22 / 50), leaving a
 comfort margin so the intended path is always achievable even with imperfect

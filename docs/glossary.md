@@ -120,6 +120,13 @@ because the hardware lacks a fast floating-point unit. See
 timer, best times, no-death-clear badges, audio levels, Hard Mode
 unlock/toggle) stored per save slot. See [Architecture](architecture.md).
 
+**Ground friction** — A per-level multiplier (`LevelData::ground_friction`,
+default 1) on how quickly the duck brakes to a stop after releasing the
+D-Pad. Values below 1 give a slippery floor (World 3's non-boss levels use
+0.55). Only affects grounded braking - it never touches acceleration,
+gravity, or jump speed, so it can't make a platform unreachable. See
+[Level Design — Platform placement principles](level-design.md#platform-placement-principles).
+
 ## H
 
 **Hard Mode** — An unlockable, per-save-slot difficulty toggle: completing the

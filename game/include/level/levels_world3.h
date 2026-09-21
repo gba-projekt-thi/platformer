@@ -81,7 +81,13 @@ const LevelData LEVEL_3 = {
     // Player spawn
     {-96, 40},
     // Door position
-    {72, -64}};
+    {72, -64},
+    // World size (single-screen; spelled out so ground_friction below can
+    // be set - the same 240x160 default every non-scrolling level uses)
+    240,
+    160,
+    // Ground friction: mossy forest floor, noticeably slippery to stop on
+    0.55};
 
 // =============================================================================
 // WORLD 3 SCROLL - new, uses the scrolling camera (world_width=480)
@@ -150,7 +156,9 @@ const LevelData LEVEL_WORLD3_SCROLL = {
     {224, -16},
     // World size (enables scrolling)
     480,
-    160};
+    160,
+    // Ground friction: mossy forest floor, noticeably slippery to stop on
+    0.55};
 
 // =============================================================================
 // WORLD 3 BOSS - "Slitherman, Heart of the Forest" (world_width=520)
@@ -249,3 +257,7 @@ const LevelData LEVEL_WORLD3_BOSS = {
     // World size (enables scrolling)
     520,
     160};
+// Deliberately NOT given the slippery ground_friction the other two
+// World 3 levels use (see LEVEL_3 / LEVEL_WORLD3_SCROLL above) - a
+// dodge-heavy attack gauntlet is a bad place to also fight the floor,
+// so this boss keeps the default (1) traction.

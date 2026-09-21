@@ -25,7 +25,29 @@ inline constexpr int EDGE_MARGIN = 10;       // margin kept from the true
 
 namespace Player {
 // Physics
-inline constexpr bn::fixed ACCELERATION = 0.3;
+//
+// ACCELERATION was bumped from 0.3 to 0.38 for a snappier feel: the duck
+// reaches MAX_SPEED noticeably sooner (~100ms vs ~117ms), which reads as
+// more responsive without changing top speed or the jump arc's climb
+// height. It also very slightly *increases* max horizontal jump distance
+// (~52px -> ~54px), so every existing level stays within the same
+// provably-clearable envelope described in levels_common.h - if anything
+// with a hair more margin than before. Because MAX_SPEED (not
+// acceleration) dominates how quickly the duck covers any real distance,
+// this change is imperceptible for how much runway the player has to
+// react to a just-triggered hazard - see the comment on DECELERATION
+// below and LevelData::ground_friction in level_structure.h for the
+// knob that's actually meant to change stopping feel per level.
+inline constexpr bn::fixed ACCELERATION = 0.38;
+// Braking (releasing input) previously reused ACCELERATION for both
+// speeding up and slowing down. Split out as its own constant, kept at
+// the pre-tuning value, so the ACCELERATION bump above doesn't also make
+// stopping snappier - the duck still needs the same runway to come to a
+// full stop after a trigger fires as it always has. Levels can loosen
+// this per-stage via LevelData::ground_friction (a multiplier on this
+// value, default 1) for a deliberately slippery floor - see
+// PlayerLocomotion::set_ground_friction().
+inline constexpr bn::fixed DECELERATION = 0.3;
 inline constexpr int MAX_SPEED = 2;
 inline constexpr int JUMP_SPEED = -3;
 inline constexpr bn::fixed GRAVITY = 0.22;

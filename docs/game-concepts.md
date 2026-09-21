@@ -63,9 +63,16 @@ Several mechanics exist purely to make the duck *feel* responsive:
   duck rises, enabling precise short hops and full leaps.
 - **Fall speed clamp.** Prevents runaway fall speeds so the player can still
   steer while descending.
+- **Ground braking.** How quickly the duck comes to a stop after releasing
+  the D-Pad is its own tuning knob, separate from how quickly it speeds up.
+  Every world uses the same, snappy default - except Forest's mossy floor
+  (see below), which trades some of that precision for a distinct feel.
 
 Together, these create a "tight but forgiving" feel that the [Level Design](level-design.md)
-spacing rules then respect.
+spacing rules then respect. Braking is the one exception a level can opt
+out of on its own terms: it only changes how far the duck skids to a stop,
+never how high or far a jump can reach, so it can vary by level without
+risking a platform becoming unreachable.
 
 ## Game progression
 
@@ -88,7 +95,11 @@ The current world themes, in order, are:
 
 Each theme pairs a tilemap background, a music track, a set of themed trap
 sprites, and a platform tileset. This pairing is what gives each world its
-distinct identity.
+distinct identity. Forest also carries the theme into ground feel: its two
+non-boss levels have a noticeably slippery, mossy floor - the duck skids
+roughly twice as far before stopping there as it does everywhere else. The
+boss arena deliberately keeps normal footing, so the dodge-heavy fight
+doesn't also fight the floor.
 
 ### Save slots
 

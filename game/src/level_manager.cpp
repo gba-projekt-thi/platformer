@@ -60,6 +60,7 @@ void LevelManager::_reset_entities() {
 void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.teleport_to(level.player_data.x, level.player_data.y);
     _player.set_spawn_point(level.player_data.x, level.player_data.y);
+    _player.set_ground_friction(level.ground_friction);
     _save_sync.reset_baseline();
     _level_frame_count = 0;
 }
