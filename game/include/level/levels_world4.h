@@ -83,7 +83,11 @@ const LevelData LEVEL_WORLD4_SCROLL = {
 // =============================================================================
 // WORLD 4 SCROLL 2 - garden theme, second level (world_width=320)
 // Introduces AmbushTrap: a bug lurking in the gap between the korb
-// platforms that darts out once the duck gets close.
+// platforms that darts out once the duck gets close. Also gives the
+// CHASE mechanic its first appearance outside a boss fight - a second,
+// gentler bug trails the duck the whole level - so the Hive Queen's
+// relentless pursuit in the World 4 boss isn't the player's first time
+// reading a chaser's pressure alongside a lunging ambush.
 // =============================================================================
 
 constexpr PlatformData world4b_scroll_platforms[] = {
@@ -97,6 +101,15 @@ constexpr PlatformData world4b_scroll_platforms[] = {
     {152, 60, 16, 10, 0, 0, bn::sprite_items::flower1, 0}};
 
 constexpr TrapData world4b_scroll_traps[] = {
+
+    // Trailing bug, introducing CHASE outside a boss fight: eases toward
+    // 65px behind the duck at a gentle 1.3px/frame - slower and with more
+    // slack than the Hive Queen's 50px/1.8px/frame in the World 4 boss.
+    // Combined with the ambush bug below, standing still to plan the
+    // ambush dodge lets the chaser close the gap - the level's first
+    // taste of "pursuer pressure plus dodge timing" at once.
+    {TrapType::CHASE, -180, 24, 12, 12, 0, 0, bn::sprite_items::bug16x16, 1,
+     TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, NO_PATH_TRAP, 0, 65, 1.3},
 
     // Static bush hazard right after the first platform.
     {TrapType::BASE, -104, 56, 24, 24, 0, 0, bn::sprite_items::strauch32x32, 16,

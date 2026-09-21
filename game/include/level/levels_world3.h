@@ -134,6 +134,15 @@ constexpr TrapData world3_scroll_traps[] = {
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, LEVEL3_BRANCH_PATH, 20, 0, 0,
      "mid_trigger"},
 
+    // Second branch, one step higher up the same staircase, sweeping the
+    // identical loop exactly out of phase with the one above (same
+    // path_waits, same trigger, LEVEL3_BRANCH_PATH_PHASE2 instead of
+    // LEVEL3_BRANCH_PATH) - two branches to read at once instead of one,
+    // periodically crossing rather than moving together.
+    {TrapType::PATH, 144, 16, 32, 16, 0, 0, bn::sprite_items::branch32x16, 10,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, LEVEL3_BRANCH_PATH_PHASE2, 20, 0, 0,
+     "mid_trigger"},
+
     {TrapType::BASE, 168, 6, 12, 16, 0, 0, bn::sprite_items::branch32x16, 16,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0}};
 

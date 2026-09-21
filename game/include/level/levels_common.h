@@ -70,3 +70,17 @@ constexpr bn::fixed_point LEVEL3_BRANCH_PATH[] = {
     bn::fixed_point(-48, -8), bn::fixed_point(-24, -16),
     bn::fixed_point(0, -8),   bn::fixed_point(24, -16),
     bn::fixed_point(48, -8),  bn::fixed_point(24, 0)};
+
+// The exact same 8-point loop as LEVEL3_BRANCH_PATH, rotated by half a
+// cycle (starting at what was index 4 above). A second PathTrap using
+// this instead of LEVEL3_BRANCH_PATH - same sprite, same path_waits,
+// triggered at the same moment as a first trap using the original array
+// - patrols the identical route exactly out of phase with it: the two
+// are always on opposite sides of the loop, crossing paths periodically
+// rather than moving in lockstep. Data-only way to get "two phase-offset
+// patrols" without any new path shape or trap type.
+constexpr bn::fixed_point LEVEL3_BRANCH_PATH_PHASE2[] = {
+
+    bn::fixed_point(0, -8),   bn::fixed_point(24, -16), bn::fixed_point(48, -8),
+    bn::fixed_point(24, 0),   bn::fixed_point(0, 0),    bn::fixed_point(-24, 0),
+    bn::fixed_point(-48, -8), bn::fixed_point(-24, -16)};
