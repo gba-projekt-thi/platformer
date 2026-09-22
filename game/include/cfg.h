@@ -89,6 +89,16 @@ inline constexpr int X = -76;
 inline constexpr int Y = -50;
 }  // namespace NewBestBanner
 
+namespace Summary {
+// Same X as NewBestBanner - both center a similar-length longest line
+// ("Press A to continue"). Five lines total (title, time, deaths,
+// no-death clears, prompt); the prompt gets an extra LINE_SPACING gap
+// above it to read as a separate call-to-action, not a stat.
+inline constexpr int X = -76;
+inline constexpr int Y = -50;
+inline constexpr int LINE_SPACING = 16;
+}  // namespace Summary
+
 namespace HardMode {
 // Applied to MOVING (velocity/max_vel), CHASE (chase_speed) and AMBUSH
 // (speed) trap values in TrapFactory::create() when GameState::

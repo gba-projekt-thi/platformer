@@ -114,6 +114,12 @@ level/deaths/timer to start a fresh run, but best times, no-death badges, and
 the Hard Mode unlock all survive that reset (the Hard Mode *toggle* itself
 does not - see [Hard Mode](#hard-mode) below).
 
+Before picking a slot, each one already shows a hint of what's on it: "New"
+for a slot that's never been played, or the furthest world reached
+otherwise. It's a quick glance, not a full readout - see
+[World-select stats](#world-select-stats) below for the fuller picture once
+a slot is loaded.
+
 ### Pause & recovery
 
 During gameplay, opening the pause menu offers:
@@ -299,6 +305,18 @@ shows a one-line summary for the loaded save slot: total deaths accumulated
 on that slot, and how many levels have a recorded best time out of the total
 level count. It's a quick "how am I doing on this save" readout, computed
 from data that's already being tracked - no separate counter is needed.
+
+### Run-complete summary
+
+After the kiss scene, before the save slot resets for a fresh run, a short
+summary screen shows what the finished playthrough added up to: total time
+across every level's personal best, total deaths for the run, and how many
+levels were cleared without a single death. Like the World-select stats
+line, none of it is tracked specially for this screen - it's the same
+per-level best times and no-death badges every level clear already records,
+just totaled up once at the moment they're most worth seeing. The player
+acknowledges it with A or Start before the slot resets and the game returns
+to the title screen.
 
 ## Death, respawn, and difficulty
 

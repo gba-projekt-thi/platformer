@@ -36,4 +36,20 @@ inline constexpr WorldEntry WORLDS[] = {
 
 inline constexpr int WORLD_COUNT = sizeof(WORLDS) / sizeof(WORLDS[0]);
 
+// Returns the index into WORLDS of the world that `level_index` belongs to
+// - the highest-indexed world whose start_index is <= level_index. Same
+// boundary logic WorldSelectScene::_is_unlocked() already uses, factored
+// out so other screens (e.g. a save-slot progress preview) can answer
+// "which world is this save at" without duplicating it. Clamped to world
+// 0 for any level_index before the first world (i.e. never negative).
+inline int world_for_level(int level_index) {
+    int result = 0;
+    for (int i = 0; i < WORLD_COUNT; ++i) {
+        if (WORLDS[i].start_index <= level_index) {
+            result = i;
+        }
+    }
+    return result;
+}
+
 }  // namespace WorldIndex

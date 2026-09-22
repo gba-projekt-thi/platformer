@@ -445,6 +445,42 @@ Nothing new is written to the save for this line; it's a read-time
 aggregation over data the level-clear and death-tracking systems already
 maintain, rebuilt whenever the menu is (re)built.
 
+### Run-complete summary
+
+`SummaryScene` is a small scene inserted between `KissingScene` and
+`StartScene`, existing purely to total up what a finished playthrough
+recorded before that data gets reset. Its `init()` sums every entry of
+`best_time_frames` for a total-time readout, reads `deaths` directly, and
+counts `has_no_death_clear()` hits across the level list - the same fields
+`LevelSelectScene` and the World-select stats line already read, just
+aggregated once more, at the moment right after completion when the totals
+are most meaningful.
+
+Moving `DataManager::reset()` here (out of `KissingScene`, which used to
+call it directly once its timer expired) is what makes the ordering work:
+`SummaryScene::init()` reads `GameState` while it's still the just-finished
+run's live state, and only calls `reset()` itself once the player
+acknowledges the screen with A or Start - a held-scene-transition pattern
+matching the New Best banner's "read the state, then gate the transition on
+a button press" shape, not `KissingScene`'s own timer-based auto-advance.
+
+### Save-slot preview
+
+`StartScene` previews all three save slots before the player picks one, by
+calling the new `DataManager::peek_state(slot_id, out)` for each - a thin
+wrapper around the underlying `SaveManager::load()` that writes into a
+caller-supplied `GameState&` without touching the active slot, `_slot_index`,
+or any runtime state. This read happens exactly once, in `init()` (SRAM
+reads across all three slots on every visit to the start screen, never
+per-frame or per-keypress); moving the cursor only re-renders cached
+results via a `_rebuild_slot_list()` helper, mirroring the
+`_rebuild_menu()` pattern every other menu scene already uses. Each slot
+shows "New" if unused, or its furthest-reached world via the same
+`WorldIndex::world_for_level()` helper `WorldSelectScene`'s unlock check
+uses internally - factored out to `world_index.h` specifically so both call
+sites share one implementation of "which world is this `furthest_level`
+in."
+
 ---
 
 ## 5.5 Audio System

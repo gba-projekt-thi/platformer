@@ -227,10 +227,20 @@ checks run before each commit. See
 session, owned by the player HUD. See
 [Components — Player System](components.md).
 
+**Run-complete summary** — `SummaryScene`, shown once between the kiss scene
+and the title screen: total time across every level's personal best, total
+deaths, and a no-death-clear count for the finished playthrough. Purely
+aggregates existing per-level records; acknowledged with A/Start, which is
+also when the save slot actually resets. See
+[Components — Progress Feedback](components.md#run-complete-summary).
+
 ## S
 
 **Save slot** — One of three independent persistence slots selectable on the
-start screen. See [Game Concepts](game-concepts.md).
+start screen, each previewed there as "New" or its furthest-reached world
+before being picked (`DataManager::peek_state()`, read-only, doesn't touch
+the active slot). See [Game Concepts](game-concepts.md) and
+[Components — Progress Feedback](components.md#save-slot-preview).
 
 **Save sync controller** — Owns the *when-to-save* policy; commits deaths/timer
 to SRAM only on meaningful changes (or when forced), and tracks whether the
