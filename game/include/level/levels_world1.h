@@ -170,9 +170,14 @@ constexpr TrapData world1_scroll_traps[] = {
      16, TRAP_GRAPHICS_INDEXES_8, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Second falling bubble in the extended section, triggered by
-    // "release2".
+    // "release2". Same sprite and MOVING behavior as "release1" above,
+    // retuned 20% faster (4 -> 4.8px/frame) now that the player has
+    // already met the slower version once in this level - same
+    // in-level-escalation treatment as LEVEL_WORLD2_SCROLL's
+    // can_release1/can_release2.
     {TrapType::MOVING, 160, -32, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
-     TRAP_GRAPHICS_INDEXES_3, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "release2"}};
+     TRAP_GRAPHICS_INDEXES_3, 0.0, 4.8, 4.8, NO_PATH_TRAP, 0, 0, 0,
+     "release2"}};
 
 const LevelData LEVEL_WORLD1_SCROLL = {
 
@@ -225,7 +230,7 @@ constexpr TriggerData world1_boss_triggers[] = {
     {-160, 40, 32, 40, false, "wave1"},
     {-50, 40, 32, 40, false, "wave2"},
     {50, 40, 32, 40, false, "wave3"},
-    {150, 40, 32, 40, false, "wave4"}};
+    {132, 40, 32, 40, false, "wave4"}};
 
 constexpr TrapData world1_boss_traps[] = {
 

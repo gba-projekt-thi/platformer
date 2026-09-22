@@ -88,6 +88,11 @@ const LevelData LEVEL_WORLD5_SCROLL = {
 // WORLD 5 SCROLL 2 - dungeon theme, second level (world_width=380)
 // Introduces the AmbushTrap variant of the mimic: previously purely
 // decorative animation, it now actually lunges once the duck gets close.
+// The axe from the first World 5 level also returns here, tuned a notch
+// tighter than there and a notch gentler than the boss - filling in the
+// missing middle rung of its own escalation (scroll1 -> scroll2 -> boss)
+// and giving CHASE+AMBUSH their first pairing in World 5 outside the
+// boss fight.
 // =============================================================================
 
 constexpr PlatformData world5b_scroll_platforms[] = {
@@ -102,6 +107,14 @@ constexpr PlatformData world5b_scroll_platforms[] = {
     {176, 60, 32, 16, 0, 0, bn::sprite_items::bars32x32, 0}};
 
 constexpr TrapData world5b_scroll_traps[] = {
+
+    // The axe, back for a second round: 34px follow distance / 2.75px per
+    // frame, between LEVEL_WORLD5_SCROLL's introductory 40/2.5 and
+    // LEVEL_WORLD5_BOSS's tighter 28/3.0. Same sprite, no new graphics -
+    // just closes the gap a little faster and sits a little closer than
+    // the first time the duck met it.
+    {TrapType::CHASE, -196, 20, 32, 16, 0, 0, bn::sprite_items::axe64x32, 1,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 34, 2.75},
 
     // Static rusty bar hazard in the first gap.
     {TrapType::BASE, -140, 60, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,

@@ -112,6 +112,17 @@ The pattern's power is that the hazard's *timing* is authored by the trigger
 placement, so the same falling brick can feel like a surprise or a telegraph
 depending on where its trigger sits.
 
+**Variant - in-level escalation.** When the same sprite/trap appears twice
+in one level via two separate triggers, retune the later instance faster
+than the earlier one (same sprite, same behavior, just tighter numbers) -
+the player already met the pattern once, so the second copy can ask more
+of them without needing new art or a new trap type.
+`LEVEL_WORLD1_SCROLL` ("release1"/"release2" bubbles) and
+`LEVEL_WORLD2_SCROLL` ("can_release1"/"can_release2" cans) both do this.
+It's deliberately scoped to *within one world's own levels* - see
+[Audio-visual theme integration](#audio-visual-theme-integration) for why
+reusing a hazard sprite across different world themes is avoided instead.
+
 ### 3. The patrol (Path trap)
 
 A hazard that sweeps a route defined by waypoints. Use it to guard a corridor or
@@ -139,7 +150,12 @@ be boss-exclusive: `LEVEL_WORLD4_SCROLL_2` gives it a gentler first outing
 (more follow distance, lower speed) alongside an `AMBUSH` bug, so the World 4
 boss's much tighter chaser isn't the player's first time reading pursuit
 pressure and a lunging dodge at the same time - see [The gauntlet](#6-the-gauntlet-boss-level)
-below for how the boss escalates it.
+below for how the boss escalates it. World 5 goes a step further and brings
+the *same* pursuer back across all three of its levels: the axe introduced
+in `LEVEL_WORLD5_SCROLL` returns tuned a notch tighter in
+`LEVEL_WORLD5_SCROLL_2` (also its first pairing with that level's `AMBUSH`
+mimic), then tighter again in `LEVEL_WORLD5_BOSS` - a three-step escalation
+of one hazard across a whole world, purely from data.
 
 ### 5. The disguise (Ambush trap)
 

@@ -130,7 +130,7 @@ constexpr TrapData world3_scroll_traps[] = {
 
     // Patrolling branch hazard over the second climb. Shares
     // "mid_trigger" with the slither arms above.
-    {TrapType::PATH, 96, 32, 32, 16, 0, 0, bn::sprite_items::branch32x16, 10,
+    {TrapType::PATH, 100, 36, 32, 16, 0, 0, bn::sprite_items::branch32x16, 10,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, LEVEL3_BRANCH_PATH, 20, 0, 0,
      "mid_trigger"},
 
@@ -139,7 +139,7 @@ constexpr TrapData world3_scroll_traps[] = {
     // path_waits, same trigger, LEVEL3_BRANCH_PATH_PHASE2 instead of
     // LEVEL3_BRANCH_PATH) - two branches to read at once instead of one,
     // periodically crossing rather than moving together.
-    {TrapType::PATH, 144, 16, 32, 16, 0, 0, bn::sprite_items::branch32x16, 10,
+    {TrapType::PATH, 148, 20, 32, 16, 0, 0, bn::sprite_items::branch32x16, 10,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, LEVEL3_BRANCH_PATH_PHASE2, 20, 0, 0,
      "mid_trigger"},
 
