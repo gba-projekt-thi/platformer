@@ -7,7 +7,7 @@ This document describes the `game/` project inside this repository, including th
 This repository contains a small Game Boy Advance platformer built with the Butano engine. The playable game lives in `game/` and uses global engine support from `extern/engine/`.
 
 The game includes:
-- A start/save selection scene with three save slots (level, deaths, and run timer persist to SRAM)
+- A start/save selection scene with three save slots (level, deaths, and run timer persist to SRAM), each showing "New" or its furthest-reached world before you even pick it
 - A world-select scene and a level-select scene for jumping directly to any already-reached world or level (reachable from the start screen by pressing B)
 - A world-select stats line ("Deaths: N  Cleared: X/Y") aggregated from the loaded save slot's existing death total and best-time records
 - Level-select also shows each unlocked level's personal-best clear time (mm:ss.cc), once one has been set, marked with a trailing `*` if that level has ever been cleared without a single death (a no-death clear)
@@ -16,6 +16,7 @@ The game includes:
 - Trigger zones that activate hazards
 - A door that advances the player to the next level, ending in a celebratory kiss scene (the door itself can be reskinned as a different, non-animated sprite for narrative moments - see World 5's finale)
 - A "New Best!" banner that holds the level-complete transition until acknowledged, whenever a level is cleared faster than its previous best time
+- A run-complete summary screen after the kiss scene (total time, deaths, no-death clears), acknowledged with A/Start before the save slot resets
 - Music and tilemap backgrounds
 - A death counter and run timer HUD
 - A pause menu with Continue / Restart Level / Options / Title Screen; Options lets the player adjust music and SFX volume (0-4), persisted per save slot, plus - once unlocked by completing the game - toggle Hard Mode, which speeds up Moving/Chase/Ambush trap velocities for a tougher replay
@@ -88,6 +89,7 @@ For headless or CI testing, use:
   - Implements the first scene shown to the player
   - Presents save slot / start selection logic
   - Pressing B (instead of A) after picking a save slot opens the world-select scene
+  - Peeks all three slots once via `DataManager::peek_state()` (no SRAM writes, doesn't touch the active slot) and shows each as "New" or its furthest-reached world (`WorldIndex::world_for_level()`) before the player picks one
 
 - `game/include/world_select_scene.h` / `game/src/world_select_scene.cpp`
   - Lists the worlds and lets the player jump directly to any world they have already reached (based on the loaded save slot's furthest level)
@@ -102,11 +104,20 @@ For headless or CI testing, use:
 - `game/include/world_index.h`
   - Declares how the flat `levels[]` array in `game/src/main.cpp` is grouped into worlds for the world/level-select scenes
   - This table is maintained by hand and must be kept in sync whenever the `levels[]` array changes
+  - Also declares `world_for_level()`, mapping a `furthest_level` back to its containing world index - shared by `WorldSelectScene`'s unlock check and `StartScene`'s slot preview
 
 - `game/include/level_scene.h` / `game/src/level_scene.cpp`
   - Implements actual level gameplay
   - Handles player movement, collision, traps, and level completion
   - Records new best-clear-times and no-death clears on reaching the door, and shows the "New Best!" banner (holding the scene transition) when a record is beaten
+
+- `game/include/kissing_scene.h` / `game/src/kissing_scene.cpp`
+  - The celebratory scene shown after the final level's door - holds on the kiss background for `Cfg::Sleep::KISSING_SCENE` frames, then hands off to `SummaryScene`
+  - No longer calls `DataManager::reset()` itself - that now happens in `SummaryScene`, once the player has seen the run's final numbers
+
+- `game/include/summary_scene.h` / `game/src/summary_scene.cpp`
+  - Shown once, between `KissingScene` and `StartScene`: sums every level's `best_time_frames` for a total-time readout, plus the slot's total deaths and a `has_no_death_clear()` count - all read from state that's about to be reset
+  - Waits for A/Start, then calls `DataManager::reset()` and transitions to `StartScene` - the same reset `KissingScene` used to perform directly
 
 - `game/include/player.h` / `game/src/player.cpp`
   - Implements player movement, jump behavior, gravity, and input handling

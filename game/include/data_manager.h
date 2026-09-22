@@ -32,6 +32,13 @@ class DataManager {
     // Resets both SRAM and runtime state.
     void reset();
 
+    // Reads slot_id's saved state into `out`, without changing the active
+    // slot, the runtime state, or anything else - for previewing another
+    // slot's progress (e.g. the start screen's slot list) mid-menu, where
+    // switching the active slot would be wrong. Returns false (leaving
+    // `out` unspecified) if the slot is empty or invalid.
+    [[nodiscard]] bool peek_state(int slot_id, GameState& out);
+
    private:
     // Support 3 save slots by default.
     engine::save::SaveManager<GameState, 3> _save_mgr;

@@ -60,6 +60,10 @@ void DataManager::reset() {
     _save_mgr.save(_slot_index, _game_state);
 }
 
+bool DataManager::peek_state(int slot_id, GameState& out) {
+    return _save_mgr.load(slot_id, out) == engine::save::SaveResult::OK;
+}
+
 void DataManager::set_slot_index(int index) {
     if (index < 0)
         index = 0;

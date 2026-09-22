@@ -18,6 +18,7 @@
 #include "level_manager.h"
 #include "level_scene.h"
 #include "player.h"
+#include "world_index.h"
 #include "world_select_scene.h"
 
 StartScene::StartScene(
@@ -31,6 +32,57 @@ StartScene::StartScene(
       _level_manager(level_manager) {
     _selected_slot = 0;
     _transition_requested = false;
+}
+
+void StartScene::_peek_slot_progress() {
+    for (int i = 0; i < Cfg::StartScreen::SAVE_SLOT_COUNT; ++i) {
+        GameState peeked;
+        _slot_used[i] = _data_manager.peek_state(i, peeked);
+        _slot_furthest_world[i] =
+            _slot_used[i] ? WorldIndex::world_for_level(peeked.furthest_level)
+                          : 0;
+    }
+}
+
+void StartScene::_rebuild_slot_list() {
+    for (bn::sprite_ptr& s : _slot_sprites) {
+        s.set_visible(false);
+    }
+    _slot_sprites.clear();
+
+    for (int i = 0; i < Cfg::StartScreen::SAVE_SLOT_COUNT; ++i) {
+        char buf[32];
+        int pos = 0;
+        buf[pos++] = (i == _selected_slot) ? '>' : ' ';
+        buf[pos++] = ' ';
+        const char* label = "Slot ";
+        for (const char* p = label; *p; ++p)
+            buf[pos++] = *p;
+        int num = i + 1;
+        buf[pos++] = char('0' + (num % 10));
+
+        if (_slot_used[i]) {
+            // 1-indexed for display, matching the "Slot N" convention
+            // above and WorldIndex::WORLDS' "World N" naming.
+            const char* world_label = "  World ";
+            for (const char* p = world_label; *p; ++p)
+                buf[pos++] = *p;
+            buf[pos++] = char('1' + _slot_furthest_world[i]);
+        } else {
+            const char* new_label = "  New";
+            for (const char* p = new_label; *p; ++p)
+                buf[pos++] = *p;
+        }
+        buf[pos] = '\0';
+
+        _text_gen->generate(
+            Cfg::StartScreen::X, Cfg::StartScreen::Y + i * 16, buf,
+            _slot_sprites);
+    }
+
+    for (bn::sprite_ptr& s : _slot_sprites) {
+        s.set_blending_enabled(true);
+    }
 }
 
 void StartScene::init() {
@@ -77,26 +129,10 @@ void StartScene::init() {
     // Start screen music
     bn::music_items::startscreen.play();
 
-    // Initial render of slots
-    _slot_sprites.clear();
-    for (int i = 0; i < Cfg::StartScreen::SAVE_SLOT_COUNT; ++i) {
-        char buf[32];
-        int pos = 0;
-        buf[pos++] = (i == _selected_slot) ? '>' : ' ';
-        buf[pos++] = ' ';
-        const char* label = "Slot ";
-        for (const char* p = label; *p; ++p)
-            buf[pos++] = *p;
-        int num = i + 1;
-        buf[pos++] = char('0' + (num % 10));
-        buf[pos] = '\0';
-        _text_gen->generate(
-            Cfg::StartScreen::X, Cfg::StartScreen::Y + i * 16, buf,
-            _slot_sprites);
-    }
-    for (bn::sprite_ptr& s : _slot_sprites) {
-        s.set_blending_enabled(true);
-    }
+    // Peek every slot's progress once (SRAM reads) and render the
+    // initial slot list from it.
+    _peek_slot_progress();
+    _rebuild_slot_list();
 }
 
 void StartScene::update() {
@@ -118,29 +154,9 @@ void StartScene::update() {
         }
 
         if (changed) {
-            // Re-generate slot text
-            for (bn::sprite_ptr& s : _slot_sprites) {
-                s.set_visible(false);
-            }
-            _slot_sprites.clear();
-            for (int i = 0; i < Cfg::StartScreen::SAVE_SLOT_COUNT; ++i) {
-                char buf[32];
-                int pos = 0;
-                buf[pos++] = (i == _selected_slot) ? '>' : ' ';
-                buf[pos++] = ' ';
-                const char* label = "Slot ";
-                for (const char* p = label; *p; ++p)
-                    buf[pos++] = *p;
-                int num = i + 1;
-                buf[pos++] = char('0' + (num % 10));
-                buf[pos] = '\0';
-                _text_gen->generate(
-                    Cfg::StartScreen::X, Cfg::StartScreen::Y + i * 16, buf,
-                    _slot_sprites);
-            }
-            for (bn::sprite_ptr& s : _slot_sprites) {
-                s.set_blending_enabled(true);
-            }
+            // Cursor moved - only the ">" position changes, not any
+            // slot's progress, so just re-render from the cached peek.
+            _rebuild_slot_list();
         }
 
         if (bn::keypad::a_pressed()) {

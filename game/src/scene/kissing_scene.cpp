@@ -10,7 +10,7 @@
 #include "data_manager.h"
 #include "level_manager.h"
 #include "player.h"
-#include "start_scene.h"
+#include "summary_scene.h"
 
 KissingScene::KissingScene(
     Player& player,
@@ -50,13 +50,13 @@ void KissingScene::update() {
 
     _transition_requested = true;
 
-    // Reset game save state after full completion.
-    _data_manager.reset();
-
-    // Return to the start scene as the next scene.
-    auto restart_scene = bn::make_unique<StartScene>(
+    // Show the run summary (total time, deaths, no-death clears) before
+    // returning to the title. DataManager::reset() moved to SummaryScene
+    // - it now runs once the player dismisses that screen, not here, so
+    // the numbers it reads are still this run's live state.
+    auto summary_scene = bn::make_unique<SummaryScene>(
         _player, _levels, _data_manager, _level_manager);
-    core::SceneManager::instance().set_next_scene(bn::move(restart_scene));
+    core::SceneManager::instance().set_next_scene(bn::move(summary_scene));
 
     // Play a confirmation sound when the transition begins.
     AudioSettings::instance().play_sfx(bn::sound_items::confirm);
