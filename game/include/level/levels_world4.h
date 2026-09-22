@@ -174,7 +174,7 @@ constexpr PlatformData world4_boss_platforms[] = {
     {8, 60, 32, 16, 0, 0, bn::sprite_items::beet, 0},
     {64, 44, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
     {104, 60, 32, 16, 0, 0, bn::sprite_items::korb, 0},
-    {160, 60, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
+    {152, 60, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
     {200, 60, 32, 16, 0, 0, bn::sprite_items::beet, 0}};
 
 constexpr TriggerData world4_boss_triggers[] = {
@@ -218,7 +218,7 @@ constexpr TrapData world4_boss_traps[] = {
      TRAP_GRAPHICS_INDEXES_0, 0.0, 5, 5, NO_PATH_TRAP, 0, 0, 0, "wave1"},
 
     // Attack 2: a second dive-bomb, triggered by wave2.
-    {TrapType::MOVING, -20, -90, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
+    {TrapType::MOVING, -20, -106, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
      TRAP_GRAPHICS_INDEXES_0, 0.0, 5, 5, NO_PATH_TRAP, 0, 0, 0, "wave2"},
 
     // A second, faster worker bug lunges in once the duck nears the door.
