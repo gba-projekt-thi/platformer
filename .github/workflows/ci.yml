@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  host-tests:
+    name: Host unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Only extern/engine itself is needed here (pure save-system
+          # headers) - not its own nested butano submodule, which the
+          # host tests never touch.
+          submodules: true
+
+      - name: Build and run tests/host
+        run: |
+          cd tests/host
+          make
+
+  gba-build:
+    name: GBA build + headless boot
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build dev container image
+        run: docker build -t projectgba -f docker/Dockerfile .
+
+      - name: Build ROM
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+            projectgba bash -c "make"
+
+      - name: Headless boot test
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+            projectgba bash -c "./test-rom.sh platformer.gba"

@@ -169,15 +169,3 @@ void TimerHUD::set_digit(int index, int value) {
 
     _sprites[index].set_tiles(_cached_tiles[value]);
 }
-
-FrameTime frames_to_time(uint32_t frames) {
-    // 60 frames == 1 second, matching Timer::tick()'s cadence.
-    const uint32_t total_seconds = frames / 60;
-    const uint32_t remainder_frames = frames % 60;
-
-    FrameTime result;
-    result.minutes = uint16_t(total_seconds / 60);
-    result.seconds = uint16_t(total_seconds % 60);
-    result.centis = uint16_t((remainder_frames * 100) / 60);
-    return result;
-}

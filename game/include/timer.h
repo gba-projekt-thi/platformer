@@ -8,6 +8,7 @@
 #include "bn_sprite_tiles_ptr.h"
 
 #include "cfg.h"
+#include "frame_time.h"
 
 // Lightweight timer optimized for GBA.
 //
@@ -72,18 +73,5 @@ class TimerHUD {
     bool _visible = true;
 };
 
-// -----------------------------------------------------------------------------
-// frames_to_time
-//
-// Converts an absolute frame count into minutes/seconds/centiseconds.
-// Only called when building level-select menu text (level best-time
-// display), NOT in the per-frame HUD path - that stays on Timer::tick()'s
-// lookup tables. Plain division here is fine since this isn't a hot path.
-// -----------------------------------------------------------------------------
-struct FrameTime {
-    uint16_t minutes;
-    uint16_t seconds;
-    uint16_t centis;
-};
-
-FrameTime frames_to_time(uint32_t frames);
+// FrameTime / frames_to_time() now live in frame_time.h (included above) -
+// kept dependency-free so they can be unit-tested on the host.

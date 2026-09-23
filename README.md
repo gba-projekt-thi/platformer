@@ -222,6 +222,16 @@ sudo chown -R $(whoami):$(whoami) build
 Before every commit a short script runs to check if all files are using a consistent code style using clang-format and clang-tidy with pre-commit.
 This is only possible in the devcontainer or if you have [pre-commit](https://pre-commit.com), clang-format and clang-tidy installed on your system. 
 
+### Tests
+Pure-logic code (save integrity, game-state bit flags, frame-time formatting) has a small host-side unit test suite under `tests/host/` - no ARM toolchain or devcontainer needed, just your system's own `g++`/`clang++`:
+
+```bash
+cd tests/host
+make
+```
+
+CI (`.github/workflows/ci.yml`) runs this on every push/PR, plus a separate job that builds the actual ROM in the devcontainer image and boots it headlessly. See [`docs/development-workflow.md`](docs/development-workflow.md#testing-methodology) for what's covered and what still has to be tested manually in the emulator.
+
 ## Links
 
 - [Butano Documentation](https://gvaliente.github.io/butano/)

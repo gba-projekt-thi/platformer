@@ -6,3 +6,14 @@ repos:
       - id: clang-format
         args: [-i]
       - id: clang-tidy
+        # tests/host/ builds with the host's own g++/clang++ (see
+        # tests/host/Makefile) and is never compiled by the ARM
+        # toolchain, so it has no entry in compile_commands.json.
+        # Without a matching compile command, clang-tidy falls back to
+        # this repo's .clang-tidy ExtraArgsBefore standalone (-std=c++23
+        # plus --target=arm-none-eabi/--sysroot=devkitARM/-I<butano
+        # paths>), which don't apply to host-only code and made clang's
+        # driver misdetect the .h files as C in the process (invalid
+        # argument '-std=c++23' not allowed with 'C'). clang-format
+        # still runs here - formatting is language/target-agnostic.
+        exclude: ^tests/
