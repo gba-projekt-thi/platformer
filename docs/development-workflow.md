@@ -53,9 +53,59 @@ Pick whichever fits your flow; they all produce the same ROM.
 
 ## Testing methodology
 
-There is no large automated unit-test harness in the current project; testing is
-primarily **manual and behavioral**, supplemented by a headless run for
-automation:
+Testing splits into an automated layer (host-side unit tests + CI) covering
+pure logic, and manual/behavioral testing covering everything that actually
+needs the emulator - gameplay feel, timing, and rendering can't be unit
+tested, so they stay manual on purpose.
+
+### Automated: host-side unit tests (`tests/host/`)
+
+A small, dependency-free test suite (`tests/host/test_framework.h` - no
+GoogleTest/Catch2 to install or vendor) covers the handful of files with
+**zero Butano/GBA dependency**: `save_integrity.h/.cpp` (CRC32, header/
+checksum validation - including a known external CRC-32 test vector, not
+just internal self-consistency), `save_buffer.h` (`SaveBuffer` read/write
+round-trips), `game_state.h` (`set_no_death_clear()`/`has_no_death_clear()`
+bit-flag helpers), and `frame_time.h` (`frames_to_time()`, including the
+>99-minute case `SummaryScene`'s total-time readout can hit).
+
+These build with the **host's own g++/clang++**, not the ARM cross-compiler
+- no devkitARM, no Butano, no container needed:
+
+```bash
+cd tests/host
+make        # builds and runs; non-zero exit on any failure
+```
+
+`frame_time.h` is `FrameTime`/`frames_to_time()` extracted out of `timer.h`
+specifically so it has no Butano include chain to drag along - `timer.h`
+includes it, so every existing `#include "timer.h"` call site is
+unaffected.
+
+When adding a new pure-logic helper (no `bn::` types, no hardware access),
+consider whether it belongs in a similarly dependency-free header so it can
+gain the same kind of test coverage, rather than being bundled into a
+Butano-dependent file where it becomes untestable on the host.
+
+### Automated: CI (`.github/workflows/ci.yml`)
+
+Two independent jobs, so the fast check isn't blocked by the slow one:
+
+- **`host-tests`** - checks out just the `extern/engine` submodule (not its
+  nested Butano submodule, which host tests never touch) and runs
+  `tests/host`'s `make`. No Docker, no ARM toolchain - this is the fast,
+  cheap check.
+- **`gba-build`** - checks out recursively, builds the dev container image
+  from `docker/Dockerfile` (the same image the devcontainer uses), runs
+  `make` inside it to produce the ROM, then runs `./test-rom.sh` headlessly
+  inside the same container - confirms the ROM actually boots.
+
+The `gba-build` job rebuilds the container image from scratch on every run
+(no layer caching yet), so it's noticeably slower than `host-tests` -
+acceptable for now, but a candidate for a registry-cached base image later
+if CI time becomes a problem.
+
+### Manual (still required - nothing above replaces this)
 
 - **Manual play testing** in the emulator is the main loop. After a change,
   load the ROM and verify the affected behavior: Does the duck jump as intended?
@@ -63,9 +113,9 @@ automation:
 - **Clearability testing for levels.** After editing a stage, walk the intended
   path and confirm every required jump is achievable within the physics envelope
   (climbs ≤ 16px, gaps ≤ 40px per the [Level Design](level-design.md) rules).
-- **Headless / CI run.** A helper script runs the ROM without a graphical
-  window, useful for automated pipelines that just need to confirm the ROM
-  boots and runs a bit.
+- **Headless / CI run.** The same `./test-rom.sh` helper script the
+  `gba-build` CI job uses; useful to run locally too when you just need to
+  confirm the ROM boots and runs a bit, without a graphical window.
 - **Save-state / persistence checks.** Verify that deaths, the timer, level
   progression, and save slots survive a quit-and-reload.
 

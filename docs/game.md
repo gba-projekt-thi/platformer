@@ -199,6 +199,7 @@ To add a new gameplay object:
 
 - `game/` is the game-specific project code. It depends on Butano and shared engine code in `extern/engine/`.
 - The root `Makefile` points `TARGET := platformer`, so the generated ROM is `platformer.gba`.
+- `tests/host/` holds host-buildable unit tests (no ARM toolchain needed) for the Butano-free pure-logic files (`save_integrity`, `save_buffer`, `game_state`, `frame_time`); `.github/workflows/ci.yml` runs them plus a full devcontainer build + headless boot on every push/PR - see [`docs/development-workflow.md`](development-workflow.md#testing-methodology).
 
 ## Related Docs
 
