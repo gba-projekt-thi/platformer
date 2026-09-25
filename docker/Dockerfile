@@ -32,8 +32,19 @@ ENV DEVKITPRO=/opt/devkitpro
 ENV DEVKITARM=/opt/devkitpro/devkitARM
 ENV PATH=$DEVKITPRO/tools/bin:$DEVKITARM/bin:$PATH
 
+# pkg.devkitpro.org has been observed returning 403 for the package
+# database sync specifically from GitHub Actions runner IPs (cloud/
+# datacenter ranges) - works fine locally/on most networks. Retrying
+# with backoff covers the case where this is rate-limiting rather than
+# a hard block; if it still fails after 5 attempts, it's very likely a
+# genuine block and this loop just surfaces the real error after ~60s
+# instead of masking it silently.
 RUN ln -sf /proc/self/mounts /etc/mtab && \
-    dkp-pacman -Syu --noconfirm && \
+    for i in 1 2 3 4 5; do \
+        dkp-pacman -Syu --noconfirm && break || \
+        { echo "devkitPro package sync failed (attempt $i/5) - retrying in 15s..." >&2; sleep 15; }; \
+        if [ "$i" = "5" ]; then exit 1; fi; \
+    done && \
     dkp-pacman -S --noconfirm gba-dev
 
 # Version-independent symlink to the installed devkitARM GCC C++ headers,
