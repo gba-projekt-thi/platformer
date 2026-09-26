@@ -17,3 +17,17 @@ repos:
         # argument '-std=c++23' not allowed with 'C'). clang-format
         # still runs here - formatting is language/target-agnostic.
         exclude: ^tests/
+
+  - repo: local
+    hooks:
+      - id: check-trigger-references
+        name: Validate trigger_name references
+        description: >-
+          Every TrapData::trigger_name must resolve to a TriggerData::name
+          defined for that same level - see tools/check_trigger_references.py.
+        entry: python3 tools/check_trigger_references.py
+        language: system
+        # Full scan every time it runs (not per changed file), triggered
+        # whenever level data or the checker script itself changes.
+        files: ^(game/include/level/levels_world.*\.h|tools/check_trigger_references\.py)$
+        pass_filenames: false

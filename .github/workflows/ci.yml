@@ -22,6 +22,17 @@ jobs:
           cd tests/host
           make
 
+  level-data-checks:
+    name: Level data checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        # No submodules needed - this only reads game/include/level/.
+
+      - name: Validate trigger_name references
+        run: python3 tools/check_trigger_references.py
+
   gba-build:
     name: GBA build + headless boot
     runs-on: ubuntu-latest
