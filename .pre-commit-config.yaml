@@ -24,10 +24,10 @@ repos:
         name: Validate trigger_name references
         description: >-
           Every TrapData::trigger_name must resolve to a TriggerData::name
-          defined for that same level - see tools/check_trigger_references.py.
-        entry: python3 tools/check_trigger_references.py
+          defined for that same level - see tools/Check_trigger_references.py.
+        entry: python3 tools/Check_trigger_references.py
         language: system
         # Full scan every time it runs (not per changed file), triggered
         # whenever level data or the checker script itself changes.
-        files: ^(game/include/level/levels_world.*\.h|tools/check_trigger_references\.py)$
+        files: ^(game/include/level/levels_world.*\.h|tools/Check_trigger_references\.py)$
         pass_filenames: false

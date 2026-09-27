@@ -51,8 +51,31 @@ jobs:
         with:
           submodules: recursive
 
+      # The image is fully determined by docker/Dockerfile alone (repo
+      # source is bind-mounted at `docker run` time below, never baked
+      # into the image), so it's cacheable as one unit keyed by that
+      # file's hash - skips the devkitPro/mGBA/LLVM install entirely on
+      # every run where the Dockerfile hasn't changed. Bump the "v1"
+      # prefix to force a one-off cache invalidation if ever needed
+      # (e.g. a corrupted cache entry) without touching the Dockerfile.
+      - name: Restore cached image
+        id: image-cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/projectgba-image.tar
+          key: docker-image-v1-${{ hashFiles('docker/Dockerfile') }}
+
+      - name: Load cached image
+        if: steps.image-cache.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/projectgba-image.tar
+
       - name: Build dev container image
+        if: steps.image-cache.outputs.cache-hit != 'true'
         run: docker build -t projectgba -f docker/Dockerfile .
+
+      - name: Save image to cache
+        if: steps.image-cache.outputs.cache-hit != 'true'
+        run: docker save projectgba -o /tmp/projectgba-image.tar
 
       # --user matches the container process's UID/GID to the runner's own
       # (whatever checked out the repo), so the bind-mounted /workspace is

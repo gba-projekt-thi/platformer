@@ -1,5 +1,7 @@
 # GBA Development with Butano
 
+[![CI](https://github.com/gba-projekt-thi/platformer/actions/workflows/ci.yml/badge.svg)](https://github.com/gba-projekt-thi/platformer/actions/workflows/ci.yml)
+
 Game Boy Advance development environment using [Butano](https://github.com/GValiente/butano) engine, devkitARM, and mGBA emulator.
 
 ## What is a Dev Container?

@@ -95,15 +95,42 @@ Two independent jobs, so the fast check isn't blocked by the slow one:
   nested Butano submodule, which host tests never touch) and runs
   `tests/host`'s `make`. No Docker, no ARM toolchain - this is the fast,
   cheap check.
+- **`level-data-checks`** - no submodules, no Docker: runs
+  `tools/Check_trigger_references.py` (see below) against
+  `game/include/level/levels_world*.h`.
 - **`gba-build`** - checks out recursively, builds the dev container image
   from `docker/Dockerfile` (the same image the devcontainer uses), runs
   `make` inside it to produce the ROM, then runs `./test-rom.sh` headlessly
-  inside the same container - confirms the ROM actually boots.
+  inside the same container - confirms the ROM actually boots. Marked
+  `continue-on-error: true` for now (see the comment in `ci.yml` for why);
+  it still runs and reports its real status, just doesn't block the rest
+  of the workflow.
 
-The `gba-build` job rebuilds the container image from scratch on every run
-(no layer caching yet), so it's noticeably slower than `host-tests` -
-acceptable for now, but a candidate for a registry-cached base image later
-if CI time becomes a problem.
+The image `gba-build` builds depends only on `docker/Dockerfile` (repo
+source is bind-mounted at `docker run` time, never baked into the image),
+so it's cached as one unit keyed by that file's hash via `actions/cache` -
+`docker save`/`docker load` around the build step. A run where the
+Dockerfile hasn't changed skips the devkitPro/mGBA/LLVM install entirely
+and just restores the saved image.
+
+### Level data checks (`tools/Check_trigger_references.py`)
+
+Statically validates every `TrapData::trigger_name` a `MOVING`/`PATH` trap
+references against the `TriggerData::name` entries actually defined for
+that same level - the same per-level lookup
+`LevelManager::get_trigger_by_name()` performs at runtime, checked here
+without compiling or running the game. Also warns (non-fatal) about
+triggers that are defined but never referenced by any trap in their level.
+
+Pure Python, no C++ involved:
+
+```bash
+python3 tools/Check_trigger_references.py
+```
+
+Runs both as a CI job and as a local pre-commit hook (triggered only when
+level data or the script itself changes), so a dangling trigger reference
+gets caught before it reaches a PR, not just at commit time in CI.
 
 ### Manual (still required - nothing above replaces this)
 
