@@ -138,6 +138,12 @@ then sweep in lockstep but permanently out of phase, periodically crossing
 rather than moving together - genuinely new difficulty from data alone, no
 new path shape or trap type. `LEVEL_WORLD3_SCROLL` does this with
 `LEVEL3_BRANCH_PATH` / `LEVEL3_BRANCH_PATH_PHASE2` (`levels_common.h`).
+`LEVEL_WORLD1_BOSS` and `LEVEL_WORLD2_BOSS` both do it too, each with a
+second patrol anchored further into the arena than the first, so patrol
+pressure covers the whole fight instead of just the opening section -
+`LEVEL_WORLD2_BOSS` reuses `LEVEL3_BRANCH_PATH_PHASE2` verbatim (same
+shape World 3 already shares with World 2's idle patrol), and
+`LEVEL_WORLD1_BOSS` adds a matching `FIGURE_8_PATH_PHASE2` for its bubble.
 
 ### 4. The pursuer (Chase trap)
 

@@ -31,7 +31,7 @@ jobs:
         # No submodules needed - this only reads game/include/level/.
 
       - name: Validate trigger_name references
-        run: python3 tools/check_trigger_references.py
+        run: python3 tools/Check_trigger_references.py
 
   gba-build:
     name: GBA build + headless boot

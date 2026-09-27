@@ -230,7 +230,7 @@ constexpr TriggerData world1_boss_triggers[] = {
     {-160, 40, 32, 40, false, "wave1"},
     {-50, 40, 32, 40, false, "wave2"},
     {50, 40, 32, 40, false, "wave3"},
-    {132, 40, 32, 40, false, "wave4"}};
+    {150, 40, 32, 40, false, "wave4"}};
 
 constexpr TrapData world1_boss_traps[] = {
 
@@ -239,6 +239,15 @@ constexpr TrapData world1_boss_traps[] = {
     // Shares "wave1" with Attack 1 below - starts once the fight begins.
     {TrapType::PATH, -180, -10, 32, 32, 0, 0, bn::sprite_items::bubbles, 30,
      TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, FIGURE_8_PATH, 15, 0, 0, "wave1"},
+
+    // Second bubble, further into the arena, sweeping the identical
+    // figure-8 exactly out of phase with the one above (same sprite,
+    // same path_waits, same trigger, FIGURE_8_PATH_PHASE2 instead of
+    // FIGURE_8_PATH) - together the two patrols cover nearly the whole
+    // arena instead of just the opening section, so the mid-to-late
+    // fight (ambush pufferfish, Attacks 3-4) has patrol pressure too.
+    {TrapType::PATH, 140, -10, 32, 32, 0, 0, bn::sprite_items::bubbles, 30,
+     TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, FIGURE_8_PATH_PHASE2, 15, 0, 0, "wave1"},
 
     // Attack 1: telegraphed overhead slam, drops once the duck enters wave1.
     {TrapType::MOVING, -150, -40, 32, 32, 0, 0, bn::sprite_items::bubbles, 40,

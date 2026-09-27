@@ -63,6 +63,24 @@ constexpr bn::fixed_point FIGURE_8_PATH[] = {
     bn::fixed_point(-100, 0),  bn::fixed_point(-92, -21),
     bn::fixed_point(-71, -30), bn::fixed_point(-38, -21)};
 
+// The exact same 16-point figure-8 as FIGURE_8_PATH, rotated by half a
+// cycle (starting at what was index 8 above) - same technique as
+// LEVEL3_BRANCH_PATH_PHASE2 below. A second PathTrap using this instead
+// of FIGURE_8_PATH, same path_waits, same trigger, traces the identical
+// figure-8 loop permanently on the opposite lobe from a first trap using
+// the original array - used by LEVEL_WORLD1_BOSS for a second bubble.
+constexpr bn::fixed_point FIGURE_8_PATH_PHASE2[] = {
+
+    bn::fixed_point(0, 0),     bn::fixed_point(-38, 21),
+    bn::fixed_point(-71, 30),  bn::fixed_point(-92, 21),
+    bn::fixed_point(-100, 0),  bn::fixed_point(-92, -21),
+    bn::fixed_point(-71, -30), bn::fixed_point(-38, -21),
+
+    bn::fixed_point(0, 0),     bn::fixed_point(38, 21),
+    bn::fixed_point(71, 30),   bn::fixed_point(92, 21),
+    bn::fixed_point(100, 0),   bn::fixed_point(92, -21),
+    bn::fixed_point(71, -30),  bn::fixed_point(38, -21)};
+
 constexpr bn::fixed_point LEVEL3_BRANCH_PATH[] = {
 
     // Horizontal patrol near upper climb
