@@ -166,6 +166,16 @@ constexpr TrapData world2_boss_traps[] = {
     {TrapType::PATH, -180, 20, 12, 8, 0, 0, bn::sprite_items::pipe16x16, 10,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, LEVEL3_BRANCH_PATH, 15, 0, 0, "wave1"},
 
+    // Second pipe, further into the corridor, sweeping the identical
+    // route exactly out of phase with the one above - reuses the same
+    // LEVEL3_BRANCH_PATH_PHASE2 World 3 already defines (same shape,
+    // same path_waits, same trigger), no new path data needed. Lands
+    // near Attack 3 and the rusty-nails hazard, so the mid-to-late
+    // arena isn't just attack waves with no patrol pressure.
+    {TrapType::PATH, 100, 20, 12, 8, 0, 0, bn::sprite_items::pipe16x16, 10,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, LEVEL3_BRANCH_PATH_PHASE2, 15, 0, 0,
+     "wave1"},
+
     // Attack 1: a can slams down from above, triggered by wave1.
     {TrapType::MOVING, -145, -40, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
      TRAP_GRAPHICS_INDEXES_8, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "wave1"},
