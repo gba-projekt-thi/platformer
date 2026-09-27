@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-check_trigger_references.py
+Check_trigger_references.py
 
 Statically validates every TrapData::trigger_name a MOVING/PATH trap
 references against the TriggerData::name entries actually defined for
@@ -26,7 +26,7 @@ This check catches it at commit/CI time instead, without needing to reach
 that specific level in the emulator.
 
 Usage:
-    python3 tools/check_trigger_references.py [file ...]
+    python3 tools/Check_trigger_references.py [file ...]
 
 With no arguments, scans every game/include/level/levels_world*.h found
 under the repository root (wherever this script is invoked from). Exit
