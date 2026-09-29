@@ -55,7 +55,10 @@ class PauseController {
 
     bn::optional<bn::sprite_text_generator> _text_gen;
     bn::vector<bn::sprite_ptr, 8> _title_sprites;
-    bn::vector<bn::sprite_ptr, 64> _menu_sprites;
+    // Bumped from 64: the Options sub-menu's worst case (Music + SFX +
+    // Hard Mode rows plus the Hard Mode info line while it's on) is ~59
+    // characters, close enough to the old capacity to warrant headroom.
+    bn::vector<bn::sprite_ptr, 80> _menu_sprites;
 
     DataManager& _data_manager;
 };

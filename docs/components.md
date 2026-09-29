@@ -541,7 +541,13 @@ appended only once `GameState::hard_mode_unlocked` is set for the loaded
 slot - see [Game Concepts — Hard Mode](game-concepts.md#hard-mode) for the
 unlock condition and gameplay effect, and
 [Trap System — Hard Mode speed scaling](#hard-mode-speed-scaling) above for
-how the toggle changes trap behavior.
+how the toggle changes trap behavior. While the toggle is on, a fourth,
+non-selectable line ("Traps x1.35") shows `Cfg::HardMode::SPEED_MULTIPLIER`
+spelled out as a literal string - not derived from the constant at
+render time, so a future change to that constant needs a matching edit
+to this display string. It's its own line rather than appended to the
+Hard Mode row itself, which already sits close to the screen's right
+edge.
 
 ---
 
