@@ -135,6 +135,20 @@ void PauseController::_rebuild_options_menu() {
             Cfg::PauseMenu::X,
             Cfg::PauseMenu::Y_OPTION_0 + 2 * Cfg::PauseMenu::OPTION_SPACING,
             buf, _menu_sprites);
+
+        // Informational only (not selectable, not part of row_count):
+        // shows what Hard Mode actually does while it's on. Its own line
+        // rather than lengthening the row above - that row already sits
+        // close to the right screen edge (text starts at PauseMenu::X and
+        // has ~150px to the edge), so appending to it would risk clipping.
+        // "x1.35" is Cfg::HardMode::SPEED_MULTIPLIER spelled out as a
+        // literal - update this string too if that constant changes.
+        if (state.hard_mode_enabled) {
+            _text_gen->generate(
+                Cfg::PauseMenu::X,
+                Cfg::PauseMenu::Y_OPTION_0 + 3 * Cfg::PauseMenu::OPTION_SPACING,
+                "  Traps x1.35", _menu_sprites);
+        }
     }
 
     for (bn::sprite_ptr& sprite : _menu_sprites) {

@@ -144,6 +144,8 @@ value once a save has already finished the game once:
   the pause menu's Options sub-menu, alongside Music and SFX. Left/Right (or
   either direction on the row) flips it On/Off; the change commits the same
   way Music/SFX do - once, on leaving the sub-menu, not on every keypress.
+  While it's on, a short "Traps x1.35" line underneath shows the actual
+  speed multiplier - informational only, not a selectable row.
 - **Effect.** While enabled, Moving, Chase, and Ambush traps move faster
   (their velocities are scaled up). Path traps are deliberately unaffected,
   since a patrol's speed is authored as a frame count between waypoints
