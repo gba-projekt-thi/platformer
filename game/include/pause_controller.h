@@ -43,6 +43,11 @@ class PauseController {
     void _rebuild_menu();
     void _rebuild_options_menu();
     void _change_option_level(int delta);
+    // Row index of the Assist Mode toggle: 2 normally, 3 once the Hard
+    // Mode row (always row 2) is unlocked and shown.
+    [[nodiscard]] int _assist_row() const;
+    // Renders one "> Label < On/Off >" toggle row at the given row index.
+    void _append_toggle_row(int row, const char* label, bool on);
 
     bool _paused = false;
     bool _pause_menu_initialized = false;
@@ -51,14 +56,16 @@ class PauseController {
 
     // Options sub-menu state.
     bool _showing_options = false;
-    int _option_row = 0;  // 0 = Music, 1 = SFX, 2 = Hard Mode (once unlocked)
+    // 0 = Music, 1 = SFX, 2 = Hard Mode (once unlocked), then Assist Mode
+    // (see _assist_row()).
+    int _option_row = 0;
 
     bn::optional<bn::sprite_text_generator> _text_gen;
     bn::vector<bn::sprite_ptr, 8> _title_sprites;
-    // Bumped from 64: the Options sub-menu's worst case (Music + SFX +
-    // Hard Mode rows plus the Hard Mode info line while it's on) is ~59
-    // characters, close enough to the old capacity to warrant headroom.
-    bn::vector<bn::sprite_ptr, 80> _menu_sprites;
+    // Bumped from 64, then 80: the Options sub-menu's worst case (Music +
+    // SFX + Hard Mode + Assist Mode rows plus one info line while a mode
+    // is on) is ~80 characters counting spaces, so 96 leaves headroom.
+    bn::vector<bn::sprite_ptr, 96> _menu_sprites;
 
     DataManager& _data_manager;
 };

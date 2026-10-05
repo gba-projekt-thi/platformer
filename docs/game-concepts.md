@@ -159,6 +159,24 @@ about a stage's data changes. It exists purely as a value multiplier applied
 at trap-construction time, so it costs no extra level content or entity
 budget - see [Components — Trap System](components.md).
 
+### Assist Mode
+
+Assist Mode is the mirror image of Hard Mode, for players who want to see
+the levels without a high skill bar:
+
+- **Availability.** Always available - no unlock. It is the last row of
+  the pause menu's Options sub-menu (below Hard Mode once that is unlocked).
+- **Effect.** Moving, Chase, and Ambush traps move at half speed (x0.5;
+  Path traps are unaffected, as in Hard Mode). Coyote time grows from 4 to
+  8 frames and the jump buffer from 6 to 12. Jump height, gravity, and
+  acceleration are untouched, so every platform stays reachable exactly as
+  authored.
+- **Exclusive with Hard Mode.** Switching one on switches the other off.
+- **Persistence.** The toggle is saved per slot but resets to Off on a
+  fresh run, like Hard Mode's toggle and the audio settings.
+- **When it applies.** Like Hard Mode, trap speeds are applied when a
+  level loads, so a change takes effect from the next level load.
+
 ## Level structure (player-facing view)
 
 From the player's seat, every stage has the same skeleton:

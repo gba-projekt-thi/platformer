@@ -68,11 +68,21 @@ struct GameState {
 
     // Current-playthrough toggle (PauseController's Options sub-menu,
     // only togglable once hard_mode_unlocked is true). Scales trap
-    // speed via LevelManager::hard_mode_multiplier() in
+    // speed via LevelManager::trap_speed_multiplier() in
     // TrapFactory::create(). NOT preserved across DataManager::reset() -
     // resets to off like the audio volume settings, unlike the
     // achievement flag above. Both added in save schema version 4.
     bool hard_mode_enabled = false;
+
+    // Current-playthrough toggle (PauseController's Options sub-menu),
+    // available from the start - no unlock. Mirror image of Hard Mode:
+    // halves Moving/Chase/Ambush trap speeds (LevelManager::
+    // trap_speed_multiplier()) and widens coyote time / jump buffer
+    // (Cfg::AssistMode). Mutually exclusive with hard_mode_enabled.
+    // NOT preserved across DataManager::reset() - resets to off like
+    // hard_mode_enabled and the audio volume settings. Added in save
+    // schema version 5.
+    bool assist_mode_enabled = false;
 };
 
 inline void set_no_death_clear(GameState& state, unsigned level_index) {

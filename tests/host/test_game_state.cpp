@@ -55,3 +55,9 @@ TEST_CASE(no_death_clear_survives_alongside_other_game_state_fields) {
     CHECK_EQ(state.best_time_frames[3], 12345u);
     CHECK(has_no_death_clear(state, 3));
 }
+TEST_CASE(assist_and_hard_mode_toggles_default_to_off) {
+    GameState state{};
+    CHECK(!state.assist_mode_enabled);
+    CHECK(!state.hard_mode_enabled);
+    CHECK(!state.hard_mode_unlocked);
+}

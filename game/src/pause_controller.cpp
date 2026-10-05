@@ -78,6 +78,30 @@ void PauseController::_rebuild_menu() {
     }
 }
 
+int PauseController::_assist_row() const {
+    return _data_manager.state().hard_mode_unlocked ? 3 : 2;
+}
+
+void PauseController::_append_toggle_row(int row, const char* label, bool on) {
+    char buf[24];
+    int pos = 0;
+    buf[pos++] = (_option_row == row) ? '>' : ' ';
+    buf[pos++] = ' ';
+    for (const char* p = label; *p; ++p) {
+        buf[pos++] = *p;
+    }
+    const char* value = on ? "On >" : "Off >";
+    for (const char* p = value; *p; ++p) {
+        buf[pos++] = *p;
+    }
+    buf[pos] = '\0';
+
+    _text_gen->generate(
+        Cfg::PauseMenu::X,
+        Cfg::PauseMenu::Y_OPTION_0 + row * Cfg::PauseMenu::OPTION_SPACING, buf,
+        _menu_sprites);
+}
+
 void PauseController::_rebuild_options_menu() {
     for (bn::sprite_ptr& sprite : _menu_sprites) {
         sprite.set_visible(false);
@@ -112,43 +136,32 @@ void PauseController::_rebuild_options_menu() {
             buf, _menu_sprites);
     }
 
-    // Hard Mode row - only shown once unlocked (see
-    // GameState::hard_mode_unlocked). Appended separately rather than
-    // folded into the loop above since it's a toggle, not a 0-4 level.
+    // Toggle rows (not 0-4 levels): Hard Mode - only shown once unlocked
+    // (see GameState::hard_mode_unlocked) - then Assist Mode, which is
+    // always available. The two are mutually exclusive, see
+    // _change_option_level().
     const GameState& state = _data_manager.state();
     if (state.hard_mode_unlocked) {
-        char buf[24];
-        int pos = 0;
-        buf[pos++] = (_option_row == 2) ? '>' : ' ';
-        buf[pos++] = ' ';
-        const char* label = "Hard Mode < ";
-        for (const char* p = label; *p; ++p) {
-            buf[pos++] = *p;
-        }
-        const char* value = state.hard_mode_enabled ? "On >" : "Off >";
-        for (const char* p = value; *p; ++p) {
-            buf[pos++] = *p;
-        }
-        buf[pos] = '\0';
+        _append_toggle_row(2, "Hard Mode < ", state.hard_mode_enabled);
+    }
+    const int assist_row = _assist_row();
+    _append_toggle_row(assist_row, "Assist Mode < ", state.assist_mode_enabled);
 
+    // Informational only (not selectable, not part of row_count): shows
+    // what the active mode does to trap speed. Its own line below the
+    // last toggle row - those rows already sit close to the right screen
+    // edge. "x1.35" / "x0.5" are Cfg::HardMode::SPEED_MULTIPLIER /
+    // Cfg::AssistMode::TRAP_SPEED_MULTIPLIER spelled out as literals -
+    // update these strings too if those constants change. Only one mode
+    // can be on at a time, so one line is enough.
+    const int info_y = Cfg::PauseMenu::Y_OPTION_0 +
+                       (assist_row + 1) * Cfg::PauseMenu::OPTION_SPACING;
+    if (state.hard_mode_enabled) {
         _text_gen->generate(
-            Cfg::PauseMenu::X,
-            Cfg::PauseMenu::Y_OPTION_0 + 2 * Cfg::PauseMenu::OPTION_SPACING,
-            buf, _menu_sprites);
-
-        // Informational only (not selectable, not part of row_count):
-        // shows what Hard Mode actually does while it's on. Its own line
-        // rather than lengthening the row above - that row already sits
-        // close to the right screen edge (text starts at PauseMenu::X and
-        // has ~150px to the edge), so appending to it would risk clipping.
-        // "x1.35" is Cfg::HardMode::SPEED_MULTIPLIER spelled out as a
-        // literal - update this string too if that constant changes.
-        if (state.hard_mode_enabled) {
-            _text_gen->generate(
-                Cfg::PauseMenu::X,
-                Cfg::PauseMenu::Y_OPTION_0 + 3 * Cfg::PauseMenu::OPTION_SPACING,
-                "  Traps x1.35", _menu_sprites);
-        }
+            Cfg::PauseMenu::X, info_y, "  Traps x1.35", _menu_sprites);
+    } else if (state.assist_mode_enabled) {
+        _text_gen->generate(
+            Cfg::PauseMenu::X, info_y, "  Traps x0.5", _menu_sprites);
     }
 
     for (bn::sprite_ptr& sprite : _menu_sprites) {
@@ -190,12 +203,25 @@ void PauseController::_change_option_level(int delta) {
         // Audible preview at the just-set level, so raising SFX from 0
         // is itself audible feedback.
         audio.play_sfx(bn::sound_items::select);
+    } else if (_option_row == _assist_row()) {
+        // Assist Mode row - a toggle; either direction flips it. Turning
+        // it on turns Hard Mode off (mutually exclusive). Committed to
+        // SRAM once on leaving the sub-menu, like the rows above.
+        state.assist_mode_enabled = !state.assist_mode_enabled;
+        if (state.assist_mode_enabled) {
+            state.hard_mode_enabled = false;
+        }
+        AudioSettings::instance().play_sfx(bn::sound_items::select);
     } else {
         // Hard Mode row - a toggle, not a 0-4 level; either direction
-        // flips it. Not saved here - PauseController commits to SRAM
-        // once, on leaving the Options sub-menu (see the b_pressed()
-        // handling in update()), same as Music/SFX.
+        // flips it. Turning it on turns Assist Mode off. Not saved here -
+        // PauseController commits to SRAM once, on leaving the Options
+        // sub-menu (see the b_pressed() handling in update()), same as
+        // Music/SFX.
         state.hard_mode_enabled = !state.hard_mode_enabled;
+        if (state.hard_mode_enabled) {
+            state.assist_mode_enabled = false;
+        }
         AudioSettings::instance().play_sfx(bn::sound_items::select);
     }
 }
@@ -238,8 +264,9 @@ PauseController::Action PauseController::update() {
             bool changed = false;
 
             if (bn::keypad::down_pressed() || bn::keypad::up_pressed()) {
+                // Music, SFX, [Hard Mode], Assist Mode.
                 const int row_count =
-                    _data_manager.state().hard_mode_unlocked ? 3 : 2;
+                    _data_manager.state().hard_mode_unlocked ? 4 : 3;
                 _option_row = bn::keypad::down_pressed()
                                   ? (_option_row + 1) % row_count
                                   : (_option_row + row_count - 1) % row_count;

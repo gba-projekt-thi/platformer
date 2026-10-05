@@ -109,6 +109,18 @@ namespace HardMode {
 inline constexpr bn::fixed SPEED_MULTIPLIER = 1.35;
 }  // namespace HardMode
 
+namespace AssistMode {
+// Mirror image of HardMode: applied to the same MOVING/CHASE/AMBUSH
+// values in TrapFactory::create(). PATH traps are left alone for the
+// same reason as in Hard Mode (speed lives in path_waits).
+inline constexpr bn::fixed TRAP_SPEED_MULTIPLIER = 0.5;
+// Forgiveness windows, replacing Cfg::Player::COYOTE_FRAMES /
+// JUMP_BUFFER_FRAMES while active. Jump speed, gravity and acceleration
+// are untouched, so the jump envelope level layouts rely on is unchanged.
+inline constexpr int COYOTE_FRAMES = 8;
+inline constexpr int JUMP_BUFFER_FRAMES = 12;
+}  // namespace AssistMode
+
 namespace Level {
 namespace Limits {
 inline constexpr unsigned int PLATFORMS = 32;

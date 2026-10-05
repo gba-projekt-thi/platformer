@@ -94,6 +94,10 @@ void Player::set_ground_friction(bn::fixed scale) {
     _locomotion.set_ground_friction(scale);
 }
 
+void Player::set_assist_mode(bool enabled) {
+    _locomotion.set_assist_mode(enabled);
+}
+
 void Player::death() {
     _hud.on_player_death();
 

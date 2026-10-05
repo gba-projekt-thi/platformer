@@ -65,7 +65,10 @@ void PlayerLocomotion::handle_horizontal_input() {
 
     } else {
         // No horizontal input: apply friction to slow the player down.
-        _body.dec_velocity(_acceleration, 0);
+        // Uses _deceleration (not _acceleration) so a level's
+        // ground_friction only changes stopping feel, never how quickly
+        // the duck speeds up or how far a jump reaches.
+        _body.dec_velocity(_deceleration * _ground_friction_scale, 0);
     }
 
     bool moving = bn::keypad::left_held() || bn::keypad::right_held();

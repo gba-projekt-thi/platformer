@@ -60,6 +60,18 @@ class PlayerLocomotion {
         _ground_friction_scale = scale;
     }
 
+    // Assist Mode: swaps coyote time and jump buffer to the wider
+    // Cfg::AssistMode windows. Only forgiveness timing changes - jump
+    // speed, gravity and acceleration stay untouched, so the jump
+    // envelope level layouts are authored against is unaffected. Called
+    // by LevelManager::load() on every level load.
+    void set_assist_mode(bool enabled) {
+        _coyote_frames = enabled ? Cfg::AssistMode::COYOTE_FRAMES
+                                 : Cfg::Player::COYOTE_FRAMES;
+        _jump_buffer_frames = enabled ? Cfg::AssistMode::JUMP_BUFFER_FRAMES
+                                      : Cfg::Player::JUMP_BUFFER_FRAMES;
+    }
+
    private:
     void handle_horizontal_input();
     void handle_jump();
@@ -95,6 +107,10 @@ class PlayerLocomotion {
     // Jump helpers
     int _coyote_timer = 0;
     int _jump_buffer_timer = 0;
+    // Window lengths (frames) - Cfg::Player defaults, widened by
+    // set_assist_mode().
+    int _coyote_frames = Cfg::Player::COYOTE_FRAMES;
+    int _jump_buffer_frames = Cfg::Player::JUMP_BUFFER_FRAMES;
 
     // Walk sound helper
     int _walk_sound_counter = 0;

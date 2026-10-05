@@ -45,6 +45,9 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
     // Per-level ground braking multiplier (1 = normal, <1 = slippery). See
     // PlayerLocomotion::set_ground_friction().
     void set_ground_friction(bn::fixed scale);
+    // Assist Mode: widens coyote time / jump buffer. See
+    // PlayerLocomotion::set_assist_mode().
+    void set_assist_mode(bool enabled);
     // Get & Set the count of player deaths.
     unsigned int get_deaths() const;
     void set_deaths(unsigned int deaths);

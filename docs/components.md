@@ -263,7 +263,7 @@ layout faces the player each time.
 ### Hard Mode speed scaling
 
 Moving, Chase, and Ambush traps read a **Hard Mode multiplier** from the level
-manager at construction time (`LevelManager::hard_mode_multiplier()`), which
+manager at construction time (`LevelManager::trap_speed_multiplier()`), which
 returns a configured scale factor when the loaded save slot has Hard Mode
 enabled, or `1` otherwise. The multiplier is applied once, in the **trap
 factory**, to the relevant velocity/speed parameters before the concrete trap
@@ -277,6 +277,20 @@ the next time a level loads (on Continue/Restart from the pause menu, or on
 the next level transition) rather than retroactively on already-placed traps
 mid-level. See [Game Concepts — Hard Mode](game-concepts.md#hard-mode) for the
 player-facing unlock/toggle flow.
+
+### Assist Mode scaling
+
+Assist Mode reuses the Hard Mode plumbing. `LevelManager::
+trap_speed_multiplier()` returns `Cfg::HardMode::SPEED_MULTIPLIER` with Hard
+Mode on, `Cfg::AssistMode::TRAP_SPEED_MULTIPLIER` (0.5) with Assist Mode on,
+or `1`; the trap factory applies it once at construction to Moving, Chase,
+and Ambush traps (Path traps excluded). Additionally,
+`LevelManager::_load_player_spawn()` calls `Player::set_assist_mode()`,
+which swaps `PlayerLocomotion`'s coyote and jump-buffer windows to
+`Cfg::AssistMode` values. Only forgiveness timing changes - jump speed,
+gravity, and acceleration are untouched, so the physics envelope that level
+layouts rely on does not move. The two modes are mutually exclusive
+(enforced in the Options menu; if both flags were ever set, Hard Mode wins).
 
 ---
 
@@ -548,6 +562,10 @@ render time, so a future change to that constant needs a matching edit
 to this display string. It's its own line rather than appended to the
 Hard Mode row itself, which already sits close to the screen's right
 edge.
+
+An **Assist Mode** row follows (always shown, so the sub-menu has three or
+four rows); the info line then moves below it and shows "Traps x0.5" while
+Assist Mode is on. Turning either mode on turns the other off.
 
 ---
 

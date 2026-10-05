@@ -25,7 +25,7 @@ inline auto create(const TrapData& trap_data, LevelManager& level_manager)
         case TrapType::MOVING: {
             Trigger& trigger =
                 level_manager.get_trigger_by_name(trap_data.trigger_name);
-            const bn::fixed mult = level_manager.hard_mode_multiplier();
+            const bn::fixed mult = level_manager.trap_speed_multiplier();
             return bn::make_unique<MovingTrap>(
                 trap_data.x, trap_data.y, trap_data.width, trap_data.height,
                 trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
@@ -52,7 +52,7 @@ inline auto create(const TrapData& trap_data, LevelManager& level_manager)
                 trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
                 trap_data.sprite_waits, trap_data.graphic_indexes, 0,
                 trap_data.chase_follow_distance,
-                trap_data.chase_speed * level_manager.hard_mode_multiplier(),
+                trap_data.chase_speed * level_manager.trap_speed_multiplier(),
                 level_manager.player());
 
         case TrapType::AMBUSH:
@@ -61,7 +61,7 @@ inline auto create(const TrapData& trap_data, LevelManager& level_manager)
                 trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
                 trap_data.sprite_waits, trap_data.graphic_indexes, 0,
                 trap_data.ambush_range,
-                trap_data.ambush_speed * level_manager.hard_mode_multiplier(),
+                trap_data.ambush_speed * level_manager.trap_speed_multiplier(),
                 trap_data.ambush_duration, level_manager.player());
 
         default:

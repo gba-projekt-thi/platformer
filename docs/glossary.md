@@ -11,6 +11,12 @@ range, then lunges once in a fixed direction and returns; punishes
 approaching disguised or similar-looking objects carelessly. Speeds up under
 Hard Mode. See [Components — Trap System](components.md).
 
+**Assist Mode** — An always-available, per-save-slot comfort toggle in the
+pause menu's Options sub-menu: the mirror image of [Hard Mode](#h). Halves
+Moving, Chase, and Ambush trap speeds and widens coyote time and the jump
+buffer. Mutually exclusive with Hard Mode; the toggle resets to off with a
+fresh run. See [Game Concepts — Assist Mode](game-concepts.md#assist-mode).
+
 **AudioSettings** — Engine-level singleton holding the player's current
 music/SFX volume levels; read by the scene manager during fades and by SFX
 call sites via `play_sfx()`. See

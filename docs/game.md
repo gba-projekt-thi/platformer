@@ -19,7 +19,7 @@ The game includes:
 - A run-complete summary screen after the kiss scene (total time, deaths, no-death clears), acknowledged with A/Start before the save slot resets
 - Music and tilemap backgrounds
 - A death counter and run timer HUD
-- A pause menu with Continue / Restart Level / Options / Title Screen; Options lets the player adjust music and SFX volume (0-4), persisted per save slot, plus - once unlocked by completing the game - toggle Hard Mode, which speeds up Moving/Chase/Ambush trap velocities for a tougher replay
+- A pause menu with Continue / Restart Level / Options / Title Screen; Options lets the player adjust music and SFX volume (0-4), persisted per save slot, plus - once unlocked by completing the game - toggle Hard Mode, which speeds up Moving/Chase/Ambush trap velocities for a tougher replay, and an always-available Assist Mode (halved Moving/Chase/Ambush trap speeds plus longer coyote/jump-buffer windows) for a gentler run - the two modes are mutually exclusive
  - A camera that follows the player across wider, scrolling worlds (single-screen worlds stay fixed)
 
 > This page is a quick map of the `game/` folder and its key files. For the
@@ -83,7 +83,7 @@ For headless or CI testing, use:
 - `game/include/level_manager.h` / `game/src/level_manager.cpp`
   - Controls level transitions and scene switching
   - Manages game state across levels and save data
-  - Exposes `hard_mode_multiplier()`, read by the trap factory when constructing Moving/Chase/Ambush traps
+  - Exposes `trap_speed_multiplier()`, read by the trap factory when constructing Moving/Chase/Ambush traps
 
 - `game/include/start_scene.h` / `game/src/start_scene.cpp`
   - Implements the first scene shown to the player
@@ -125,7 +125,7 @@ For headless or CI testing, use:
 - `game/include/trap_factory.h` and `game/src/traps/`
   - Define trap creation and trap behaviors
   - Support base traps, moving traps, path-following traps, chaser traps, and ambush traps
-  - Scales Moving/Chase/Ambush trap velocities by `LevelManager::hard_mode_multiplier()` at construction time; Path traps are left unscaled
+  - Scales Moving/Chase/Ambush trap velocities by `LevelManager::trap_speed_multiplier()` at construction time; Path traps are left unscaled
 
 - `game/include/level_structure.h`
   - `TriggerData::name` / `TrapData::trigger_name` bind a MovingTrap/PathTrap
