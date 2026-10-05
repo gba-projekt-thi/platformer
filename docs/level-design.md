@@ -77,6 +77,27 @@ comfort margin so the intended path is always achievable even with imperfect
 input. Stays within these limits unless you explicitly want a risky, optional
 leap.
 
+### Dash and the envelope
+
+From World 3 onward the duck can also dash (see
+[Game Concepts](game-concepts.md#dash)). Dash only adds horizontal reach: a
+flat ground dash covers 32px, and a jump plus a well-timed air dash reaches
+up to ~94px horizontally (measured with the same per-frame simulation as the
+jump envelope above), while the climb stays at ~22px. Consequences for
+authoring:
+
+- **Existing layouts stay valid.** The 16px climb and 40px gap rules still
+  guarantee a dash-free route, so every level remains clearable without
+  using the dash.
+- **Dash can bypass hazards.** In levels with dash enabled, a long gap that
+  was only a hazard-forced detour can now be crossed directly. Check that a
+  shortcut like that is intended.
+- **Dash-required gaps need a margin.** If a future level deliberately
+  requires the dash, keep the gap well under the measured ~94px (about 70px)
+  and keep the climb at 16px or less, like every other jump.
+- **Worlds 1-2 have no dash.** Their levels, including when replayed via
+  Level Select, were authored for the plain jump envelope.
+
 ### Other placement guidelines
 
 - **Lead with a safe landing.** Give the player a reliable platform to start

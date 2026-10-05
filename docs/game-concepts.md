@@ -37,6 +37,8 @@ The duck can:
 - **Jump** with variable height (hold the button longer to jump higher).
 - **Fall** under gravity with a clamped maximum fall speed, so long drops are
   survivable and predictable.
+- **Dash** (B, from World 3 onward) in a short horizontal burst - see
+  [Dash](#dash).
 
 The control scheme is intentionally simple:
 
@@ -44,6 +46,7 @@ The control scheme is intentionally simple:
 |-------|--------|
 | D-Pad left / right | Move horizontally |
 | A button | Jump |
+| B button | Dash (from World 3 onward) |
 | Start button | Pause (opens the pause menu) |
 
 The pause menu uses D-Pad up/down and A to navigate, mirroring the start-screen
@@ -73,6 +76,29 @@ spacing rules then respect. Braking is the one exception a level can opt
 out of on its own terms: it only changes how far the duck skids to a stop,
 never how high or far a jump can reach, so it can vary by level without
 risking a platform becoming unreachable.
+
+### Dash
+
+The duck's one learned ability, in the spirit of Hollow Knight's cloak dash:
+
+- **Burst.** B launches a fixed-length horizontal dash in the held
+  direction (or the facing direction if none is held). Gravity is suspended
+  for its duration - 8 frames at 4px/frame, a flat 32px - then normal
+  movement resumes at walking speed.
+- **Limits.** A 20-frame cooldown follows every dash. In the air it can be
+  used once per air time and is refilled on landing (not by coyote time). On
+  the ground only the cooldown limits it.
+- **Cancels.** A wall ends the dash early; pressing A while on the ground
+  turns it into a jump; dying cancels it.
+- **No invincibility.** Traps still kill the duck during a dash. It is a
+  movement tool, not a shield - timing a dash through a hazard window is the
+  skill, not a free pass.
+- **Availability.** Enabled from World 3 onward (`Cfg::Dash::UNLOCK_WORLD`),
+  checked against the level being loaded. Worlds 1-2 were authored without
+  it and play as before, also when replayed via Level Select.
+- **Reach.** Dash adds horizontal reach only: jump height is unchanged
+  (~22px climb), horizontal reach grows from ~54px (jump) to at most ~94px
+  (jump + dash). Every existing layout stays clearable without it.
 
 ## Game progression
 

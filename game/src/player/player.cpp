@@ -42,7 +42,8 @@ void Player::update() {
     _locomotion.update();
 
     _state_machine.update(_locomotion.on_ground(), vel_y);
-    _animator.update(_locomotion.on_ground());
+    // A dash plays the jump pose, also when started on the ground.
+    _animator.update(_locomotion.on_ground() && !_locomotion.dashing());
 
     _hud.tick();
 }
@@ -98,10 +99,16 @@ void Player::set_assist_mode(bool enabled) {
     _locomotion.set_assist_mode(enabled);
 }
 
+void Player::set_dash_enabled(bool enabled) {
+    _locomotion.set_dash_enabled(enabled);
+}
+
 void Player::death() {
     _hud.on_player_death();
 
     set_velocity(0, 0);
+    // A dash must not survive the respawn.
+    _locomotion.reset_dash();
 
     pos.x = _restart_x;
     pos.y = _restart_y;

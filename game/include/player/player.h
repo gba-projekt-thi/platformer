@@ -48,6 +48,8 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
     // Assist Mode: widens coyote time / jump buffer. See
     // PlayerLocomotion::set_assist_mode().
     void set_assist_mode(bool enabled);
+    // Dash (B): enabled per level by LevelManager::load().
+    void set_dash_enabled(bool enabled);
     // Get & Set the count of player deaths.
     unsigned int get_deaths() const;
     void set_deaths(unsigned int deaths);

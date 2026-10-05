@@ -68,6 +68,35 @@ within a single frame:
 The ground state and facing direction are then made available to the animator
 and state machine so they can pick the correct frames for this tick.
 
+### Dash
+
+Dash is a self-contained mode inside locomotion (`update_dash()`,
+`start_dash()`, `end_dash()`), tuned by `Cfg::Dash`. It is checked first in
+the per-frame step: while a dash runs it owns the whole frame, and the normal
+steps above (input, gravity, variable jump, clamping) are skipped; only the
+fall-death check and the ground-state update still run.
+
+- **Start.** B pressed, dash enabled for the level, air dash charge
+  available, cooldown elapsed. Direction is the held D-Pad direction, else the
+  facing direction.
+- **Motion.** `vel_x = ±SPEED`, `vel_y = 0` each frame for `DURATION_FRAMES`.
+  `PhysicsBody::move_velocity()` clamps by magnitude, so `SPEED` must stay
+  below the player's `vel_max`.
+- **End.** Timer elapsed, a wall zeroed `vel_x`, the world's bounce edge was
+  reached, or a buffered jump on the ground (dash-jump). Normal movement
+  resumes the same frame at walking top speed with zero vertical velocity,
+  and the cooldown starts.
+- **Charge.** The air dash is refilled by a real ground probe hit, never by
+  coyote time - otherwise dashing off a ledge would refill it at once.
+- **Reset.** `Player::death()` and every level load call `reset_dash()`, so a
+  dash never carries over a respawn.
+- **Enablement.** `LevelManager::_load_player_spawn()` enables it when the
+  loaded level index is at or beyond the start of `Cfg::Dash::UNLOCK_WORLD`
+  (via `WorldIndex::WORLDS`). No save field is involved, so there is no
+  schema change.
+- **Animation.** While dashing the animator is given "not on ground", so the
+  jump pose plays, also for a dash started on the ground.
+
 ### Jump physics principles
 
 The jump is not a single impulse; it is a small set of cooperating rules that

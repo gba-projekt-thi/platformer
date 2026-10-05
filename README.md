@@ -127,6 +127,7 @@ A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each 
 - Adjustable music/SFX volume via a pause-menu Options sub-menu, persisted per save slot
 - A Hard Mode toggle in the same Options sub-menu: unlocked the first time the game is completed, it speeds up Moving/Chase/Ambush trap velocities for a tougher replay (Path traps are unaffected). The unlock is a permanent, per-save achievement; the toggle itself resets to off like the audio settings
 - An Assist Mode toggle in the same Options sub-menu, available from the start: the mirror image of Hard Mode, it halves Moving/Chase/Ambush trap speeds and doubles the coyote-time and jump-buffer windows. Mutually exclusive with Hard Mode; the toggle resets to off like the audio settings
+- A Hollow-Knight-style dash on B, available from World 3 onward: a short horizontal burst with gravity suspended, a cooldown, and one use per air time (refilled on landing). It grants no invincibility and only adds horizontal reach, so every existing layout stays clearable
 - Player movement with acceleration, maximum speed, gravity, and fall speed clamping
 - Jump mechanics with jump buffering and coyote time for more forgiving platforming
 - Variable jump height based on how long the jump button is held

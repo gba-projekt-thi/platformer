@@ -81,6 +81,12 @@ destroys scenes. See [Architecture](architecture.md).
 
 ## D
 
+**Dash** — The duck's horizontal burst on B, enabled from World 3 onward:
+8 frames at 4px/frame with gravity suspended, a 20-frame cooldown, and one
+use per air time (refilled on landing). Adds horizontal reach only and gives
+no invincibility. See [Game Concepts — Dash](game-concepts.md#dash) and
+[Components — Player System](components.md).
+
 **Data manager** — Owns the runtime copy of the game state, the active save
 slot, and load/save/reset operations. See [Architecture](architecture.md).
 

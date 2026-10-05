@@ -132,6 +132,7 @@ graph TD
 |------------|--------|
 | Movement speed, acceleration, gravity, jump strength, coyote/buffer frames, death height, screen-edge bounce | The **central player configuration** (physics values), then verify levels still clear |
 | How far the duck skids to a stop on one specific level (a slippery floor) | That level's `LevelData::ground_friction` - a per-level multiplier, no global config change needed |
+| Dash speed, duration, cooldown, or the world it unlocks in | `Cfg::Dash` (`UNLOCK_WORLD` indexes `WorldIndex::WORLDS`); behavior in **Locomotion**. Re-check the dash reach noted in [Level Design](level-design.md) if SPEED/DURATION change |
 | How input becomes motion; ground detection; variable jump | **Locomotion** |
 | Which sprite frames appear for a state/facing | **Animator** and the player configuration's frame tables |
 | The coarse movement states and their transitions | **State machine** |

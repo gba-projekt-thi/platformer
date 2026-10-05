@@ -1,6 +1,7 @@
 #include "level_manager.h"
 #include "audio_settings.h"
 #include "trap_factory.h"
+#include "world_index.h"
 
 LevelManager::LevelManager(Player& player, DataManager& data_manager)
     : _player(player),
@@ -62,6 +63,13 @@ void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.set_spawn_point(level.player_data.x, level.player_data.y);
     _player.set_ground_friction(level.ground_friction);
     _player.set_assist_mode(assist_mode_active());
+    // Dash is available from Cfg::Dash::UNLOCK_WORLD onward. Compared
+    // against the level being loaded (GameState::level is already set to
+    // it by every path into LevelScene), so replaying an earlier world via
+    // Level Select plays as authored, without dash.
+    _player.set_dash_enabled(
+        _data_manager.state().level >=
+        WorldIndex::WORLDS[Cfg::Dash::UNLOCK_WORLD].start_index);
     _save_sync.reset_baseline();
     _level_frame_count = 0;
 }
