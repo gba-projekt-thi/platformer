@@ -3,6 +3,7 @@
 #include "bn_fixed.h"
 
 #include "cfg.h"
+#include "dash_controller.h"
 #include "physics_body.h"
 #include "sprite.h"
 
@@ -67,22 +68,14 @@ class PlayerLocomotion {
     // by LevelManager::load() on every level load.
     // Dash (B): enabled per level by LevelManager::load(). Changing the
     // flag also cancels a running dash and refills the air dash.
-    void set_dash_enabled(bool enabled) {
-        _dash_enabled = enabled;
-        reset_dash();
-    }
+    void set_dash_enabled(bool enabled) { _dash.set_enabled(enabled); }
 
     // Cancels a running dash and clears its cooldown/air-use (called on
     // death and on level load so a dash never carries over a respawn).
-    void reset_dash() {
-        _dashing = false;
-        _dash_timer = 0;
-        _dash_cooldown_timer = 0;
-        _dash_available = true;
-    }
+    void reset_dash() { _dash.reset(); }
 
     // True while a dash is in progress (read by Player for animation).
-    bool dashing() const { return _dashing; }
+    bool dashing() const { return _dash.dashing(); }
 
     void set_assist_mode(bool enabled) {
         _coyote_frames = enabled ? Cfg::AssistMode::COYOTE_FRAMES
@@ -100,12 +93,11 @@ class PlayerLocomotion {
     void check_bounds();
     void update_ground_state();
     void check_death();
-    // Per-frame dash step. Returns true when a dash owns this frame (the
-    // normal movement path must then be skipped); false otherwise, also
-    // on the frame a dash ends so normal movement resumes immediately.
+    // Per-frame dash step: feeds DashController and applies its result.
+    // Returns true when a dash owns this frame (the normal movement path
+    // must then be skipped); false otherwise, also on the frame a dash ends
+    // so normal movement resumes immediately.
     bool update_dash();
-    void start_dash();
-    void end_dash();
 
     PhysicsBody& _body;
     Sprite& _sprite;
@@ -137,15 +129,6 @@ class PlayerLocomotion {
     int _coyote_frames = Cfg::Player::COYOTE_FRAMES;
     int _jump_buffer_frames = Cfg::Player::JUMP_BUFFER_FRAMES;
 
-    // Dash state. _dash_available is the air-dash charge: refilled on real
-    // ground contact (not coyote time), spent by start_dash().
-    bool _dash_enabled = false;
-    bool _dashing = false;
-    bool _dash_available = true;
-    int _dash_dir = 1;  // -1 = left, +1 = right
-    int _dash_timer = 0;
-    int _dash_cooldown_timer = 0;
-
     // Walk sound helper
     int _walk_sound_counter = 0;
 
@@ -161,4 +144,8 @@ class PlayerLocomotion {
     // LevelManager to match that level's LevelData::ground_friction
     // (defaults to 1 = today's stopping feel, unchanged).
     bn::fixed _ground_friction_scale = 1;
+
+    // Dash decision logic (host-tested, see dash_controller.h).
+    DashController _dash{
+        Cfg::Dash::DURATION_FRAMES, Cfg::Dash::COOLDOWN_FRAMES};
 };

@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include "bn_fixed.h"
+#include "cfg_dash.h"
 
 namespace Cfg {
 
@@ -69,24 +70,6 @@ inline constexpr int DEATH_HEIGHT = 100;
 inline constexpr int COYOTE_FRAMES = 4;
 inline constexpr int JUMP_BUFFER_FRAMES = 6;
 }  // namespace Player
-
-namespace Dash {
-// Horizontal burst on B (Hollow Knight style): gravity is suspended and the
-// duck travels SPEED px/frame for DURATION_FRAMES, i.e. a flat 32px on the
-// ground. In the air it is usable once per air time (refilled on landing);
-// on the ground only the cooldown limits it. Dash only ever ADDS reach -
-// the climb envelope (~22px) is unchanged, horizontal reach grows from ~54px
-// (jump) to at most ~94px (jump + dash) - so no existing layout becomes
-// unreachable. SPEED must stay below Player's vel_max (5) because
-// PhysicsBody::move_velocity() clamps by magnitude.
-inline constexpr int SPEED = 4;
-inline constexpr int DURATION_FRAMES = 8;
-inline constexpr int COOLDOWN_FRAMES = 20;  // ~0.33s between dashes
-// Index into WorldIndex::WORLDS of the first world with dash enabled
-// (2 = World 3, Forest). Earlier levels were authored without it and keep
-// their design; set to 0 to enable it everywhere.
-inline constexpr int UNLOCK_WORLD = 2;
-}  // namespace Dash
 
 namespace DeathCounter {
 inline constexpr int X = -110;
@@ -168,6 +151,8 @@ namespace StartScreen {
 inline constexpr int X = -80;
 inline constexpr int Y = -10;
 inline constexpr int SAVE_SLOT_COUNT = 3;
+// Save slots plus the "Controls" entry below them.
+inline constexpr int ENTRY_COUNT = SAVE_SLOT_COUNT + 1;
 }  // namespace StartScreen
 
 namespace Physics {

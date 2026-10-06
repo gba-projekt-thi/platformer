@@ -21,6 +21,7 @@ The game includes:
 - A death counter and run timer HUD
 - A pause menu with Continue / Restart Level / Options / Title Screen; Options lets the player adjust music and SFX volume (0-4), persisted per save slot, plus - once unlocked by completing the game - toggle Hard Mode, which speeds up Moving/Chase/Ambush trap velocities for a tougher replay, and an always-available Assist Mode (halved Moving/Chase/Ambush trap speeds plus longer coyote/jump-buffer windows) for a gentler run - the two modes are mutually exclusive
 - A dash (B button) from World 3 onward: a short horizontal burst with gravity suspended, a cooldown, and one use per air time; no invincibility, adds horizontal reach only, so no existing layout becomes unreachable
+- A controls overview screen, reachable from the start screen (a "Controls" entry below the save slots) and from the pause menu
  - A camera that follows the player across wider, scrolling worlds (single-screen worlds stay fixed)
 
 > This page is a quick map of the `game/` folder and its key files. For the
@@ -120,6 +121,13 @@ For headless or CI testing, use:
   - Shown once, between `KissingScene` and `StartScene`: sums every level's `best_time_frames` for a total-time readout, plus the slot's total deaths and a `has_no_death_clear()` count - all read from state that's about to be reset
   - Waits for A/Start, then calls `DataManager::reset()` and transitions to `StartScene` - the same reset `KissingScene` used to perform directly
 
+- `game/include/controls_scene.h` / `game/src/controls_scene.cpp`
+  - The start-screen controls overview (A/B/Start returns to `StartScene`); the pause menu has its own in-place view because leaving a level would destroy it
+  - Both draw `controls_text.h`'s `ControlsText::LINES`, so they always agree
+
+- `game/include/game_modes.h`, `dash_controller.h`, `menu_nav.h`, `controls_text.h`, `cfg_dash.h`
+  - Butano-free helpers holding the testable decision logic: Hard/Assist Mode toggles and Options row indices, the dash rules (`DashController`) and constants, wrap-around list-menu cursors, and the controls text. `LevelManager`, `PlayerLocomotion`, `PauseController` and `StartScene` call them and apply the results; covered by `tests/host/`
+
 - `game/include/player.h` / `game/src/player.cpp`
   - Implements player movement, jump behavior, gravity, and input handling
 
@@ -154,7 +162,7 @@ For headless or CI testing, use:
   - Game code persists the chosen levels into `GameState::music_volume`/`sfx_volume` and restores them via `LevelManager::restoreHUD()`
 
  - `game/include/pause_controller.h` / `game/src/pause_controller.cpp`
-  - Handles pause toggling and the pause menu (Continue / Restart Level / Options / Title Screen)
+  - Handles pause toggling and the pause menu (Continue / Restart Level / Options / Controls / Title Screen)
   - Owns an embedded Options sub-menu (Up/Down selects Music/SFX/Hard Mode, Left/Right adjusts the level or flips the toggle, B returns and commits to SRAM once)
   - The Hard Mode row only appears once `GameState::hard_mode_unlocked` is set for the loaded slot
 
@@ -200,7 +208,7 @@ To add a new gameplay object:
 
 - `game/` is the game-specific project code. It depends on Butano and shared engine code in `extern/engine/`.
 - The root `Makefile` points `TARGET := platformer`, so the generated ROM is `platformer.gba`.
-- `tests/host/` holds host-buildable unit tests (no ARM toolchain needed) for the Butano-free pure-logic files (`save_integrity`, `save_buffer`, `game_state`, `frame_time`); `.github/workflows/ci.yml` runs them plus a full devcontainer build + headless boot on every push/PR - see [`docs/development-workflow.md`](development-workflow.md#testing-methodology).
+- `tests/host/` holds host-buildable unit tests (no ARM toolchain needed) for the Butano-free pure-logic files (`save_integrity`, `save_buffer`, `game_state`, `frame_time`, `world_index`, `game_modes`, `dash_controller`/`cfg_dash`, `menu_nav`, `controls_text`); `.github/workflows/ci.yml` runs them plus a full devcontainer build + headless boot on every push/PR - see [`docs/development-workflow.md`](development-workflow.md#testing-methodology).
 
 ## Related Docs
 

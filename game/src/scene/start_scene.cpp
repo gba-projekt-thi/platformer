@@ -14,9 +14,11 @@
 
 #include "cfg.h"
 #include "common_variable_8x16_sprite_font.h"
+#include "controls_scene.h"
 #include "data_manager.h"
 #include "level_manager.h"
 #include "level_scene.h"
+#include "menu_nav.h"
 #include "player.h"
 #include "world_index.h"
 #include "world_select_scene.h"
@@ -80,6 +82,14 @@ void StartScene::_rebuild_slot_list() {
             _slot_sprites);
     }
 
+    // Last entry below the save slots: the controls overview.
+    _text_gen->generate(
+        Cfg::StartScreen::X,
+        Cfg::StartScreen::Y + Cfg::StartScreen::SAVE_SLOT_COUNT * 16,
+        (_selected_slot == Cfg::StartScreen::SAVE_SLOT_COUNT) ? "> Controls"
+                                                              : "  Controls",
+        _slot_sprites);
+
     for (bn::sprite_ptr& s : _slot_sprites) {
         s.set_blending_enabled(true);
     }
@@ -139,15 +149,14 @@ void StartScene::update() {
     if (!_transition_requested) {
         bool changed = false;
         if (bn::keypad::down_pressed()) {
-            _selected_slot =
-                (_selected_slot + 1) % Cfg::StartScreen::SAVE_SLOT_COUNT;
+            _selected_slot = menu_nav::next_index(
+                _selected_slot, Cfg::StartScreen::ENTRY_COUNT);
             changed = true;
 
             AudioSettings::instance().play_sfx(bn::sound_items::select);
         } else if (bn::keypad::up_pressed()) {
-            _selected_slot =
-                (_selected_slot + Cfg::StartScreen::SAVE_SLOT_COUNT - 1) %
-                Cfg::StartScreen::SAVE_SLOT_COUNT;
+            _selected_slot = menu_nav::prev_index(
+                _selected_slot, Cfg::StartScreen::ENTRY_COUNT);
             changed = true;
 
             AudioSettings::instance().play_sfx(bn::sound_items::select);
@@ -159,7 +168,17 @@ void StartScene::update() {
             _rebuild_slot_list();
         }
 
-        if (bn::keypad::a_pressed()) {
+        if (bn::keypad::a_pressed() &&
+            _selected_slot == Cfg::StartScreen::SAVE_SLOT_COUNT) {
+            // "Controls" entry: no slot is loaded, just show the overview.
+            _transition_requested = true;
+
+            auto next = bn::make_unique<ControlsScene>(
+                _player, _levels, _data_manager, _level_manager);
+            core::SceneManager::instance().set_next_scene(bn::move(next));
+
+            AudioSettings::instance().play_sfx(bn::sound_items::confirm);
+        } else if (bn::keypad::a_pressed()) {
             // Confirm selection: set active slot, load save, and transition
             _transition_requested = true;
             _data_manager.set_slot_index(_selected_slot);
@@ -172,7 +191,9 @@ void StartScene::update() {
             _level_manager.restoreHUD();
 
             AudioSettings::instance().play_sfx(bn::sound_items::confirm);
-        } else if (bn::keypad::b_pressed()) {
+        } else if (
+            bn::keypad::b_pressed() &&
+            _selected_slot < Cfg::StartScreen::SAVE_SLOT_COUNT) {
             // Jump to world/level select instead of continuing normally.
             _transition_requested = true;
             _data_manager.set_slot_index(_selected_slot);

@@ -77,6 +77,18 @@ cd tests/host
 make        # builds and runs; non-zero exit on any failure
 ```
 
+The same extraction pattern covers the later features: the pure decision
+logic of Assist/Hard Mode (`game_modes.h`: `modes::trap_speed_mode()`,
+mutually exclusive toggles, Options row indices), the dash (`dash_controller.h`
+`DashController`: start/duration/cooldown/air-charge/cancel rules, plus the
+`Cfg::Dash` invariants in `cfg_dash.h`), list-menu cursor wrapping
+(`menu_nav.h`), and the controls overview text (`controls_text.h`: line
+count, length, ASCII and sprite-budget limits, and that the dash line names
+the world `Cfg::Dash::UNLOCK_WORLD` unlocks). `PlayerLocomotion`,
+`LevelManager`, `PauseController` and the scenes only feed these helpers
+and apply their results, so what is left in the Butano-dependent files is
+glue that still needs the manual checks below.
+
 `frame_time.h` is `FrameTime`/`frames_to_time()` extracted out of `timer.h`
 specifically so it has no Butano include chain to drag along - `timer.h`
 includes it, so every existing `#include "timer.h"` call site is
@@ -156,6 +168,9 @@ A practical manual test checklist for any gameplay change:
 | Progression | Door advances to the right stage; final stage triggers the kiss scene |
 | Persistence | Deaths/timer/level saved and reloaded per slot |
 | Pause | Menu navigates; continue/restart/title behave correctly |
+| Dash | B dashes from World 3 onward (not in Worlds 1-2); one air dash per jump, refilled on landing; wall/edge/death cancel it |
+| Assist / Hard Mode | Toggling one turns the other off; traps and coyote/buffer change from the next level load |
+| Controls overview | Reachable from the start screen's "Controls" entry and the pause menu; A/B returns; text fits on screen in the longest level |
 
 ## Debugging approach
 

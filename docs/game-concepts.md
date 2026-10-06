@@ -48,9 +48,23 @@ The control scheme is intentionally simple:
 | A button | Jump |
 | B button | Dash (from World 3 onward) |
 | Start button | Pause (opens the pause menu) |
+| Select button | Show / hide the run timer |
 
 The pause menu uses D-Pad up/down and A to navigate, mirroring the start-screen
 controls for consistency.
+
+### Controls overview
+
+A short overview of all buttons is available without starting a level:
+
+- **Start screen.** A "Controls" entry sits below the three save slots
+  (reached with D-Pad down). A opens the overview, A/B/Start returns. It
+  does not load or touch any save slot, and B on it does nothing.
+- **Pause menu.** A "Controls" entry sits between Options and Title Screen.
+  The list replaces the menu in place (no scene change, so the level stays
+  loaded); A or B returns to the menu.
+
+Both show the same text, so the two can never disagree.
 
 ### Feel-oriented mechanics
 
@@ -155,6 +169,7 @@ During gameplay, opening the pause menu offers:
 - **Options** — adjust music and SFX volume (0-4), without leaving the
   paused overlay. Persisted per save slot. Once Hard Mode has been unlocked
   (see below), a third row lets the player toggle it on/off from here too.
+- **Controls** — show the controls overview (A/B returns).
 - **Title Screen** — leave to the title (progress is saved).
 
 ### Hard Mode

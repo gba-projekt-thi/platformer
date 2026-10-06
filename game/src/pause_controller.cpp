@@ -8,12 +8,15 @@
 
 #include "cfg.h"
 #include "common_variable_8x16_sprite_font.h"
+#include "controls_text.h"
 #include "data_manager.h"
+#include "game_modes.h"
 #include "level_manager.h"
+#include "menu_nav.h"
 
 namespace {
-constexpr const char* MENU_LABELS[4] = {
-    "Continue", "Restart Level", "Options", "Title Screen"};
+constexpr const char* MENU_LABELS[5] = {
+    "Continue", "Restart Level", "Options", "Controls", "Title Screen"};
 }  // namespace
 
 PauseController::PauseController(DataManager& data_manager)
@@ -79,7 +82,7 @@ void PauseController::_rebuild_menu() {
 }
 
 int PauseController::_assist_row() const {
-    return _data_manager.state().hard_mode_unlocked ? 3 : 2;
+    return modes::assist_row(_data_manager.state().hard_mode_unlocked);
 }
 
 void PauseController::_append_toggle_row(int row, const char* label, bool on) {
@@ -170,6 +173,33 @@ void PauseController::_rebuild_options_menu() {
     }
 }
 
+void PauseController::_rebuild_controls_view() {
+    // Title and menu rows make way for the controls list. Sprite budget:
+    // the overview is drawn on top of a running level, so ControlsText keeps
+    // its lines short (see controls_text.h).
+    for (bn::sprite_ptr& sprite : _title_sprites) {
+        sprite.set_visible(false);
+    }
+    for (bn::sprite_ptr& sprite : _menu_sprites) {
+        sprite.set_visible(false);
+    }
+    _menu_sprites.clear();
+
+    _text_gen->generate(
+        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_TITLE, "Controls", _menu_sprites);
+    for (int i = 0; i < ControlsText::LINE_COUNT; ++i) {
+        _text_gen->generate(
+            Cfg::PauseMenu::X,
+            Cfg::PauseMenu::Y_OPTION_0 + i * Cfg::PauseMenu::OPTION_SPACING,
+            ControlsText::LINES[i], _menu_sprites);
+    }
+
+    for (bn::sprite_ptr& sprite : _menu_sprites) {
+        sprite.set_visible(_paused);
+        sprite.set_blending_enabled(true);
+    }
+}
+
 void PauseController::_change_option_level(int delta) {
     AudioSettings& audio = AudioSettings::instance();
     GameState& state = _data_manager.state();
@@ -207,10 +237,7 @@ void PauseController::_change_option_level(int delta) {
         // Assist Mode row - a toggle; either direction flips it. Turning
         // it on turns Hard Mode off (mutually exclusive). Committed to
         // SRAM once on leaving the sub-menu, like the rows above.
-        state.assist_mode_enabled = !state.assist_mode_enabled;
-        if (state.assist_mode_enabled) {
-            state.hard_mode_enabled = false;
-        }
+        modes::toggle_assist_mode(state);
         AudioSettings::instance().play_sfx(bn::sound_items::select);
     } else {
         // Hard Mode row - a toggle, not a 0-4 level; either direction
@@ -218,10 +245,7 @@ void PauseController::_change_option_level(int delta) {
         // PauseController commits to SRAM once, on leaving the Options
         // sub-menu (see the b_pressed() handling in update()), same as
         // Music/SFX.
-        state.hard_mode_enabled = !state.hard_mode_enabled;
-        if (state.hard_mode_enabled) {
-            state.assist_mode_enabled = false;
-        }
+        modes::toggle_hard_mode(state);
         AudioSettings::instance().play_sfx(bn::sound_items::select);
     }
 }
@@ -232,6 +256,7 @@ void PauseController::reset() {
     _prev_paused = false;
     _selected_index = 0;
     _showing_options = false;
+    _showing_controls = false;
     _option_row = 0;
     _set_visible(false);
 }
@@ -248,6 +273,7 @@ PauseController::Action PauseController::update() {
         if (_paused) {
             _selected_index = 0;
             _showing_options = false;
+            _showing_controls = false;
             _rebuild_menu();
             _set_visible(true);
             bn::music::pause();
@@ -260,13 +286,27 @@ PauseController::Action PauseController::update() {
     }
 
     if (_paused) {
+        if (_showing_controls) {
+            if (bn::keypad::a_pressed() || bn::keypad::b_pressed()) {
+                _showing_controls = false;
+                for (bn::sprite_ptr& sprite : _title_sprites) {
+                    sprite.set_visible(true);
+                }
+                _rebuild_menu();
+                AudioSettings::instance().play_sfx(bn::sound_items::cancel);
+            }
+
+            bn::core::update();
+            return Action::None;
+        }
+
         if (_showing_options) {
             bool changed = false;
 
             if (bn::keypad::down_pressed() || bn::keypad::up_pressed()) {
                 // Music, SFX, [Hard Mode], Assist Mode.
-                const int row_count =
-                    _data_manager.state().hard_mode_unlocked ? 4 : 3;
+                const int row_count = modes::options_row_count(
+                    _data_manager.state().hard_mode_unlocked);
                 _option_row = bn::keypad::down_pressed()
                                   ? (_option_row + 1) % row_count
                                   : (_option_row + row_count - 1) % row_count;
@@ -301,12 +341,13 @@ PauseController::Action PauseController::update() {
         bool selection_changed = false;
 
         if (bn::keypad::down_pressed()) {
-            _selected_index = (_selected_index + 1) % int(MenuOption::Count);
+            _selected_index =
+                menu_nav::next_index(_selected_index, int(MenuOption::Count));
             selection_changed = true;
             AudioSettings::instance().play_sfx(bn::sound_items::select);
         } else if (bn::keypad::up_pressed()) {
-            _selected_index = (_selected_index + int(MenuOption::Count) - 1) %
-                              int(MenuOption::Count);
+            _selected_index =
+                menu_nav::prev_index(_selected_index, int(MenuOption::Count));
             selection_changed = true;
             AudioSettings::instance().play_sfx(bn::sound_items::select);
         }
@@ -326,6 +367,16 @@ PauseController::Action PauseController::update() {
                 _showing_options = true;
                 _option_row = 0;
                 _rebuild_options_menu();
+                bn::core::update();
+                return Action::None;
+            }
+
+            if (option == MenuOption::Controls) {
+                // Stay paused, show the overview in place of the menu - no
+                // Action returned, no scene transition (leaving the level
+                // would destroy it).
+                _showing_controls = true;
+                _rebuild_controls_view();
                 bn::core::update();
                 return Action::None;
             }

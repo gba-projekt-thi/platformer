@@ -128,6 +128,7 @@ A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each 
 - A Hard Mode toggle in the same Options sub-menu: unlocked the first time the game is completed, it speeds up Moving/Chase/Ambush trap velocities for a tougher replay (Path traps are unaffected). The unlock is a permanent, per-save achievement; the toggle itself resets to off like the audio settings
 - An Assist Mode toggle in the same Options sub-menu, available from the start: the mirror image of Hard Mode, it halves Moving/Chase/Ambush trap speeds and doubles the coyote-time and jump-buffer windows. Mutually exclusive with Hard Mode; the toggle resets to off like the audio settings
 - A Hollow-Knight-style dash on B, available from World 3 onward: a short horizontal burst with gravity suspended, a cooldown, and one use per air time (refilled on landing). It grants no invincibility and only adds horizontal reach, so every existing layout stays clearable
+- A controls overview screen, reachable from the start screen (a "Controls" entry below the save slots) and from the pause menu
 - Player movement with acceleration, maximum speed, gravity, and fall speed clamping
 - Jump mechanics with jump buffering and coyote time for more forgiving platforming
 - Variable jump height based on how long the jump button is held
@@ -227,7 +228,7 @@ Before every commit a short script runs to check if all files are using a consis
 This is only possible in the devcontainer or if you have [pre-commit](https://pre-commit.com), clang-format and clang-tidy installed on your system. 
 
 ### Tests
-Pure-logic code (save integrity, game-state bit flags, frame-time formatting) has a small host-side unit test suite under `tests/host/` - no ARM toolchain or devcontainer needed, just your system's own `g++`/`clang++`:
+Pure-logic code (save integrity, game-state bit flags, frame-time formatting, Hard/Assist Mode toggles, dash rules, menu cursor wrapping, controls text) has a small host-side unit test suite under `tests/host/` - no ARM toolchain or devcontainer needed, just your system's own `g++`/`clang++`:
 
 ```bash
 cd tests/host

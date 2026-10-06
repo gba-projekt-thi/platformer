@@ -72,6 +72,11 @@ but never retreats; punishes standing still. Speeds up under Hard Mode. See
 a body belongs to and reacts to, letting the collision system route interactions
 without testing every pair. See [Project Architecture](architecture.md).
 
+**Controls overview** — A short list of every button, shown by the start
+screen's "Controls" entry (`ControlsScene`) and by the pause menu's Controls
+view. Both read the same `ControlsText`. See
+[Game Concepts — Controls overview](game-concepts.md#controls-overview).
+
 **Coyote time** — A few grace frames after leaving a ledge during which a jump
 is still allowed. A forgiving-control mechanic. See
 [Game Concepts](game-concepts.md).
@@ -216,7 +221,7 @@ waypoints; used for patrols and figure-8 motion. Unaffected by Hard Mode. See
 [Components — Trap System](components.md).
 
 **Pause controller** — Handles pause toggling and the pause menu (continue /
-restart / options / title). See [Components](components.md).
+restart / options / controls / title). See [Components](components.md).
 
 **Physics body** — The shared engine concept giving an entity position, motion,
 and collision-layer participation. Used by player, traps, triggers, platforms,

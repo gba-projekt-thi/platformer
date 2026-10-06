@@ -15,6 +15,7 @@
 #include "cfg.h"
 #include "data_manager.h"
 #include "door.h"
+#include "game_modes.h"
 #include "game_state.h"
 #include "i_resettable.h"
 #include "level_structure.h"
@@ -84,25 +85,25 @@ class LevelManager {
         return _save_sync.no_deaths_this_attempt();
     }
 
-    // True if Assist Mode is on. Hard Mode wins if both flags are ever
-    // set (e.g. inconsistent save data) - the Options menu keeps them
-    // mutually exclusive.
+    // True if Assist Mode is on (Hard Mode wins if both flags are ever
+    // set - see modes::trap_speed_mode()).
     [[nodiscard]] bool assist_mode_active() const {
-        const GameState& state = _data_manager.state();
-        return state.assist_mode_enabled && !state.hard_mode_enabled;
+        return modes::assist_active(_data_manager.state());
     }
 
     // Cfg::HardMode::SPEED_MULTIPLIER with Hard Mode,
     // Cfg::AssistMode::TRAP_SPEED_MULTIPLIER with Assist Mode, else 1 -
     // used by TrapFactory to scale trap speed values at creation time.
     [[nodiscard]] bn::fixed trap_speed_multiplier() const {
-        if (_data_manager.state().hard_mode_enabled) {
-            return Cfg::HardMode::SPEED_MULTIPLIER;
+        switch (modes::trap_speed_mode(_data_manager.state())) {
+            case modes::TrapSpeedMode::Hard:
+                return Cfg::HardMode::SPEED_MULTIPLIER;
+            case modes::TrapSpeedMode::Assist:
+                return Cfg::AssistMode::TRAP_SPEED_MULTIPLIER;
+            case modes::TrapSpeedMode::Normal:
+            default:
+                return bn::fixed(1);
         }
-        if (assist_mode_active()) {
-            return Cfg::AssistMode::TRAP_SPEED_MULTIPLIER;
-        }
-        return bn::fixed(1);
     }
 
    private:

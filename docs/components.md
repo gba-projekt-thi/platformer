@@ -70,8 +70,12 @@ and state machine so they can pick the correct frames for this tick.
 
 ### Dash
 
-Dash is a self-contained mode inside locomotion (`update_dash()`,
-`start_dash()`, `end_dash()`), tuned by `Cfg::Dash`. It is checked first in
+The dash rules live in `DashController` (`dash_controller.h`), which has no
+Butano dependency so it is unit-tested on the host. Locomotion
+(`update_dash()`) gathers the frame's inputs and environment flags into a
+`DashInput`, calls `update()`, and applies the returned `DashStep`
+(start: facing/sound; end: hand-over velocity; moving: dash velocity). It is
+tuned by `Cfg::Dash` (`cfg_dash.h`). It is checked first in
 the per-frame step: while a dash runs it owns the whole frame, and the normal
 steps above (input, gravity, variable jump, clamping) are skipped; only the
 fall-death check and the ground-state update still run.
@@ -320,6 +324,19 @@ which swaps `PlayerLocomotion`'s coyote and jump-buffer windows to
 gravity, and acceleration are untouched, so the physics envelope that level
 layouts rely on does not move. The two modes are mutually exclusive
 (enforced in the Options menu; if both flags were ever set, Hard Mode wins).
+
+### Pause menu views
+
+The pause controller has three views: the main menu (Continue / Restart
+Level / Options / Controls / Title Screen), the Options sub-menu, and the
+Controls overview. The Options sub-menu and the Controls view both replace
+the menu in place rather than switching scenes - leaving the level would
+destroy it. The Controls view draws `ControlsText` (shared with the
+start-screen `ControlsScene`) and returns on A or B. List cursors wrap via
+`menu_nav::next_index()` / `prev_index()`, and the Hard Mode / Assist Mode
+toggles go through `modes::toggle_hard_mode()` /
+`modes::toggle_assist_mode()` (`game_modes.h`), which keep the two modes
+mutually exclusive.
 
 ---
 

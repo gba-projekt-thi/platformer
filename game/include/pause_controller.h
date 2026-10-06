@@ -34,14 +34,17 @@ class PauseController {
         Continue = 0,
         Restart = 1,
         Options = 2,
-        TitleScreen = 3,
-        Count = 4
+        Controls = 3,
+        TitleScreen = 4,
+        Count = 5
     };
 
     void _init_pause_menu();
     void _set_visible(bool visible);
     void _rebuild_menu();
     void _rebuild_options_menu();
+    // Replaces the menu with the controls overview (see ControlsText).
+    void _rebuild_controls_view();
     void _change_option_level(int delta);
     // Row index of the Assist Mode toggle: 2 normally, 3 once the Hard
     // Mode row (always row 2) is unlocked and shown.
@@ -56,6 +59,8 @@ class PauseController {
 
     // Options sub-menu state.
     bool _showing_options = false;
+    // Controls overview shown in place of the menu (A/B returns).
+    bool _showing_controls = false;
     // 0 = Music, 1 = SFX, 2 = Hard Mode (once unlocked), then Assist Mode
     // (see _assist_row()).
     int _option_row = 0;
