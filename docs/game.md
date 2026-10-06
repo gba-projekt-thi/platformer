@@ -13,7 +13,7 @@ The game includes:
 - Level-select also shows each unlocked level's personal-best clear time (mm:ss.cc), once one has been set, marked with a trailing `*` if that level has ever been cleared without a single death (a no-death clear)
 - A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each with at least two regular levels plus one boss level, defined in code (17 levels total). World 5 has an extra trap-free finale level after its boss.
 - Five trap categories: static (base), trigger-activated moving, path-following patrol, player-chasing, and proximity-triggered ambush hazards
-- Trigger zones that activate hazards
+- Trigger zones that activate hazards - latching by default, or as toggling switches and hold-down pressure plates (optionally with a visible sprite) that can also open and close platforms
 - A door that advances the player to the next level, ending in a celebratory kiss scene (the door itself can be reskinned as a different, non-animated sprite for narrative moments - see World 5's finale)
 - A "New Best!" banner that holds the level-complete transition until acknowledged, whenever a level is cleared faster than its previous best time
 - A run-complete summary screen after the kiss scene (total time, deaths, no-death clears), acknowledged with A/Start before the save slot resets
@@ -125,8 +125,8 @@ For headless or CI testing, use:
   - The start-screen controls overview (A/B/Start returns to `StartScene`); the pause menu has its own in-place view because leaving a level would destroy it
   - Both draw `controls_text.h`'s `ControlsText::LINES`, so they always agree
 
-- `game/include/game_modes.h`, `dash_controller.h`, `menu_nav.h`, `controls_text.h`, `cfg_dash.h`
-  - Butano-free helpers holding the testable decision logic: Hard/Assist Mode toggles and Options row indices, the dash rules (`DashController`) and constants, wrap-around list-menu cursors, and the controls text. `LevelManager`, `PlayerLocomotion`, `PauseController` and `StartScene` call them and apply the results; covered by `tests/host/`
+- `game/include/game_modes.h`, `dash_controller.h`, `menu_nav.h`, `controls_text.h`, `cfg_dash.h`, `trigger_logic.h`, `switch_logic.h`
+  - Butano-free helpers holding the testable decision logic: Hard/Assist Mode toggles and Options row indices, the dash rules (`DashController`) and constants, wrap-around list-menu cursors, the trigger mode state logic and switched-platform rules, and the controls text. `LevelManager`, `PlayerLocomotion`, `PauseController` and `StartScene` call them and apply the results; covered by `tests/host/`
 
 - `game/include/player.h` / `game/src/player.cpp`
   - Implements player movement, jump behavior, gravity, and input handling
@@ -208,7 +208,7 @@ To add a new gameplay object:
 
 - `game/` is the game-specific project code. It depends on Butano and shared engine code in `extern/engine/`.
 - The root `Makefile` points `TARGET := platformer`, so the generated ROM is `platformer.gba`.
-- `tests/host/` holds host-buildable unit tests (no ARM toolchain needed) for the Butano-free pure-logic files (`save_integrity`, `save_buffer`, `game_state`, `frame_time`, `world_index`, `game_modes`, `dash_controller`/`cfg_dash`, `menu_nav`, `controls_text`); `.github/workflows/ci.yml` runs them plus a full devcontainer build + headless boot on every push/PR - see [`docs/development-workflow.md`](development-workflow.md#testing-methodology).
+- `tests/host/` holds host-buildable unit tests (no ARM toolchain needed) for the Butano-free pure-logic files (`save_integrity`, `save_buffer`, `game_state`, `frame_time`, `world_index`, `game_modes`, `dash_controller`/`cfg_dash`, `menu_nav`, `controls_text`, `trigger_logic`, `switch_logic`); `tools/test_check_trigger_references.py` covers the level-data checker; `.github/workflows/ci.yml` runs them plus a full devcontainer build + headless boot on every push/PR - see [`docs/development-workflow.md`](development-workflow.md#testing-methodology).
 
 ## Related Docs
 

@@ -197,7 +197,7 @@ The project has clear extension points and patterns to reuse:
 |----------------|----------------------|
 | A new scene (e.g. a hub, a minigame) | Create a scene and ask the scene manager to set it as the next scene; follow how the start/level/kiss scenes transition. |
 | A new resettable hazard/feature | Implement the shared resettable interface so the level manager resets it on death without special-casing. |
-| A new trigger-driven effect | Use an existing trigger and add behavior bound to it, rather than inventing a parallel activation channel. |
+| A new trigger-driven effect | Use an existing trigger and add behavior bound to it, rather than inventing a parallel activation channel. For puzzle-like effects use a Toggle or Hold trigger, or bind platforms to a trigger via `PlatformData::trigger_name`. |
 | A new persistent stat | Add a fixed-width field to the saved game-state record (keeps the save layout predictable). |
 | A new save slot | Increase the slot count in the data manager's save configuration; the start screen presents slots accordingly. |
 | More entity capacity per stage | Raise the configured container limits deliberately, with awareness of the memory budget (see [System Internals](system-internals.md)). |

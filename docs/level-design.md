@@ -236,6 +236,49 @@ A good trigger is placed so the resulting hazard is *visible and reactable* the
 instant it activates — the duck should see it begin moving and have time to
 respond.
 
+### Trigger modes and switched platforms
+
+A trigger has a **mode** that decides how entering and leaving its zone
+changes its state:
+
+| Mode | Behavior | Typical use |
+|------|----------|-------------|
+| **Latch** (default) | Turns on at the first entry and stays on until the next death/restart. | Everything authored so far: releasing a falling hazard. |
+| **Toggle** | Every *entry* flips it; standing inside does not flip it again. | A switch the duck steps on and off again. |
+| **Hold** | On only while the duck is inside. | A pressure plate. |
+
+Existing levels do not set a mode and keep Latch, so none of them changes.
+
+A trigger can also have an optional **visible sprite** with an "off" and an
+"on" tile, so a switch reads as a switch. Without one it stays invisible,
+like every trigger so far.
+
+A **switched platform** is a platform bound to a trigger by name
+(`PlatformData::trigger_name`). While the trigger is on it is solid and
+visible if `active_when_on` is true, or gone if it is false. Two platforms
+bound to the same Toggle trigger with opposite `active_when_on` values give
+the classic "this switch opens path A and closes path B". Traps bound to the
+same trigger still follow it: a patrol (Path trap) pauses while its trigger
+is off, so a switch can also freeze or release a hazard. A Moving trap only
+stops accelerating while its trigger is off - it keeps its current momentum -
+so prefer Path traps and platforms for switch puzzles.
+
+Authoring notes:
+
+- **Everything resets on death.** Triggers return to their default state and
+  switched platforms follow, so a puzzle always starts the same way.
+- **A platform never appears inside the duck.** It stays out until the duck
+  has stepped clear, then appears.
+- **Keep the switch reachable and readable.** Give it a visible sprite, put
+  it where the duck can see what it changes, and keep every jump inside the
+  physics envelope in both switch states.
+- **Budgets.** A visible switch uses one sprite slot (the registry holds 72)
+  and two tile sets; the trigger limit (16) and platform limit (32) are
+  unchanged.
+- **The level-data check covers platforms.** `Check_trigger_references.py`
+  also fails on a platform whose `trigger_name` matches no trigger in its
+  level.
+
 ## Audio-visual theme integration
 
 Each world is a coherent theme that ties visuals and audio together:

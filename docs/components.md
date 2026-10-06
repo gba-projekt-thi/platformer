@@ -256,6 +256,30 @@ Two activation styles exist:
   threshold, then run a fixed, self-contained lunge sequence independent of
   further player movement.
 
+### Trigger modes and switched platforms
+
+`Trigger` keeps its state in a `TriggerState` (`trigger_logic.h`, Butano-free
+and unit-tested). The mode (`TriggerData::mode`) decides what an entry or exit
+does: **Latch** (default, identical to the original behavior), **Toggle**
+(flip on every entry) or **Hold** (on while inside). `Trigger` now also
+implements the resettable interface, and the level manager registers every
+trigger in its resettable list - so a trigger that drives only platforms still
+resets on death. An optional sprite (`TriggerData::sprite` plus an off and an
+on tile index) is wrapped in `Sprite` and registered with `SpriteRegistry`;
+both tile sets are created up front, so a state change is a tile swap.
+
+Platforms bind to a trigger through `PlatformData::trigger_name`. After the
+triggers load, `LevelManager::_bind_switched_platforms()` resolves each name
+once with `get_trigger_by_name()`. Every frame, right after the collision
+update, `_sync_switched_platforms()` compares `switch_logic::
+platform_active(trigger_on, active_when_on)` with the platform body's enabled
+state and enables or disables the body (so it stops blocking and being
+discoverable by probes) and its sprite together. A platform that is about to
+re-appear is held back while its box overlaps the duck's
+(`switch_logic::boxes_overlap()`, same strict comparisons as the collision
+registry), because every move into an overlapping body is blocked and the duck
+would be stuck.
+
 ### Trigger lookup
 
 A trigger can optionally carry a stable name (`TriggerData::name`); a trap

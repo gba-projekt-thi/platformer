@@ -1,5 +1,6 @@
 #include "level_manager.h"
 #include "audio_settings.h"
+#include "switch_logic.h"
 #include "trap_factory.h"
 #include "world_index.h"
 
@@ -135,6 +136,7 @@ void LevelManager::_setup_camera(const LevelData& level) {
 }
 
 void LevelManager::_clear_runtime_state() {
+    _switched_platforms.clear();
     _platforms.clear();
     _platform_bodies.clear();
     _triggers.clear();
@@ -190,12 +192,61 @@ void LevelManager::_load_triggers(const LevelData& level) {
         const TriggerData& trigger = level.triggers[i];
         _triggers.emplace_back(
             trigger.x, trigger.y, trigger.width, trigger.height,
-            trigger.default_on, trigger.name);
+            trigger.default_on, trigger.name, trigger.mode, trigger.sprite,
+            trigger.sprite_index_off, trigger.sprite_index_on);
     }
 
     // Fallback trigger prevents invalid references.
     if (_triggers.empty()) {
         _triggers.emplace_back(1000, 1000, 0, 0, true, nullptr);
+    }
+
+    // Triggers reset themselves on death/restart, so one that drives only
+    // platforms (no trap to reset it) still returns to its default state.
+    for (Trigger& trigger : _triggers) {
+        _resettables.push_back(&trigger);
+    }
+}
+
+void LevelManager::_bind_switched_platforms(const LevelData& level) {
+    // _platforms / _platform_bodies hold exactly one entry per platform, in
+    // the same order as level.platforms (see _load_platforms()).
+    for (int i = 0; i < level.platform_count; ++i) {
+        const PlatformData& platform = level.platforms[i];
+        if (platform.trigger_name == nullptr) {
+            continue;
+        }
+        _switched_platforms.push_back(SwitchedPlatform{
+            &get_trigger_by_name(platform.trigger_name), &_platform_bodies[i],
+            _platforms[i].get(), platform.active_when_on});
+    }
+}
+
+void LevelManager::_sync_switched_platforms() {
+    for (SwitchedPlatform& switched : _switched_platforms) {
+        const bool want = switch_logic::platform_active(
+            switched.trigger->is_triggered(), switched.active_when_on);
+        if (want == switched.body->is_enabled()) {
+            continue;
+        }
+
+        if (want) {
+            // A platform re-appearing on top of the duck would trap it (every
+            // move into an overlapping body is blocked), so hold it back
+            // until the duck has stepped clear.
+            if (switch_logic::boxes_overlap(
+                    _player.pos.get_x(), _player.pos.get_y(), _player.pos.width,
+                    _player.pos.height, switched.body->pos.get_x(),
+                    switched.body->pos.get_y(), switched.body->pos.width,
+                    switched.body->pos.height)) {
+                continue;
+            }
+            switched.body->enable();
+            switched.sprite->enable();
+        } else {
+            switched.body->disable();
+            switched.sprite->disable();
+        }
     }
 }
 
@@ -224,13 +275,16 @@ void LevelManager::load(const LevelData& level) {
 
     _load_platforms(level);
     _load_triggers(level);
+    _bind_switched_platforms(level);
     _load_traps(level);
+    _sync_switched_platforms();
 }
 
 void LevelManager::unload() {
     _background.reset();
     _door.reset();
     _music.reset();
+    _switched_platforms.clear();
     _platforms.clear();
     _platform_bodies.clear();
     _triggers.clear();
@@ -271,6 +325,7 @@ LevelManager::UpdateResult LevelManager::update() {
     // -------------------------------------------------------------------------
 
     CollisionRegistry::instance().update_all();
+    _sync_switched_platforms();
 
     // -------------------------------------------------------------------------
     // Camera

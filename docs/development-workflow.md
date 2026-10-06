@@ -82,7 +82,9 @@ logic of Assist/Hard Mode (`game_modes.h`: `modes::trap_speed_mode()`,
 mutually exclusive toggles, Options row indices), the dash (`dash_controller.h`
 `DashController`: start/duration/cooldown/air-charge/cancel rules, plus the
 `Cfg::Dash` invariants in `cfg_dash.h`), list-menu cursor wrapping
-(`menu_nav.h`), and the controls overview text (`controls_text.h`: line
+(`menu_nav.h`), trigger modes (`trigger_logic.h`: latch/toggle/hold,
+including a check that Latch matches the original behavior) and the
+switched-platform rules (`switch_logic.h`), and the controls overview text (`controls_text.h`: line
 count, length, ASCII and sprite-budget limits, and that the dash line names
 the world `Cfg::Dash::UNLOCK_WORLD` unlocks). `PlayerLocomotion`,
 `LevelManager`, `PauseController` and the scenes only feed these helpers
@@ -134,6 +136,15 @@ that same level - the same per-level lookup
 without compiling or running the game. Also warns (non-fatal) about
 triggers that are defined but never referenced by any trap in their level.
 
+It also validates `PlatformData::trigger_name` (a platform bound to a switch)
+the same way, and counts a platform reference as "used" so a trigger that only
+drives platforms is not reported as unreferenced. The checker itself has unit
+tests (`tools/test_check_trigger_references.py`), run with:
+
+```bash
+python3 -m unittest discover -s tools -p 'test_*.py'
+```
+
 Pure Python, no C++ involved:
 
 ```bash
@@ -165,6 +176,7 @@ A practical manual test checklist for any gameplay change:
 | Movement | Acceleration, jump height, coyote/buffer feel, screen-edge bounce |
 | Traps | Activation timing, hit behavior, reset on respawn |
 | Triggers | Fire at the intended zone; linked traps respond correctly |
+| Switches | Toggle flips per entry, Hold releases on exit; bound platforms appear/vanish with their trigger; a platform never appears inside the duck; death resets switches and platforms |
 | Progression | Door advances to the right stage; final stage triggers the kiss scene |
 | Persistence | Deaths/timer/level saved and reloaded per slot |
 | Pause | Menu navigates; continue/restart/title behave correctly |

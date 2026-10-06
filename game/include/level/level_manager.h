@@ -118,6 +118,12 @@ class LevelManager {
     void _load_platforms(const LevelData& level);
     void _load_triggers(const LevelData& level);
     void _load_traps(const LevelData& level);
+    // Resolves every platform's trigger_name to its Trigger (after the
+    // triggers are loaded) and records the binding.
+    void _bind_switched_platforms(const LevelData& level);
+    // Enables/disables switched platforms to match their triggers. Called
+    // once at load and every frame after the collision update.
+    void _sync_switched_platforms();
 
     // Resets all resettable entities (currently: traps) after player
     // death or a manual level restart. Iterates a generic list rather
@@ -133,10 +139,26 @@ class LevelManager {
     bn::vector<bn::unique_ptr<BaseTrap>, Cfg::Level::Limits::TOTAL_TRAPS>
         _traps;
 
-    // Non-owning view over every currently-loaded IResettable entity.
-    // Populated alongside _traps in _load_traps(); ownership stays with
-    // the owning container (_traps for now).
-    bn::vector<IResettable*, Cfg::Level::Limits::TOTAL_TRAPS> _resettables;
+    // Platforms bound to a trigger (PlatformData::trigger_name): the
+    // trigger decides whether the platform body and sprite are enabled.
+    // Non-owning - the platform bodies/sprites and triggers live in the
+    // containers above.
+    struct SwitchedPlatform {
+        Trigger* trigger;
+        StaticBody* body;
+        Sprite* sprite;
+        bool active_when_on;
+    };
+    bn::vector<SwitchedPlatform, Cfg::Level::Limits::PLATFORMS>
+        _switched_platforms;
+
+    // Non-owning view over every currently-loaded IResettable entity:
+    // the triggers (registered in _load_triggers()) and the traps
+    // (_load_traps()); ownership stays with the owning containers.
+    bn::vector<
+        IResettable*,
+        Cfg::Level::Limits::TOTAL_TRAPS + Cfg::Level::Limits::TRIGGERS>
+        _resettables;
 
     bn::optional<bn::regular_bg_ptr> _background;
     Player& _player;

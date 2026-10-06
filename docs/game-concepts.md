@@ -269,6 +269,18 @@ mid-jump, a hazard that rises as the duck climbs, a flying pest released later
 in the run. Without triggers, every moving hazard would be permanently active,
 which would be hard to design around and visually chaotic.
 
+### Switches
+
+Beyond the invisible latching zones, a trigger can behave as a **switch**
+(every entry flips it) or a **pressure plate** (on only while the duck stands
+on it), and can show a small sprite so it is recognizable. Switches drive the
+same hazards as before and can also open and close platforms: one switch can
+make a platform appear while another disappears, which allows puzzle-like
+stages in the spirit of Level Devil - where the "obvious" switch is not
+always the helpful one - without any new trap type. Death resets every
+switch, so a puzzle always starts from the same state, and a platform that
+would appear on top of the duck waits until the duck has moved clear.
+
 ## Boss levels
 
 Every world's gameplay culminates in a **boss level**: a single, mostly flat corridor

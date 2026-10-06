@@ -11,6 +11,7 @@
 #include "bn_sprite_items_door32x32.h"
 
 #include "cfg.h"
+#include "trigger_logic.h"
 
 // -----------------------------------------------------------------------------
 // TrapType
@@ -41,6 +42,17 @@ struct PlatformData {
     bn::sprite_item sprite;
     // Tile index inside sprite tileset.
     int sprite_index;
+
+    // Optional: binds the platform to a trigger (TriggerData::name) so a
+    // switch can open or close it. nullptr = always solid and visible, as
+    // every platform before this field existed. Appended last so existing
+    // aggregate-init literals keep compiling unchanged.
+    const char* trigger_name = nullptr;
+    // With trigger_name set: true = the platform is solid and visible while
+    // the trigger is on (appears when switched on); false = it is solid and
+    // visible while the trigger is off (vanishes when switched on). See
+    // switch_logic::platform_active().
+    bool active_when_on = true;
 };
 
 // -----------------------------------------------------------------------------
@@ -66,6 +78,21 @@ struct TriggerData {
     // needs a default so positional literals that stop before it, i.e.
     // every one today, keep compiling unchanged.
     const char* name = nullptr;
+
+    // How entering/leaving the zone changes the trigger's state - see
+    // TriggerMode in trigger_logic.h. Latch (the default) is the original
+    // behavior every existing trigger keeps. Appended after `name` so
+    // positional literals that stop earlier keep compiling unchanged.
+    TriggerMode mode = TriggerMode::Latch;
+
+    // Optional visible switch/plate: a sprite item drawn at the trigger's
+    // position, showing tile `sprite_index_off` while the trigger is off and
+    // `sprite_index_on` while it is on. nullptr = invisible (the default,
+    // like every trigger so far). Points at a constexpr sprite item, e.g.
+    // &bn::sprite_items::flower1.
+    const bn::sprite_item* sprite = nullptr;
+    int sprite_index_off = 0;
+    int sprite_index_on = 1;
 };
 
 // -----------------------------------------------------------------------------

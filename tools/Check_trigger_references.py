@@ -2,8 +2,8 @@
 """
 Check_trigger_references.py
 
-Statically validates every TrapData::trigger_name a MOVING/PATH trap
-references against the TriggerData::name entries actually defined for
+Statically validates every TrapData::trigger_name a MOVING/PATH trap - and
+every PlatformData::trigger_name a switched platform - references against the TriggerData::name entries actually defined for
 THAT SAME LEVEL - the exact per-level lookup
 LevelManager::get_trigger_by_name() performs at runtime, but checked here
 without compiling or running the game.
@@ -33,7 +33,7 @@ under the repository root (wherever this script is invoked from). Exit
 code 0 means every trigger_name reference resolved; non-zero means at
 least one dangling reference was found (printed with file/level/name
 detail). Also warns (non-fatal) about triggers that are defined but never
-referenced by any trap in their level - not a runtime bug, but often a
+referenced by any trap or platform in their level - not a runtime bug, but often a
 sign of a rename that missed a spot.
 
 Pure text/data parsing - no C++ compiler involved, so this runs anywhere
@@ -135,6 +135,7 @@ def check_file(path: Path):
 
     trigger_arrays = extract_named_arrays(content, "TriggerData")
     trap_arrays = extract_named_arrays(content, "TrapData")
+    platform_arrays = extract_named_arrays(content, "PlatformData")
 
     errors = []
     warnings = []
@@ -191,12 +192,29 @@ def check_file(path: Path):
                                     f'"{n}", not found in \'{trigger_array_name}\''
                                 )
 
+        # PlatformData::trigger_name binds a platform to a trigger (a switch
+        # opening/closing it). Platform literals have no other quoted field,
+        # so any quoted string in one is a trigger name.
+        platform_array_name = level_fields[0]
+        if platform_array_name != "nullptr":
+            body = platform_arrays.get(platform_array_name)
+            if body is not None:
+                for lit in extract_top_level_literals(body):
+                    for n in quoted_strings_in(top_level_fields(lit)):
+                        referenced_names.add(n)
+                        if n not in defined_names:
+                            errors.append(
+                                f"{path.name}: {level_name} - platform in "
+                                f"'{platform_array_name}' references trigger_name "
+                                f'"{n}", not found in \'{trigger_array_name}\''
+                            )
+
         unused = defined_names - referenced_names
         for n in sorted(unused):
             warnings.append(
                 f"{path.name}: {level_name} - trigger \"{n}\" in "
                 f"'{trigger_array_name}' is never referenced by any "
-                f"MOVING/PATH trap in this level"
+                f"MOVING/PATH trap or platform in this level"
             )
 
     return errors, warnings

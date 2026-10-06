@@ -280,6 +280,12 @@ death total and per-level best-time records - no separate counter is stored
 for it. See
 [Components — Progress Feedback](components.md#world-select-stats-line).
 
+**Switched platform** — A platform bound to a trigger by name
+(`PlatformData::trigger_name`): solid and visible while the trigger's state
+matches `active_when_on`, otherwise gone. It waits to re-appear while the duck
+overlaps it. See
+[Level Design — Trigger modes](level-design.md#trigger-modes-and-switched-platforms).
+
 ## T
 
 **Tracker module** — Compact pattern-based music format played back efficiently
@@ -288,6 +294,11 @@ by the handheld audio hardware. See [Asset Management](asset-management.md).
 **Trigger** — An invisible rectangular zone that activates linked hazards when
 the duck enters it; may start active or inactive. See
 [Level Design](level-design.md).
+
+**Trigger mode** — How a [trigger](#t) reacts to the duck: **Latch** (default;
+on at the first entry until death/restart), **Toggle** (every entry flips it)
+or **Hold** (on only while the duck is inside). See
+[Level Design — Trigger modes](level-design.md#trigger-modes-and-switched-platforms).
 
 **Trap factory** — The mechanism that constructs the correct trap subtype from a
 stage-data entry, and applies the Hard Mode speed multiplier where relevant.
