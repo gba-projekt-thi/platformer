@@ -433,6 +433,17 @@ next scene. The scene manager guarantees the previous stage is torn down before
 the next one initializes, which is critical on a device with limited shared
 resources (palettes, sprite slots, VRAM).
 
+### Level hints
+
+`LevelScene::init()` calls `_show_hint_if_needed()` after the level has loaded.
+`hint::should_show()` (`hint_logic.h`, Butano-free and unit-tested) decides:
+the level has an `intro_hint` and no personal best yet
+(`GameState::best_time_frames[level] == 0`) - so the hint needs no save field
+and ends with the first clear. The text is drawn centered at `Cfg::Hint::Y`
+with the shared text generator; a `hint::Timer` counts `Cfg::Hint::FRAMES`
+(five seconds) and B dismisses it early. The hint never pauses or blocks the
+level.
+
 ### Level data organization
 
 A stage is defined by immutable, ROM-resident data describing:

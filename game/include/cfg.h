@@ -71,6 +71,12 @@ inline constexpr int COYOTE_FRAMES = 4;
 inline constexpr int JUMP_BUFFER_FRAMES = 6;
 }  // namespace Player
 
+namespace Hint {
+// One-time level hint (LevelData::intro_hint), see hint_logic.h.
+inline constexpr int FRAMES = 300;  // visible for 5s unless dismissed
+inline constexpr int Y = -48;       // below the HUD row (y = -70), above play
+}  // namespace Hint
+
 namespace DeathCounter {
 inline constexpr int X = -110;
 inline constexpr int Y = -70;

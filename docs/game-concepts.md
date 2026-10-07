@@ -53,6 +53,15 @@ The control scheme is intentionally simple:
 The pause menu uses D-Pad up/down and A to navigate, mirroring the start-screen
 controls for consistency.
 
+### Level hints
+
+A level can carry a short one-time hint (`LevelData::intro_hint`, at most 28
+characters) that appears at the top of the screen when it starts: it teaches
+the dash, and "Lever Hall" says levers flip when stepped on. It never blocks
+play and goes away after five seconds or as soon as B is pressed. It is shown
+only while the level has no personal best yet, so it disappears for good with
+the first clear - which also needs no extra save data.
+
 ### Controls overview
 
 A short overview of all buttons is available without starting a level:
@@ -113,6 +122,10 @@ The duck's one learned ability, in the spirit of Hollow Knight's cloak dash:
 - **Reach.** Dash adds horizontal reach only: jump height is unchanged
   (~22px climb), horizontal reach grows from ~54px (jump) to roughly 100px
   (jump + dash). Every existing layout stays clearable without it.
+- **Hint.** The first dash-enabled level (World 3's "LEVEL_3") shows "New:
+  Dash with B" once, and the first level that cannot be finished without the
+  dash ("Cloak Corridor") shows "Too far? Jump + B to dash". See
+  [Level hints](#level-hints).
 - **Required in World 5.** "Cloak Corridor" has three gaps (84-92px) that
   only the dash crosses, and "Lever Hall" offers a dash shortcut in two of
   its rooms - see [Dash and switch levels](level-design.md#dash-and-switch-levels).

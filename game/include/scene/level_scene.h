@@ -10,6 +10,7 @@
 #include "bn_vector.h"
 #include "common_variable_8x16_sprite_font.h"
 
+#include "hint_logic.h"
 #include "level_structure.h"
 
 class Player;
@@ -33,6 +34,9 @@ class LevelScene : public core::Scene {
     void _finalize_completion();
     void _show_new_best_banner();
     void _hide_new_best_banner();
+    // One-time level hint (LevelData::intro_hint, see hint_logic.h).
+    void _show_hint_if_needed();
+    void _update_hint();
 
     Player& _player;
     bn::span<const LevelData> _levels;
@@ -55,4 +59,10 @@ class LevelScene : public core::Scene {
     // "New Best!" (9) + time e.g. "01:23.45" (8) + "Press A to
     // continue" (19) = 36 chars, +headroom.
     bn::vector<bn::sprite_ptr, 40> _banner_sprites;
+
+    // One-time hint at the top of the screen. hint::MAX_CHARS (28) glyphs
+    // at most, so 32 sprites leave headroom.
+    bn::optional<bn::sprite_text_generator> _hint_text_gen;
+    bn::vector<bn::sprite_ptr, 32> _hint_sprites;
+    hint::Timer _hint_timer{Cfg::Hint::FRAMES};
 };

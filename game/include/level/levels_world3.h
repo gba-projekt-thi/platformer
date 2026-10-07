@@ -87,7 +87,10 @@ const LevelData LEVEL_3 = {
     240,
     160,
     // Ground friction: mossy forest floor, noticeably slippery to stop on
-    0.55};
+    0.55,
+    // First level with the dash enabled (Cfg::Dash::UNLOCK_WORLD = World 3):
+    // tell the player once.
+    "New: Dash with B"};
 
 // =============================================================================
 // WORLD 3 SCROLL - new, uses the scrolling camera (world_width=480)

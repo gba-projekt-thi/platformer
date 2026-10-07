@@ -260,7 +260,11 @@ const LevelData LEVEL_WORLD5_DASH = {
     {320, 40},
     // World size (enables scrolling)
     700,
-    160};
+    160,
+    // Ground friction: default
+    1,
+    // First level that cannot be finished without the dash.
+    "Too far? Jump + B to dash"};
 
 // =============================================================================
 // WORLD 5 LEVERS - "Lever Hall" (world_width=700)
@@ -344,7 +348,11 @@ const LevelData LEVEL_WORLD5_LEVERS = {
     {324, 40},
     // World size (enables scrolling)
     700,
-    160};
+    160,
+    // Ground friction: default
+    1,
+    // The levers flip on entry; say so once.
+    "Step on a lever to flip it"};
 
 // =============================================================================
 // WORLD 5 BOSS - "The Mimic Lord" (world_width=650)

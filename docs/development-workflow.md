@@ -84,7 +84,8 @@ mutually exclusive toggles, Options row indices), the dash (`dash_controller.h`
 `Cfg::Dash` invariants in `cfg_dash.h`), list-menu cursor wrapping
 (`menu_nav.h`), trigger modes (`trigger_logic.h`: latch/toggle/hold,
 including a check that Latch matches the original behavior) and the
-switched-platform rules (`switch_logic.h`), and the controls overview text (`controls_text.h`: line
+switched-platform rules (`switch_logic.h`), the one-time level hint rules (`hint_logic.h`: when it
+shows, how long it stays), and the controls overview text (`controls_text.h`: line
 count, length, ASCII and sprite-budget limits, and that the dash line names
 the world `Cfg::Dash::UNLOCK_WORLD` unlocks). `PlayerLocomotion`,
 `LevelManager`, `PauseController` and the scenes only feed these helpers
@@ -171,6 +172,9 @@ Two more static checkers keep level content honest (pure Python, no C++):
 - `tools/Check_world_index.py` - confirms `WorldIndex::WORLDS` still describes
   main.cpp's `levels[]` (no gaps or overlaps, same total, no duplicates; warns
   about levels defined but not listed). It also runs as a pre-commit hook.
+- `tools/Check_level_hints.py` - validates `LevelData::intro_hint` strings:
+  28 characters at most (the limit comes from `hint_logic.h`), printable ASCII
+  only, never empty. Also a pre-commit hook.
 
 Run all Python tests with:
 
@@ -205,6 +209,7 @@ A practical manual test checklist for any gameplay change:
 | Movement | Acceleration, jump height, coyote/buffer feel, screen-edge bounce |
 | Traps | Activation timing, hit behavior, reset on respawn |
 | Triggers | Fire at the intended zone; linked traps respond correctly |
+| Level hints | Show once at the start of World 3's first level, "Cloak Corridor" and "Lever Hall"; B or five seconds hides them; gone after the first clear |
 | World 5 dash / lever levels | Dash gaps clear with a dash; levers flip once per pass and show the right frame; the Room 2 stone disappears and returns |
 | Switches | Toggle flips per entry, Hold releases on exit; bound platforms appear/vanish with their trigger; a platform never appears inside the duck; death resets switches and platforms |
 | Progression | Door advances to the right stage; final stage triggers the kiss scene |

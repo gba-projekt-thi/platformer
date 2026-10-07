@@ -20,6 +20,15 @@ repos:
 
   - repo: local
     hooks:
+      - id: check-level-hints
+        name: Validate LevelData::intro_hint strings
+        description: >-
+          Hints must be <= hint::MAX_CHARS printable ASCII characters - see
+          tools/Check_level_hints.py.
+        entry: python3 tools/Check_level_hints.py
+        language: system
+        files: ^(game/include/level/levels_world.*\.h|game/include/hint_logic\.h|tools/Check_level_hints\.py)$
+        pass_filenames: false
       - id: check-world-index
         name: Validate WorldIndex against levels[]
         description: >-

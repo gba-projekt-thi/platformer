@@ -58,6 +58,9 @@ than fighting it.
 
 ### Design reminders
 
+- A mechanic needs a moment where the player learns it. Give the first level
+  that uses it an `intro_hint` (28 characters; shown until the level is first
+  cleared) and run `tools/Check_level_hints.py`.
 - Per-level save data (best times, no-death clears, `level`, `furthest_level`)
   is indexed by position in the level list, so a level inserted in the middle
   shifts the records of every level after it. Prefer inserting late (before a

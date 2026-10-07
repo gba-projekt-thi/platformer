@@ -293,4 +293,17 @@ struct LevelData {
     // gap is reachable. Appended last so every existing level literal
     // keeps compiling unchanged.
     bn::fixed ground_friction = 1;
+
+    // -------------------------------------------------------------------------
+    // Hint
+    // -------------------------------------------------------------------------
+
+    // Optional one-time hint shown at the top of the screen when the level
+    // starts, for hint::MAX_CHARS characters at most (checked by
+    // tools/Check_level_hints.py). It stays until the level has been cleared
+    // once (no personal best yet), is hidden after Cfg::Hint::FRAMES or as
+    // soon as B is pressed, and never blocks play. nullptr = no hint, as for
+    // every level before this field existed. Appended last so existing
+    // literals keep compiling unchanged.
+    const char* intro_hint = nullptr;
 };

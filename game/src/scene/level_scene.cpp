@@ -4,6 +4,7 @@
 #include "bn_keypad.h"
 #include "bn_unique_ptr.h"
 
+#include "cfg.h"
 #include "data_manager.h"
 #include "game_session.h"
 #include "level_manager.h"
@@ -36,9 +37,48 @@ void LevelScene::init() {
     _level_manager.load(_levels[_level_index]);
     _player.set_visible(true);
     _player.set_hud_visible(true);
+    _show_hint_if_needed();
+}
+
+void LevelScene::_show_hint_if_needed() {
+    const char* text = _levels[_level_index].intro_hint;
+    const uint32_t best =
+        _level_index < unsigned(GameState::MAX_LEVELS)
+            ? _data_manager.state().best_time_frames[_level_index]
+            : 0;
+    if (!hint::should_show(text, best)) {
+        return;
+    }
+
+    _hint_text_gen.emplace(common::variable_8x16_sprite_font);
+    _hint_text_gen->set_z_order(Cfg::ZOrder::PAUSE_MENU);
+    _hint_text_gen->set_blending_enabled(true);
+    _hint_text_gen->set_center_alignment();
+    _hint_text_gen->generate(0, Cfg::Hint::Y, text, _hint_sprites);
+    for (bn::sprite_ptr& sprite : _hint_sprites) {
+        sprite.set_blending_enabled(true);
+    }
+    _hint_timer.start();
+}
+
+void LevelScene::_update_hint() {
+    if (_hint_sprites.empty()) {
+        return;
+    }
+    // Pressing B (the player has tried the dash) dismisses it at once.
+    if (bn::keypad::b_pressed()) {
+        _hint_timer.dismiss();
+    }
+    _hint_timer.tick();
+    if (!_hint_timer.visible()) {
+        _hint_sprites.clear();
+        _hint_text_gen.reset();
+    }
 }
 
 void LevelScene::update() {
+    _update_hint();
+
     // Waiting for the player to acknowledge a new best-time banner before
     // actually committing the level transition (see _new_best_pending's
     // comment in level_scene.h).

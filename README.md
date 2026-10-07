@@ -129,6 +129,7 @@ A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each 
 - An Assist Mode toggle in the same Options sub-menu, available from the start: the mirror image of Hard Mode, it halves Moving/Chase/Ambush trap speeds and doubles the coyote-time and jump-buffer windows. Mutually exclusive with Hard Mode; the toggle resets to off like the audio settings
 - A Hollow-Knight-style dash on B, available from World 3 onward: a short horizontal burst with gravity suspended, a cooldown, and one use per air time (refilled on landing). It grants no invincibility and only adds horizontal reach, so every existing layout stays clearable
 - A controls overview screen, reachable from the start screen (a "Controls" entry below the save slots) and from the pause menu
+- One-time level hints that teach the dash and the levers when a level is first played (until it is cleared once)
 - Switch mechanics: triggers can be latching (default), toggling switches or hold-down pressure plates, optionally drawn as a two-state sprite, and platforms can be bound to a trigger so a switch opens one path and closes another; everything resets on death
 - Player movement with acceleration, maximum speed, gravity, and fall speed clamping
 - Jump mechanics with jump buffering and coyote time for more forgiving platforming
@@ -229,7 +230,7 @@ Before every commit a short script runs to check if all files are using a consis
 This is only possible in the devcontainer or if you have [pre-commit](https://pre-commit.com), clang-format and clang-tidy installed on your system. 
 
 ### Tests
-Pure-logic code (save integrity, game-state bit flags, frame-time formatting, Hard/Assist Mode toggles, dash rules, menu cursor wrapping, controls text, trigger modes, switched-platform rules) has a small host-side unit test suite under `tests/host/` - no ARM toolchain or devcontainer needed, just your system's own `g++`/`clang++`:
+Pure-logic code (save integrity, game-state bit flags, frame-time formatting, Hard/Assist Mode toggles, dash rules, menu cursor wrapping, controls text, trigger modes, switched-platform rules, level hints) has a small host-side unit test suite under `tests/host/` - no ARM toolchain or devcontainer needed, just your system's own `g++`/`clang++`:
 
 ```bash
 cd tests/host

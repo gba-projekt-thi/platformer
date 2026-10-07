@@ -21,6 +21,7 @@ Every stage is described by a single declarative definition that contains:
 | **Music** | The stage's audio track. |
 | **Spawn point** | Where the duck appears at the start (and after death). |
 | **Door** | The exit that advances the game. Sprite, animation, and facing are all overridable per stage - not always a literal door (World 5's finale uses this for a narrative goal marker instead). |
+| **Intro hint** | Optional one-time text (28 characters at most) shown when the stage starts, until it has been cleared once. For teaching a mechanic at the moment it matters. |
 | **World size** | Determines whether the camera scrolls and sets the duck's bounce edges. |
 
 The same skeleton powers every world; only the contents and theme change.
@@ -235,6 +236,12 @@ platforms in three rooms:
   walk; one lever plus the dash (96px) also works; none is impossible.
 
 Everything resets on death, so a puzzle always restarts from the same state.
+
+**Hints.** The first dash level (World 3's first stage), "Cloak Corridor" and
+"Lever Hall" each carry an `intro_hint`, so the player is told once what the
+new mechanic needs. Hints are for *how to use* something, not for solving a
+puzzle; they are limited to 28 ASCII characters (`tools/Check_level_hints.py`
+checks this) and vanish after the first clear.
 
 **Verifying levels.** Run `tools/Check_level_reachability.py` on a level: it
 re-implements the duck's per-frame movement (same constants as `Cfg::Player`

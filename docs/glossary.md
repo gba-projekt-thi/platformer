@@ -157,6 +157,11 @@ On/Off toggle itself resets to off, like the audio volume settings. See
 
 ## I
 
+**Intro hint** — An optional one-time text on a level
+(`LevelData::intro_hint`, 28 characters at most) shown at its start until the
+level has been cleared once, then never again; B or five seconds hides it. See
+[Game Concepts — Level hints](game-concepts.md#level-hints).
+
 **IResettable / resettable** — An interface entities implement to be reset by
 the level manager on death/restart, decoupling the manager from concrete types.
 See [Architecture](architecture.md).
