@@ -155,6 +155,35 @@ Runs both as a CI job and as a local pre-commit hook (triggered only when
 level data or the script itself changes), so a dangling trigger reference
 gets caught before it reaches a PR, not just at commit time in CI.
 
+### Level geometry and roster checks
+
+Two more static checkers keep level content honest (pure Python, no C++):
+
+- `tools/Check_level_reachability.py FILE LEVEL...` - a jump/dash reachability
+  check driven by a small re-implementation of the duck's per-frame movement.
+  It reports the reachable platforms and door, with and without the dash, for a
+  conservative and an optimistic start, over every lever configuration the duck
+  can set. Use it when placing platforms: a gap meant to need the dash must
+  fail the no-dash optimistic run (see [Level Design](level-design.md#dash-and-switch-levels)).
+  Its tests calibrate the model against the documented jump/dash envelope and
+  check the two World 5 levels' design intent; a whole-roster run takes a few
+  minutes, the tests about 15 seconds.
+- `tools/Check_world_index.py` - confirms `WorldIndex::WORLDS` still describes
+  main.cpp's `levels[]` (no gaps or overlaps, same total, no duplicates; warns
+  about levels defined but not listed). It also runs as a pre-commit hook.
+
+Run all Python tests with:
+
+```bash
+python3 -m unittest discover -s tools -p 'test_*.py'
+```
+
+Because `GameState::best_time_frames`, `no_death_clears`, `level` and
+`furthest_level` are indexed by position in `levels[]`, inserting a level
+shifts every later level's records. Insert as late as the design allows - the
+two World 5 levels went in before the boss, so only the boss and the finale
+moved - and mention the shift in the commit.
+
 ### Manual (still required - nothing above replaces this)
 
 - **Manual play testing** in the emulator is the main loop. After a change,
@@ -176,6 +205,7 @@ A practical manual test checklist for any gameplay change:
 | Movement | Acceleration, jump height, coyote/buffer feel, screen-edge bounce |
 | Traps | Activation timing, hit behavior, reset on respawn |
 | Triggers | Fire at the intended zone; linked traps respond correctly |
+| World 5 dash / lever levels | Dash gaps clear with a dash; levers flip once per pass and show the right frame; the Room 2 stone disappears and returns |
 | Switches | Toggle flips per entry, Hold releases on exit; bound platforms appear/vanish with their trigger; a platform never appears inside the duck; death resets switches and platforms |
 | Progression | Door advances to the right stage; final stage triggers the kiss scene |
 | Persistence | Deaths/timer/level saved and reloaded per slot |

@@ -22,6 +22,7 @@ graph TD
     G --> W4[world4/]
     G --> W5[world5/]
     Glob --> Door[Door sprite]
+    Glob --> Lever[Lever sprite, two frames]
     Glob --> Duck[Duck sprite]
     Glob --> Kiss[Kiss scene backdrop]
     Glob --> Start[Start screen backdrop]

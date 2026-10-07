@@ -17,7 +17,9 @@ namespace Dash {
 // ground. In the air it is usable once per air time (refilled on landing);
 // on the ground only the cooldown limits it. Dash only ever ADDS reach -
 // the climb envelope (~22px) is unchanged, horizontal reach grows from ~54px
-// (jump) to at most ~94px (jump + dash) - so no existing layout becomes
+// (jump) to roughly 100px (jump + dash; same-height edge-to-edge gaps up to
+// ~61px with a jump, ~103px with jump + dash, measured with
+// tools/Check_level_reachability.py) - so no existing layout becomes
 // unreachable. SPEED must stay below Player's vel_max (5) because
 // PhysicsBody::move_velocity() clamps by magnitude.
 inline constexpr int SPEED = 4;

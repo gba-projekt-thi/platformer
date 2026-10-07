@@ -111,8 +111,11 @@ The duck's one learned ability, in the spirit of Hollow Knight's cloak dash:
   checked against the level being loaded. Worlds 1-2 were authored without
   it and play as before, also when replayed via Level Select.
 - **Reach.** Dash adds horizontal reach only: jump height is unchanged
-  (~22px climb), horizontal reach grows from ~54px (jump) to at most ~94px
+  (~22px climb), horizontal reach grows from ~54px (jump) to roughly 100px
   (jump + dash). Every existing layout stays clearable without it.
+- **Required in World 5.** "Cloak Corridor" has three gaps (84-92px) that
+  only the dash crosses, and "Lever Hall" offers a dash shortcut in two of
+  its rooms - see [Dash and switch levels](level-design.md#dash-and-switch-levels).
 
 ## Game progression
 
@@ -131,7 +134,7 @@ The current world themes, in order, are:
 | Sewerage (World 2, 3 levels incl. boss) | Industrial hazards | Pipes, cans, rusty nails |
 | Forest (World 3, 3 levels incl. boss) | Misty climb | Trees, fog, mushrooms, slither arms |
 | Village (World 4, 3 levels incl. boss) | Bright open spaces | Flowers, baskets, bugs, nests, an ambush bug |
-| Dungeon (World 5, 3 levels incl. boss) | Final gauntlet | Barrels, bars, chests, an ambush mimic, axes, thwomps |
+| Dungeon (World 5, 6 levels incl. boss and finale) | Final gauntlet | Barrels, bars, chests, levers, an ambush mimic, axes, thwomps |
 
 Each theme pairs a tilemap background, a music track, a set of themed trap
 sprites, and a platform tileset. This pairing is what gives each world its

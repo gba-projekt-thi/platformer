@@ -82,8 +82,10 @@ leap.
 From World 3 onward the duck can also dash (see
 [Game Concepts](game-concepts.md#dash)). Dash only adds horizontal reach: a
 flat ground dash covers 32px, and a jump plus a well-timed air dash reaches
-up to ~94px horizontally (measured with the same per-frame simulation as the
-jump envelope above), while the climb stays at ~22px. Consequences for
+roughly 100px horizontally (same-height edge-to-edge gaps: up to ~61px with a
+jump alone, ~72px with a run-up and coyote time, ~103px with jump + dash,
+measured with `tools/Check_level_reachability.py`, which re-implements the
+per-frame movement), while the climb stays at ~22px. Consequences for
 authoring:
 
 - **Existing layouts stay valid.** The 16px climb and 40px gap rules still
@@ -93,8 +95,11 @@ authoring:
   was only a hazard-forced detour can now be crossed directly. Check that a
   shortcut like that is intended.
 - **Dash-required gaps need a margin.** If a future level deliberately
-  requires the dash, keep the gap well under the measured ~94px (about 70px)
-  and keep the climb at 16px or less, like every other jump.
+  requires the dash, make the gap clearly bigger than a plain jump can ever cross (more than
+  ~72px, so that coyote time and a run-up cannot cheat it) and well inside
+  the dash envelope - 76-96px works, and the dash may then start anywhere in a
+  window of 12+ frames after takeoff. Keep the climb at 16px or less, like
+  every other jump.
 - **Worlds 1-2 have no dash.** Their levels, including when replayed via
   Level Select, were authored for the plain jump envelope.
 
@@ -205,6 +210,45 @@ worlds) a chase hazard keeping forward momentum mandatory. Used for the
 one boss level that closes out each world; see
 [Game Concepts — Boss levels](game-concepts.md#boss-levels).
 
+### Dash and switch levels
+
+World 5 has two levels built on the newer mechanics; they double as worked
+examples.
+
+**Cloak Corridor** (`LEVEL_WORLD5_DASH`) - three gaps of 84-92px between
+barrels, each with rusty bars in the pit so the gap reads as lethal, joined by
+ordinary 28-40px hops. Without the dash it cannot be finished, even with a
+perfect run-up. The axe chases from 48px behind at exactly walking speed - it
+never catches a duck that keeps moving, but punishes stopping to think - and
+an ambush mimic lurks in the gap between two short hops.
+
+**Lever Hall** (`LEVEL_WORLD5_LEVERS`) - four Toggle levers and four switched
+platforms in three rooms:
+
+- *Room 1:* the 120px chasm is wider than even a dash, so `lever1` (which
+  raises the bridge stone) is mandatory. Walking over the lever flips it once.
+- *Room 2:* the stone in the 84px chasm is present by default and `lever2`
+  removes it. The lever stands on the way: hop over it to keep the stone, or
+  step on it and dash the 84px gap. Stepping on it a second time brings the
+  stone back, so there is no dead end.
+- *Room 3:* two stones over a 160px chasm, one per lever. Both on is a plain
+  walk; one lever plus the dash (96px) also works; none is impossible.
+
+Everything resets on death, so a puzzle always restarts from the same state.
+
+**Verifying levels.** Run `tools/Check_level_reachability.py` on a level: it
+re-implements the duck's per-frame movement (same constants as `Cfg::Player`
+and `Cfg::Dash`), simulates every combination of start position, jump,
+direction release and dash timing from each platform, and reports which
+platforms and the door are reachable - without the dash and with it, from a
+conservative start (center exactly on the edge) and an optimistic one (already
+past the edge with coyote time). For switch levels it explores every lever
+configuration the duck can set from the platforms it has reached. A gap meant
+to require the dash must fail the optimistic no-dash run and pass the
+conservative dash run. The check ignores hazards, so traps still need a manual
+look. All 19 current levels pass it conservatively, and 18 of them without the
+dash.
+
 ## Trigger zones & their function
 
 Triggers are the stage's **director**: they decide *when* things happen.
@@ -289,7 +333,7 @@ Each world is a coherent theme that ties visuals and audio together:
 | 2 | Factory | Industrial tilemap | Pipes, cans, rusty nails |
 | 3 | Forest | Misty forest tilemap | Mushrooms, slither arms, branches |
 | 4 | Garden | Bright garden tilemap | Nests, bushes, bugs, bricks |
-| 5 | Dungeon | Dark dungeon tilemap | Barrels, bars, chests, mimics, axes, thwomps |
+| 5 | Dungeon | Dark dungeon tilemap | Barrels, bars, chests, levers, mimics, axes, thwomps |
 
 When designing a stage, pick hazards that *belong* to the theme. A factory stage
 with ocean bubbles breaks immersion. The goal is that a player who sees a frame

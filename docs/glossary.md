@@ -174,6 +174,11 @@ See [Game Concepts](game-concepts.md).
 
 ## L
 
+**Lever** — The visible form of a Toggle [trigger](#t): a two-frame sprite
+(`lever16x16`, off/on) set through `TriggerData::sprite`. World 5's "Lever
+Hall" uses four of them to open and close platforms. See
+[Level Design — Dash and switch levels](level-design.md#dash-and-switch-levels).
+
 **Level manager** — The runtime owner of the current stage: loads it, steps it,
 resets entities, unloads it, and reports outcomes to the scene. See
 [Components — Level Management](components.md).

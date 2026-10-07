@@ -20,6 +20,15 @@ repos:
 
   - repo: local
     hooks:
+      - id: check-world-index
+        name: Validate WorldIndex against levels[]
+        description: >-
+          world_index.h's WORLDS table must cover main.cpp's levels[] exactly
+          - see tools/Check_world_index.py.
+        entry: python3 tools/Check_world_index.py
+        language: system
+        files: ^(game/src/main\.cpp|game/include/world_index\.h|tools/Check_world_index\.py)$
+        pass_filenames: false
       - id: check-trigger-references
         name: Validate trigger_name references
         description: >-

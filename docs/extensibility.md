@@ -58,6 +58,11 @@ than fighting it.
 
 ### Design reminders
 
+- Per-level save data (best times, no-death clears, `level`, `furthest_level`)
+  is indexed by position in the level list, so a level inserted in the middle
+  shifts the records of every level after it. Prefer inserting late (before a
+  world's boss, say) and run `tools/Check_world_index.py` after editing the
+  list and the world table.
 - Keep the stage readable: the player should see hazards and landings from the
   takeoff point.
 - Match the theme of the surrounding worlds (or introduce a new theme
