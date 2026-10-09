@@ -352,6 +352,12 @@ gravity, and acceleration are untouched, so the physics envelope that level
 layouts rely on does not move. The two modes are mutually exclusive
 (enforced in the Options menu; if both flags were ever set, Hard Mode wins).
 
+Assisted runs do not set records: `LevelManager::records_allowed()` is false
+when Assist Mode was on at level load or is on now (so a mid-level toggle
+cannot launder a run), and `LevelScene::update()` then skips the best-time and
+no-death-clear bookkeeping and the "New Best!" banner. Advancing and unlocking
+are unaffected.
+
 ### Pause menu views
 
 The pause controller has three views: the main menu (Continue / Restart
@@ -440,9 +446,10 @@ resources (palettes, sprite slots, VRAM).
 
 `LevelScene::init()` calls `_show_hint_if_needed()` after the level has loaded.
 `hint::should_show()` (`hint_logic.h`, Butano-free and unit-tested) decides:
-the level has an `intro_hint` and no personal best yet
-(`GameState::best_time_frames[level] == 0`) - so the hint needs no save field
-and ends with the first clear. The text is drawn centered at `Cfg::Hint::Y`
+the level has an `intro_hint` and has not been cleared yet: no personal best
+(`best_time_frames[level] == 0`) and `furthest_level <= level` (an Assist Mode
+clear records no best time but still advances `furthest_level`) - so the hint
+needs no save field and ends with the first clear. The text is drawn centered at `Cfg::Hint::Y`
 with the shared text generator; a `hint::Timer` counts `Cfg::Hint::FRAMES`
 (five seconds) and B dismisses it early. The hint never pauses or blocks the
 level.

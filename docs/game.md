@@ -19,7 +19,7 @@ The game includes:
 - A run-complete summary screen after the kiss scene (total time, deaths, no-death clears), acknowledged with A/Start before the save slot resets
 - Music and tilemap backgrounds
 - A death counter and run timer HUD
-- A pause menu with Continue / Restart Level / Options / Title Screen; Options lets the player adjust music and SFX volume (0-4), persisted per save slot, plus - once unlocked by completing the game - toggle Hard Mode, which speeds up Moving/Chase/Ambush trap velocities for a tougher replay, and an always-available Assist Mode (halved Moving/Chase/Ambush trap speeds plus longer coyote/jump-buffer windows) for a gentler run - the two modes are mutually exclusive
+- A pause menu with Continue / Restart Level / Options / Title Screen; Options lets the player adjust music and SFX volume (0-4), persisted per save slot, plus - once unlocked by completing the game - toggle Hard Mode, which speeds up Moving/Chase/Ambush trap velocities for a tougher replay, and an always-available Assist Mode (halved Moving/Chase/Ambush trap speeds plus longer coyote/jump-buffer windows) for a gentler run - the two modes are mutually exclusive, and no best times or no-death clears are recorded while Assist Mode is on
 - A dash (B button) from World 3 onward: a short horizontal burst with gravity suspended, a cooldown, and one use per air time; no invincibility, adds horizontal reach only, so no existing layout becomes unreachable
 - A controls overview screen, reachable from the start screen (a "Controls" entry below the save slots) and from the pause menu
 - One-time level hints (`LevelData::intro_hint`) that teach the dash and the levers at the moment they matter, shown until the level is first cleared

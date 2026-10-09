@@ -91,6 +91,14 @@ class LevelManager {
         return modes::assist_active(_data_manager.state());
     }
 
+    // False if Assist Mode was on when the level loaded or is on now: neither
+    // a best time nor a no-death clear is recorded then (a mid-level toggle
+    // must not be able to launder an assisted run).
+    [[nodiscard]] bool records_allowed() const {
+        return !_loaded_in_assist_mode &&
+               modes::records_enabled(_data_manager.state());
+    }
+
     // Cfg::HardMode::SPEED_MULTIPLIER with Hard Mode,
     // Cfg::AssistMode::TRAP_SPEED_MULTIPLIER with Assist Mode, else 1 -
     // used by TrapFactory to scale trap speed values at creation time.
@@ -171,4 +179,8 @@ class LevelManager {
     // See level_frame_count(). Reset in _load_player_spawn(), advanced
     // once per non-paused frame in update().
     unsigned _level_frame_count = 0;
+
+    // Whether Assist Mode was active when the current level loaded (set in
+    // _load_player_spawn()); see records_allowed().
+    bool _loaded_in_assist_mode = false;
 };

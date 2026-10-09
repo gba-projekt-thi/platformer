@@ -46,7 +46,8 @@ void LevelScene::_show_hint_if_needed() {
         _level_index < unsigned(GameState::MAX_LEVELS)
             ? _data_manager.state().best_time_frames[_level_index]
             : 0;
-    if (!hint::should_show(text, best)) {
+    if (!hint::should_show(
+            text, best, _data_manager.state().furthest_level, _level_index)) {
         return;
     }
 
@@ -128,8 +129,12 @@ void LevelScene::update() {
     // anything else touches game_state - covers both the "advance to
     // next level" and "game completed" paths below, since both start
     // from having reached this level's door.
+    // Not while Assist Mode is on (see LevelManager::records_allowed()): no
+    // best time, no no-death clear, no "New Best!" banner. The level still
+    // counts as cleared for progress and unlocks below.
     bool new_best = false;
-    if (_level_index < unsigned(GameState::MAX_LEVELS)) {
+    if (_level_index < unsigned(GameState::MAX_LEVELS) &&
+        _level_manager.records_allowed()) {
         auto& game_state = _data_manager.state();
         const unsigned frames = _level_manager.level_frame_count();
         uint32_t& best = game_state.best_time_frames[_level_index];

@@ -64,6 +64,7 @@ void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.set_spawn_point(level.player_data.x, level.player_data.y);
     _player.set_ground_friction(level.ground_friction);
     _player.set_assist_mode(assist_mode_active());
+    _loaded_in_assist_mode = assist_mode_active();
     // Dash is available from Cfg::Dash::UNLOCK_WORLD onward. Compared
     // against the level being loaded (GameState::level is already set to
     // it by every path into LevelScene), so replaying an earlier world via

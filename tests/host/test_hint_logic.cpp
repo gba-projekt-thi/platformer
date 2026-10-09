@@ -3,18 +3,34 @@
 #include "hint_logic.h"
 
 TEST_CASE(hint_is_shown_for_an_uncleared_level_with_text) {
-    CHECK(hint::should_show("New: Dash with B", 0));
+    // No best time, progression has only reached this level (7 <= 7).
+    CHECK(hint::should_show("New: Dash with B", 0, 7, 7));
+    CHECK(hint::should_show("New: Dash with B", 0, 0, 7));
 }
 
 TEST_CASE(hint_is_not_shown_without_text) {
-    CHECK(!hint::should_show(nullptr, 0));
-    CHECK(!hint::should_show("", 0));
+    CHECK(!hint::should_show(nullptr, 0, 0, 0));
+    CHECK(!hint::should_show("", 0, 0, 0));
 }
 
-TEST_CASE(hint_disappears_after_the_first_clear) {
-    // best_time_frames > 0 means the level has been cleared at least once.
-    CHECK(!hint::should_show("New: Dash with B", 1));
-    CHECK(!hint::should_show("New: Dash with B", 3600));
+TEST_CASE(hint_disappears_after_a_recorded_best_time) {
+    CHECK(!hint::should_show("New: Dash with B", 1, 7, 7));
+    CHECK(!hint::should_show("New: Dash with B", 3600, 7, 7));
+}
+
+TEST_CASE(hint_disappears_once_progression_moved_past_the_level) {
+    // An Assist Mode clear records no best time but advances furthest_level.
+    CHECK(!hint::should_show("New: Dash with B", 0, 8, 7));
+    CHECK(!hint::should_show("New: Dash with B", 0, 16, 7));
+}
+
+TEST_CASE(hint_stays_for_levels_ahead_of_the_progress) {
+    CHECK(hint::should_show("Step on a lever to flip it", 0, 14, 16));
+}
+
+TEST_CASE(hint_stays_hidden_after_a_finished_run_reset_furthest_level) {
+    // DataManager::reset() clears furthest_level but keeps best times.
+    CHECK(!hint::should_show("New: Dash with B", 1200, 0, 7));
 }
 
 TEST_CASE(hint_max_chars_fits_the_screen_at_the_widest_glyph) {

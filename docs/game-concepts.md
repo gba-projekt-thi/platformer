@@ -59,8 +59,9 @@ A level can carry a short one-time hint (`LevelData::intro_hint`, at most 28
 characters) that appears at the top of the screen when it starts: it teaches
 the dash, and "Lever Hall" says levers flip when stepped on. It never blocks
 play and goes away after five seconds or as soon as B is pressed. It is shown
-only while the level has no personal best yet, so it disappears for good with
-the first clear - which also needs no extra save data.
+only while the level has not been cleared yet - no personal best and progress
+has not moved past it - so it disappears for good with the first clear, also an
+Assist Mode clear, and needs no extra save data.
 
 ### Controls overview
 
@@ -229,6 +230,9 @@ the levels without a high skill bar:
   acceleration are untouched, so every platform stays reachable exactly as
   authored.
 - **Exclusive with Hard Mode.** Switching one on switches the other off.
+- **No records.** Best times and no-death clears are not recorded while it is
+  on - it is a comfort option, not a leaderboard run - and no "New Best!"
+  banner appears. Levels still count as cleared for progress and unlocks.
 - **Persistence.** The toggle is saved per slot but resets to Off on a
   fresh run, like Hard Mode's toggle and the audio settings.
 - **When it applies.** Like Hard Mode, trap speeds are applied when a

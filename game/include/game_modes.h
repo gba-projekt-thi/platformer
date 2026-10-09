@@ -50,6 +50,12 @@ inline void toggle_hard_mode(GameState& state) {
     }
 }
 
+// Best times and no-death clears are only recorded outside Assist Mode: it is
+// a comfort option, not a leaderboard run. (Progress and unlocks still count.)
+inline auto records_enabled(const GameState& state) -> bool {
+    return !assist_active(state);
+}
+
 // Options sub-menu rows: Music (0), SFX (1), [Hard Mode (2) once unlocked],
 // then Assist Mode.
 inline auto assist_row(bool hard_unlocked) -> int {

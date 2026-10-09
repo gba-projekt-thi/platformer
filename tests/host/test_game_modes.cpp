@@ -103,3 +103,32 @@ TEST_CASE(modes_assist_row_is_always_the_last_row) {
     CHECK_EQ(modes::assist_row(false), modes::options_row_count(false) - 1);
     CHECK_EQ(modes::assist_row(true), modes::options_row_count(true) - 1);
 }
+
+TEST_CASE(modes_records_are_enabled_in_normal_and_hard_mode) {
+    GameState state{};
+    CHECK(modes::records_enabled(state));
+    state.hard_mode_enabled = true;
+    CHECK(modes::records_enabled(state));
+}
+
+TEST_CASE(modes_records_are_disabled_in_assist_mode) {
+    GameState state{};
+    modes::toggle_assist_mode(state);
+    CHECK(!modes::records_enabled(state));
+}
+
+TEST_CASE(modes_records_come_back_when_assist_mode_is_turned_off) {
+    GameState state{};
+    modes::toggle_assist_mode(state);
+    modes::toggle_assist_mode(state);
+    CHECK(modes::records_enabled(state));
+}
+
+TEST_CASE(modes_records_follow_hard_mode_precedence_for_inconsistent_flags) {
+    // Both flags set (cannot happen via the menu): Hard Mode wins, so the
+    // run is not an assisted one and records are enabled.
+    GameState state{};
+    state.hard_mode_enabled = true;
+    state.assist_mode_enabled = true;
+    CHECK(modes::records_enabled(state));
+}
