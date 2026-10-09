@@ -91,7 +91,10 @@ fall-death check and the ground-state update still run.
   resumes the same frame at walking top speed with zero vertical velocity,
   and the cooldown starts.
 - **Charge.** The air dash is refilled by a real ground probe hit, never by
-  coyote time - otherwise dashing off a ledge would refill it at once.
+  coyote time - otherwise dashing off a ledge would refill it at once - and
+  `DashController::land()` ignores the call while a dash is running, so a dash
+  started on the ground cannot refill itself on the next ground probe and be
+  chained into an air dash right off the ledge.
 - **Reset.** `Player::death()` and every level load call `reset_dash()`, so a
   dash never carries over a respawn.
 - **Enablement.** `LevelManager::_load_player_spawn()` enables it when the

@@ -298,3 +298,42 @@ TEST_CASE(dash_dash_does_not_cancel_without_condition_over_full_duration) {
     dash.update(press());
     CHECK_EQ(run_to_end(dash, 1), DUR);
 }
+
+TEST_CASE(dash_land_while_dashing_does_not_refill_the_charge) {
+    // A dash started on the ground sees ground contact on every frame; that
+    // must not hand out a second, air dash once the duck runs off the ledge.
+    DashController dash = make();
+    dash.update(press());
+    dash.land();  // ground probe during the dash
+    CHECK(!dash.available());
+    run_to_end(dash, 1);
+    CHECK(!dash.available());
+
+    // Cooldown elapsed, still in the air (no land() any more): no dash.
+    for (int k = 0; k < CD + 5; ++k) {
+        CHECK(!dash.update(press()).started);
+    }
+}
+
+TEST_CASE(dash_ground_dash_is_available_again_after_it_ended_on_the_ground) {
+    DashController dash = make();
+    dash.update(press());
+    run_to_end(dash, 1);
+    CHECK(!dash.available());
+    dash.land();  // first ground probe after the dash
+    CHECK(dash.available());
+}
+
+TEST_CASE(dash_land_on_the_frame_the_dash_ends_counts) {
+    // update() reports ended and clears dashing() before the locomotion's
+    // ground-state step of the same frame calls land().
+    DashController dash = make();
+    dash.update(press());
+    DashStep step;
+    for (int i = 0; i < DUR; ++i) {
+        step = dash.update(DashInput{});
+    }
+    CHECK(step.ended);
+    dash.land();
+    CHECK(dash.available());
+}

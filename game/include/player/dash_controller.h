@@ -22,7 +22,10 @@
 //
 // The air-dash charge is spent when a dash starts and only refilled by
 // land() - which the caller must call on REAL ground contact, never during
-// coyote time, or dashing off a ledge would refill it at once.
+// coyote time, or dashing off a ledge would refill it at once. land() is also
+// ignored while a dash is running: a dash started on the ground would
+// otherwise refill itself on the very next ground probe and could be chained
+// into a second, air dash right off the ledge.
 // -----------------------------------------------------------------------------
 
 struct DashInput {
@@ -64,8 +67,12 @@ class DashController {
         _available = true;
     }
 
-    // Real ground contact: refills the air dash.
-    void land() { _available = true; }
+    // Real ground contact: refills the air dash (not while dashing).
+    void land() {
+        if (!_dashing) {
+            _available = true;
+        }
+    }
 
     [[nodiscard]] auto dashing() const -> bool { return _dashing; }
     [[nodiscard]] auto available() const -> bool { return _available; }

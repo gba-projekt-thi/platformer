@@ -15,30 +15,88 @@ PlayerLocomotion::PlayerLocomotion(
       _death_handler(death_handler) {}
 
 void PlayerLocomotion::update() {
-    // Handle left/right movement first.
-    handle_horizontal_input();
-
-    // Store jump input in a buffer to allow forgiving timing.
+    // Store jump input in a buffer to allow forgiving timing. Done before the
+    // dash step: a buffered jump on the ground also cancels a running dash
+    // into a jump (see DashController).
     if (bn::keypad::a_pressed()) {
-        _jump_buffer_timer = Cfg::Player::JUMP_BUFFER_FRAMES;
+        _jump_buffer_timer = _jump_buffer_frames;
     }
 
-    // Apply continuous vertical motion effects.
-    apply_gravity();
-    apply_variable_jump();
-    clamp_velocity();
+    // The dash is checked first. While one runs it owns the whole frame:
+    // input, gravity, variable jump, clamping, bounds and jumping are skipped
+    // (only the fall-death check and the ground state still run). On the frame
+    // a dash ends update_dash() returns false, so normal movement resumes at
+    // once.
+    const bool dash_owns_frame = update_dash();
 
-    // Keep the player inside bounds and detect death conditions.
-    check_bounds();
+    if (!dash_owns_frame) {
+        // Handle left/right movement.
+        handle_horizontal_input();
+
+        // Apply continuous vertical motion effects.
+        apply_gravity();
+        apply_variable_jump();
+        clamp_velocity();
+
+        // Keep the player inside bounds.
+        check_bounds();
+    }
+
+    // Detect death conditions.
     check_death();
 
     update_ground_state();
-    handle_jump();
+
+    if (!dash_owns_frame) {
+        handle_jump();
+    }
 
     // Decrease jump buffer timer
     if (_jump_buffer_timer > 0) {
         _jump_buffer_timer--;
     }
+}
+
+// Dash (B): feeds this frame's input and surroundings to DashController and
+// applies what it decides (velocity, facing, sound). Returns true while the
+// dash owns the frame.
+bool PlayerLocomotion::update_dash() {
+    DashInput in;
+    in.dash_pressed = bn::keypad::b_pressed();
+    in.left_held = bn::keypad::left_held();
+    in.right_held = bn::keypad::right_held();
+    in.facing_left = _facing == Facing::Left;
+    in.jump_buffered = _jump_buffer_timer > 0;
+    in.on_ground = _on_ground;
+    // A wall zeroes vel_x inside PhysicsBody::move(); update() runs before
+    // the move, so this is the result of the previous frame's step.
+    in.vel_x_zero = _body.vel_x == 0;
+    in.at_left_edge = _body.pos.x <= -_horizontal_bound;
+    in.at_right_edge = _body.pos.x >= _horizontal_bound;
+
+    const DashStep step = _dash.update(in);
+
+    if (step.started) {
+        _facing = step.dir < 0 ? Facing::Left : Facing::Right;
+        _sprite.sprite().set_horizontal_flip(step.dir < 0);
+        _walk_sound_counter = 0;
+
+        // Reuses the jump sample until a dedicated dash sound exists.
+        AudioSettings::instance().play_sfx(bn::sound_items::jump);
+    }
+
+    if (step.ended) {
+        // Hand over to normal movement at walking top speed, no vertical
+        // velocity (a buffered jump on the ground follows in handle_jump()).
+        _body.set_velocity(bn::fixed(step.dir) * _max_speed, 0);
+    }
+
+    if (step.moving) {
+        // Gravity is suspended: flat horizontal burst.
+        _body.set_velocity(bn::fixed(step.dir) * Cfg::Dash::SPEED, 0);
+    }
+
+    return step.moving;
 }
 
 // Horizontal input handling
@@ -132,7 +190,9 @@ void PlayerLocomotion::check_bounds() {
 void PlayerLocomotion::update_ground_state() {
     if (_body.probe_bottom(_block_mask).any()) {
         _on_ground = true;
-        _coyote_timer = Cfg::Player::COYOTE_FRAMES;
+        _coyote_timer = _coyote_frames;
+        // Real ground contact (never coyote time) refills the air dash.
+        _dash.land();
     } else {
         if (_coyote_timer > 0) {
             _coyote_timer--;
