@@ -1,9 +1,19 @@
 #include "data_manager.h"
 
+#include "game_state_migration.h"
+#include "log.h"
+
 void DataManager::load_from_save() {
     if (_save_mgr.is_slot_used(_slot_index)) {
-        if (_save_mgr.load(_slot_index, _game_state) !=
-            engine::save::SaveResult::OK) {
+        const engine::save::SaveResult result = _save_mgr.load(
+            _slot_index, _game_state, &game_state_migration::valid_bytes);
+        if (result == engine::save::SaveResult::MIGRATED) {
+            // Older schema: newer fields hold their defaults. Nothing is
+            // written back here - the next progress save upgrades the slot.
+            BN_LOG_INFO(
+                LogCategory::Save, "slot ", _slot_index,
+                " migrated from an older save version");
+        } else if (!engine::save::succeeded(result)) {
             // Incompatible/corrupt slot (e.g. a save written before
             // furthest_level existed) - fall back to a clean state
             // instead of silently keeping whatever was already in
@@ -61,7 +71,8 @@ void DataManager::reset() {
 }
 
 bool DataManager::peek_state(int slot_id, GameState& out) {
-    return _save_mgr.load(slot_id, out) == engine::save::SaveResult::OK;
+    return engine::save::succeeded(
+        _save_mgr.load(slot_id, out, &game_state_migration::valid_bytes));
 }
 
 void DataManager::set_slot_index(int index) {

@@ -83,7 +83,8 @@ mutually exclusive toggles, Options row indices), the dash (`dash_controller.h`
 `DashController`: start/duration/cooldown/air-charge/cancel rules, plus the
 `Cfg::Dash` invariants in `cfg_dash.h`), list-menu cursor wrapping
 (`menu_nav.h`), the dash afterimage pool (`dash_trail.h`: spawn cadence, slots,
-lifetime, flicker), trigger modes (`trigger_logic.h`: latch/toggle/hold,
+lifetime, flicker), save migration (`save_migration.h` / `game_state_migration.h`:
+prefix copy, defaults for new fields, padding safety, a `GameState` layout lock), trigger modes (`trigger_logic.h`: latch/toggle/hold,
 including a check that Latch matches the original behavior) and the
 switched-platform rules (`switch_logic.h`), the one-time level hint rules (`hint_logic.h`: when it
 shows, how long it stays), and the controls overview text (`controls_text.h`: line

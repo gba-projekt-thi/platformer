@@ -264,6 +264,12 @@ also when the save slot actually resets. See
 
 ## S
 
+**Save migration** — Loading a save written by an older schema version: the
+bytes that existed then are copied and fields added later keep their defaults,
+so a new `GameState` field no longer wipes saves. Driven by a version table
+(`game_state_migration.h`); fields may only be appended. See
+[Architecture](architecture.md#save-migration).
+
 **Save slot** — One of three independent persistence slots selectable on the
 start screen, each previewed there as "New" or its furthest-reached world
 before being picked (`DataManager::peek_state()`, read-only, doesn't touch

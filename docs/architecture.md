@@ -164,6 +164,19 @@ graph LR
   (reaching a door) advances `furthest_level`; jumping to an earlier
   level via Level Select only moves the resume point, so previously
   unlocked levels stay selectable afterwards.
+- **Save migration.** Adding a `GameState` field does not wipe saves any more.
+  `SaveManager::load()` takes a small version table
+  (`game_state_migration::valid_bytes()`): for a payload written by an older
+  schema version it copies only the bytes that existed then, and the fields
+  added later keep their default values (result `MIGRATED`, logged, nothing
+  written back until the next progress save). The table is keyed by schema
+  version rather than payload size because a new field can fit into the
+  struct's tail padding, where an old payload has the same size but a
+  meaningless byte. The rules: fields are only appended at the end, each gets a
+  default initializer, `SAVE_VERSION` is bumped, and the previous version gets a
+  line in the table. Schemas 1-4 (layouts that are not a prefix of the current
+  one) stay incompatible and fall back to a fresh state. A layout-lock unit
+  test fails when `GameState` changes without the table being updated.
 - **Data manager** owns the runtime copy of the game state, the selected save
   slot (three slots), and the operations to load, save, and reset. It wraps a
   generic save manager that performs the actual SRAM reads/writes.

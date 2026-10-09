@@ -126,7 +126,7 @@ For headless or CI testing, use:
   - The start-screen controls overview (A/B/Start returns to `StartScene`); the pause menu has its own in-place view because leaving a level would destroy it
   - Both draw `controls_text.h`'s `ControlsText::LINES`, so they always agree
 
-- `game/include/game_modes.h`, `dash_controller.h`, `menu_nav.h`, `controls_text.h`, `cfg_dash.h`, `trigger_logic.h`, `switch_logic.h`, `hint_logic.h`, `dash_trail.h`
+- `game/include/game_modes.h`, `dash_controller.h`, `menu_nav.h`, `controls_text.h`, `cfg_dash.h`, `trigger_logic.h`, `switch_logic.h`, `hint_logic.h`, `dash_trail.h`, `game_state_migration.h`
   - Butano-free helpers holding the testable decision logic: Hard/Assist Mode toggles and Options row indices, the dash rules (`DashController`) and constants, wrap-around list-menu cursors, the trigger mode state logic and switched-platform rules, and the controls text. `LevelManager`, `PlayerLocomotion`, `PauseController` and `StartScene` call them and apply the results; covered by `tests/host/`
 
 - `game/include/player.h` / `game/src/player.cpp`
@@ -209,7 +209,7 @@ To add a new gameplay object:
 
 - `game/` is the game-specific project code. It depends on Butano and shared engine code in `extern/engine/`.
 - The root `Makefile` points `TARGET := platformer`, so the generated ROM is `platformer.gba`.
-- `tests/host/` holds host-buildable unit tests (no ARM toolchain needed) for the Butano-free pure-logic files (`save_integrity`, `save_buffer`, `game_state`, `frame_time`, `world_index`, `game_modes`, `dash_controller`/`cfg_dash`, `menu_nav`, `controls_text`, `trigger_logic`, `switch_logic`, `hint_logic`, `dash_trail`); the `tools/test_*.py` files cover the level-data, reachability, world-index and hint checkers; `.github/workflows/ci.yml` runs them plus a full devcontainer build + headless boot on every push/PR - see [`docs/development-workflow.md`](development-workflow.md#testing-methodology).
+- `tests/host/` holds host-buildable unit tests (no ARM toolchain needed) for the Butano-free pure-logic files (`save_integrity`, `save_buffer`, `game_state`, `frame_time`, `world_index`, `game_modes`, `dash_controller`/`cfg_dash`, `menu_nav`, `controls_text`, `trigger_logic`, `switch_logic`, `hint_logic`, `dash_trail`, `save_migration`); the `tools/test_*.py` files cover the level-data, reachability, world-index and hint checkers; `.github/workflows/ci.yml` runs them plus a full devcontainer build + headless boot on every push/PR - see [`docs/development-workflow.md`](development-workflow.md#testing-methodology).
 
 ## Related Docs
 

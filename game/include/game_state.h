@@ -4,6 +4,11 @@
 
 // Persistent save data.
 //
+// Layout rule: new fields are only ever APPENDED at the end, with a default
+// member initializer, and need a SAVE_VERSION bump plus a line in
+// game_state_migration.h - then existing saves keep working (the new field
+// starts at its default). The save-migration unit tests lock the layout.
+//
 // Uses fixed-width integer types to ensure:
 // - predictable memory layout
 // - smaller save size
