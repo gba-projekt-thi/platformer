@@ -123,6 +123,9 @@ The duck's one learned ability, in the spirit of Hollow Knight's cloak dash:
 - **Reach.** Dash adds horizontal reach only: jump height is unchanged
   (~22px climb), horizontal reach grows from ~54px (jump) to roughly 100px
   (jump + dash). Every existing layout stays clearable without it.
+- **Feedback.** A short whoosh sound and a flickering afterimage trail of
+  ghosts left behind the duck - no extra graphics, the trail reuses the duck's
+  own sprite.
 - **Hint.** The first dash-enabled level (World 3's "LEVEL_3") shows "New:
   Dash with B" once, and the first level that cannot be finished without the
   dash ("Cloak Corridor") shows "Too far? Jump + B to dash". See

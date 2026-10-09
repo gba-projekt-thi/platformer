@@ -103,6 +103,17 @@ fall-death check and the ground-state update still run.
   schema change.
 - **Animation.** While dashing the animator is given "not on ground", so the
   jump pose plays, also for a dash started on the ground.
+- **Feedback.** Starting a dash plays `bn::sound_items::dash`. While it runs,
+  `Player` leaves afterimage ghosts: `DashTrail` (`dash_trail.h`, Butano-free
+  and unit-tested) decides when a ghost is spawned (every second dash frame),
+  which of its four slots it takes, how long it lives (six frames) and when it
+  is drawn - on odd remaining life only, so it flickers like a transparency
+  without touching the blending setup the scene fades use. Each slot is a
+  `Sprite` copy of the duck's current frame (same tile set, same palette),
+  registered with `SpriteRegistry` so it stays put in world space while the
+  camera scrolls, and one z-step behind the duck. Ghosts are cleared on death,
+  when the duck is hidden for a menu, and when a level ends (`LevelManager`
+  calls `Player::clear_dash_trail()`), so none stays frozen on screen.
 
 ### Jump physics principles
 

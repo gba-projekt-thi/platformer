@@ -305,6 +305,7 @@ LevelManager::UpdateResult LevelManager::update() {
         pause_action == PauseController::Action::ReturnToTitleRequested) {
         // Persist progress before leaving to the title screen.
         _save_sync.force_save();
+        _player.clear_dash_trail();
         return UpdateResult::ReturnToTitle;
     }
 
@@ -350,6 +351,7 @@ LevelManager::UpdateResult LevelManager::update() {
     // -------------------------------------------------------------------------
 
     if (_door && _door->reached()) {
+        _player.clear_dash_trail();
         return UpdateResult::LevelComplete;
     }
 

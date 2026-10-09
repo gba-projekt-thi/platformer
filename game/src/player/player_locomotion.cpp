@@ -81,8 +81,7 @@ bool PlayerLocomotion::update_dash() {
         _sprite.sprite().set_horizontal_flip(step.dir < 0);
         _walk_sound_counter = 0;
 
-        // Reuses the jump sample until a dedicated dash sound exists.
-        AudioSettings::instance().play_sfx(bn::sound_items::jump);
+        AudioSettings::instance().play_sfx(bn::sound_items::dash);
     }
 
     if (step.ended) {

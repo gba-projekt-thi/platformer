@@ -82,7 +82,8 @@ logic of Assist/Hard Mode (`game_modes.h`: `modes::trap_speed_mode()`,
 mutually exclusive toggles, Options row indices), the dash (`dash_controller.h`
 `DashController`: start/duration/cooldown/air-charge/cancel rules, plus the
 `Cfg::Dash` invariants in `cfg_dash.h`), list-menu cursor wrapping
-(`menu_nav.h`), trigger modes (`trigger_logic.h`: latch/toggle/hold,
+(`menu_nav.h`), the dash afterimage pool (`dash_trail.h`: spawn cadence, slots,
+lifetime, flicker), trigger modes (`trigger_logic.h`: latch/toggle/hold,
 including a check that Latch matches the original behavior) and the
 switched-platform rules (`switch_logic.h`), the one-time level hint rules (`hint_logic.h`: when it
 shows, how long it stays), and the controls overview text (`controls_text.h`: line
@@ -120,6 +121,13 @@ Two independent jobs, so the fast check isn't blocked by the slow one:
   `continue-on-error: true` for now (see the comment in `ci.yml` for why);
   it still runs and reports its real status, just doesn't block the rest
   of the workflow.
+
+A separate workflow, `.github/workflows/python-tools.yml`, runs the Python
+side on its own: every `tools/test_*.py` (the checkers, the reachability
+simulator, the sprite and sound generators) and the level-data checks
+(`Check_trigger_references.py`, `Check_level_hints.py`, `Check_world_index.py`).
+It needs no submodules, Docker or ARM toolchain, so it is fast and independent
+of the slower `gba-build` job.
 
 The image `gba-build` builds depends only on `docker/Dockerfile` (repo
 source is bind-mounted at `docker run` time, never baked into the image),
@@ -215,7 +223,7 @@ A practical manual test checklist for any gameplay change:
 | Progression | Door advances to the right stage; final stage triggers the kiss scene |
 | Persistence | Deaths/timer/level saved and reloaded per slot |
 | Pause | Menu navigates; continue/restart/title behave correctly |
-| Dash | B dashes from World 3 onward (not in Worlds 1-2); one air dash per jump, refilled on landing; wall/edge/death cancel it |
+| Dash | Whoosh sound and a flickering afterimage trail while dashing, none left behind after a death or level end; B dashes from World 3 onward (not in Worlds 1-2); one air dash per jump, refilled on landing; wall/edge/death cancel it |
 | Assist / Hard Mode | Toggling one turns the other off; traps and coyote/buffer change from the next level load |
 | Controls overview | Reachable from the start screen's "Controls" entry and the pause menu; A/B returns; text fits on screen in the longest level |
 

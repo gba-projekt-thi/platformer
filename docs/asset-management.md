@@ -65,7 +65,7 @@ Audio is organized by role rather than by world:
 | Folder / kind | Contents | Use |
 |---------------|----------|-----|
 | **Music tracks** (tracker modules) | One per world plus menu, start, and end themes. | Background music per stage/scene. |
-| **Sound effects** (short samples) | Jump, footsteps, confirm/cancel, trap hit, trap fall, spikes, death. | Momentary playback on gameplay events. |
+| **Sound effects** (short samples) | Jump, dash, footsteps, confirm/cancel, trap hit, trap fall, spikes, death. | Momentary playback on gameplay events. |
 | **Legacy audio** | An older-format audio set kept for compatibility. | Optional / historical support. |
 
 The music files are compact **tracker modules** — small pattern-based music that
