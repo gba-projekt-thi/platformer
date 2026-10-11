@@ -185,6 +185,11 @@ See [Game Concepts](game-concepts.md).
 Hall" uses four of them to open and close platforms. See
 [Level Design — Dash and switch levels](level-design.md#dash-and-switch-levels).
 
+**Level preview** — An SVG picture of a level drawn by
+`tools/Preview_level.py`: platforms coloured by reachability, traps, triggers,
+spawn, door and jump arcs, in the game's own coordinates. See
+[Level Design — Previewing levels](level-design.md#previewing-levels).
+
 **Level manager** — The runtime owner of the current stage: loads it, steps it,
 resets entities, unloads it, and reports outcomes to the scene. See
 [Components — Level Management](components.md).

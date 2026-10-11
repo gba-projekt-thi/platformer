@@ -185,6 +185,11 @@ Two more static checkers keep level content honest (pure Python, no C++):
   28 characters at most (the limit comes from `hint_logic.h`), printable ASCII
   only, never empty. Also a pre-commit hook.
 
+- `tools/Preview_level.py [FILE.h] [LEVEL ...]` - draws levels as SVG pictures
+  (see [Level Design](level-design.md#previewing-levels)). The Python CI job
+  renders every level and uploads the pictures as the `level-previews`
+  artifact, so a layout change can be reviewed without building the ROM.
+
 Run all Python tests with:
 
 ```bash

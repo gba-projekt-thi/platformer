@@ -256,6 +256,41 @@ conservative dash run. The check ignores hazards, so traps still need a manual
 look. All 19 current levels pass it conservatively, and 18 of them without the
 dash.
 
+### Previewing levels
+
+`tools/Preview_level.py` draws a level as an SVG picture (opens in any browser
+or editor; no packages to install), so a layout can be judged without building
+the ROM:
+
+```bash
+python3 tools/Preview_level.py LEVEL_WORLD5_DASH          # build/level_preview/LEVEL_WORLD5_DASH.svg
+python3 tools/Preview_level.py levels_world5.h LEVEL_WORLD5_LEVERS -o lever.svg
+python3 tools/Preview_level.py                            # every level + index.html
+```
+
+The picture uses the game's own coordinates (y points down, the world is
+centered at 0,0, a dashed line marks every 240px "screen", the death line sits
+at y = 100) and shows:
+
+- **Platforms** in green when a plain jump reaches them, orange when only the
+  dash does, red when nothing does - the same check as
+  `Check_level_reachability.py`, over every lever configuration. Switched
+  platforms are dashed and labelled `+lever` (solid while it is on) or `-lever`.
+- **Jump arcs** between platforms from the same movement model: blue for plain
+  jumps, dashed orange where only a dash gets across. `--arcs plain|none`
+  speeds this up or hides it; `--optimistic` draws the optimistic start.
+- **Triggers** with their mode (`[Toggle]`, `[Hold]`) and a dotted line to the
+  traps they release.
+- **Traps** by type: BASE as a box; MOVING with ghost boxes every 12 frames
+  after its trigger fires (until it leaves the world); PATH with its route and
+  nodes; CHASE with follow distance and speed; AMBUSH with its trigger band and
+  the lunge.
+- **Spawn**, **door** (sprite and hit box) and the level's intro hint.
+
+Like the reachability check it draws hazards but does not judge their timing,
+so fairness still needs play-testing. The Python CI job renders every level and
+attaches the pictures to the run as the `level-previews` artifact.
+
 ## Trigger zones & their function
 
 Triggers are the stage's **director**: they decide *when* things happen.

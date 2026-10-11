@@ -102,10 +102,27 @@ def _hits(plats, x, y, w, h):
 
 
 def simulate(
-    plats, door, x0, y0, vx0, d, jump, hold, dash_t, start_plat, coyote0, release=MAX_FRAMES
+    plats,
+    door,
+    x0,
+    y0,
+    vx0,
+    d,
+    jump,
+    hold,
+    dash_t,
+    start_plat,
+    coyote0,
+    release=MAX_FRAMES,
+    trace=None,
 ):
-    """Runs one policy. Returns (landed_platform_or_None, door_touched)."""
+    """Runs one policy. Returns (landed_platform_or_None, door_touched).
+
+    `trace`, when a list, receives the duck's (x, y) center after every frame
+    (used by tools/Preview_level.py to draw the jump arcs)."""
     x, y, vx, vy = x0, y0, vx0, 0.0
+    if trace is not None:
+        trace.append((x, y))
     on_ground = True
     coyote = coyote0
     dashing = False
@@ -168,6 +185,8 @@ def simulate(
             y = ny
         else:
             vy = 0.0
+        if trace is not None:
+            trace.append((x, y))
         if door is not None and overlap(x, y, BW, BH, door[0], door[1], 2, 2):
             door_touched = True
         if y > DEATH_Y:
@@ -198,8 +217,11 @@ def policies(allow_dash):
 START_OFFSETS = (0.0, 10.0, 20.0, 30.0)  # px back from the edge (conservative)
 
 
-def landings(active, start, door, allow_dash, optimistic):
-    """Platforms (and door contact) reachable in ONE action from `start`."""
+def landings(active, start, door, allow_dash, optimistic, traces=None):
+    """Platforms (and door contact) reachable in ONE action from `start`.
+
+    `traces`, when a dict, collects one jump trajectory per
+    (start index, landed index, dash scheduled) - the shortest one found."""
     found = set()
     door_hit = False
     y0 = start.top - BH / 2
@@ -217,12 +239,29 @@ def landings(active, start, door, allow_dash, optimistic):
             # ran ~11px past the edge (coyote time at full speed)
             starts.append((edge + d * 11.0, d * MAXS))
         for x0, vx0 in starts:
+            trace = [] if traces is not None else None
             landed, touched = simulate(
-                active, door, x0, y0, vx0, d, jump, hold, dash_t, start, COYOTE, release
+                active,
+                door,
+                x0,
+                y0,
+                vx0,
+                d,
+                jump,
+                hold,
+                dash_t,
+                start,
+                COYOTE,
+                release,
+                trace,
             )
             door_hit |= touched
             if landed is not None and landed is not start:
                 found.add(landed)
+                if traces is not None:
+                    key = (start.index, landed.index, dash_t is not None)
+                    if key not in traces or len(trace) < len(traces[key]):
+                        traces[key] = trace
     return found, door_hit
 
 
