@@ -13,6 +13,8 @@
 #include "base_trap.h"
 #include "camera.h"
 #include "cfg.h"
+#include "checkpoint.h"
+#include "checkpoint_logic.h"
 #include "data_manager.h"
 #include "door.h"
 #include "game_modes.h"
@@ -126,6 +128,15 @@ class LevelManager {
     void _load_platforms(const LevelData& level);
     void _load_triggers(const LevelData& level);
     void _load_traps(const LevelData& level);
+    void _load_checkpoints(const LevelData& level);
+    // Takes this frame's checkpoint touches, makes the furthest one the
+    // respawn point and snapshots the triggers that are on.
+    void _sync_checkpoints();
+    // After a death reset: switches the triggers that were on when the active
+    // checkpoint was reached back on.
+    void _restore_checkpoint_triggers();
+    // Restart Level / level load: no checkpoint, respawn at the level spawn.
+    void _clear_checkpoint();
     // Resolves every platform's trigger_name to its Trigger (after the
     // triggers are loaded) and records the binding.
     void _bind_switched_platforms(const LevelData& level);
@@ -146,6 +157,15 @@ class LevelManager {
     bn::vector<Trigger, Cfg::Level::Limits::TRIGGERS> _triggers;
     bn::vector<bn::unique_ptr<BaseTrap>, Cfg::Level::Limits::TOTAL_TRAPS>
         _traps;
+    bn::vector<Checkpoint, Cfg::Level::Limits::CHECKPOINTS> _checkpoints;
+
+    // Active checkpoint (furthest touched) and the level's own spawn point
+    // to fall back to; _checkpoint_triggers is the snapshot taken when the
+    // active checkpoint was reached. See checkpoint_logic.h.
+    CheckpointTracker _checkpoint_tracker;
+    uint16_t _checkpoint_triggers = 0;
+    bn::fixed _spawn_x = 0;
+    bn::fixed _spawn_y = 0;
 
     // Platforms bound to a trigger (PlatformData::trigger_name): the
     // trigger decides whether the platform body and sprite are enabled.

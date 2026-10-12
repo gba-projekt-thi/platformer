@@ -64,6 +64,9 @@ constexpr TrapData world5_scroll_traps[] = {
     {TrapType::MOVING, 200, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "thwomp_gate"}};
 
+// Checkpoint on the middle barrel of the longest level.
+constexpr CheckpointData world5_scroll_checkpoints[] = {{24, 44}};
+
 const LevelData LEVEL_WORLD5_SCROLL = {
 
     world5_scroll_platforms,
@@ -83,7 +86,14 @@ const LevelData LEVEL_WORLD5_SCROLL = {
     {296, 40},
     // World size (enables scrolling)
     624,
-    160};
+    160,
+    // Ground friction: default
+    1,
+    // No intro hint
+    nullptr,
+    // Checkpoints, in play order
+    world5_scroll_checkpoints,
+    sizeof(world5_scroll_checkpoints) / sizeof(world5_scroll_checkpoints[0])};
 
 // =============================================================================
 // WORLD 5 SCROLL 2 - dungeon theme, second level (world_width=380)
@@ -241,6 +251,10 @@ constexpr TrapData world5_dash_traps[] = {
      -2.0,
      15}};
 
+// Checkpoint after the second 88px dash gap, so the third gap is retried
+// without redoing the first two.
+constexpr CheckpointData world5_dash_checkpoints[] = {{44, 44}};
+
 const LevelData LEVEL_WORLD5_DASH = {
 
     world5_dash_platforms,
@@ -264,7 +278,10 @@ const LevelData LEVEL_WORLD5_DASH = {
     // Ground friction: default
     1,
     // First level that cannot be finished without the dash.
-    "Too far? Jump + B to dash"};
+    "Too far? Jump + B to dash",
+    // Checkpoints, in play order
+    world5_dash_checkpoints,
+    sizeof(world5_dash_checkpoints) / sizeof(world5_dash_checkpoints[0])};
 
 // =============================================================================
 // WORLD 5 LEVERS - "Lever Hall" (world_width=700)
@@ -452,6 +469,10 @@ constexpr TrapData world5_boss_traps[] = {
     {TrapType::MOVING, 80, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, 0.0, 4.5, 4.5, NO_PATH_TRAP, 0, 0, 0, "wave3"}};
 
+// Two checkpoints, each outside both mimics' ambush ranges (a respawn inside
+// one would trigger it).
+constexpr CheckpointData world5_boss_checkpoints[] = {{-48, 47}, {104, 44}};
+
 const LevelData LEVEL_WORLD5_BOSS = {
 
     world5_boss_platforms,
@@ -471,7 +492,14 @@ const LevelData LEVEL_WORLD5_BOSS = {
     {284, 40},
     // World size (enables scrolling)
     650,
-    160};
+    160,
+    // Ground friction: default
+    1,
+    // No intro hint
+    nullptr,
+    // Checkpoints, in play order
+    world5_boss_checkpoints,
+    sizeof(world5_boss_checkpoints) / sizeof(world5_boss_checkpoints[0])};
 
 // =============================================================================
 // WORLD 5 FINALE - "Reunited" (world_width=360, 1.5 screens)

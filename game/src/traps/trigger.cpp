@@ -64,6 +64,11 @@ void Trigger::reset() {
     _refresh_visual();
 }
 
+void Trigger::restore(bool triggered) {
+    _state.restore(triggered);
+    _refresh_visual();
+}
+
 void Trigger::_refresh_visual() {
     if (!_sprite) {
         return;

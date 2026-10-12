@@ -125,6 +125,7 @@ A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each 
 - Background music per world and tilemap backgrounds
 - A death counter and run timer HUD
 - Adjustable music/SFX volume via a pause-menu Options sub-menu, persisted per save slot
+- Checkpoints in the long levels and bosses: touching a flag makes the duck respawn there (the furthest flag wins; Restart Level clears it), and the triggers that had fired are re-armed so a boss keeps its patrols
 - A Hard Mode toggle in the same Options sub-menu: unlocked the first time the game is completed, it speeds up Moving/Chase/Ambush trap velocities for a tougher replay (Path traps are unaffected). The unlock is a permanent, per-save achievement; the toggle itself resets to off like the audio settings
 - An Assist Mode toggle in the same Options sub-menu, available from the start: the mirror image of Hard Mode, it halves Moving/Chase/Ambush trap speeds and doubles the coyote-time and jump-buffer windows. Mutually exclusive with Hard Mode; no best times or no-death clears are recorded while it is on; the toggle resets to off like the audio settings
 - A Hollow-Knight-style dash on B, available from World 3 onward: a short horizontal burst with gravity suspended, a cooldown, and one use per air time (refilled on landing). It grants no invincibility and only adds horizontal reach, so every existing layout stays clearable; a dedicated sound and a flickering afterimage trail give feedback
@@ -230,7 +231,7 @@ Before every commit a short script runs to check if all files are using a consis
 This is only possible in the devcontainer or if you have [pre-commit](https://pre-commit.com), clang-format and clang-tidy installed on your system. 
 
 ### Tests
-Pure-logic code (save integrity, game-state bit flags, frame-time formatting, Hard/Assist Mode toggles, dash rules, menu cursor wrapping, controls text, trigger modes, switched-platform rules, level hints) has a small host-side unit test suite under `tests/host/` - no ARM toolchain or devcontainer needed, just your system's own `g++`/`clang++`:
+Pure-logic code (save integrity, game-state bit flags, frame-time formatting, Hard/Assist Mode toggles, dash rules, menu cursor wrapping, controls text, trigger modes, switched-platform rules, level hints, checkpoint rules) has a small host-side unit test suite under `tests/host/` - no ARM toolchain or devcontainer needed, just your system's own `g++`/`clang++`:
 
 ```bash
 cd tests/host

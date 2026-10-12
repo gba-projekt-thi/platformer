@@ -172,6 +172,8 @@ stateDiagram-v2
   updated total.
 - The level manager uses a **generic reset interface** to put every trap back to
   its starting state, so a respawn always faces the same hazard layout.
+- With a **checkpoint** reached, the respawn point is that flag (see
+  [Checkpoints](#checkpoints) below); a death resets traps and triggers as always.
 - Whether *any* death occurred during the current attempt is tracked
   separately from the running total, feeding the **no-death clear** record
   described under [Progress Feedback](#54-progress-feedback) below.
@@ -452,6 +454,34 @@ level **scene**, and the scene asks the **core scene manager** to move to the
 next scene. The scene manager guarantees the previous stage is torn down before
 the next one initializes, which is critical on a device with limited shared
 resources (palettes, sprite slots, VRAM).
+
+### Checkpoints
+
+`LevelData::checkpoints` lists `CheckpointData {x, y}` entries (center of the
+flag sprite = respawn position). `LevelManager::_load_checkpoints()` creates one
+`Checkpoint` per entry: a `PhysicsBody` that senses the player on the trigger
+layer and only raises a flag in `on_enter()`; `take_hit()` hands it to the
+manager once. It is deliberately not resettable - a death keeps it.
+
+Once per frame, right after the collision update, `_sync_checkpoints()` asks
+every checkpoint for its touch and lets `CheckpointTracker`
+(`checkpoint_logic.h`, Butano-free and unit-tested) decide: only a flag
+further along than the active one counts. The new active flag becomes the
+player's spawn point (`Player::set_spawn_point()`), its frame switches to the
+raised green flag, and the manager snapshots which triggers are on as a 16-bit
+mask (`pack_flags()`).
+
+After a death, `_reset_entities()` resets traps and triggers as usual (a trap's
+own `reset()` also resets its trigger); then `_restore_checkpoint_triggers()`
+switches the snapshot's triggers back on via `Trigger::restore()` -
+`TriggerState::restore()` ignores Hold triggers, which are only on while the
+duck stands in them. Restart Level (`PauseController::Action::RestartRequested`)
+calls `_clear_checkpoint()` first: tracker and snapshot reset, spawn point back
+to the level's own, flags lowered. Loading and unloading a level clear
+everything with the other runtime state.
+
+Budget: at most `Cfg::Level::Limits::CHECKPOINTS` (4) per level, one sprite and
+one physics body each - the registries' capacities keep their headroom.
 
 ### Level hints
 

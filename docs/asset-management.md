@@ -23,6 +23,7 @@ graph TD
     G --> W5[world5/]
     Glob --> Door[Door sprite]
     Glob --> Lever[Lever sprite, two frames]
+    Glob --> Flag[Checkpoint flag, two frames]
     Glob --> Duck[Duck sprite]
     Glob --> Kiss[Kiss scene backdrop]
     Glob --> Start[Start screen backdrop]

@@ -41,6 +41,8 @@ class Trigger : public PhysicsBody, public IResettable {
     void on_enter(uint16_t hit_layers, StaticBody* body) override;
     void on_exit(uint16_t hit_layers, StaticBody* body) override;
     void reset() override;
+    // Checkpoint respawn: puts the state back to a snapshot (not for Hold).
+    void restore(bool triggered);
 
     [[nodiscard]] const char* name() const { return _name; }
 

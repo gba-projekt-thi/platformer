@@ -59,6 +59,9 @@ constexpr TrapData world4_scroll_traps[] = {
     {TrapType::MOVING, 192, 50, 12, 12, 0, 0, bn::sprite_items::bug16x16, 1,
      TRAP_GRAPHICS_INDEXES_0, 1.2, 0, 2, NO_PATH_TRAP, 0, 0, 0, "bug_release"}};
 
+// Checkpoint on the middle korb platform of the long garden level.
+constexpr CheckpointData world4_scroll_checkpoints[] = {{104, 28}};
+
 const LevelData LEVEL_WORLD4_SCROLL = {
 
     world4_scroll_platforms,
@@ -78,7 +81,14 @@ const LevelData LEVEL_WORLD4_SCROLL = {
     {254, 40},
     // World size (enables scrolling)
     528,
-    160};
+    160,
+    // Ground friction: default
+    1,
+    // No intro hint
+    nullptr,
+    // Checkpoints, in play order
+    world4_scroll_checkpoints,
+    sizeof(world4_scroll_checkpoints) / sizeof(world4_scroll_checkpoints[0])};
 
 // =============================================================================
 // WORLD 4 SCROLL 2 - garden theme, second level (world_width=320)
@@ -248,6 +258,10 @@ constexpr TrapData world4_boss_traps[] = {
     {TrapType::MOVING, 100, -90, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
      TRAP_GRAPHICS_INDEXES_0, 0.0, 4, 4.5, NO_PATH_TRAP, 0, 0, 0, "wave3"}};
 
+// Checkpoint on the beet in the middle of the arena, clear of both ambush
+// ranges.
+constexpr CheckpointData world4_boss_checkpoints[] = {{8, 44}};
+
 const LevelData LEVEL_WORLD4_BOSS = {
 
     world4_boss_platforms,
@@ -267,4 +281,11 @@ const LevelData LEVEL_WORLD4_BOSS = {
     {216, 40},
     // World size (enables scrolling)
     480,
-    160};
+    160,
+    // Ground friction: default
+    1,
+    // No intro hint
+    nullptr,
+    // Checkpoints, in play order
+    world4_boss_checkpoints,
+    sizeof(world4_boss_checkpoints) / sizeof(world4_boss_checkpoints[0])};

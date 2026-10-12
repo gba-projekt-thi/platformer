@@ -256,6 +256,51 @@ conservative dash run. The check ignores hazards, so traps still need a manual
 look. All 19 current levels pass it conservatively, and 18 of them without the
 dash.
 
+### Checkpoints
+
+A long level or a boss can carry a few **checkpoints**: flags the duck touches
+to respawn there instead of at the spawn point. They are plain level data:
+
+```cpp
+constexpr CheckpointData world1_boss_checkpoints[] = {{-24, 48}};
+// ... at the end of the LevelData literal, after ground_friction and intro_hint:
+//     world1_boss_checkpoints, sizeof(world1_boss_checkpoints) / sizeof(...[0])
+```
+
+`(x, y)` is the center of the 16x16 flag AND the respawn position. Put the
+flag's bottom on a platform's top: `y = platform top - 8` (the preview shows
+each platform's top; `Preview_level.py` draws the flags in teal). List a level's
+checkpoints in the order it is played, at most `Cfg::Level::Limits::CHECKPOINTS`
+(4).
+
+What a respawn does, and what to keep in mind when placing one:
+
+- **Furthest one wins.** Touching an earlier flag again never moves the
+  respawn back. Skipping a flag by jumping past it is fine.
+- **Traps and triggers still reset on a death**, exactly as before - with one
+  addition: the triggers that were ON when the checkpoint was reached (Latch and
+  Toggle, not Hold) are switched on again after the respawn. That keeps a boss
+  patrol or an already released attack running instead of leaving it dormant
+  behind the flag. A released MOVING trap starts again from its start position,
+  so it arrives a little later than in the run that reached the flag.
+- **Chase traps start from their start position** (far behind a flag in the
+  middle of a level), so the first seconds after a respawn are gentler than at
+  the real spawn.
+- **Keep the respawn clear of ambush traps.** A flag inside an ambush trap's
+  range lunges the trap right after the respawn; inside its lunge it is a
+  guaranteed hit. The checker errors on the second and warns on the first.
+- **No checkpoints in puzzle levels** like "Lever Hall": a death resets the
+  levers, so a flag in the middle would only force the player to redo them.
+- **Restart Level** (pause menu) clears the checkpoint and restarts from the
+  spawn point; loading a level does too. A death still counts for the death
+  counter and the no-death badge, and the level clock keeps running.
+
+`tools/Check_checkpoints.py` verifies all of this on the level data: the flag
+stands on a (non-switched) platform, the respawn box overlaps no platform or
+trap (including a PATH trap's route and an ambush lunge), the platform is
+reachable from the spawn, plus count, order and spacing. It runs in the Python CI
+job.
+
 ### Previewing levels
 
 `tools/Preview_level.py` draws a level as an SVG picture (opens in any browser

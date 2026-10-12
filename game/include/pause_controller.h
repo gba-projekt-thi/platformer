@@ -20,7 +20,7 @@ class DataManager;
 // ----------------------------------------------------------------------------
 class PauseController {
    public:
-    enum class Action { None, DeathRequested, ReturnToTitleRequested };
+    enum class Action { None, RestartRequested, ReturnToTitleRequested };
 
     explicit PauseController(DataManager& data_manager);
 

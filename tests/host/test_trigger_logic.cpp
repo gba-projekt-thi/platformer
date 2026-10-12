@@ -112,3 +112,35 @@ TEST_CASE(trigger_reset_while_inside_a_toggle_starts_from_default_again) {
     state.on_enter();
     CHECK(state.triggered());
 }
+
+TEST_CASE(trigger_restore_sets_latch_and_toggle_triggers) {
+    for (TriggerMode mode : {TriggerMode::Latch, TriggerMode::Toggle}) {
+        TriggerState state(false, mode);
+        state.restore(true);
+        CHECK(state.triggered());
+        state.restore(false);
+        CHECK(!state.triggered());
+    }
+}
+
+TEST_CASE(trigger_restore_leaves_hold_triggers_alone) {
+    // A pressure plate is only on while the duck stands on it; restoring it
+    // "on" would leave it on forever (the exit never comes).
+    TriggerState state(false, TriggerMode::Hold);
+    state.restore(true);
+    CHECK(!state.triggered());
+}
+
+TEST_CASE(trigger_reset_after_restore_returns_to_the_default) {
+    TriggerState state(false, TriggerMode::Latch);
+    state.restore(true);
+    state.reset();
+    CHECK(!state.triggered());
+}
+
+TEST_CASE(trigger_toggle_continues_from_a_restored_state) {
+    TriggerState state(false, TriggerMode::Toggle);
+    state.restore(true);
+    state.on_enter();  // flips the restored "on" to off
+    CHECK(!state.triggered());
+}

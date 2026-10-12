@@ -62,6 +62,8 @@ void LevelManager::_reset_entities() {
 void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.teleport_to(level.player_data.x, level.player_data.y);
     _player.set_spawn_point(level.player_data.x, level.player_data.y);
+    _spawn_x = level.player_data.x;
+    _spawn_y = level.player_data.y;
     _player.set_ground_friction(level.ground_friction);
     _player.set_assist_mode(assist_mode_active());
     _loaded_in_assist_mode = assist_mode_active();
@@ -142,6 +144,9 @@ void LevelManager::_clear_runtime_state() {
     _platform_bodies.clear();
     _triggers.clear();
     _traps.clear();
+    _checkpoints.clear();
+    _checkpoint_tracker.reset();
+    _checkpoint_triggers = 0;
     _resettables.clear();
 }
 
@@ -155,6 +160,9 @@ void LevelManager::_validate_level(const LevelData& level) {
     BN_ASSERT(
         unsigned(level.trap_count) < Cfg::Level::Limits::TOTAL_TRAPS,
         "Too many traps");
+    BN_ASSERT(
+        unsigned(level.checkpoint_count) <= Cfg::Level::Limits::CHECKPOINTS,
+        "Too many checkpoints");
 }
 
 void LevelManager::_load_platforms(const LevelData& level) {
@@ -258,6 +266,55 @@ void LevelManager::_load_traps(const LevelData& level) {
     }
 }
 
+void LevelManager::_load_checkpoints(const LevelData& level) {
+    for (int i = 0; i < level.checkpoint_count; ++i) {
+        _checkpoints.emplace_back(
+            level.checkpoints[i].x, level.checkpoints[i].y);
+        _checkpoints.back().set_active(false);
+    }
+}
+
+void LevelManager::_sync_checkpoints() {
+    for (int i = 0; i < _checkpoints.size(); ++i) {
+        if (!_checkpoints[i].take_hit() || !_checkpoint_tracker.reach(i)) {
+            continue;
+        }
+
+        _player.set_spawn_point(_checkpoints[i].pos.x, _checkpoints[i].pos.y);
+
+        bool on[Cfg::Level::Limits::TRIGGERS] = {};
+        for (int t = 0; t < _triggers.size(); ++t) {
+            on[t] = _triggers[t].is_triggered();
+        }
+        _checkpoint_triggers = pack_flags(on, int(_triggers.size()));
+
+        for (int c = 0; c < _checkpoints.size(); ++c) {
+            _checkpoints[c].set_active(c == _checkpoint_tracker.active());
+        }
+        AudioSettings::instance().play_sfx(bn::sound_items::confirm);
+    }
+}
+
+void LevelManager::_restore_checkpoint_triggers() {
+    if (!_checkpoint_tracker.has_active()) {
+        return;
+    }
+    for (int t = 0; t < _triggers.size(); ++t) {
+        if (flag_at(_checkpoint_triggers, t)) {
+            _triggers[t].restore(true);
+        }
+    }
+}
+
+void LevelManager::_clear_checkpoint() {
+    _checkpoint_tracker.reset();
+    _checkpoint_triggers = 0;
+    _player.set_spawn_point(_spawn_x, _spawn_y);
+    for (Checkpoint& checkpoint : _checkpoints) {
+        checkpoint.set_active(false);
+    }
+}
+
 // -----------------------------------------------------------------------------
 // load()
 // -----------------------------------------------------------------------------
@@ -278,6 +335,7 @@ void LevelManager::load(const LevelData& level) {
     _load_triggers(level);
     _bind_switched_platforms(level);
     _load_traps(level);
+    _load_checkpoints(level);
     _sync_switched_platforms();
 }
 
@@ -290,6 +348,9 @@ void LevelManager::unload() {
     _platform_bodies.clear();
     _triggers.clear();
     _traps.clear();
+    _checkpoints.clear();
+    _checkpoint_tracker.reset();
+    _checkpoint_triggers = 0;
     _resettables.clear();
 }
 
@@ -299,7 +360,10 @@ LevelManager::UpdateResult LevelManager::update() {
     // -------------------------------------------------------------------------
 
     const auto pause_action = _pause_controller.update();
-    if (pause_action == PauseController::Action::DeathRequested) {
+    if (pause_action == PauseController::Action::RestartRequested) {
+        // Restart Level starts over from the level's spawn point, not from a
+        // checkpoint. Still counts as a death, as before.
+        _clear_checkpoint();
         _player.death();
     } else if (
         pause_action == PauseController::Action::ReturnToTitleRequested) {
@@ -327,6 +391,7 @@ LevelManager::UpdateResult LevelManager::update() {
     // -------------------------------------------------------------------------
 
     CollisionRegistry::instance().update_all();
+    _sync_checkpoints();
     _sync_switched_platforms();
 
     // -------------------------------------------------------------------------
@@ -361,6 +426,7 @@ LevelManager::UpdateResult LevelManager::update() {
 
     if (_save_sync.sync()) {
         _reset_entities();
+        _restore_checkpoint_triggers();
     }
     return UpdateResult::None;
 }

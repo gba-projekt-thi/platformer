@@ -46,6 +46,16 @@ class TriggerState {
 
     void reset() { _triggered = _default_on; }
 
+    // Puts the state back to `triggered` (a checkpoint's snapshot, see
+    // checkpoint_logic.h). Hold triggers are left alone: they are only on
+    // while the duck stands in them and would stay on forever, because the
+    // exit that turns them off never comes.
+    void restore(bool triggered) {
+        if (_mode != TriggerMode::Hold) {
+            _triggered = triggered;
+        }
+    }
+
    private:
     bool _triggered;
     bool _default_on;

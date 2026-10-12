@@ -15,7 +15,7 @@ the jump arcs without building the ROM:
   * traps by type: BASE (static), MOVING (ghost boxes every 12 frames after its
     trigger fires, until it leaves the world), PATH (the route and its nodes),
     CHASE (start, follow distance, speed), AMBUSH (trigger band and lunge)
-  * spawn, door, the death line (y = 100), the world bounds and one line per
+  * checkpoints (teal flags, in play order), spawn, door, the death line (y = 100), the world bounds and one line per
     240 px "screen"
   * jump arcs between platforms, from the same movement model as
     tools/Check_level_reachability.py: blue = plain jump, orange dashed = needs
@@ -150,11 +150,20 @@ class Level:
         self.platforms = []
         self.triggers = []
         self.traps = []
+        self.checkpoints = []
         self.sim_triggers = {}
         self.spawn = (0.0, 0.0)
         self.door = (0.0, 0.0)
         self.door_hit = (0.0, 0.0)
         self.hint = None
+
+
+def parse_checkpoints(array_body):
+    points = []
+    for literal in _ctr.extract_top_level_literals(array_body):
+        f = _ctr.top_level_fields(literal)
+        points.append((_num(f[0]), _num(f[1])))
+    return points
 
 
 def load_level_file(path):
@@ -165,6 +174,7 @@ def load_level_file(path):
     paths = load_paths(path.parent)
     trap_arrays = _ctr.extract_named_arrays(content, "TrapData")
     trigger_arrays = _ctr.extract_named_arrays(content, "TriggerData")
+    checkpoint_arrays = _ctr.extract_named_arrays(content, "CheckpointData")
     levels = {}
     for m in re.finditer(r"(?:const|constexpr) LevelData ([A-Za-z0-9_]+)\s*=\s*", content):
         name = m.group(1)
@@ -188,6 +198,9 @@ def load_level_file(path):
             level.world_w, level.world_h = _num(f[10], 240.0), _num(f[11], 160.0)
         if len(f) > 13:
             level.hint = _string(f[13])
+        # LevelData field 14 = checkpoints array, 15 = count
+        if len(f) > 14 and f[14] in checkpoint_arrays:
+            level.checkpoints = parse_checkpoints(checkpoint_arrays[f[14]])
         levels[name] = level
     return levels
 
@@ -316,6 +329,7 @@ STYLE = """
   .spawn { fill: #2e7d32; stroke: #1b5e20; stroke-width: 0.5; }
   .door { fill: #ffd54f; fill-opacity: 0.45; stroke: #f9a825; stroke-width: 0.6; }
   .doorhit { fill: #5d4037; }
+  .checkpoint { fill: #26a69a; fill-opacity: 0.35; stroke: #00695c; stroke-width: 0.7; }
 """
 
 
@@ -439,6 +453,12 @@ def render(level, arcs="all", optimistic=False, show_traps=True, scale=2.0, reac
     svg.text(level.door[0], level.door[1] - 18, "door", "small", "middle")
     svg.add("</g>")
 
+    svg.add('<g id="checkpoints">')
+    for i, (cx, cy) in enumerate(level.checkpoints):
+        svg.rect(cx, cy, 16, 16, "checkpoint", f"checkpoint {i + 1} (respawn at {cx:g},{cy:g})")
+        svg.text(cx, cy - 11, f"checkpoint {i + 1}", "small", "middle")
+    svg.add("</g>")
+
     # header + legend
     counts = {}
     for t in level.traps:
@@ -455,6 +475,7 @@ def render(level, arcs="all", optimistic=False, show_traps=True, scale=2.0, reac
         f"{level.name}   world {_fmt(level.world_w)}x{_fmt(level.world_h)} "
         f"({screens} screen{'s' if screens != 1 else ''})",
         f"platforms {len(level.platforms)}   triggers {len(level.triggers)}   "
+        f"checkpoints {len(level.checkpoints)}   "
         f"traps: {trap_text}   arcs drawn: {arc_count}",
         door_line,
     ]

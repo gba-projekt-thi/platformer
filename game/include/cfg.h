@@ -134,6 +134,7 @@ inline constexpr unsigned int PLATFORMS = 32;
 inline constexpr unsigned int PLATFORM_BODIES = 32;
 inline constexpr unsigned int TRIGGERS = 16;
 inline constexpr unsigned int TOTAL_TRAPS = 32;
+inline constexpr unsigned int CHECKPOINTS = 4;
 }  // namespace Limits
 }  // namespace Level
 
@@ -144,6 +145,7 @@ inline constexpr int PAUSE_MENU = -100;
 inline constexpr int DEATH_COUNTER = -100;
 inline constexpr int TIMER = -100;
 inline constexpr int DOOR = 1;
+inline constexpr int CHECKPOINT = 1;  // behind the duck, like the door
 }  // namespace ZOrder
 
 namespace PauseMenu {

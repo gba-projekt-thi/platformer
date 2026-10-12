@@ -64,6 +64,12 @@ See [Getting Started](getting-started.md).
 and clamps to the edges for wider (scrolling) worlds. See
 [Components — Level Management](components.md).
 
+**Checkpoint** — A flag (`LevelData::checkpoints`) the duck touches to respawn
+there instead of at the stage's spawn point, until the level is restarted or
+left. The furthest touched flag is the active one; the triggers that were on
+when it was reached fire again after a respawn. See
+[Level Design — Checkpoints](level-design.md#checkpoints).
+
 **Chase trap** — A hazard that trails the player and closes in as they advance,
 but never retreats; punishes standing still. Speeds up under Hard Mode. See
 [Components — Trap System](components.md).

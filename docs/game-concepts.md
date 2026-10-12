@@ -185,7 +185,7 @@ a slot is loaded.
 During gameplay, opening the pause menu offers:
 
 - **Continue** — resume the current stage.
-- **Restart Level** — reset the current stage's traps and respawn the duck.
+- **Restart Level** — reset the current stage's traps and respawn the duck at the stage's spawn point (a reached checkpoint is cleared).
 - **Options** — adjust music and SFX volume (0-4), without leaving the
   paused overlay. Persisted per save slot. Once Hard Mode has been unlocked
   (see below), a third row lets the player toggle it on/off from here too.
@@ -421,6 +421,18 @@ system, and the death counter is the only penalty. This encourages experimentati
 and fast retries, which suits short stages. The difficulty therefore comes from
 trap timing and platform layout (and, once unlocked, Hard Mode's speed
 multiplier), not from limited attempts.
+
+### Checkpoints
+
+The long levels and the bosses have **checkpoints**: small flags. Touching one
+(the grey flag turns green and raises) makes the duck respawn there instead of
+at the start of the stage - until the level is restarted from the pause menu or
+left. Later flags replace earlier ones; walking back to an earlier flag does
+not undo progress. The death counter still counts every death, so a no-death
+clear and the best time are unaffected. Which triggers had fired when the flag
+was reached fire again after the respawn, so a boss fight keeps its patrols
+instead of going quiet behind the flag. See
+[Level Design — Checkpoints](level-design.md#checkpoints).
 
 ## Thematic personality
 

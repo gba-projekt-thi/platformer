@@ -227,6 +227,20 @@ struct DoorData {
 };
 
 // -----------------------------------------------------------------------------
+// CheckpointData
+//
+// A flag the duck can touch to respawn there (see checkpoint_logic.h).
+// (x, y) is the center of the 16x16 flag sprite AND the respawn position:
+// place it with its bottom edge on a platform's top (y = platform top - 8) so
+// the flag stands on the platform. List a level's checkpoints in the order it
+// is played. tools/Check_checkpoints.py verifies the placement.
+// -----------------------------------------------------------------------------
+struct CheckpointData {
+    int x;
+    int y;
+};
+
+// -----------------------------------------------------------------------------
 // LevelData
 //
 // Immutable level definition.
@@ -306,4 +320,15 @@ struct LevelData {
     // every level before this field existed. Appended last so existing
     // literals keep compiling unchanged.
     const char* intro_hint = nullptr;
+
+    // -------------------------------------------------------------------------
+    // Checkpoints
+    // -------------------------------------------------------------------------
+
+    // Optional checkpoints, in play order, at most
+    // Cfg::Level::Limits::CHECKPOINTS. nullptr / 0 = none, as for every
+    // level before this field existed. Appended last so existing literals
+    // keep compiling unchanged.
+    const CheckpointData* checkpoints = nullptr;
+    int checkpoint_count = 0;
 };

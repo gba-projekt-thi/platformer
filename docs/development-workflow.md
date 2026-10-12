@@ -84,7 +84,7 @@ mutually exclusive toggles, Options row indices), the dash (`dash_controller.h`
 `Cfg::Dash` invariants in `cfg_dash.h`), list-menu cursor wrapping
 (`menu_nav.h`), the dash afterimage pool (`dash_trail.h`: spawn cadence, slots,
 lifetime, flicker), save migration (`save_migration.h` / `game_state_migration.h`:
-prefix copy, defaults for new fields, padding safety, a `GameState` layout lock), trigger modes (`trigger_logic.h`: latch/toggle/hold,
+prefix copy, defaults for new fields, padding safety, a `GameState` layout lock), the checkpoint rules (`checkpoint_logic.h`: furthest flag wins, trigger snapshot masks, `TriggerState::restore()`), trigger modes (`trigger_logic.h`: latch/toggle/hold,
 including a check that Latch matches the original behavior) and the
 switched-platform rules (`switch_logic.h`), the one-time level hint rules (`hint_logic.h`: when it
 shows, how long it stays), and the controls overview text (`controls_text.h`: line
@@ -184,6 +184,12 @@ Two more static checkers keep level content honest (pure Python, no C++):
 - `tools/Check_level_hints.py` - validates `LevelData::intro_hint` strings:
   28 characters at most (the limit comes from `hint_logic.h`), printable ASCII
   only, never empty. Also a pre-commit hook.
+- `tools/Check_checkpoints.py` - validates `LevelData::checkpoints`: the flag
+  stands on a platform that is not switched, the respawn box overlaps no
+  platform, trap start box, PATH route node or ambush lunge, the platform is
+  reachable from the spawn (jump + dash model), count within
+  `Cfg::Level::Limits::CHECKPOINTS`, plus warnings for an ambush range, order
+  and spacing. Runs in the Python CI job.
 
 - `tools/Preview_level.py [FILE.h] [LEVEL ...]` - draws levels as SVG pictures
   (see [Level Design](level-design.md#previewing-levels)). The Python CI job

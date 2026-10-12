@@ -394,7 +394,7 @@ PauseController::Action PauseController::update() {
                 case MenuOption::Continue:
                     return Action::None;
                 case MenuOption::Restart:
-                    return Action::DeathRequested;
+                    return Action::RestartRequested;
                 case MenuOption::TitleScreen:
                     return Action::ReturnToTitleRequested;
                 default:

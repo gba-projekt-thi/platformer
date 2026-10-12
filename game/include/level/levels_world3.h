@@ -249,6 +249,9 @@ constexpr TrapData world3_boss_traps[] = {
      bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, 0, -2.2,
      3.8, NO_PATH_TRAP, 0, 0, 0, "wave4"}};
 
+// Two checkpoints: after the second arm and after the third.
+constexpr CheckpointData world3_boss_checkpoints[] = {{-80, 48}, {112, 48}};
+
 const LevelData LEVEL_WORLD3_BOSS = {
 
     world3_boss_platforms,
@@ -268,7 +271,14 @@ const LevelData LEVEL_WORLD3_BOSS = {
     {246, 40},
     // World size (enables scrolling)
     520,
-    160};
+    160,
+    // Ground friction: default
+    1,
+    // No intro hint
+    nullptr,
+    // Checkpoints, in play order
+    world3_boss_checkpoints,
+    sizeof(world3_boss_checkpoints) / sizeof(world3_boss_checkpoints[0])};
 // Deliberately NOT given the slippery ground_friction the other two
 // World 3 levels use (see LEVEL_3 / LEVEL_WORLD3_SCROLL above) - a
 // dodge-heavy attack gauntlet is a bad place to also fight the floor,

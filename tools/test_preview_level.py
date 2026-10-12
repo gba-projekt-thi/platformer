@@ -52,12 +52,14 @@ constexpr TrapData traps[] = {
     {TrapType::CHASE, -100, 20, 12, 12, 0, 0, bn::sprite_items::t, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 40, 2.5}};
 
+constexpr CheckpointData cps[] = {{-40, 44}, {40, 44}};
+
 const LevelData LEVEL_T = {
     plats, sizeof(plats) / sizeof(plats[0]),
     trigs, sizeof(trigs) / sizeof(trigs[0]),
     traps, sizeof(traps) / sizeof(traps[0]),
     bn::regular_bg_items::w, bn::music_items::m, {-40, 30}, {40, 40},
-    640, 160, 1, "hello"};
+    640, 160, 1, "hello", cps, 2};
 
 const LevelData LEVEL_T2 = {
     plats, sizeof(plats) / sizeof(plats[0]),
@@ -145,6 +147,10 @@ class ParsingTests(Fixture):
         self.assertEqual(
             (chase["chase_follow_distance"], chase["chase_speed"]), (40.0, 2.5)
         )
+
+    def test_checkpoints_are_parsed_in_order(self):
+        self.assertEqual(self.level.checkpoints, [(-40.0, 44.0), (40.0, 44.0)])
+        self.assertEqual(self.levels["LEVEL_T2"].checkpoints, [])
 
     def test_trigger_modes_and_names(self):
         self.assertEqual([t["name"] for t in self.level.triggers], ["go", "lev"])
@@ -246,6 +252,16 @@ class DrawingTests(Fixture):
         limit = 80 + pv.TRACK_MARGIN + 8  # half height + margin + half box
         for g in ghosts:
             self.assertLessEqual(float(g.get("y")) + float(g.get("height")) / 2, limit + 8)
+
+    def test_checkpoints_are_drawn_where_the_duck_respawns(self):
+        root = self.svg(arcs="none")
+        flags = drawn(root, "checkpoint")
+        self.assertEqual(len(flags), 2)
+        # center (-40, 44), 16x16 -> top-left (-48, 36)
+        self.assertEqual((float(flags[0].get("x")), float(flags[0].get("y"))), (-48.0, 36.0))
+        text = " ".join(t.text or "" for t in root.iter(SVG + "text"))
+        self.assertIn("checkpoint 2", text)
+        self.assertIn("checkpoints 2", text)
 
     def test_spawn_and_door_markers(self):
         root = self.svg(arcs="none")
@@ -371,6 +387,15 @@ class RealLevelTests(unittest.TestCase):
             self.assertEqual(len(traps), len(level.traps), name)
             triggers = rects_with(root, "trigger")
             self.assertEqual(len(triggers), len(level.triggers), name)
+            self.assertEqual(len(drawn(root, "checkpoint")), len(level.checkpoints), name)
+
+    def test_long_levels_and_bosses_have_checkpoints(self):
+        for name in (
+            "LEVEL_WORLD1_BOSS", "LEVEL_WORLD2_BOSS", "LEVEL_WORLD3_BOSS",
+            "LEVEL_WORLD4_BOSS", "LEVEL_WORLD5_BOSS", "LEVEL_WORLD5_SCROLL",
+            "LEVEL_WORLD5_DASH",
+        ):
+            self.assertGreaterEqual(len(self.levels[name].checkpoints), 1, name)
 
     def test_dash_level_shows_platforms_that_need_the_dash_and_none_unreachable(self):
         level = self.levels["LEVEL_WORLD5_DASH"]
