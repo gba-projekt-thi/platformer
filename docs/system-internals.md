@@ -138,6 +138,29 @@ These are not micro-optimizations for their own sake — each one exists because
 the alternative (a naive approach) would either not fit in memory or would miss
 the frame budget on real hardware.
 
+## Sprite and entity budgets
+
+Three ceilings apply to what a stage puts on screen, and they are not the same
+number:
+
+| Ceiling | Value | What counts against it |
+|---------|-------|------------------------|
+| **Entity limits** (`Cfg::Level::Limits`) | 32 platforms, 32 traps, 16 triggers, 4 checkpoints | Fixed-capacity containers in the level manager. Exactly the limit is valid, one more fails the load-time assertion. |
+| **Sprite registry** (`SpriteRegistry`) | 72 | Everything that scrolls with the camera: the duck, the door, platforms, traps, switch sprites, checkpoint flags and the four dash afterimages. A sprite beyond the capacity is dropped (logged) and would stay pinned to its screen position. |
+| **Hardware sprites** (OAM) | 128 | The registered sprites plus all text: death counter and timer, the hidden "Paused" title, the level hint, the "New Best!" banner and the pause overlay. Hidden sprites still occupy a slot. |
+
+The entity limits alone do not keep a stage inside the other two: a stage that
+filled every limit would need 90 registered sprites. In practice the stages are
+far below that, but the pause overlay is large (up to ~57 glyph sprites in the
+Options sub-menu with Hard Mode on), and while it is open the level hint can
+still be visible, so the worst case of a hint-carrying stage is close to 128.
+`tools/Check_sprite_budget.py` counts this worst case per stage (spaces draw no
+sprite), fails on an overflow and warns when fewer than 8 slots are left. Its
+text constants mirror `pause_controller.cpp`, `level_scene.cpp` and
+`death_counter.h` - update them when those strings change. It also checks that
+the `CollisionRegistry` capacities cover the limits (static bodies, physics
+bodies and shapes, including checkpoints, triggers, the door and the duck).
+
 ## How to keep internals healthy
 
 When extending the project, respect the budgets:
@@ -145,7 +168,9 @@ When extending the project, respect the budgets:
 - Don't allocate in the per-frame path; create at load, reuse, release at
   unload.
 - Keep entity counts within the configured container caps (and raise the caps
-  deliberately, with a reason, if a stage needs more).
+  deliberately, with a reason, if a stage needs more) and run
+  `tools/Check_sprite_budget.py` - see
+  [Sprite and entity budgets](#sprite-and-entity-budgets).
 - Add stage content as data, not as new runtime machinery.
 - Release every resource a stage acquired when leaving it.
 - Measure by play-testing on the emulator; watch for sprite disappearance or

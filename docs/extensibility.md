@@ -71,7 +71,9 @@ than fighting it.
 - Match the theme of the surrounding worlds (or introduce a new theme
   deliberately, with its own background, music, and art).
 - Respect the entity-count budgets (platforms, triggers, traps) configured for
-  a stage; raise them only with a reason.
+  a stage; raise them only with a reason. Run `tools/Check_sprite_budget.py`
+  after editing a stage: it also counts sprites, which the limits alone do not
+  bound (see [System Internals](system-internals.md#sprite-and-entity-budgets)).
 
 ## Creating a new trap type
 

@@ -49,3 +49,13 @@ repos:
         # whenever level data or the checker script itself changes.
         files: ^(game/include/level/levels_world.*\.h|tools/Check_trigger_references\.py)$
         pass_filenames: false
+      - id: check-sprite-budget
+        name: Validate sprite and entity budgets
+        description: >-
+          Levels must stay inside Cfg::Level::Limits, the SpriteRegistry
+          capacity and the 128 hardware sprites - see
+          tools/Check_sprite_budget.py.
+        entry: python3 tools/Check_sprite_budget.py
+        language: system
+        files: ^(game/include/level/levels_world.*\.h|game/include/cfg\.h|game/include/pause_controller\.h|extern/engine/core/include/(sprite|collision)_registry\.h|tools/Check_sprite_budget\.py)$
+        pass_filenames: false

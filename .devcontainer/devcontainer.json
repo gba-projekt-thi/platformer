@@ -22,8 +22,7 @@
 				"ms-vscode.cmake-tools",
 				"twxs.cmake",
 				"eamodio.gitlens",
-				"ms-python.python",
-				"Continue.continue"
+				"ms-python.python"
 			]
 		}
 	},

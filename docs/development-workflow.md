@@ -89,7 +89,9 @@ including a check that Latch matches the original behavior) and the
 switched-platform rules (`switch_logic.h`), the one-time level hint rules (`hint_logic.h`: when it
 shows, how long it stays), and the controls overview text (`controls_text.h`: line
 count, length, ASCII and sprite-budget limits, and that the dash line names
-the world `Cfg::Dash::UNLOCK_WORLD` unlocks). `PlayerLocomotion`,
+the world `Cfg::Dash::UNLOCK_WORLD` unlocks) and the entity-limit rule
+(`level_limits.h`: a level with exactly `Cfg::Level::Limits` entries fits, one
+more does not). `PlayerLocomotion`,
 `LevelManager`, `PauseController` and the scenes only feed these helpers
 and apply their results, so what is left in the Butano-dependent files is
 glue that still needs the manual checks below.
@@ -126,7 +128,8 @@ Two independent jobs, so the fast check isn't blocked by the slow one:
 A separate workflow, `.github/workflows/python-tools.yml`, runs the Python
 side on its own: every `tools/test_*.py` (the checkers, the reachability
 simulator, the sprite and sound generators) and the level-data checks
-(`Check_trigger_references.py`, `Check_level_hints.py`, `Check_world_index.py`).
+(`Check_trigger_references.py`, `Check_level_hints.py`, `Check_world_index.py`,
+`Check_checkpoints.py`, `Check_sprite_budget.py`).
 It needs no submodules, Docker or ARM toolchain, so it is fast and independent
 of the slower `gba-build` job.
 
@@ -190,6 +193,12 @@ Two more static checkers keep level content honest (pure Python, no C++):
   reachable from the spawn (jump + dash model), count within
   `Cfg::Level::Limits::CHECKPOINTS`, plus warnings for an ambush range, order
   and spacing. Runs in the Python CI job.
+- `tools/Check_sprite_budget.py` - checks every level against the entity limits
+  (`Cfg::Level::Limits`), the `SpriteRegistry` capacity and the 128 hardware
+  sprites, in a worst-case model (see
+  [System Internals](system-internals.md#sprite-and-entity-budgets)), and the
+  `CollisionRegistry` capacities against the limits. Runs in the Python CI job
+  and as a pre-commit hook.
 
 - `tools/Preview_level.py [FILE.h] [LEVEL ...]` - draws levels as SVG pictures
   (see [Level Design](level-design.md#previewing-levels)). The Python CI job

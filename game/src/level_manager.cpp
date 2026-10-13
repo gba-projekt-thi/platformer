@@ -1,5 +1,6 @@
 #include "level_manager.h"
 #include "audio_settings.h"
+#include "level_limits.h"
 #include "switch_logic.h"
 #include "trap_factory.h"
 #include "world_index.h"
@@ -151,17 +152,22 @@ void LevelManager::_clear_runtime_state() {
 }
 
 void LevelManager::_validate_level(const LevelData& level) {
+    // Cfg::Level::Limits are container capacities: exactly `limit` entries is
+    // fine, one more is not (see level_limits.h). tools/Check_sprite_budget.py
+    // reports the same at commit time and also checks the sprite budgets.
     BN_ASSERT(
-        unsigned(level.platform_count) < Cfg::Level::Limits::PLATFORMS,
+        level_limits::within(
+            level.platform_count, Cfg::Level::Limits::PLATFORMS),
         "Too many platforms");
     BN_ASSERT(
-        unsigned(level.trigger_count) < Cfg::Level::Limits::TRIGGERS,
+        level_limits::within(level.trigger_count, Cfg::Level::Limits::TRIGGERS),
         "Too many triggers");
     BN_ASSERT(
-        unsigned(level.trap_count) < Cfg::Level::Limits::TOTAL_TRAPS,
+        level_limits::within(level.trap_count, Cfg::Level::Limits::TOTAL_TRAPS),
         "Too many traps");
     BN_ASSERT(
-        unsigned(level.checkpoint_count) <= Cfg::Level::Limits::CHECKPOINTS,
+        level_limits::within(
+            level.checkpoint_count, Cfg::Level::Limits::CHECKPOINTS),
         "Too many checkpoints");
 }
 

@@ -34,6 +34,9 @@ jobs:
       - name: Checkpoint placement
         run: python3 tools/Check_checkpoints.py
 
+      - name: Sprite and entity budgets
+        run: python3 tools/Check_sprite_budget.py
+
       # One picture per level (platforms by reachability, traps, triggers,
       # jump arcs) to look at in the run's artifacts; plain jumps only to keep
       # the step short.

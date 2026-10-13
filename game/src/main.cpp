@@ -97,7 +97,10 @@ int main() {
     // Level List
     // -------------------------------------------------------------------------
 
-    const LevelData levels[] = {
+    // static: the list is shared by every scene for the whole program, so it
+    // lives in static storage instead of copying all LevelData structs onto
+    // main()'s stack (IWRAM, shared with every call below).
+    static const LevelData levels[] = {
         LEVEL_0,
         LEVEL_1,
         LEVEL_WORLD1_SCROLL,

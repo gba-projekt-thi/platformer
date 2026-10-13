@@ -137,6 +137,8 @@ def parse_triggers(array_body):
                 "default_on": len(f) > 4 and f[4].strip() == "true",
                 "name": _string(f[5]) if len(f) > 5 else None,
                 "mode": mode,
+                # TriggerData::sprite (field 7): a visible switch uses a sprite slot.
+                "has_sprite": len(f) > 7 and f[7].strip() not in ("", "nullptr"),
             }
         )
     return triggers
