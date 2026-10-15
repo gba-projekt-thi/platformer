@@ -6,3 +6,56 @@ repos:
       - id: clang-format
         args: [-i]
       - id: clang-tidy
+        # tests/host/ builds with the host's own g++/clang++ (see
+        # tests/host/Makefile) and is never compiled by the ARM
+        # toolchain, so it has no entry in compile_commands.json.
+        # Without a matching compile command, clang-tidy falls back to
+        # this repo's .clang-tidy ExtraArgsBefore standalone (-std=c++23
+        # plus --target=arm-none-eabi/--sysroot=devkitARM/-I<butano
+        # paths>), which don't apply to host-only code and made clang's
+        # driver misdetect the .h files as C in the process (invalid
+        # argument '-std=c++23' not allowed with 'C'). clang-format
+        # still runs here - formatting is language/target-agnostic.
+        exclude: ^tests/
+
+  - repo: local
+    hooks:
+      - id: check-level-hints
+        name: Validate LevelData::intro_hint strings
+        description: >-
+          Hints must be <= hint::MAX_CHARS printable ASCII characters - see
+          tools/Check_level_hints.py.
+        entry: python3 tools/Check_level_hints.py
+        language: system
+        files: ^(game/include/level/levels_world.*\.h|game/include/hint_logic\.h|tools/Check_level_hints\.py)$
+        pass_filenames: false
+      - id: check-world-index
+        name: Validate WorldIndex against levels[]
+        description: >-
+          world_index.h's WORLDS table must cover main.cpp's levels[] exactly
+          - see tools/Check_world_index.py.
+        entry: python3 tools/Check_world_index.py
+        language: system
+        files: ^(game/src/main\.cpp|game/include/world_index\.h|tools/Check_world_index\.py)$
+        pass_filenames: false
+      - id: check-trigger-references
+        name: Validate trigger_name references
+        description: >-
+          Every TrapData::trigger_name must resolve to a TriggerData::name
+          defined for that same level - see tools/Check_trigger_references.py.
+        entry: python3 tools/Check_trigger_references.py
+        language: system
+        # Full scan every time it runs (not per changed file), triggered
+        # whenever level data or the checker script itself changes.
+        files: ^(game/include/level/levels_world.*\.h|tools/Check_trigger_references\.py)$
+        pass_filenames: false
+      - id: check-sprite-budget
+        name: Validate sprite and entity budgets
+        description: >-
+          Levels must stay inside Cfg::Level::Limits, the SpriteRegistry
+          capacity and the 128 hardware sprites - see
+          tools/Check_sprite_budget.py.
+        entry: python3 tools/Check_sprite_budget.py
+        language: system
+        files: ^(game/include/level/levels_world.*\.h|game/include/cfg\.h|game/include/pause_controller\.h|extern/engine/core/include/(sprite|collision)_registry\.h|tools/Check_sprite_budget\.py)$
+        pass_filenames: false

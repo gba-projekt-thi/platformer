@@ -1,11 +1,18 @@
 #include "trigger.h"
 
+#include "cfg.h"
+
 Trigger::Trigger(
     bn::fixed t_x,
     bn::fixed t_y,
     bn::fixed t_width,
     bn::fixed t_height,
-    bool t_default_on)
+    bool t_default_on,
+    const char* t_name,
+    TriggerMode t_mode,
+    const bn::sprite_item* t_sprite,
+    int t_sprite_index_off,
+    int t_sprite_index_on)
     : PhysicsBody(
           t_x,
           t_y,
@@ -14,20 +21,57 @@ Trigger::Trigger(
           Cfg::Layer::TRIGGER,
           Cfg::Layer::PLAYER,
           0),
-      triggered(t_default_on),
-      default_on(t_default_on) {}
+      _state(t_default_on, t_mode),
+      _name(t_name) {
+    if (t_sprite != nullptr) {
+        const int graphics_count = t_sprite->tiles_item().graphics_count();
+        _tiles_off = t_sprite->tiles_item().create_tiles(
+            t_sprite_index_off % graphics_count);
+        _tiles_on = t_sprite->tiles_item().create_tiles(
+            t_sprite_index_on % graphics_count);
+
+        bn::sprite_ptr raw_sprite = t_sprite->create_sprite(t_x, t_y);
+        raw_sprite.set_blending_enabled(true);
+
+        // Wrapped in Sprite like every other world object, so it scrolls
+        // with the camera via SpriteRegistry.
+        _sprite.emplace(bn::move(raw_sprite), t_x, t_y);
+        sprite = &*_sprite;
+        _refresh_visual();
+    }
+}
 
 bool Trigger::is_triggered() const {
-    return triggered;
+    return _state.triggered();
 }
 
 void Trigger::on_enter(
     [[maybe_unused]] uint16_t hit_layers,
     [[maybe_unused]] StaticBody* body) {
-    // Activate trigger once entered.
-    triggered = !default_on;
+    _state.on_enter();
+    _refresh_visual();
+}
+
+void Trigger::on_exit(
+    [[maybe_unused]] uint16_t hit_layers,
+    [[maybe_unused]] StaticBody* body) {
+    _state.on_exit();
+    _refresh_visual();
 }
 
 void Trigger::reset() {
-    triggered = default_on;
+    _state.reset();
+    _refresh_visual();
+}
+
+void Trigger::restore(bool triggered) {
+    _state.restore(triggered);
+    _refresh_visual();
+}
+
+void Trigger::_refresh_visual() {
+    if (!_sprite) {
+        return;
+    }
+    _sprite->sprite().set_tiles(_state.triggered() ? *_tiles_on : *_tiles_off);
 }

@@ -1,0 +1,68 @@
+#pragma once
+
+#include "core_scene.h"
+#include "core_scene_manager.h"
+
+#include "bn_optional.h"
+#include "bn_span.h"
+#include "bn_sprite_ptr.h"
+#include "bn_sprite_text_generator.h"
+#include "bn_vector.h"
+#include "common_variable_8x16_sprite_font.h"
+
+#include "hint_logic.h"
+#include "level_structure.h"
+
+class Player;
+class DataManager;
+class LevelManager;
+
+class LevelScene : public core::Scene {
+   public:
+    LevelScene(
+        Player& player,
+        bn::span<const LevelData> levels,
+        DataManager& data_manager,
+        LevelManager& level_manager);
+    ~LevelScene() override;
+
+    void init() override;
+    void update() override;
+
+   private:
+    void _finalize_advance(unsigned int next_level_index);
+    void _finalize_completion();
+    void _show_new_best_banner();
+    void _hide_new_best_banner();
+    // One-time level hint (LevelData::intro_hint, see hint_logic.h).
+    void _show_hint_if_needed();
+    void _update_hint();
+
+    Player& _player;
+    bn::span<const LevelData> _levels;
+    unsigned int _level_index;
+    LevelManager& _level_manager;
+    DataManager& _data_manager;
+
+    // Prevents multiple scene transitions.
+    bool _transition_requested;
+
+    // Set when a level clear beats its stored best time. Holds the
+    // scene on this frame's completed level, showing a banner, until
+    // A/Start is pressed - only then does _finalize_advance()/
+    // _finalize_completion() actually run (save + scene swap).
+    bool _new_best_pending = false;
+    bool _next_is_game_completion = false;
+    unsigned int _pending_next_level_index = 0;
+
+    bn::optional<bn::sprite_text_generator> _banner_text_gen;
+    // "New Best!" (9) + time e.g. "01:23.45" (8) + "Press A to
+    // continue" (19) = 36 chars, +headroom.
+    bn::vector<bn::sprite_ptr, 40> _banner_sprites;
+
+    // One-time hint at the top of the screen. hint::MAX_CHARS (28) glyphs
+    // at most, so 32 sprites leave headroom.
+    bn::optional<bn::sprite_text_generator> _hint_text_gen;
+    bn::vector<bn::sprite_ptr, 32> _hint_sprites;
+    hint::Timer _hint_timer{Cfg::Hint::FRAMES};
+};

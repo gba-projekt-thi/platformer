@@ -8,6 +8,7 @@
 
 // Engine team
 #include "collision_registry.h"
+#include "log.h"
 #include "sprite.h"
 
 // Our team
@@ -20,14 +21,14 @@
 #include "bn_sprite_items_connector16x16.h"
 #include "bn_sprite_items_door32x32.h"
 #include "bn_sprite_items_kugelfisch.h"
-#include "bn_sprite_items_platformslvl1.h"
+#include "bn_sprite_items_platforms_world1.h"
 
 // Level 2
 #include "bn_sprite_items_box32x32.h"
 #include "bn_sprite_items_can32x32.h"
 #include "bn_sprite_items_ladder.h"
 #include "bn_sprite_items_pipe16x16.h"
-#include "bn_sprite_items_platformslvl2.h"
+#include "bn_sprite_items_platforms_world2.h"
 #include "bn_sprite_items_rustynails32x16.h"
 
 // Level 3
@@ -37,11 +38,33 @@
 #include "bn_sprite_items_nebel.h"
 #include "bn_sprite_items_slithermanarms32x32.h"
 
+// World 4 (garden, scrolling)
+#include "bn_sprite_items_beet.h"
+#include "bn_sprite_items_brick16x16.h"
+#include "bn_sprite_items_bug16x16.h"
+#include "bn_sprite_items_flower1.h"
+#include "bn_sprite_items_flower2.h"
+#include "bn_sprite_items_flower3.h"
+#include "bn_sprite_items_korb.h"
+#include "bn_sprite_items_nest32x16.h"
+#include "bn_sprite_items_strauch32x32.h"
+
+// World 5 (dungeon, scrolling finale)
+#include "bn_sprite_items_axe64x32.h"
+#include "bn_sprite_items_barrel32x32.h"
+#include "bn_sprite_items_bars32x32.h"
+#include "bn_sprite_items_chest32x32.h"
+#include "bn_sprite_items_mimic32x32.h"
+#include "bn_sprite_items_rostybar32x32.h"
+#include "bn_sprite_items_thwomp32x32.h"
+
 // Wallpapers
 #include "bn_regular_bg_items_kissingscene.h"
-#include "bn_regular_bg_items_level1.h"
-#include "bn_regular_bg_items_level2.h"
-#include "bn_regular_bg_items_level3.h"
+#include "bn_regular_bg_items_world1.h"
+#include "bn_regular_bg_items_world2.h"
+#include "bn_regular_bg_items_world3.h"
+#include "bn_regular_bg_items_world4.h"
+#include "bn_regular_bg_items_world5.h"
 #include "bn_regular_bg_ptr.h"
 
 // Music
@@ -50,13 +73,12 @@
 // Levels
 #include "core_scene.h"
 #include "core_scene_manager.h"
+#include "game_session.h"
 #include "kissing_scene.h"
 #include "level_manager.h"
 #include "level_scene.h"
 #include "levels.h"
 #include "start_scene.h"
-
-extern bool game_finished;
 
 int main() {
     // -------------------------------------------------------------------------
@@ -75,7 +97,29 @@ int main() {
     // Level List
     // -------------------------------------------------------------------------
 
-    const LevelData levels[] = {LEVEL_0, LEVEL_1, LEVEL_2, LEVEL_3};
+    // static: the list is shared by every scene for the whole program, so it
+    // lives in static storage instead of copying all LevelData structs onto
+    // main()'s stack (IWRAM, shared with every call below).
+    static const LevelData levels[] = {
+        LEVEL_0,
+        LEVEL_1,
+        LEVEL_WORLD1_SCROLL,
+        LEVEL_WORLD1_BOSS,
+        LEVEL_2,
+        LEVEL_WORLD2_SCROLL,
+        LEVEL_WORLD2_BOSS,
+        LEVEL_3,
+        LEVEL_WORLD3_SCROLL,
+        LEVEL_WORLD3_BOSS,
+        LEVEL_WORLD4_SCROLL,
+        LEVEL_WORLD4_SCROLL_2,
+        LEVEL_WORLD4_BOSS,
+        LEVEL_WORLD5_SCROLL,
+        LEVEL_WORLD5_SCROLL_2,
+        LEVEL_WORLD5_DASH,
+        LEVEL_WORLD5_LEVERS,
+        LEVEL_WORLD5_BOSS,
+        LEVEL_WORLD5_FINALE};
 
     // -------------------------------------------------------------------------
     // Create the player entity and apply an offset for the sprite anchor point.
@@ -93,7 +137,7 @@ int main() {
 #pragma message( \
     "make clean; make USERFLAGS=-DRESET_SAVED used to reset corrupted game state. After running game once it should be fine from now on without the flag")
     data_manager.reset();
-    BN_LOG("Save data reset enabled via RESET_SAVED");
+    BN_LOG_INFO(LogCategory::Save, "Save data reset enabled via RESET_SAVED");
 
 #endif
 
@@ -114,7 +158,7 @@ int main() {
     // -------------------------------------------------------------------------
 
     while (true) {
-        while (!game_finished) {
+        while (!GameSession::instance().is_finished()) {
             core::SceneManager::instance().update();
         }
 
@@ -130,6 +174,6 @@ int main() {
         core::SceneManager::instance().set_next_scene(bn::move(kissing_scene));
 
         // Reset the completion flag so the next scene can run normally.
-        game_finished = false;
+        GameSession::instance().reset();
     }
 }

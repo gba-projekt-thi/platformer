@@ -1,8 +1,18 @@
 #include "level_manager.h"
+#include "audio_settings.h"
+#include "level_limits.h"
+#include "switch_logic.h"
 #include "trap_factory.h"
+#include "world_index.h"
 
 LevelManager::LevelManager(Player& player, DataManager& data_manager)
-    : _player(player), _pause_controller(), _data_manager(data_manager) {
+    : _player(player),
+      // Constructor parameter used directly, not _data_manager - the
+      // member is declared *after* _pause_controller in the header, so
+      // referencing it here would read before it's initialized.
+      _pause_controller(data_manager),
+      _data_manager(data_manager),
+      _save_sync(player, data_manager) {
     restoreHUD();
 }
 
@@ -17,156 +27,388 @@ void LevelManager::restoreHUD() {
     auto& game_state = _data_manager.state();
     _player.set_deaths(game_state.deaths);
     timer.set_time(game_state.centis, game_state.seconds, game_state.minutes);
+
+    // Sound settings are per-save-slot; restore them into the engine-level
+    // AudioSettings singleton whenever a slot is (re)loaded. Covers both
+    // this constructor and StartScene's post-load_from_save() call.
+    AudioSettings::instance().set_music_level(game_state.music_volume);
+    AudioSettings::instance().set_sfx_level(game_state.sfx_volume);
 }
 
-Trigger& LevelManager::get_trigger(int trigger_index) {
-    const int trigger_count = _triggers.size();
-    if (trigger_index >= 0 && trigger_index < trigger_count) {
-        return _triggers[trigger_index];
+Trigger& LevelManager::get_trigger_by_name(const char* name) {
+    if (name != nullptr) {
+        for (Trigger& trigger : _triggers) {
+            const char* candidate = trigger.name();
+            if (candidate != nullptr &&
+                bn::string_view(candidate) == bn::string_view(name)) {
+                return trigger;
+            }
+        }
     }
-    BN_LOG(
-        "[ERROR] level_manager: "
-        "invalid trigger index, fallback to trigger 0");
+    BN_LOG_ERROR(
+        LogCategory::Level, "trigger name not found, fallback to trigger 0");
     return _triggers[0];
 }
 
-void LevelManager::_reset_traps() {
-    for (auto& trap : _traps) {
-        trap->reset();
+void LevelManager::_reset_entities() {
+    for (auto* entity : _resettables) {
+        entity->reset();
     }
 }
 
-void LevelManager::load(const LevelData& level) {
-    _pause_controller.reset();
+// -----------------------------------------------------------------------------
+// load() stages
+// -----------------------------------------------------------------------------
 
-    // -------------------------------------------------------------------------
-    // Player Spawn
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.teleport_to(level.player_data.x, level.player_data.y);
     _player.set_spawn_point(level.player_data.x, level.player_data.y);
-    _last_death_ct = _player.get_deaths();
+    _spawn_x = level.player_data.x;
+    _spawn_y = level.player_data.y;
+    _player.set_ground_friction(level.ground_friction);
+    _player.set_assist_mode(assist_mode_active());
+    _loaded_in_assist_mode = assist_mode_active();
+    // Dash is available from Cfg::Dash::UNLOCK_WORLD onward. Compared
+    // against the level being loaded (GameState::level is already set to
+    // it by every path into LevelScene), so replaying an earlier world via
+    // Level Select plays as authored, without dash.
+    _player.set_dash_enabled(
+        _data_manager.state().level >=
+        WorldIndex::WORLDS[Cfg::Dash::UNLOCK_WORLD].start_index);
+    _save_sync.reset_baseline();
+    _level_frame_count = 0;
+}
 
-    // -------------------------------------------------------------------------
-    // Door
-    // -------------------------------------------------------------------------
+void LevelManager::_load_door(const LevelData& level) {
+    _door.emplace(
+        level.door.x, level.door.y, level.door.sprite,
+        level.door.sprite_graphics_indexes, level.door.sprite_animation_wait,
+        level.door.sprite_flip_horizontal);
+}
 
-    _door.emplace(level.door.x, level.door.y);
-
-    // -------------------------------------------------------------------------
-    // Music
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_music(const LevelData& level) {
     if (!_music.has_value() || *_music != level.music) {
         _music.emplace(level.music);
         bn::music::play(*_music);
     }
+}
 
+void LevelManager::_load_background(const LevelData& level) {
     // -------------------------------------------------------------------------
     // Background
+    //
+    // Always created at its authored position (0,0) and NEVER repositioned
+    // afterwards - neither here nor in update(). The current background art
+    // (level1/level2/level3/world4/world5) was authored as a single static
+    // 240x160 screen, not a wide seamlessly-tileable world backdrop;
+    // repositioning it with the camera wraps it at the GBA tilemap block
+    // boundary (visible seam) and offsets it away from screen center in
+    // wide levels. Until dedicated wide/tileable background art exists per
+    // scrolling level, the background is a static backdrop while the
+    // foreground (player/platforms/traps/door) scrolls normally via
+    // SpriteRegistry.
     // -------------------------------------------------------------------------
 
     _background.reset();
+
+    // Force a full engine frame between releasing the previous background's
+    // tiles/palette and allocating the new one's. Without this, a normal
+    // level-to-level scene transition destroys the old background and
+    // creates the new one back-to-back within the same SceneManager::update()
+    // call (no bn::core::update() runs between LevelManager::unload() and
+    // load() during that transition), so the new background's VRAM write can
+    // land in the same uncommitted batch as the old one's pending release -
+    // observed as a level's background using stale palette colors from a
+    // previously loaded level's background (but only when reached via normal
+    // progression, not when loaded fresh from a save, where no prior
+    // background was ever allocated).
+    bn::core::update();
+
     _background.emplace(level.back_ground.create_bg(0, 0));
     _background->set_priority(3);
     _background->set_blending_enabled(true);
+}
 
-    // -------------------------------------------------------------------------
-    // Clear Previous Level State
-    // -------------------------------------------------------------------------
+void LevelManager::_setup_camera(const LevelData& level) {
+    Camera::instance().init(level.world_width, level.world_height);
+    Camera::instance().follow(_player.pos.x, _player.pos.y);
 
+    // Bounce boundary must match this level's world width, not the fixed
+    // 240px screen default.
+    _player.set_horizontal_bound(
+        level.world_width / 2 - Cfg::Screen::EDGE_MARGIN);
+}
+
+void LevelManager::_clear_runtime_state() {
+    _switched_platforms.clear();
     _platforms.clear();
     _platform_bodies.clear();
     _triggers.clear();
     _traps.clear();
+    _checkpoints.clear();
+    _checkpoint_tracker.reset();
+    _checkpoint_triggers = 0;
+    _resettables.clear();
+}
 
-    // -------------------------------------------------------------------------
-    // Validation
-    // -------------------------------------------------------------------------
-
+void LevelManager::_validate_level(const LevelData& level) {
+    // Cfg::Level::Limits are container capacities: exactly `limit` entries is
+    // fine, one more is not (see level_limits.h). tools/Check_sprite_budget.py
+    // reports the same at commit time and also checks the sprite budgets.
     BN_ASSERT(
-        unsigned(level.platform_count) < Cfg::Level::Limits::PLATFORMS,
+        level_limits::within(
+            level.platform_count, Cfg::Level::Limits::PLATFORMS),
         "Too many platforms");
     BN_ASSERT(
-        unsigned(level.trigger_count) < Cfg::Level::Limits::TRIGGERS,
+        level_limits::within(level.trigger_count, Cfg::Level::Limits::TRIGGERS),
         "Too many triggers");
     BN_ASSERT(
-        unsigned(level.trap_count) < Cfg::Level::Limits::TOTAL_TRAPS,
+        level_limits::within(level.trap_count, Cfg::Level::Limits::TOTAL_TRAPS),
         "Too many traps");
+    BN_ASSERT(
+        level_limits::within(
+            level.checkpoint_count, Cfg::Level::Limits::CHECKPOINTS),
+        "Too many checkpoints");
+}
 
-    // -------------------------------------------------------------------------
-    // Platforms
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_platforms(const LevelData& level) {
     for (int i = 0; i < level.platform_count; ++i) {
         const PlatformData& platform = level.platforms[i];
         const int graphics_count =
             platform.sprite.tiles_item().graphics_count();
-        bn::sprite_ptr sprite =
+
+        bn::sprite_ptr raw_sprite =
             platform.sprite.create_sprite(platform.x, platform.y);
-        sprite.set_tiles(platform.sprite.tiles_item().create_tiles(
+        raw_sprite.set_tiles(platform.sprite.tiles_item().create_tiles(
             platform.sprite_index % graphics_count));
-        sprite.set_blending_enabled(true);
-        _platforms.push_back(bn::move(sprite));
+        raw_sprite.set_blending_enabled(true);
+
+        // Wrap in the shared Sprite type - same pattern as Door and every
+        // trap. This is what registers the sprite with SpriteRegistry so
+        // sync_all() moves it in step with the camera each frame. A bare
+        // bn::sprite_ptr never gets touched again after creation and stays
+        // pinned to its initial screen position on scrolling levels.
+        auto wrapped_sprite = bn::make_unique<Sprite>(
+            bn::move(raw_sprite), platform.x, platform.y);
+
         _platform_bodies.emplace_back(
             platform.x, platform.y, platform.width, platform.height,
             Cfg::Layer::PLATFORM);
         _platform_bodies.back().pos.offset_x = platform.offset_x;
         _platform_bodies.back().pos.offset_y = platform.offset_y;
+        _platform_bodies.back().sprite = wrapped_sprite.get();
+
+        _platforms.push_back(bn::move(wrapped_sprite));
     }
+}
 
-    // -------------------------------------------------------------------------
-    // Triggers
-    // -------------------------------------------------------------------------
-
+void LevelManager::_load_triggers(const LevelData& level) {
     for (int i = 0; i < level.trigger_count; ++i) {
         const TriggerData& trigger = level.triggers[i];
         _triggers.emplace_back(
-            trigger.x, trigger.y, trigger.width, trigger.height);
+            trigger.x, trigger.y, trigger.width, trigger.height,
+            trigger.default_on, trigger.name, trigger.mode, trigger.sprite,
+            trigger.sprite_index_off, trigger.sprite_index_on);
     }
 
     // Fallback trigger prevents invalid references.
     if (_triggers.empty()) {
-        _triggers.emplace_back(1000, 1000, 0, 0, true);
+        _triggers.emplace_back(1000, 1000, 0, 0, true, nullptr);
     }
 
-    // -------------------------------------------------------------------------
-    // Trap Construction
-    // -------------------------------------------------------------------------
+    // Triggers reset themselves on death/restart, so one that drives only
+    // platforms (no trap to reset it) still returns to its default state.
+    for (Trigger& trigger : _triggers) {
+        _resettables.push_back(&trigger);
+    }
+}
 
+void LevelManager::_bind_switched_platforms(const LevelData& level) {
+    // _platforms / _platform_bodies hold exactly one entry per platform, in
+    // the same order as level.platforms (see _load_platforms()).
+    for (int i = 0; i < level.platform_count; ++i) {
+        const PlatformData& platform = level.platforms[i];
+        if (platform.trigger_name == nullptr) {
+            continue;
+        }
+        _switched_platforms.push_back(SwitchedPlatform{
+            &get_trigger_by_name(platform.trigger_name), &_platform_bodies[i],
+            _platforms[i].get(), platform.active_when_on});
+    }
+}
+
+void LevelManager::_sync_switched_platforms() {
+    for (SwitchedPlatform& switched : _switched_platforms) {
+        const bool want = switch_logic::platform_active(
+            switched.trigger->is_triggered(), switched.active_when_on);
+        if (want == switched.body->is_enabled()) {
+            continue;
+        }
+
+        if (want) {
+            // A platform re-appearing on top of the duck would trap it (every
+            // move into an overlapping body is blocked), so hold it back
+            // until the duck has stepped clear.
+            if (switch_logic::boxes_overlap(
+                    _player.pos.get_x(), _player.pos.get_y(), _player.pos.width,
+                    _player.pos.height, switched.body->pos.get_x(),
+                    switched.body->pos.get_y(), switched.body->pos.width,
+                    switched.body->pos.height)) {
+                continue;
+            }
+            switched.body->enable();
+            switched.sprite->enable();
+        } else {
+            switched.body->disable();
+            switched.sprite->disable();
+        }
+    }
+}
+
+void LevelManager::_load_traps(const LevelData& level) {
     for (int i = 0; i < level.trap_count; ++i) {
         _traps.push_back(TrapFactory::create(level.traps[i], *this));
+        _resettables.push_back(_traps.back().get());
     }
+}
+
+void LevelManager::_load_checkpoints(const LevelData& level) {
+    for (int i = 0; i < level.checkpoint_count; ++i) {
+        _checkpoints.emplace_back(
+            level.checkpoints[i].x, level.checkpoints[i].y);
+        _checkpoints.back().set_active(false);
+    }
+}
+
+void LevelManager::_sync_checkpoints() {
+    for (int i = 0; i < _checkpoints.size(); ++i) {
+        if (!_checkpoints[i].take_hit() || !_checkpoint_tracker.reach(i)) {
+            continue;
+        }
+
+        _player.set_spawn_point(_checkpoints[i].pos.x, _checkpoints[i].pos.y);
+
+        bool on[Cfg::Level::Limits::TRIGGERS] = {};
+        for (int t = 0; t < _triggers.size(); ++t) {
+            on[t] = _triggers[t].is_triggered();
+        }
+        _checkpoint_triggers = pack_flags(on, int(_triggers.size()));
+
+        for (int c = 0; c < _checkpoints.size(); ++c) {
+            _checkpoints[c].set_active(c == _checkpoint_tracker.active());
+        }
+        AudioSettings::instance().play_sfx(bn::sound_items::confirm);
+    }
+}
+
+void LevelManager::_restore_checkpoint_triggers() {
+    if (!_checkpoint_tracker.has_active()) {
+        return;
+    }
+    for (int t = 0; t < _triggers.size(); ++t) {
+        if (flag_at(_checkpoint_triggers, t)) {
+            _triggers[t].restore(true);
+        }
+    }
+}
+
+void LevelManager::_clear_checkpoint() {
+    _checkpoint_tracker.reset();
+    _checkpoint_triggers = 0;
+    _player.set_spawn_point(_spawn_x, _spawn_y);
+    for (Checkpoint& checkpoint : _checkpoints) {
+        checkpoint.set_active(false);
+    }
+}
+
+// -----------------------------------------------------------------------------
+// load()
+// -----------------------------------------------------------------------------
+
+void LevelManager::load(const LevelData& level) {
+    _pause_controller.reset();
+
+    _load_player_spawn(level);
+    _load_door(level);
+    _load_music(level);
+    _load_background(level);
+    _setup_camera(level);
+
+    _clear_runtime_state();
+    _validate_level(level);
+
+    _load_platforms(level);
+    _load_triggers(level);
+    _bind_switched_platforms(level);
+    _load_traps(level);
+    _load_checkpoints(level);
+    _sync_switched_platforms();
 }
 
 void LevelManager::unload() {
     _background.reset();
     _door.reset();
     _music.reset();
+    _switched_platforms.clear();
     _platforms.clear();
     _platform_bodies.clear();
     _triggers.clear();
     _traps.clear();
+    _checkpoints.clear();
+    _checkpoint_tracker.reset();
+    _checkpoint_triggers = 0;
+    _resettables.clear();
 }
 
-bool LevelManager::update() {
+LevelManager::UpdateResult LevelManager::update() {
     // -------------------------------------------------------------------------
     // Pause
     // -------------------------------------------------------------------------
 
     const auto pause_action = _pause_controller.update();
-    if (pause_action == PauseController::Action::DeathRequested) {
+    if (pause_action == PauseController::Action::RestartRequested) {
+        // Restart Level starts over from the level's spawn point, not from a
+        // checkpoint. Still counts as a death, as before.
+        _clear_checkpoint();
         _player.death();
+    } else if (
+        pause_action == PauseController::Action::ReturnToTitleRequested) {
+        // Persist progress before leaving to the title screen.
+        _save_sync.force_save();
+        _player.clear_dash_trail();
+        return UpdateResult::ReturnToTitle;
     }
+
     if (_pause_controller.paused()) {
-        return false;
+        return UpdateResult::None;
     }
+
+    // Level clock: counts frames the level has actually been playable
+    // (i.e. not paused), used to compute this attempt's clear time for
+    // the best-time record. Deliberately NOT reset on death - matches
+    // the existing overall run Timer, which also keeps counting through
+    // deaths; a level's recorded time is its total time-to-clear
+    // including any retries within that attempt, not a speedrun-style
+    // per-segment split.
+    ++_level_frame_count;
 
     // -------------------------------------------------------------------------
     // Physics
     // -------------------------------------------------------------------------
 
     CollisionRegistry::instance().update_all();
+    _sync_checkpoints();
+    _sync_switched_platforms();
+
+    // -------------------------------------------------------------------------
+    // Camera
+    //
+    // Only the foreground (player/platforms/traps/door, via SpriteRegistry)
+    // follows the camera each frame. The background stays screen-locked -
+    // see the note in _load_background().
+    // -------------------------------------------------------------------------
+
+    Camera::instance().follow(_player.pos.x, _player.pos.y);
 
     // -------------------------------------------------------------------------
     // Rendering
@@ -180,29 +422,17 @@ bool LevelManager::update() {
     // -------------------------------------------------------------------------
 
     if (_door && _door->reached()) {
-        return true;
+        _player.clear_dash_trail();
+        return UpdateResult::LevelComplete;
     }
 
     // -------------------------------------------------------------------------
     // Death Synchronization
     // -------------------------------------------------------------------------
 
-    if (_last_death_ct != _player.get_deaths()) {
-        _last_death_ct = _player.get_deaths();
-
-        // Runtime state access only.
-        auto& game_state = _data_manager.state();
-        game_state.deaths = _last_death_ct;
-        Timer& timer = _player.get_timer();
-        game_state.centis = timer.centis();
-        game_state.seconds = timer.seconds();
-        game_state.minutes = timer.minutes();
-
-        // NOTE:
-        // SRAM writes are relatively expensive.
-        // Consider batching saves later.
-        _data_manager.save();
-        _reset_traps();
+    if (_save_sync.sync()) {
+        _reset_entities();
+        _restore_checkpoint_triggers();
     }
-    return false;
+    return UpdateResult::None;
 }

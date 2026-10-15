@@ -1,0 +1,206 @@
+#pragma once
+
+#include "bn_core.h"
+#include "bn_dmg_music_item.h"
+#include "bn_music.h"
+#include "bn_optional.h"
+#include "bn_regular_bg_ptr.h"
+#include "bn_sprite_ptr.h"
+#include "bn_unique_ptr.h"
+#include "bn_vector.h"
+#include "common_variable_8x16_sprite_font.h"
+
+#include "base_trap.h"
+#include "camera.h"
+#include "cfg.h"
+#include "checkpoint.h"
+#include "checkpoint_logic.h"
+#include "data_manager.h"
+#include "door.h"
+#include "game_modes.h"
+#include "game_state.h"
+#include "i_resettable.h"
+#include "level_structure.h"
+#include "log.h"
+#include "pause_controller.h"
+#include "player.h"
+#include "save_sync_controller.h"
+#include "sprite.h"
+#include "trigger.h"
+
+// -----------------------------------------------------------------------------
+// LevelManager
+//
+// Handles:
+// - Level loading
+// - Runtime updates
+// - Pause state
+// - Trap reset logic
+// - Persistent save updates
+//
+// Uses fixed-capacity containers to avoid heap allocation and fragmentation.
+// -----------------------------------------------------------------------------
+class LevelManager {
+   public:
+    // Result of a single update() call.
+    //
+    // None          -> level keeps running (or is paused)
+    // LevelComplete -> the door was reached, advance to the next level
+    // ReturnToTitle -> the player chose "Title Screen" in the pause menu
+    enum class UpdateResult { None, LevelComplete, ReturnToTitle };
+
+    explicit LevelManager(Player& player, DataManager& data_manager);
+
+    // restores hud (timer, counter, etc.)
+    void restoreHUD();
+
+    // Loads a level and initializes all entities.
+    void load(const LevelData& level);
+
+    // Unloads the current level and frees all temporary resources.
+    // This is used when transitioning to the final kiss scene to ensure the
+    // old level's palettes and sprites are released.
+    void unload();
+
+    // Advances the simulation by one frame.
+    UpdateResult update();
+
+    // Returns the trigger whose TriggerData::name matches (linear scan -
+    // trivially cheap given Cfg::Level::Limits::TRIGGERS <= 16 and this is
+    // only ever called once per trap at level load, never per-frame).
+    // Falls back to trigger[0] with a BN_LOG_ERROR if no match is found -
+    // shouldn't happen now that every MOVING/PATH trap's trigger_name is
+    // set (see level_structure.h), but stays defensive.
+    Trigger& get_trigger_by_name(const char* name);
+
+    auto player() -> Player& { return _player; }
+
+    // Frames elapsed since this level was loaded, excluding time spent
+    // paused. Used by LevelScene to compute this attempt's clear time
+    // for the best-time record on reaching the door.
+    [[nodiscard]] unsigned level_frame_count() const {
+        return _level_frame_count;
+    }
+
+    // Forwards SaveSyncController::no_deaths_this_attempt() - see there.
+    [[nodiscard]] bool no_deaths_this_attempt() const {
+        return _save_sync.no_deaths_this_attempt();
+    }
+
+    // True if Assist Mode is on (Hard Mode wins if both flags are ever
+    // set - see modes::trap_speed_mode()).
+    [[nodiscard]] bool assist_mode_active() const {
+        return modes::assist_active(_data_manager.state());
+    }
+
+    // False if Assist Mode was on when the level loaded or is on now: neither
+    // a best time nor a no-death clear is recorded then (a mid-level toggle
+    // must not be able to launder an assisted run).
+    [[nodiscard]] bool records_allowed() const {
+        return !_loaded_in_assist_mode &&
+               modes::records_enabled(_data_manager.state());
+    }
+
+    // Cfg::HardMode::SPEED_MULTIPLIER with Hard Mode,
+    // Cfg::AssistMode::TRAP_SPEED_MULTIPLIER with Assist Mode, else 1 -
+    // used by TrapFactory to scale trap speed values at creation time.
+    [[nodiscard]] bn::fixed trap_speed_multiplier() const {
+        switch (modes::trap_speed_mode(_data_manager.state())) {
+            case modes::TrapSpeedMode::Hard:
+                return Cfg::HardMode::SPEED_MULTIPLIER;
+            case modes::TrapSpeedMode::Assist:
+                return Cfg::AssistMode::TRAP_SPEED_MULTIPLIER;
+            case modes::TrapSpeedMode::Normal:
+            default:
+                return bn::fixed(1);
+        }
+    }
+
+   private:
+    void _load_player_spawn(const LevelData& level);
+    void _load_door(const LevelData& level);
+    void _load_music(const LevelData& level);
+    void _load_background(const LevelData& level);
+    void _setup_camera(const LevelData& level);
+
+    void _clear_runtime_state();
+    static void _validate_level(const LevelData& level);
+    void _load_platforms(const LevelData& level);
+    void _load_triggers(const LevelData& level);
+    void _load_traps(const LevelData& level);
+    void _load_checkpoints(const LevelData& level);
+    // Takes this frame's checkpoint touches, makes the furthest one the
+    // respawn point and snapshots the triggers that are on.
+    void _sync_checkpoints();
+    // After a death reset: switches the triggers that were on when the active
+    // checkpoint was reached back on.
+    void _restore_checkpoint_triggers();
+    // Restart Level / level load: no checkpoint, respawn at the level spawn.
+    void _clear_checkpoint();
+    // Resolves every platform's trigger_name to its Trigger (after the
+    // triggers are loaded) and records the binding.
+    void _bind_switched_platforms(const LevelData& level);
+    // Enables/disables switched platforms to match their triggers. Called
+    // once at load and every frame after the collision update.
+    void _sync_switched_platforms();
+
+    // Resets all resettable entities (currently: traps) after player
+    // death or a manual level restart. Iterates a generic list rather
+    // than _traps directly so future non-trap entity types can opt in
+    // without LevelManager needing to know their concrete type.
+    void _reset_entities();
+
+    bn::vector<bn::unique_ptr<Sprite>, Cfg::Level::Limits::PLATFORMS>
+        _platforms;
+    bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES>
+        _platform_bodies;
+    bn::vector<Trigger, Cfg::Level::Limits::TRIGGERS> _triggers;
+    bn::vector<bn::unique_ptr<BaseTrap>, Cfg::Level::Limits::TOTAL_TRAPS>
+        _traps;
+    bn::vector<Checkpoint, Cfg::Level::Limits::CHECKPOINTS> _checkpoints;
+
+    // Active checkpoint (furthest touched) and the level's own spawn point
+    // to fall back to; _checkpoint_triggers is the snapshot taken when the
+    // active checkpoint was reached. See checkpoint_logic.h.
+    CheckpointTracker _checkpoint_tracker;
+    uint16_t _checkpoint_triggers = 0;
+    bn::fixed _spawn_x = 0;
+    bn::fixed _spawn_y = 0;
+
+    // Platforms bound to a trigger (PlatformData::trigger_name): the
+    // trigger decides whether the platform body and sprite are enabled.
+    // Non-owning - the platform bodies/sprites and triggers live in the
+    // containers above.
+    struct SwitchedPlatform {
+        Trigger* trigger;
+        StaticBody* body;
+        Sprite* sprite;
+        bool active_when_on;
+    };
+    bn::vector<SwitchedPlatform, Cfg::Level::Limits::PLATFORMS>
+        _switched_platforms;
+
+    // Non-owning view over every currently-loaded IResettable entity:
+    // the triggers (registered in _load_triggers()) and the traps
+    // (_load_traps()); ownership stays with the owning containers.
+    bn::vector<
+        IResettable*,
+        Cfg::Level::Limits::TOTAL_TRAPS + Cfg::Level::Limits::TRIGGERS>
+        _resettables;
+
+    bn::optional<bn::regular_bg_ptr> _background;
+    Player& _player;
+    bn::optional<Door> _door;
+    bn::optional<bn::music_item> _music;
+    PauseController _pause_controller;
+    DataManager& _data_manager;
+    SaveSyncController _save_sync;
+
+    // See level_frame_count(). Reset in _load_player_spawn(), advanced
+    // once per non-paused frame in update().
+    unsigned _level_frame_count = 0;
+
+    // Whether Assist Mode was active when the current level loaded (set in
+    // _load_player_spawn()); see records_allowed().
+    bool _loaded_in_assist_mode = false;
+};

@@ -1,5 +1,7 @@
 # GBA Development with Butano
 
+[![CI](https://github.com/gba-projekt-thi/platformer/actions/workflows/ci.yml/badge.svg)](https://github.com/gba-projekt-thi/platformer/actions/workflows/ci.yml)
+
 Game Boy Advance development environment using [Butano](https://github.com/GValiente/butano) engine, devkitARM, and mGBA emulator.
 
 ## What is a Dev Container?
@@ -62,7 +64,7 @@ docker run --rm -v $(pwd):/workspace -w /workspace projectgba \
     bash -c "make"
 ```
 
-**Output:** `foo.gba` and `foo.elf`
+**Output:** `platformer.gba` and `platformer.elf`
 
 **Note:** If you try to build on your host system (outside the container), you'll get "command not found" errors because the ARM toolchain isn't installed there.
 
@@ -70,13 +72,13 @@ docker run --rm -v $(pwd):/workspace -w /workspace projectgba \
 
 ```bash
 # Interactive GUI (requires X11 forwarding or host installation)
-mgba-qt foo.gba
+mgba-qt platformer.gba
 
 # Headless testing (for CI, works in Docker)
-./test-rom.sh foo.gba
+./test-rom.sh platformer.gba
 
 # Helper script with options
-./run-gba.sh foo.gba [OPTIONS]
+./run-gba.sh platformer.gba [OPTIONS]
 #   -h, --headless  Run in headless mode (no GUI, for CI)
 #   -c, --console   Enable console output with debug logging
 ```
@@ -98,24 +100,44 @@ projectGBA/
 └── .devcontainer/                     # VS Code devcontainer config
 ```
 
-See `docs/game.md` for detailed game architecture, source layout, and level data information.
+See the [`docs/`](docs/) folder for the full documentation set — a conceptual
+overview of the game's architecture, gameplay, level design, components, assets,
+development workflow, system internals, extensibility, and a glossary. Start with
+[`docs/index.md`](docs/index.md). For a quick map of the `game/` folder and its
+key files, see [`docs/game.md`](docs/game.md).
 
 ## Game Overview
 
-This repository includes a small GBA platformer built with the Butano engine. The game currently features:
+This repository includes a small GBA platformer built with the Butano engine. You play as a duck hopping through themed worlds, dodging hazards, and reaching an exit door in each stage. The game currently features:
 
-- Two playable levels defined in `game/include/levels.h`
-- Level progression through a door at the end of each stage
+- A start screen with three save slots (level, deaths, and run timer persist to SRAM), each showing at a glance whether it's unused ("New") or which world it's furthest into
+- A world-select screen and a level-select screen for jumping directly to any already-reached world or level (press B on the start screen to reach them)
+- A world-select stats line showing total deaths and the number of levels cleared for the loaded save slot, computed from existing save data
+- Level-select shows each unlocked level's personal-best clear time once one has been recorded, marked with a `*` if that level has ever been cleared without a single death (a "no-death clear")
+- A "New Best!" banner shown on finishing a level faster than its stored personal-best time, held until the player presses A/Start to continue
+- A run-complete summary screen shown once after the kiss scene (total time across every level's best, total deaths, and how many levels were cleared without dying), before the save slot resets for a fresh playthrough
+A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each culminating in a Hollow-Knight-style boss gauntlet level, defined across `game/include/level/levels_world1.h`-`levels_world5.h` (19 levels total). World 5 adds a dash level and a lever-puzzle level before its boss, and one more after it: a quiet, trap-free finale ending in a reunion with Susanne.
+- Level progression through a door at the end of each stage (occasionally a narrative stand-in for the door, like Susanne in World 5's finale), ending in a celebratory kiss scene
 - Platform placement and collision defined by level data
-- Trigger zones that activate moving traps when the player enters them
-- Moving traps that accelerate after being triggered and reset when the player dies
-- Static trap hazards and decorative tiles using Butano sprite items
-- Background music per level and tilemap backgrounds
-- A death counter HUD that updates every time the player respawns
+- Trigger zones that activate hazards when the player enters them
+- Five trap categories: static (base), trigger-activated moving, path-following patrol, player-chasing, and proximity-triggered ambush hazards
+- Animated sprites (duck, door, mimics) and decorative tiles using Butano sprite items
+- Background music per world and tilemap backgrounds
+- A death counter and run timer HUD
+- Adjustable music/SFX volume via a pause-menu Options sub-menu, persisted per save slot
+- Checkpoints in the long levels and bosses: touching a flag makes the duck respawn there (the furthest flag wins; Restart Level clears it), and the triggers that had fired are re-armed so a boss keeps its patrols
+- A Hard Mode toggle in the same Options sub-menu: unlocked the first time the game is completed, it speeds up Moving/Chase/Ambush trap velocities for a tougher replay (Path traps are unaffected). The unlock is a permanent, per-save achievement; the toggle itself resets to off like the audio settings
+- An Assist Mode toggle in the same Options sub-menu, available from the start: the mirror image of Hard Mode, it halves Moving/Chase/Ambush trap speeds and doubles the coyote-time and jump-buffer windows. Mutually exclusive with Hard Mode; no best times or no-death clears are recorded while it is on; the toggle resets to off like the audio settings
+- A Hollow-Knight-style dash on B, available from World 3 onward: a short horizontal burst with gravity suspended, a cooldown, and one use per air time (refilled on landing). It grants no invincibility and only adds horizontal reach, so every existing layout stays clearable; a dedicated sound and a flickering afterimage trail give feedback
+- A controls overview screen, reachable from the start screen (a "Controls" entry below the save slots) and from the pause menu
+- One-time level hints that teach the dash and the levers when a level is first played (until it is cleared once)
+- Switch mechanics: triggers can be latching (default), toggling switches or hold-down pressure plates, optionally drawn as a two-state sprite, and platforms can be bound to a trigger so a switch opens one path and closes another; everything resets on death
 - Player movement with acceleration, maximum speed, gravity, and fall speed clamping
 - Jump mechanics with jump buffering and coyote time for more forgiving platforming
 - Variable jump height based on how long the jump button is held
-- A static camera (camera does not follow the player yet)
+- A camera that follows the player across wider, scrolling worlds (single-screen worlds stay fixed)
+
+For the full conceptual picture — architecture, gameplay, level design, components, assets, workflow, internals, and extensibility — see the [`docs/`](docs/) documentation set, starting with [`docs/index.md`](docs/index.md).
 
 ## Game Asset Layout
 
@@ -142,24 +164,25 @@ This workflow splits tasks between the dev container and your host system:
 1. **Build in dev container** (has the ARM toolchain):
    ```bash
    # Inside VS Code terminal (in dev container) or press Ctrl+Shift+B
-   cd src/sprites && make
+   # Run from the repository root (where the Makefile lives)
+   make
    ```
 
 2. **Run on host system** (avoids X11 display issues):
    ```bash
    # Open a terminal on your HOST (not in VS Code)
    # Install mGBA if needed: sudo apt-get install mgba-qt
-   mgba-qt foo.gba
+   mgba-qt platformer.gba
    ```
 
 3. **Debug with GDB** (split between host and container):
    ```bash
    # Terminal 1 (HOST): Start mGBA GUI with GDB stub on port 2345
-   mgba-qt -g foo.gba
+   mgba-qt -g platformer.gba
 
    # Terminal 2 (DEV CONTAINER): Connect ARM debugger
    # Must run from container because host doesn't have arm-none-eabi-gdb
-   arm-none-eabi-gdb foo.elf
+   arm-none-eabi-gdb platformer.elf
    (gdb) target remote host.docker.internal:2345
    (gdb) continue
    ```
@@ -182,7 +205,7 @@ All commands run automatically in the correct environment (container or host).
 
 For automated testing without GUI:
 ```bash
-./test-rom.sh foo.gba
+./test-rom.sh platformer.gba
 ```
 
 **Note:** GDB connection verified working. The container connects to host mGBA via `host.docker.internal:2345`.
@@ -206,6 +229,16 @@ sudo chown -R $(whoami):$(whoami) build
 ### Linter
 Before every commit a short script runs to check if all files are using a consistent code style using clang-format and clang-tidy with pre-commit.
 This is only possible in the devcontainer or if you have [pre-commit](https://pre-commit.com), clang-format and clang-tidy installed on your system. 
+
+### Tests
+Pure-logic code (save integrity, game-state bit flags, frame-time formatting, Hard/Assist Mode toggles, dash rules, menu cursor wrapping, controls text, trigger modes, switched-platform rules, level hints, checkpoint rules, entity limits) has a small host-side unit test suite under `tests/host/` - no ARM toolchain or devcontainer needed, just your system's own `g++`/`clang++`:
+
+```bash
+cd tests/host
+make
+```
+
+CI (`.github/workflows/ci.yml`) runs this on every push/PR, plus a separate job that builds the actual ROM in the devcontainer image and boots it headlessly. See [`docs/development-workflow.md`](docs/development-workflow.md#testing-methodology) for what's covered and what still has to be tested manually in the emulator.
 
 ## Links
 

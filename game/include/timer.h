@@ -8,6 +8,7 @@
 #include "bn_sprite_tiles_ptr.h"
 
 #include "cfg.h"
+#include "frame_time.h"
 
 // Lightweight timer optimized for GBA.
 //
@@ -71,3 +72,6 @@ class TimerHUD {
 
     bool _visible = true;
 };
+
+// FrameTime / frames_to_time() now live in frame_time.h (included above) -
+// kept dependency-free so they can be unit-tested on the host.
