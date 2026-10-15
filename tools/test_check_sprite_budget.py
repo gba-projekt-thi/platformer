@@ -250,6 +250,8 @@ class ReadingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             b = sb.load_budget(tmp)
         self.assertEqual(b.MAX_SPRITES, sb.DEFAULTS["MAX_SPRITES"])
+        self.assertIn("sprite_registry.h", b.missing)
+        self.assertIn("cfg.h", b.missing)
         self.assertEqual(b.controls_lines, sb.DEFAULT_CONTROLS_LINES)
 
     def test_build_and_git_directories_are_skipped(self):
@@ -261,10 +263,10 @@ class ReadingTests(unittest.TestCase):
 
 
 class CommandLineTests(Fixture):
-    def run_main(self, path):
+    def run_main(self, path, root="."):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
-            code = sb.main([str(path)])
+            code = sb.main([str(path)], root)
         return code, out.getvalue(), err.getvalue()
 
     def make(self, tmp, *texts):
@@ -279,6 +281,14 @@ class CommandLineTests(Fixture):
         self.assertEqual(code, 0)
         self.assertIn("ONLY_OK", out)
         self.assertIn("0 error(s)", out)
+
+    def test_missing_headers_are_reported_as_a_note(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            # an empty source root: none of the headers can be found
+            code, out, _ = self.run_main(self.make(tmp, level("N", plats=4)), tmp)
+        self.assertEqual(code, 0)
+        self.assertIn("NOTE", out)
+        self.assertIn("sprite_registry.h", out)
 
     def test_overfull_level_exits_one(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -315,9 +325,14 @@ class RealLevelTests(unittest.TestCase):
         errors, _ = sb.check_configuration(self.budget)
         self.assertEqual(errors, [])
 
-    def test_the_real_registry_capacity_was_found(self):
-        self.assertIsNotNone(sb.find_file(_root(), "sprite_registry.h"))
-        self.assertGreater(self.budget.MAX_SPRITES, 0)
+    def test_the_real_registry_capacity_is_used_when_the_engine_is_checked_out(self):
+        # The engine headers live in the extern/engine submodule: without it
+        # (a plain clone) the defaults apply and the script prints a NOTE.
+        path = sb.find_file(_root(), "sprite_registry.h")
+        if path is None:
+            self.skipTest("sprite_registry.h not found (engine submodule not checked out)")
+        self.assertIn("MAX_SPRITES", path.read_text())
+        self.assertNotIn("sprite_registry.h", self.budget.missing)
 
     def test_pause_overlay_model_fits_the_real_sprite_vector(self):
         path = sb.find_file(_root(), "pause_controller.h")

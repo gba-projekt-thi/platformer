@@ -2,8 +2,8 @@ name: Python tools
 
 # Runs the repository's Python tooling on its own: the unit tests under tools/
 # (level-data checkers, jump/dash reachability simulator, sprite and sound
-# generators) and the level-data checks themselves. No submodules, Docker or
-# ARM toolchain needed, so it stays fast and independent of the GBA build.
+# generators) and the level-data checks themselves. No Docker or ARM toolchain
+# needed, so it stays fast and independent of the GBA build.
 
 on:
   push:
@@ -14,6 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Only extern/engine itself (not its nested Butano submodule): the
+          # sprite budget check reads the SpriteRegistry / CollisionRegistry
+          # capacities from its headers instead of assuming them.
+          submodules: true
 
       - uses: actions/setup-python@v5
         with:

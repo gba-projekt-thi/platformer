@@ -130,8 +130,9 @@ side on its own: every `tools/test_*.py` (the checkers, the reachability
 simulator, the sprite and sound generators) and the level-data checks
 (`Check_trigger_references.py`, `Check_level_hints.py`, `Check_world_index.py`,
 `Check_checkpoints.py`, `Check_sprite_budget.py`).
-It needs no submodules, Docker or ARM toolchain, so it is fast and independent
-of the slower `gba-build` job.
+It needs no Docker or ARM toolchain and only the first-level `extern/engine`
+submodule (not its nested Butano), so it is fast and independent of the slower
+`gba-build` job.
 
 The image `gba-build` builds depends only on `docker/Dockerfile` (repo
 source is bind-mounted at `docker run` time, never baked into the image),
@@ -198,7 +199,10 @@ Two more static checkers keep level content honest (pure Python, no C++):
   sprites, in a worst-case model (see
   [System Internals](system-internals.md#sprite-and-entity-budgets)), and the
   `CollisionRegistry` capacities against the limits. Runs in the Python CI job
-  and as a pre-commit hook.
+  and as a pre-commit hook. The engine headers it reads live in the
+  `extern/engine` submodule (the Python CI job checks it out); where it is not
+  checked out, e.g. in a plain clone, the script uses built-in defaults and
+  prints a `NOTE`.
 
 - `tools/Preview_level.py [FILE.h] [LEVEL ...]` - draws levels as SVG pictures
   (see [Level Design](level-design.md#previewing-levels)). The Python CI job

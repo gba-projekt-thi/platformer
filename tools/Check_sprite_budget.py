@@ -118,12 +118,17 @@ def find_file(root, name):
     return None
 
 
-def read_int(root, filename, constant, default):
+def read_int(root, filename, constant, default, missing=None):
+    """Value of `constant` in the first `filename` found, else `default`.
+    `missing`, when a list, collects "filename" for every file that was not found
+    (the engine headers live in a submodule that CI may not have checked out)."""
     path = find_file(root, filename)
     if path is not None:
         match = re.search(rf"\b{constant}\s*=\s*(\d+)", path.read_text())
         if match:
             return int(match.group(1))
+    if path is None and missing is not None and filename not in missing:
+        missing.append(filename)
     return default
 
 
@@ -146,6 +151,7 @@ class Budget:
         self.headroom = WARN_HEADROOM
         self.values = dict(DEFAULTS)
         self.controls_lines = DEFAULT_CONTROLS_LINES
+        self.missing = []  # source files not found: their defaults are assumed
         for key, value in overrides.items():
             if key == "oam":
                 self.oam = value
@@ -181,23 +187,27 @@ class Budget:
 
 
 def load_budget(root="."):
+    missing = []
     values = {
-        "MAX_SPRITES": read_int(root, "sprite_registry.h", "MAX_SPRITES", DEFAULTS["MAX_SPRITES"]),
-        "SLOTS": read_int(root, "dash_trail.h", "SLOTS", DEFAULTS["SLOTS"]),
+        "MAX_SPRITES": read_int(
+            root, "sprite_registry.h", "MAX_SPRITES", DEFAULTS["MAX_SPRITES"], missing
+        ),
+        "SLOTS": read_int(root, "dash_trail.h", "SLOTS", DEFAULTS["SLOTS"], missing),
         "MAX_STATIC_BODIES": read_int(
-            root, "collision_registry.h", "MAX_STATIC_BODIES", DEFAULTS["MAX_STATIC_BODIES"]
+            root, "collision_registry.h", "MAX_STATIC_BODIES", DEFAULTS["MAX_STATIC_BODIES"], missing
         ),
         "MAX_PHYSICS_BODIES": read_int(
-            root, "collision_registry.h", "MAX_PHYSICS_BODIES", DEFAULTS["MAX_PHYSICS_BODIES"]
+            root, "collision_registry.h", "MAX_PHYSICS_BODIES", DEFAULTS["MAX_PHYSICS_BODIES"], missing
         ),
         "MAX_COLLISION_SHAPES": read_int(
-            root, "collision_registry.h", "MAX_COLLISION_SHAPES", DEFAULTS["MAX_COLLISION_SHAPES"]
+            root, "collision_registry.h", "MAX_COLLISION_SHAPES", DEFAULTS["MAX_COLLISION_SHAPES"], missing
         ),
     }
     for key in ("PLATFORMS", "PLATFORM_BODIES", "TRIGGERS", "TOTAL_TRAPS", "CHECKPOINTS"):
-        values[key] = read_int(root, "cfg.h", key, DEFAULTS[key])
+        values[key] = read_int(root, "cfg.h", key, DEFAULTS[key], missing)
     budget = Budget(**values)
     budget.controls_lines = read_controls_lines(root)
+    budget.missing = missing
     return budget
 
 
@@ -301,7 +311,7 @@ def check_configuration(budget):
     return errors, warnings
 
 
-def main(argv):
+def main(argv, root="."):
     paths = [Path(p) for p in argv] or sorted(
         Path(p) for p in glob.glob("**/levels_world*.h", recursive=True)
     )
@@ -309,7 +319,7 @@ def main(argv):
         print("No levels_world*.h files found - nothing to check.", file=sys.stderr)
         return 1
 
-    budget = load_budget(".")
+    budget = load_budget(root)
     all_errors, all_warnings, rows = [], [], []
     for path in paths:
         for level in pv.load_level_file(path).values():
@@ -330,6 +340,11 @@ def main(argv):
     for name, plats, traps, registry, peak, scenario in rows:
         print(f"{name:<{width}}  {plats:4d} {traps:4d}  {registry:8d}      {peak:4d} ({scenario})")
 
+    if budget.missing:
+        print(
+            f"NOTE  not found: {', '.join(sorted(budget.missing))} - using the built-in "
+            "defaults for their constants (engine headers need the extern/engine submodule)"
+        )
     for w in all_warnings:
         print(f"WARN  {w}")
     for e in all_errors:
