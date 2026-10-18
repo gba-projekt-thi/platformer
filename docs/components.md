@@ -493,7 +493,11 @@ clear records no best time but still advances `furthest_level`) - so the hint
 needs no save field and ends with the first clear. The text is drawn centered at `Cfg::Hint::Y`
 with the shared text generator; a `hint::Timer` counts `Cfg::Hint::FRAMES`
 (five seconds) and B dismisses it early. The hint never pauses or blocks the
-level.
+level. While the game is paused its sprites are released and the countdown
+stands still (`hint::should_draw()`): Butano counts hidden sprites too, and the
+pause overlay needs the slots. `LevelScene` frees them before the call in which
+Start opens the pause menu, because the overlay allocates its sprites inside
+that call, and draws the hint again on resume.
 
 ### Level data organization
 

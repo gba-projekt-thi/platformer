@@ -152,8 +152,11 @@ number:
 The entity limits alone do not keep a stage inside the other two: a stage that
 filled every limit would need 90 registered sprites. In practice the stages are
 far below that, but the pause overlay is large (up to ~57 glyph sprites in the
-Options sub-menu with Hard Mode on), and while it is open the level hint can
-still be visible, so the worst case of a hint-carrying stage is close to 128.
+Options sub-menu with Hard Mode on). The level hint is therefore released while
+the game is paused (`hint::should_draw()`; the countdown stops with it and the
+sprites are drawn again on resume), so the two never take slots at once. The
+pause overlay allocates its sprites in the very `update()` call in which Start
+is pressed, so `LevelScene` frees the hint before that call.
 `tools/Check_sprite_budget.py` counts this worst case per stage (spaces draw no
 sprite), fails on an overflow and warns when fewer than 8 slots are left. Its
 text constants mirror `pause_controller.cpp`, `level_scene.cpp` and

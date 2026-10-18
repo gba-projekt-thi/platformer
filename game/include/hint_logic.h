@@ -36,6 +36,14 @@ inline auto should_show(
     return text != nullptr && text[0] != '\0' && !cleared;
 }
 
+// Whether the hint's sprites exist this frame. While the game is paused they
+// are released: Butano counts hidden sprites too, and the pause overlay needs
+// up to ~57 glyph sprites (see tools/Check_sprite_budget.py), so a hint that
+// merely hid would still take its slots.
+inline auto should_draw(bool timer_visible, bool paused) -> bool {
+    return timer_visible && !paused;
+}
+
 // Frame countdown for a visible hint. Not started = not visible.
 class Timer {
    public:

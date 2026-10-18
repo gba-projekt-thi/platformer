@@ -58,7 +58,8 @@ controls for consistency.
 A level can carry a short one-time hint (`LevelData::intro_hint`, at most 28
 characters) that appears at the top of the screen when it starts: it teaches
 the dash, and "Lever Hall" says levers flip when stepped on. It never blocks
-play and goes away after five seconds or as soon as B is pressed. It is shown
+play and goes away after five seconds or as soon as B is pressed. It is hidden
+while the game is paused and the five seconds stand still meanwhile. It is shown
 only while the level has not been cleared yet - no personal best and progress
 has not moved past it - so it disappears for good with the first clear, also an
 Assist Mode clear, and needs no extra save data.

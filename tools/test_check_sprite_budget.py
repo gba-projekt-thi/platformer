@@ -116,7 +116,14 @@ class DemandTests(Fixture):
         fixed = registry + b.hud + sb.PAUSE_TITLE_GLYPHS
         self.assertEqual(sc["play"], fixed + 10)  # "helloworld"
         self.assertEqual(sc["banner"], fixed + 10 + b.banner)
-        self.assertEqual(sc["pause"], fixed + 10 + b.pause_overlay)
+        # the hint is released while the pause overlay is open
+        self.assertEqual(sc["pause"], fixed + b.pause_overlay)
+
+    def test_a_hint_does_not_raise_the_pause_peak(self):
+        with_hint = self.load(level("WH", plats=2, hint="a hint that is long"))["WH"]
+        without = self.load(level("NH", plats=2))["NH"]
+        b = self.budget()
+        self.assertEqual(sb.demand(with_hint, b)[1]["pause"], sb.demand(without, b)[1]["pause"])
 
     def test_level_without_hint_costs_nothing_extra(self):
         lv = self.load(level("N", plats=1))["N"]
@@ -183,6 +190,18 @@ class CheckTests(Fixture):
 
 
 class ConfigurationTests(unittest.TestCase):
+    def test_hint_and_pause_overlay_are_not_added_up_in_the_worst_case(self):
+        b = sb.Budget(MAX_SPRITES=500)
+        registry = (
+            sb.PLAYER_AND_DOOR + b.PLATFORMS + b.TOTAL_TRAPS + b.TRIGGERS + b.CHECKPOINTS + b.SLOTS
+        )
+        fixed = registry + b.hud + sb.PAUSE_TITLE_GLYPHS
+        worst = fixed + max(sb.HINT_MAX_GLYPHS + b.banner, b.pause_overlay)
+        _, warnings = sb.check_configuration(sb.Budget(MAX_SPRITES=500, oam=worst))
+        self.assertEqual(warnings, [])
+        _, warnings = sb.check_configuration(sb.Budget(MAX_SPRITES=500, oam=worst - 1))
+        self.assertEqual(len(warnings), 1)
+
     def test_default_limits_exceed_the_registry_and_warn(self):
         errors, warnings = sb.check_configuration(sb.Budget())
         self.assertEqual(errors, [])

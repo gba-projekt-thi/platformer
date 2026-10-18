@@ -51,29 +51,51 @@ void LevelScene::_show_hint_if_needed() {
         return;
     }
 
+    _hint_text = text;
+    _hint_timer.start();
+    _draw_hint();
+}
+
+void LevelScene::_draw_hint() {
     _hint_text_gen.emplace(common::variable_8x16_sprite_font);
     _hint_text_gen->set_z_order(Cfg::ZOrder::PAUSE_MENU);
     _hint_text_gen->set_blending_enabled(true);
     _hint_text_gen->set_center_alignment();
-    _hint_text_gen->generate(0, Cfg::Hint::Y, text, _hint_sprites);
+    _hint_text_gen->generate(0, Cfg::Hint::Y, _hint_text, _hint_sprites);
     for (bn::sprite_ptr& sprite : _hint_sprites) {
         sprite.set_blending_enabled(true);
     }
-    _hint_timer.start();
 }
 
 void LevelScene::_update_hint() {
-    if (_hint_sprites.empty()) {
+    if (_hint_text == nullptr) {
         return;
     }
-    // Pressing B (the player has tried the dash) dismisses it at once.
-    if (bn::keypad::b_pressed()) {
-        _hint_timer.dismiss();
+
+    // The countdown only runs while the game does, and B only dismisses the
+    // hint in play (in the pause menu B means 'back').
+    const bool paused = _level_manager.paused();
+    if (!paused) {
+        // Pressing B (the player has tried the dash) dismisses it at once.
+        if (bn::keypad::b_pressed()) {
+            _hint_timer.dismiss();
+        }
+        _hint_timer.tick();
     }
-    _hint_timer.tick();
+
     if (!_hint_timer.visible()) {
         _hint_sprites.clear();
         _hint_text_gen.reset();
+        _hint_text = nullptr;
+        return;
+    }
+
+    if (hint::should_draw(_hint_timer.visible(), paused)) {
+        if (_hint_sprites.empty()) {
+            _draw_hint();
+        }
+    } else {
+        _hint_sprites.clear();
     }
 }
 
@@ -102,6 +124,13 @@ void LevelScene::update() {
     if (_transition_requested) {
         bn::core::update();
         return;
+    }
+
+    // Start toggles the pause, and the pause overlay allocates its sprites
+    // inside the next update() call: free the hint's first, so the two are
+    // never alive at once (they are drawn again once the game runs).
+    if (bn::keypad::start_pressed()) {
+        _hint_sprites.clear();
     }
 
     const LevelManager::UpdateResult result = _level_manager.update();

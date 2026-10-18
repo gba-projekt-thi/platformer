@@ -36,6 +36,7 @@ class LevelScene : public core::Scene {
     void _hide_new_best_banner();
     // One-time level hint (LevelData::intro_hint, see hint_logic.h).
     void _show_hint_if_needed();
+    void _draw_hint();
     void _update_hint();
 
     Player& _player;
@@ -64,5 +65,9 @@ class LevelScene : public core::Scene {
     // at most, so 32 sprites leave headroom.
     bn::optional<bn::sprite_text_generator> _hint_text_gen;
     bn::vector<bn::sprite_ptr, 32> _hint_sprites;
+    // The hint text while the hint is still pending (nullptr = none or
+    // expired). Kept so the sprites can be drawn again after a pause: they
+    // are released while the pause overlay is open.
+    const char* _hint_text = nullptr;
     hint::Timer _hint_timer{Cfg::Hint::FRAMES};
 };

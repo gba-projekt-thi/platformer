@@ -17,7 +17,8 @@ long before anybody runs the ROM:
   * the 128 hardware sprite slots (OAM): the registered sprites plus the HUD
     (death counter, timer), the hidden "Paused" title, the level hint, the
     "New Best!" banner and the pause overlay. Butano counts hidden sprites
-    too, so all of them are allocated at once in the worst case.
+    too, so all of them are allocated at once in the worst case - except the
+    hint and the pause overlay: LevelScene releases the hint while paused.
   * registry capacities of the collision system (collision_registry.h) against
     the entity limits.
 
@@ -63,6 +64,7 @@ PLAYER_AND_DOOR = 2  # the duck and the level's door are always registered
 DEATH_COUNTER_GLYPHS = 12  # "Deaths:" (7) + up to 5 digits (uint16_t)
 TIMER_GLYPHS = 8  # MM:SS:CC
 PAUSE_TITLE_GLYPHS = 6  # "Paused", allocated hidden at level load
+HINT_MAX_GLYPHS = 28  # hint::MAX_CHARS
 BANNER_LINES = ("New Best!", "01:23.45", "Press A to continue")
 
 # pause_controller.cpp: main menu, options sub-menu and (controls_text.h)
@@ -235,7 +237,9 @@ def demand(level, budget):
     scenarios = {
         "play": fixed + hint,
         "banner": fixed + hint + budget.banner,
-        "pause": fixed + hint + budget.pause_overlay,
+        # LevelScene releases the hint's sprites while the pause overlay is
+        # open (hint::should_draw()), so the two never coexist.
+        "pause": fixed + budget.pause_overlay,
     }
     return registry, scenarios
 
@@ -291,11 +295,17 @@ def check_configuration(budget):
             f"(every platform, trap, trigger and checkpoint with a sprite), SpriteRegistry holds "
             f"{b.MAX_SPRITES}: levels near the limits are not safe - this script checks every level"
         )
-    oam_worst = registry_worst + b.hud + PAUSE_TITLE_GLYPHS + 28 + b.pause_overlay
+    # Hint and pause overlay never coexist; hint and banner can.
+    oam_worst = (
+        registry_worst
+        + b.hud
+        + PAUSE_TITLE_GLYPHS
+        + max(HINT_MAX_GLYPHS + b.banner, b.pause_overlay)
+    )
     if oam_worst > b.oam:
         warnings.append(
-            f"the same worst case needs {oam_worst} hardware sprites with hint and pause overlay, "
-            f"the hardware has {b.oam}"
+            f"the same worst case needs {oam_worst} hardware sprites with hint and banner or the "
+            f"pause overlay, the hardware has {b.oam}"
         )
 
     shared = b.TRIGGERS + b.TOTAL_TRAPS + b.CHECKPOINTS + PLAYER_AND_DOOR

@@ -75,6 +75,12 @@ class LevelManager {
 
     auto player() -> Player& { return _player; }
 
+    // True while the pause menu is open. LevelScene reads it to release the
+    // level hint's sprites for the duration (see hint::should_draw()).
+    [[nodiscard]] auto paused() const -> bool {
+        return _pause_controller.paused();
+    }
+
     // Frames elapsed since this level was loaded, excluding time spent
     // paused. Used by LevelScene to compute this attempt's clear time
     // for the best-time record on reaching the door.
