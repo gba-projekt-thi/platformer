@@ -96,6 +96,11 @@ Several mechanics exist purely to make the duck *feel* responsive:
   Every world uses the same, snappy default - except Forest's mossy floor
   (see below), which trades some of that precision for a distinct feel.
 
+- **Smoothed camera.** On scrolling levels the camera glides after the duck
+  instead of being glued to it, looks ahead in the direction of travel and cuts
+  (not glides) to the respawn point after a death. Holding up or down looks
+  that way once a level is taller than the screen.
+
 Together, these create a "tight but forgiving" feel that the [Level Design](level-design.md)
 spacing rules then respect. Braking is the one exception a level can opt
 out of on its own terms: it only changes how far the duck skids to a stop,

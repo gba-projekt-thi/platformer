@@ -42,6 +42,7 @@ def _body(text, signature):
 
 SCENE = _find("level_scene.cpp")
 MANAGER_H = _find("level_manager.h")
+MANAGER = _find("level_manager.cpp")
 
 
 @unittest.skipIf(SCENE is None or MANAGER_H is None, "level_scene.cpp / level_manager.h not found")
@@ -84,6 +85,45 @@ class HintWiringTests(unittest.TestCase):
         self.assertIn("_hint_text = text", self.show)
         self.assertIn("_hint_text", self.draw)
         self.assertIn("_draw_hint()", self.show)
+
+
+@unittest.skipIf(MANAGER is None or MANAGER_H is None, "level_manager.cpp / level_manager.h not found")
+class CameraWiringTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.text = MANAGER.read_text()
+        cls.header = MANAGER_H.read_text()
+        cls.update = _body(cls.text, r"LevelManager::UpdateResult\s+LevelManager::update\s*\(\s*\)")
+        cls.setup = _body(cls.text, r"void\s+LevelManager::_setup_camera\s*\(\s*const LevelData&\s*\w+\s*\)")
+        cls.step = _body(cls.text, r"void\s+LevelManager::_update_camera\s*\(\s*\)")
+
+    def test_helpers_are_defined(self):
+        self.assertIsNotNone(self.setup)
+        self.assertIsNotNone(self.step)
+        self.assertIn("CameraRig<bn::fixed> _camera_rig", self.header)
+
+    def test_update_steps_the_rig_instead_of_gluing_the_camera_to_the_duck(self):
+        self.assertIn("_update_camera()", self.update)
+        self.assertNotIn("follow(_player.pos.x", self.update)
+        self.assertLess(self.update.index("_update_camera()"), self.update.index("sync_all("))
+
+    def test_the_step_feeds_the_rig_and_follows_its_result(self):
+        self.assertIn("_camera_rig.update(", self.step)
+        self.assertIn("_player.vel_x", self.step)
+        self.assertIn("up_held()", self.step)
+        self.assertIn("down_held()", self.step)
+        self.assertIn("follow(_camera_rig.x(), _camera_rig.y())", self.step)
+
+    def test_level_load_sets_the_bounds_and_cuts_to_the_duck(self):
+        self.assertIn("_camera_rig.set_bounds(", self.setup)
+        self.assertIn("camera_rig::max_offset(", self.setup)
+        self.assertLess(self.setup.index("set_bounds("), self.setup.index("snap("))
+        self.assertLess(self.setup.index("snap("), self.setup.index("follow(_camera_rig.x()"))
+
+    def test_a_respawn_cuts_instead_of_gliding(self):
+        death = self.update[self.update.index("_save_sync.sync()"):]
+        self.assertIn("_camera_rig.snap(", death)
+        self.assertLess(death.index("_reset_entities()"), death.index("_camera_rig.snap("))
 
 
 if __name__ == "__main__":

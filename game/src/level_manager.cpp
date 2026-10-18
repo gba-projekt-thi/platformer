@@ -1,5 +1,6 @@
 #include "level_manager.h"
 #include "audio_settings.h"
+#include "bn_keypad.h"
 #include "level_limits.h"
 #include "switch_logic.h"
 #include "trap_factory.h"
@@ -131,12 +132,32 @@ void LevelManager::_load_background(const LevelData& level) {
 
 void LevelManager::_setup_camera(const LevelData& level) {
     Camera::instance().init(level.world_width, level.world_height);
-    Camera::instance().follow(_player.pos.x, _player.pos.y);
+    // The rig keeps its aim inside the same limits Camera::follow() clamps to.
+    _camera_rig.set_bounds(
+        camera_rig::max_offset(level.world_width, Cfg::Screen::WIDTH),
+        camera_rig::max_offset(level.world_height, Cfg::Screen::HEIGHT));
+    _camera_rig.snap(_player.pos.x, _player.pos.y);
+    Camera::instance().follow(_camera_rig.x(), _camera_rig.y());
 
     // Bounce boundary must match this level's world width, not the fixed
     // 240px screen default.
     _player.set_horizontal_bound(
         level.world_width / 2 - Cfg::Screen::EDGE_MARGIN);
+}
+
+void LevelManager::_update_camera() {
+    // D-Pad up / down looks up / down once held for a moment; it only shows
+    // in levels taller than the screen (the camera cannot move vertically in
+    // a 160px world).
+    int look = 0;
+    if (bn::keypad::up_held()) {
+        --look;
+    }
+    if (bn::keypad::down_held()) {
+        ++look;
+    }
+    _camera_rig.update(_player.pos.x, _player.pos.y, _player.vel_x, look);
+    Camera::instance().follow(_camera_rig.x(), _camera_rig.y());
 }
 
 void LevelManager::_clear_runtime_state() {
@@ -408,7 +429,7 @@ LevelManager::UpdateResult LevelManager::update() {
     // see the note in _load_background().
     // -------------------------------------------------------------------------
 
-    Camera::instance().follow(_player.pos.x, _player.pos.y);
+    _update_camera();
 
     // -------------------------------------------------------------------------
     // Rendering
@@ -433,6 +454,10 @@ LevelManager::UpdateResult LevelManager::update() {
     if (_save_sync.sync()) {
         _reset_entities();
         _restore_checkpoint_triggers();
+        // The duck is back at the spawn point or a checkpoint, possibly far
+        // from where it died: cut there instead of gliding across the level.
+        _camera_rig.snap(_player.pos.x, _player.pos.y);
+        Camera::instance().follow(_camera_rig.x(), _camera_rig.y());
     }
     return UpdateResult::None;
 }

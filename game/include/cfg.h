@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include "bn_fixed.h"
+#include "cfg_camera.h"
 #include "cfg_dash.h"
 
 namespace Cfg {

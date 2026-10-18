@@ -23,7 +23,7 @@ The game includes:
 - A dash (B button) from World 3 onward: a short horizontal burst with gravity suspended, a cooldown, and one use per air time; no invincibility, adds horizontal reach only, so no existing layout becomes unreachable; a dedicated sound and a flickering afterimage trail give feedback
 - A controls overview screen, reachable from the start screen (a "Controls" entry below the save slots) and from the pause menu
 - One-time level hints (`LevelData::intro_hint`) that teach the dash and the levers at the moment they matter, shown until the level is first cleared
- - A camera that follows the player across wider, scrolling worlds (single-screen worlds stay fixed)
+ - A camera that follows the player across wider, scrolling worlds (smoothed, with a look-ahead and a cut to the respawn point; single-screen worlds stay fixed)
 
 > This page is a quick map of the `game/` folder and its key files. For the
 > full conceptual documentation — architecture, gameplay, level design,
@@ -126,7 +126,7 @@ For headless or CI testing, use:
   - The start-screen controls overview (A/B/Start returns to `StartScene`); the pause menu has its own in-place view because leaving a level would destroy it
   - Both draw `controls_text.h`'s `ControlsText::LINES`, so they always agree
 
-- `game/include/game_modes.h`, `dash_controller.h`, `menu_nav.h`, `controls_text.h`, `cfg_dash.h`, `trigger_logic.h`, `switch_logic.h`, `hint_logic.h`, `dash_trail.h`, `game_state_migration.h`, `checkpoint_logic.h`
+- `game/include/game_modes.h`, `dash_controller.h`, `menu_nav.h`, `controls_text.h`, `cfg_dash.h`, `camera_rig.h`, `cfg_camera.h`, `trigger_logic.h`, `switch_logic.h`, `hint_logic.h`, `dash_trail.h`, `game_state_migration.h`, `checkpoint_logic.h`
   - Butano-free helpers holding the testable decision logic: Hard/Assist Mode toggles and Options row indices, the dash rules (`DashController`) and constants, wrap-around list-menu cursors, the trigger mode state logic and switched-platform rules, and the controls text. `LevelManager`, `PlayerLocomotion`, `PauseController` and `StartScene` call them and apply the results; covered by `tests/host/`
 
 - `game/include/player.h` / `game/src/player.cpp`
@@ -212,7 +212,7 @@ To add a new gameplay object:
 
 - `game/` is the game-specific project code. It depends on Butano and shared engine code in `extern/engine/`.
 - The root `Makefile` points `TARGET := platformer`, so the generated ROM is `platformer.gba`.
-- `tests/host/` holds host-buildable unit tests (no ARM toolchain needed) for the Butano-free pure-logic files (`save_integrity`, `save_buffer`, `game_state`, `frame_time`, `world_index`, `game_modes`, `dash_controller`/`cfg_dash`, `menu_nav`, `controls_text`, `trigger_logic`, `switch_logic`, `hint_logic`, `dash_trail`, `save_migration`, `checkpoint_logic`, `level_limits`); the `tools/test_*.py` files cover the level-data, reachability, world-index, hint and sprite-budget checkers; `.github/workflows/ci.yml` runs them plus a full devcontainer build + headless boot on every push/PR - see [`docs/development-workflow.md`](development-workflow.md#testing-methodology).
+- `tests/host/` holds host-buildable unit tests (no ARM toolchain needed) for the Butano-free pure-logic files (`save_integrity`, `save_buffer`, `game_state`, `frame_time`, `world_index`, `game_modes`, `dash_controller`/`cfg_dash`, `menu_nav`, `controls_text`, `trigger_logic`, `switch_logic`, `hint_logic`, `dash_trail`, `save_migration`, `checkpoint_logic`, `level_limits`, `camera_rig`); the `tools/test_*.py` files cover the level-data, reachability, world-index, hint and sprite-budget checkers; `.github/workflows/ci.yml` runs them plus a full devcontainer build + headless boot on every push/PR - see [`docs/development-workflow.md`](development-workflow.md#testing-methodology).
 
 ## Related Docs
 

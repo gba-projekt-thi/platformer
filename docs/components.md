@@ -528,6 +528,31 @@ and clamps to the world's edges. The same world-width value also sets the
 duck's horizontal bounce boundary, so the duck never leaves the intended play
 area.
 
+The camera does not stick to the duck. `LevelManager::_update_camera()` feeds
+the duck's position and horizontal velocity into a `CameraRig`
+(`camera_rig.h`, Butano-free and unit-tested, tuned by `Cfg::CameraFollow` in
+`cfg_camera.h`) and hands the result to `Camera::follow()`, which still clamps
+it to the world:
+
+- **Smoothed follow.** Each frame the camera closes a fixed fraction of the gap
+  (1/6 horizontally, 1/8 vertically), so it trails a running duck by ~10px and
+  a dashing one by ~20px and never overshoots.
+- **Look-ahead.** It aims 20px in front of the duck in its direction of travel,
+  easing in slowly, and keeps that direction while the duck stands still.
+  Creeping slower than 1px/frame does not flip it.
+- **Look up / down.** Holding the D-Pad up or down for 24 frames moves the view
+  32px that way and back on release. This only shows in levels taller than the
+  screen (`LevelData::world_height` above 160): in a 160px world the camera
+  cannot move vertically, and no level is that tall yet.
+- **Cuts.** Level load and every respawn (death, checkpoint, Restart Level)
+  cut to the duck instead of gliding across the level.
+- **Edges.** The rig clamps its own aim to the limits `Camera::follow()` uses
+  (`camera_rig::max_offset()`), so turning around at a world edge is followed
+  at once instead of the aim having to travel back from beyond the edge.
+
+The background stays screen-locked (see above); only registered sprites move
+with the camera.
+
 ---
 
 ## 5.4 Progress Feedback

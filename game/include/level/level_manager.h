@@ -12,6 +12,7 @@
 
 #include "base_trap.h"
 #include "camera.h"
+#include "camera_rig.h"
 #include "cfg.h"
 #include "checkpoint.h"
 #include "checkpoint_logic.h"
@@ -128,6 +129,9 @@ class LevelManager {
     void _load_music(const LevelData& level);
     void _load_background(const LevelData& level);
     void _setup_camera(const LevelData& level);
+    // Aims the camera at the duck for this frame (smoothing, look-ahead, look
+    // up / down - see CameraRig) and hands the result to Camera::follow().
+    void _update_camera();
 
     void _clear_runtime_state();
     static void _validate_level(const LevelData& level);
@@ -196,6 +200,8 @@ class LevelManager {
 
     bn::optional<bn::regular_bg_ptr> _background;
     Player& _player;
+    // Where the camera aims. Cut to the duck on level load and on respawn.
+    CameraRig<bn::fixed> _camera_rig;
     bn::optional<Door> _door;
     bn::optional<bn::music_item> _music;
     PauseController _pause_controller;

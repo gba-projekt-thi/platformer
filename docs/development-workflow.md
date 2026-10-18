@@ -91,7 +91,9 @@ shows, how long it stays), and the controls overview text (`controls_text.h`: li
 count, length, ASCII and sprite-budget limits, and that the dash line names
 the world `Cfg::Dash::UNLOCK_WORLD` unlocks) and the entity-limit rule
 (`level_limits.h`: a level with exactly `Cfg::Level::Limits` entries fits, one
-more does not). `PlayerLocomotion`,
+more does not) and the camera rig (`camera_rig.h`: smoothing never overshoots,
+look-ahead direction, look up / down hold, world-edge bounds, also with
+truncating fixed-point numbers). `PlayerLocomotion`,
 `LevelManager`, `PauseController` and the scenes only feed these helpers
 and apply their results, so what is left in the Butano-dependent files is
 glue that still needs the manual checks below.
