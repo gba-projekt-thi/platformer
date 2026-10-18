@@ -56,6 +56,16 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
     // Removes the dash's afterimage ghosts at once (level complete, menus,
     // death) so none stays frozen on screen.
     void clear_dash_trail();
+    // Death feedback (see death_fx.h). begin_death_fx() is called by
+    // LevelManager right after a death: the duck is already back at its
+    // respawn point, so it is hidden and a copy of its last frame stays where
+    // it died while the world is frozen. end_death_fx() ends that, shows the
+    // duck again and makes it flicker for a moment (visual only, no
+    // invulnerability); cancel_death_fx() does the same without the flicker
+    // (level load / unload).
+    void begin_death_fx();
+    void end_death_fx();
+    void cancel_death_fx();
     // Get & Set the count of player deaths.
     unsigned int get_deaths() const;
     void set_deaths(unsigned int deaths);
@@ -90,6 +100,15 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
     DashTrail _trail;
     bn::optional<Sprite> _ghosts[DashTrail::SLOTS];
     bool _was_dashing = false;
+
+    // Death feedback: where the duck died, the copy of it left there while
+    // the world is frozen, and the flicker countdown after it comes back.
+    void _update_respawn_blink();
+    bn::fixed _death_x = 0;
+    bn::fixed _death_y = 0;
+    bn::optional<Sprite> _death_ghost;
+    bool _death_fx_active = false;
+    int _respawn_blink = 0;
 
     // PlayerDeathHandler
     void on_locomotion_death() override { death(); }

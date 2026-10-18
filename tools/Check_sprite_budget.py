@@ -230,7 +230,9 @@ def demand(level, budget):
         + len(level.traps)
         + switch_sprites
         + len(level.checkpoints)
-        + budget.SLOTS  # dash afterimages (counted for every level: conservative)
+        # dash afterimages, counted for every level (conservative); the death
+        # ghost takes one of these slots, since death clears the trail first
+        + budget.SLOTS
     )
     fixed = registry + budget.hud + PAUSE_TITLE_GLYPHS
     hint = hint_glyphs(level)

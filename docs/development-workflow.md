@@ -93,7 +93,9 @@ the world `Cfg::Dash::UNLOCK_WORLD` unlocks) and the entity-limit rule
 (`level_limits.h`: a level with exactly `Cfg::Level::Limits` entries fits, one
 more does not) and the camera rig (`camera_rig.h`: smoothing never overshoots,
 look-ahead direction, look up / down hold, world-edge bounds, also with
-truncating fixed-point numbers). `PlayerLocomotion`,
+truncating fixed-point numbers) and the death feedback (`death_fx.h`: freeze
+length, the end of the freeze reported once, shake fading out, flicker
+pattern). `PlayerLocomotion`,
 `LevelManager`, `PauseController` and the scenes only feed these helpers
 and apply their results, so what is left in the Butano-dependent files is
 glue that still needs the manual checks below.
@@ -244,7 +246,9 @@ A practical manual test checklist for any gameplay change:
 | Movement | Acceleration, jump height, coyote/buffer feel, screen-edge bounce |
 | Traps | Activation timing, hit behavior, reset on respawn |
 | Triggers | Fire at the intended zone; linked traps respond correctly |
-| Level hints | Show once at the start of World 3's first level, "Cloak Corridor" and "Lever Hall"; B or five seconds hides them; gone after the first clear |
+| Level hints | Show once at the start of World 3's first level, "Cloak Corridor" and "Lever Hall"; B or five seconds hides them; gone after the first clear; hidden while paused (also in the first frame of the pause) and back on resume with the countdown where it stood |
+| Camera | Glides after the duck on scrolling levels instead of sticking to it; looks ahead in the direction of travel; no seam or jitter on platforms; cuts (does not glide) to the respawn point after a death; turning at a world edge is followed at once |
+| Death feedback | Short freeze with a copy of the duck where it died and the killing trap still in place; screen shake that fades, HUD and background steady; duck flickers after respawn and is NOT invulnerable; no effect on Restart Level; pausing during the freeze and leaving the level during it leave nothing behind; the record time is not affected |
 | World 5 dash / lever levels | Dash gaps clear with a dash; levers flip once per pass and show the right frame; the Room 2 stone disappears and returns |
 | Switches | Toggle flips per entry, Hold releases on exit; bound platforms appear/vanish with their trigger; a platform never appears inside the duck; death resets switches and platforms |
 | Progression | Door advances to the right stage; final stage triggers the kiss scene |

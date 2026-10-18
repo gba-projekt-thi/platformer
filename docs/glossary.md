@@ -159,6 +159,12 @@ gravity, or jump speed, so it can't make a platform unreachable. See
 
 ## H
 
+**Hitstop** — The short freeze of the whole world on the frame the duck dies
+(6 frames, ~0.1s): physics, traps, camera, level clock and run timer stand
+still while the shake plays and a copy of the duck stays where it died. Part
+of the death feedback (`death_fx.h`, `Cfg::DeathFx`). See
+[Components — Death feedback](components.md#death-feedback).
+
 **Hard Mode** — An unlockable, per-save-slot difficulty toggle: completing the
 game once permanently unlocks it, after which it can be switched on/off from
 the pause menu's Options sub-menu. While enabled, Moving, Chase, and Ambush

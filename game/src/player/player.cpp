@@ -4,6 +4,8 @@
 #include "bn_sound_items.h"
 #include "bn_sprite_items_ente.h"
 
+#include "death_fx.h"
+
 Player::Player(
     bn::fixed in_start_x,
     bn::fixed in_start_y,
@@ -47,6 +49,18 @@ void Player::update() {
 
     _hud.tick();
     _update_dash_trail();
+    _update_respawn_blink();
+}
+
+void Player::_update_respawn_blink() {
+    // Only counts while the game runs (this is called from the physics step)
+    // and while the duck is shown at all (not hidden for a menu).
+    if (_respawn_blink <= 0 || !_player_sprite.is_enabled()) {
+        return;
+    }
+    --_respawn_blink;
+    _player_sprite.sprite().set_visible(
+        death_fx::blink_visible(_respawn_blink));
 }
 
 void Player::_update_dash_trail() {
@@ -133,6 +147,7 @@ Timer& Player::get_timer() {
 }
 
 void Player::set_visible(bool visible) {
+    _respawn_blink = 0;
     if (visible) {
         _player_sprite.enable();
     } else {
@@ -165,7 +180,49 @@ void Player::set_dash_enabled(bool enabled) {
     _locomotion.set_dash_enabled(enabled);
 }
 
+void Player::begin_death_fx() {
+    _death_ghost.reset();
+
+    // A copy of the duck's last frame, left where it died. Wrapped in Sprite
+    // like the dash afterimages, so SpriteRegistry keeps it at its world
+    // position while the camera scrolls (and shakes). The dash trail was
+    // cleared by death(), so this takes one of its sprite slots.
+    bn::sprite_ptr raw_sprite =
+        bn::sprite_items::ente.create_sprite(_death_x, _death_y);
+    raw_sprite.set_tiles(_player_sprite.sprite().tiles());
+    raw_sprite.set_horizontal_flip(_player_sprite.sprite().horizontal_flip());
+    raw_sprite.set_z_order(_player_sprite.sprite().z_order());
+    raw_sprite.set_blending_enabled(true);
+    _death_ghost.emplace(bn::move(raw_sprite), _death_x, _death_y);
+
+    _player_sprite.disable();
+    _respawn_blink = 0;
+    _death_fx_active = true;
+}
+
+void Player::end_death_fx() {
+    if (!_death_fx_active) {
+        return;
+    }
+    cancel_death_fx();
+    _respawn_blink = Cfg::DeathFx::RESPAWN_BLINK_FRAMES;
+}
+
+void Player::cancel_death_fx() {
+    if (!_death_fx_active) {
+        return;
+    }
+    _death_fx_active = false;
+    _death_ghost.reset();
+    _player_sprite.enable();
+}
+
 void Player::death() {
+    // Where the duck died, for the death feedback's ghost (the teleport below
+    // overwrites it).
+    _death_x = pos.x;
+    _death_y = pos.y;
+
     _hud.on_player_death();
 
     set_velocity(0, 0);

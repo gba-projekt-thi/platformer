@@ -428,6 +428,12 @@ and fast retries, which suits short stages. The difficulty therefore comes from
 trap timing and platform layout (and, once unlocked, Hard Mode's speed
 multiplier), not from limited attempts.
 
+A death is felt rather than just counted: the world freezes for a tenth of a
+second with a copy of the duck frozen where it died and the trap that got it
+still in place, the screen shakes, and the duck flickers for a moment when it
+reappears at the respawn point. The flicker is only a visual cue - there is no
+invulnerability. Restart Level from the pause menu skips the effect.
+
 ### Checkpoints
 
 The long levels and the bosses have **checkpoints**: small flags. Touching one

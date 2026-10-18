@@ -182,6 +182,35 @@ The locomotion component does **not** own respawn logic itself. Instead it
 raises a death through a small **callback interface**, and the player entity
 handles the rest — keeping locomotion focused purely on movement.
 
+#### Death feedback
+
+The teleport itself is instant; what the player sees is a short sequence
+layered on top of it (`death_fx.h`, Butano-free and unit-tested, tuned by
+`Cfg::DeathFx` in `cfg_death_fx.h`). `LevelManager::_check_player_died()` spots
+a new death right after the physics step:
+
+- **Hitstop.** The world freezes for 6 frames (~0.1s): no physics, no traps, no
+  camera movement, no level clock and no run timer, so the feedback never costs
+  record time. The duck is hidden and `Player::begin_death_fx()` leaves a copy of
+  its last frame where it died (a `Sprite` registered with `SpriteRegistry`,
+  taking one of the dash afterimages' slots, which death has just cleared). The
+  trap that killed it stays where it is: `_reset_entities()` is deferred until
+  the freeze ends.
+- **Screen shake.** The picture shakes for 14 frames, starting at 3px and fading
+  out, so it is still settling after the freeze. `Camera::set_shake()` offsets
+  every sprite that is synced through the camera; the HUD and the screen-locked
+  background stay put.
+- **Respawn.** When the freeze ends the ghost goes, the duck reappears at the
+  respawn point, traps and triggers are re-armed and the camera cuts to the duck.
+  The duck then flickers for 18 frames so the eye finds it. That is **visual
+  only: it gives no invulnerability.**
+
+Restart Level from the pause menu is a death on purpose and skips all of this
+(and cancels a freeze that was still running).
+Pausing during the freeze stops it where it is, and loading or unloading a
+level cancels it (`Player::cancel_death_fx()`). A fall past the death height
+gets the same freeze and shake, with the ghost off screen.
+
 ### HUD components
 
 The player owns an HUD consisting of:

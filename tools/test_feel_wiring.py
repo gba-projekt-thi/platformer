@@ -43,6 +43,8 @@ def _body(text, signature):
 SCENE = _find("level_scene.cpp")
 MANAGER_H = _find("level_manager.h")
 MANAGER = _find("level_manager.cpp")
+PLAYER = _find("player.cpp")
+PLAYER_H = _find("player.h")
 
 
 @unittest.skipIf(SCENE is None or MANAGER_H is None, "level_scene.cpp / level_manager.h not found")
@@ -105,7 +107,8 @@ class CameraWiringTests(unittest.TestCase):
     def test_update_steps_the_rig_instead_of_gluing_the_camera_to_the_duck(self):
         self.assertIn("_update_camera()", self.update)
         self.assertNotIn("follow(_player.pos.x", self.update)
-        self.assertLess(self.update.index("_update_camera()"), self.update.index("sync_all("))
+        cam = self.update.index("_update_camera()")
+        self.assertLess(cam, self.update.index("_render_frame()", cam))
 
     def test_the_step_feeds_the_rig_and_follows_its_result(self):
         self.assertIn("_camera_rig.update(", self.step)
@@ -121,9 +124,139 @@ class CameraWiringTests(unittest.TestCase):
         self.assertLess(self.setup.index("snap("), self.setup.index("follow(_camera_rig.x()"))
 
     def test_a_respawn_cuts_instead_of_gliding(self):
+        # The respawn (immediately, or when the death freeze ends) goes through
+        # _finish_respawn(), which re-arms the level and then cuts the camera.
         death = self.update[self.update.index("_save_sync.sync()"):]
-        self.assertIn("_camera_rig.snap(", death)
-        self.assertLess(death.index("_reset_entities()"), death.index("_camera_rig.snap("))
+        self.assertIn("_finish_respawn()", death)
+        finish = _body(self.text, r"void\s+LevelManager::_finish_respawn\s*\(\s*\)")
+        self.assertIsNotNone(finish)
+        self.assertLess(finish.index("_reset_entities()"), finish.index("_camera_rig.snap("))
+        self.assertLess(finish.index("_camera_rig.snap("), finish.index("follow(_camera_rig.x()"))
+
+
+@unittest.skipIf(MANAGER is None or MANAGER_H is None, "level_manager.cpp / level_manager.h not found")
+class DeathFeedbackWiringTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.text = MANAGER.read_text()
+        cls.header = MANAGER_H.read_text()
+        cls.update = _body(cls.text, r"LevelManager::UpdateResult\s+LevelManager::update\s*\(\s*\)")
+        cls.check = _body(cls.text, r"void\s+LevelManager::_check_player_died\s*\(\s*\)")
+        cls.render = _body(cls.text, r"void\s+LevelManager::_render_frame\s*\(\s*\)")
+        cls.advance = _body(cls.text, r"void\s+LevelManager::_advance_death_fx\s*\(\s*\)")
+        cls.finish = _body(cls.text, r"void\s+LevelManager::_finish_respawn\s*\(\s*\)")
+        cls.load = _body(cls.text, r"void\s+LevelManager::_load_player_spawn\s*\(\s*const LevelData&\s*\w+\s*\)")
+        cls.unload = _body(cls.text, r"void\s+LevelManager::unload\s*\(\s*\)")
+
+    def test_helpers_are_defined(self):
+        for name in ("check", "render", "advance", "finish", "load", "unload"):
+            self.assertIsNotNone(getattr(self, name), name)
+        self.assertIn("death_fx::Sequence _death_fx", self.header)
+
+    def test_a_death_is_detected_right_after_the_physics_step(self):
+        self.assertIn("_check_player_died()", self.update)
+        check = self.update.index("_check_player_died()")
+        self.assertLess(self.update.index("update_all()"), check)
+        self.assertLess(check, self.update.index("_render_frame()", check))
+
+    def test_the_check_starts_the_freeze_and_hides_the_duck(self):
+        self.assertIn("_death_fx.start(", self.check)
+        self.assertIn("Cfg::DeathFx::HITSTOP_FRAMES", self.check)
+        self.assertIn("Cfg::DeathFx::SHAKE_FRAMES", self.check)
+        self.assertIn("_player.begin_death_fx()", self.check)
+        self.assertIn("_skip_death_fx", self.check)
+
+    def test_restart_level_is_a_death_on_purpose_without_feedback(self):
+        restart = self.update[self.update.index("RestartRequested"):]
+        self.assertLess(restart.index("_skip_death_fx = true"), restart.index("_player.death()"))
+        # ... and a freeze that was still running is cancelled first.
+        self.assertLess(restart.index("_player.cancel_death_fx()"), restart.index("_player.death()"))
+        self.assertLess(restart.index("_death_fx.clear()"), restart.index("_player.death()"))
+
+    def test_a_frozen_world_skips_the_simulation_and_the_level_clock(self):
+        frozen = self.update.index("_death_fx.frozen()")
+        self.assertLess(frozen, self.update.index("++_level_frame_count"))
+        self.assertLess(frozen, self.update.index("update_all()"))
+        branch = self.update[frozen:self.update.index("++_level_frame_count")]
+        self.assertIn("_render_frame()", branch)
+        self.assertIn("_advance_death_fx()", branch)
+        self.assertIn("return UpdateResult::None", branch)
+
+    def test_the_pause_check_comes_before_the_freeze(self):
+        self.assertLess(self.update.index("_pause_controller.paused()"), self.update.index("_death_fx.frozen()"))
+
+    def test_the_camera_stays_on_the_death_spot_while_frozen(self):
+        self.assertRegex(self.update, r"if\s*\(!_death_fx\.frozen\(\)\)\s*\{\s*_update_camera\(\);")
+
+    def test_every_rendered_frame_goes_through_render_and_advance(self):
+        self.assertIn("set_shake(", self.render)
+        self.assertIn("shake_offset(Cfg::DeathFx::SHAKE_AMPLITUDE)", self.render)
+        self.assertLess(self.render.index("set_shake("), self.render.index("sync_all("))
+        self.assertLess(self.render.index("sync_all("), self.render.index("bn::core::update()"))
+        self.assertNotIn("sync_all(", self.update)
+
+    def test_the_end_of_the_freeze_brings_the_duck_back_and_runs_the_deferred_reset(self):
+        self.assertIn("_death_fx.advance()", self.advance)
+        self.assertIn("_player.end_death_fx()", self.advance)
+        self.assertIn("_respawn_pending", self.advance)
+        self.assertIn("_finish_respawn()", self.advance)
+
+    def test_the_trap_reset_waits_for_the_freeze(self):
+        death = self.update[self.update.index("_save_sync.sync()"):]
+        self.assertIn("_death_fx.frozen()", death)
+        self.assertIn("_respawn_pending = true", death)
+        self.assertIn("_finish_respawn()", death)
+
+    def test_the_respawn_resets_entities_and_cuts_the_camera(self):
+        self.assertLess(self.finish.index("_reset_entities()"), self.finish.index("_restore_checkpoint_triggers()"))
+        self.assertIn("_camera_rig.snap(", self.finish)
+
+    def test_level_load_and_unload_leave_no_feedback_behind(self):
+        for body in (self.load, self.unload):
+            self.assertIn("_death_fx.clear()", body)
+            self.assertIn("_player.cancel_death_fx()", body)
+            self.assertIn("set_shake(0, 0)", body)
+        self.assertIn("_deaths_seen = _player.get_deaths()", self.load)
+
+
+@unittest.skipIf(PLAYER is None or PLAYER_H is None, "player.cpp / player.h not found")
+class PlayerDeathFeedbackWiringTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.text = PLAYER.read_text()
+        cls.header = PLAYER_H.read_text()
+        cls.update = _body(cls.text, r"void\s+Player::update\s*\(\s*\)")
+        cls.death = _body(cls.text, r"void\s+Player::death\s*\(\s*\)")
+        cls.begin = _body(cls.text, r"void\s+Player::begin_death_fx\s*\(\s*\)")
+        cls.end = _body(cls.text, r"void\s+Player::end_death_fx\s*\(\s*\)")
+        cls.cancel = _body(cls.text, r"void\s+Player::cancel_death_fx\s*\(\s*\)")
+        cls.blink = _body(cls.text, r"void\s+Player::_update_respawn_blink\s*\(\s*\)")
+
+    def test_helpers_are_defined(self):
+        for name in ("update", "death", "begin", "end", "cancel", "blink"):
+            self.assertIsNotNone(getattr(self, name), name)
+        for name in ("begin_death_fx", "end_death_fx", "cancel_death_fx"):
+            self.assertIn(name, self.header)
+
+    def test_death_remembers_where_it_happened_before_the_teleport(self):
+        self.assertLess(self.death.index("_death_x = pos.x"), self.death.index("pos.x = _restart_x"))
+        self.assertLess(self.death.index("_death_y = pos.y"), self.death.index("pos.y = _restart_y"))
+
+    def test_the_ghost_is_a_registered_copy_of_the_last_frame_and_the_duck_is_hidden(self):
+        self.assertIn("_death_ghost.emplace(", self.begin)
+        self.assertIn("set_tiles(_player_sprite.sprite().tiles())", self.begin)
+        self.assertIn("_player_sprite.disable()", self.begin)
+
+    def test_ending_the_freeze_shows_the_duck_and_starts_the_flicker(self):
+        self.assertIn("cancel_death_fx()", self.end)
+        self.assertIn("Cfg::DeathFx::RESPAWN_BLINK_FRAMES", self.end)
+        self.assertIn("_player_sprite.enable()", self.cancel)
+        self.assertIn("_death_ghost.reset()", self.cancel)
+
+    def test_the_flicker_runs_in_the_physics_step_and_uses_the_pure_pattern(self):
+        self.assertIn("_update_respawn_blink()", self.update)
+        self.assertIn("death_fx::blink_visible(", self.blink)
+        self.assertIn("is_enabled()", self.blink)
 
 
 if __name__ == "__main__":

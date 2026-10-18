@@ -17,6 +17,7 @@
 #include "checkpoint.h"
 #include "checkpoint_logic.h"
 #include "data_manager.h"
+#include "death_fx.h"
 #include "door.h"
 #include "game_modes.h"
 #include "game_state.h"
@@ -133,6 +134,15 @@ class LevelManager {
     // up / down - see CameraRig) and hands the result to Camera::follow().
     void _update_camera();
 
+    // Death feedback (see death_fx.h): the world freezes for a few frames and
+    // the screen shakes. _check_player_died() starts it, _render_frame() draws
+    // a frame with the shake applied and _advance_death_fx() ends the freeze.
+    void _check_player_died();
+    void _render_frame();
+    void _advance_death_fx();
+    // After a death: re-arms traps and triggers, cuts the camera to the duck.
+    void _finish_respawn();
+
     void _clear_runtime_state();
     static void _validate_level(const LevelData& level);
     void _load_platforms(const LevelData& level);
@@ -202,6 +212,16 @@ class LevelManager {
     Player& _player;
     // Where the camera aims. Cut to the duck on level load and on respawn.
     CameraRig<bn::fixed> _camera_rig;
+
+    // Death feedback state. _deaths_seen is the death count the level manager
+    // has reacted to; _skip_death_fx suppresses the feedback for the death
+    // that Restart Level causes on purpose; _respawn_pending defers the trap
+    // reset until the freeze ends, so the trap that killed the duck stays
+    // where it is while the world is frozen.
+    death_fx::Sequence _death_fx;
+    unsigned _deaths_seen = 0;
+    bool _skip_death_fx = false;
+    bool _respawn_pending = false;
     bn::optional<Door> _door;
     bn::optional<bn::music_item> _music;
     PauseController _pause_controller;

@@ -68,10 +68,15 @@ class CheckpointWiringTests(unittest.TestCase):
         )
 
     def test_triggers_are_restored_after_the_death_reset(self):
+        # The respawn (right away, or when the death freeze ends) goes through
+        # _finish_respawn(): reset first, then restore the checkpoint's triggers.
+        finish = _body(self.text, r"void\s+LevelManager::_finish_respawn\s*\(\s*\)")
+        self.assertIsNotNone(finish)
         self.assertLess(
-            self.update.index("_reset_entities()"),
-            self.update.index("_restore_checkpoint_triggers()"),
+            finish.index("_reset_entities()"),
+            finish.index("_restore_checkpoint_triggers()"),
         )
+        self.assertIn("_finish_respawn()", self.update)
 
     def test_restart_level_clears_the_checkpoint_before_the_death(self):
         self.assertIn("RestartRequested", self.update)

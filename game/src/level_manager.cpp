@@ -78,6 +78,14 @@ void LevelManager::_load_player_spawn(const LevelData& level) {
         WorldIndex::WORLDS[Cfg::Dash::UNLOCK_WORLD].start_index);
     _save_sync.reset_baseline();
     _level_frame_count = 0;
+
+    // Nothing of an earlier level's death feedback carries over.
+    _death_fx.clear();
+    _player.cancel_death_fx();
+    Camera::instance().set_shake(0, 0);
+    _deaths_seen = _player.get_deaths();
+    _skip_death_fx = false;
+    _respawn_pending = false;
 }
 
 void LevelManager::_load_door(const LevelData& level) {
@@ -157,6 +165,52 @@ void LevelManager::_update_camera() {
         ++look;
     }
     _camera_rig.update(_player.pos.x, _player.pos.y, _player.vel_x, look);
+    Camera::instance().follow(_camera_rig.x(), _camera_rig.y());
+}
+
+void LevelManager::_check_player_died() {
+    const unsigned deaths = _player.get_deaths();
+    if (deaths == _deaths_seen) {
+        return;
+    }
+    _deaths_seen = deaths;
+
+    // Restart Level is a death on purpose: no freeze, no shake.
+    if (_skip_death_fx) {
+        _skip_death_fx = false;
+        return;
+    }
+    _death_fx.start(Cfg::DeathFx::HITSTOP_FRAMES, Cfg::DeathFx::SHAKE_FRAMES);
+    _player.begin_death_fx();
+}
+
+void LevelManager::_render_frame() {
+    // The shake moves what is registered with SpriteRegistry (the duck's
+    // ghost, platforms, traps, door); the HUD and the background stay put.
+    const death_fx::Offset shake =
+        _death_fx.shake_offset(Cfg::DeathFx::SHAKE_AMPLITUDE);
+    Camera::instance().set_shake(shake.x, shake.y);
+    SpriteRegistry::instance().sync_all(Camera::instance());
+    bn::core::update();
+}
+
+void LevelManager::_advance_death_fx() {
+    if (_death_fx.advance() != death_fx::Event::FreezeEnded) {
+        return;
+    }
+    _player.end_death_fx();
+    if (_respawn_pending) {
+        _respawn_pending = false;
+        _finish_respawn();
+    }
+}
+
+void LevelManager::_finish_respawn() {
+    _reset_entities();
+    _restore_checkpoint_triggers();
+    // The duck is back at the spawn point or a checkpoint, possibly far from
+    // where it died: cut there instead of gliding across the level.
+    _camera_rig.snap(_player.pos.x, _player.pos.y);
     Camera::instance().follow(_camera_rig.x(), _camera_rig.y());
 }
 
@@ -367,6 +421,10 @@ void LevelManager::load(const LevelData& level) {
 }
 
 void LevelManager::unload() {
+    _death_fx.clear();
+    _respawn_pending = false;
+    _player.cancel_death_fx();
+    Camera::instance().set_shake(0, 0);
     _background.reset();
     _door.reset();
     _music.reset();
@@ -391,6 +449,13 @@ LevelManager::UpdateResult LevelManager::update() {
         // Restart Level starts over from the level's spawn point, not from a
         // checkpoint. Still counts as a death, as before.
         _clear_checkpoint();
+        // Pausing during a death freeze and restarting must not leave the
+        // rest of that freeze (or its ghost) behind; the restart's own death
+        // triggers the reset below.
+        _death_fx.clear();
+        _player.cancel_death_fx();
+        _respawn_pending = false;
+        _skip_death_fx = true;
         _player.death();
     } else if (
         pause_action == PauseController::Action::ReturnToTitleRequested) {
@@ -404,9 +469,24 @@ LevelManager::UpdateResult LevelManager::update() {
         return UpdateResult::None;
     }
 
+    // -------------------------------------------------------------------------
+    // Death freeze
+    //
+    // For a few frames after a death the world stands still: no physics, no
+    // traps, no camera movement, no level clock (the feedback must not cost
+    // the player record time). The duck's ghost, the trap that killed it and
+    // the shaking picture are all there is to see.
+    // -------------------------------------------------------------------------
+
+    if (_death_fx.frozen()) {
+        _render_frame();
+        _advance_death_fx();
+        return UpdateResult::None;
+    }
+
     // Level clock: counts frames the level has actually been playable
-    // (i.e. not paused), used to compute this attempt's clear time for
-    // the best-time record. Deliberately NOT reset on death - matches
+    // (i.e. not paused or frozen), used to compute this attempt's clear time
+    // for the best-time record. Deliberately NOT reset on death - matches
     // the existing overall run Timer, which also keeps counting through
     // deaths; a level's recorded time is its total time-to-clear
     // including any retries within that attempt, not a speedrun-style
@@ -420,6 +500,7 @@ LevelManager::UpdateResult LevelManager::update() {
     CollisionRegistry::instance().update_all();
     _sync_checkpoints();
     _sync_switched_platforms();
+    _check_player_died();
 
     // -------------------------------------------------------------------------
     // Camera
@@ -429,14 +510,17 @@ LevelManager::UpdateResult LevelManager::update() {
     // see the note in _load_background().
     // -------------------------------------------------------------------------
 
-    _update_camera();
+    // On the death frame the camera stays where the duck died.
+    if (!_death_fx.frozen()) {
+        _update_camera();
+    }
 
     // -------------------------------------------------------------------------
     // Rendering
     // -------------------------------------------------------------------------
 
-    SpriteRegistry::instance().sync_all(Camera::instance());
-    bn::core::update();
+    _render_frame();
+    _advance_death_fx();
 
     // -------------------------------------------------------------------------
     // Door Completion
@@ -452,12 +536,12 @@ LevelManager::UpdateResult LevelManager::update() {
     // -------------------------------------------------------------------------
 
     if (_save_sync.sync()) {
-        _reset_entities();
-        _restore_checkpoint_triggers();
-        // The duck is back at the spawn point or a checkpoint, possibly far
-        // from where it died: cut there instead of gliding across the level.
-        _camera_rig.snap(_player.pos.x, _player.pos.y);
-        Camera::instance().follow(_camera_rig.x(), _camera_rig.y());
+        if (_death_fx.frozen()) {
+            // The traps stay as they are until the freeze ends.
+            _respawn_pending = true;
+        } else {
+            _finish_respawn();
+        }
     }
     return UpdateResult::None;
 }
