@@ -292,7 +292,7 @@ void LevelManager::_sync_checkpoints() {
         for (int t = 0; t < _triggers.size(); ++t) {
             on[t] = _triggers[t].is_triggered();
         }
-        _checkpoint_triggers = pack_flags(on, int(_triggers.size()));
+        _checkpoint_triggers = pack_flags(on, _triggers.size());
 
         for (int c = 0; c < _checkpoints.size(); ++c) {
             _checkpoints[c].set_active(c == _checkpoint_tracker.active());

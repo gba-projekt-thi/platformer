@@ -61,7 +61,7 @@ void SummaryScene::init() {
     const unsigned int remaining_seconds =
         static_cast<unsigned int>(total_seconds % 60);
 
-    const int level_count = static_cast<int>(_levels.size());
+    const int level_count = _levels.size();
     int no_death_count = 0;
     for (int i = 0; i < level_count && i < GameState::MAX_LEVELS; ++i) {
         if (has_no_death_clear(state, i)) {
