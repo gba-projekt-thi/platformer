@@ -289,9 +289,8 @@ constexpr TrapData world1_boss_traps[] = {
     {TrapType::MOVING, 260, 50, 24, 16, 0, 0, bn::sprite_items::kugelfisch16x16,
      1, TRAP_GRAPHICS_INDEXES_8, -2.5, 0, 3, NO_PATH_TRAP, 0, 0, 0, "wave4"}};
 
-// Checkpoint after the second wave: the long gauntlet no longer restarts from
-// the far left.
-constexpr CheckpointData world1_boss_checkpoints[] = {{-24, 48}};
+// No checkpoint: the pufferfish charges (wave2, wave4) sweep the whole floor,
+// so no flag could stand clear of a trap's path (tools/Check_checkpoints.py).
 
 const LevelData LEVEL_WORLD1_BOSS = {
 
@@ -312,11 +311,4 @@ const LevelData LEVEL_WORLD1_BOSS = {
     {228, 40},
     // World size (enables scrolling)
     480,
-    160,
-    // Ground friction: default
-    1,
-    // No intro hint
-    nullptr,
-    // Checkpoints, in play order
-    world1_boss_checkpoints,
-    sizeof(world1_boss_checkpoints) / sizeof(world1_boss_checkpoints[0])};
+    160};

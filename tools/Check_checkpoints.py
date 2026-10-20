@@ -14,8 +14,11 @@ Errors (exit code 1):
   - the flag does not stand on a platform: its bottom (y + 8) must be at most
     4px above or 0px into the top of a platform that spans its x, and that
     platform must not be a switched one (it can vanish)
-  - the 8x8 respawn box overlaps a platform, a trap's start box, a PATH trap's
-    route node or the box of an AMBUSH trap anywhere along its lunge
+  - the 8x8 respawn box overlaps a platform, a trap's start box or anywhere on
+    a trap's path: the whole route of a PATH trap (the segments between its
+    nodes, closing back to the first), the track a MOVING trap takes once its
+    trigger fires, the line a CHASE trap sweeps to the right, or the lunge of
+    an AMBUSH trap
   - the supporting platform cannot be reached from the spawn (checked with the
     jump + dash movement model of Check_level_reachability.py, over every lever
     configuration)
@@ -34,6 +37,7 @@ Pure text parsing + the movement model; no C++ compiler involved.
 
 import glob
 import importlib.util
+import math
 import re
 import sys
 from pathlib import Path
@@ -56,6 +60,8 @@ FLAG_HALF = 8  # the flag sprite is 16x16, its center is the respawn point
 DUCK = 8
 MAX_FLOAT = 4  # px the flag may hover above the platform top
 MIN_SPACING = 24
+SWEEP_STEP = 2.0  # px between the boxes sampled along a trap path
+MOVING_FRAMES = 600  # how long a MOVING trap is followed (it stops at the world edge)
 
 
 def max_checkpoints(search_root=None):
@@ -67,20 +73,46 @@ def max_checkpoints(search_root=None):
     return DEFAULT_MAX
 
 
-def _trap_boxes(trap):
-    """Boxes (cx, cy, w, h) the trap occupies at its start (and, for PATH
-    traps, at every route node; for AMBUSH traps along the lunge)."""
+def _segment_boxes(a, b, w, h):
+    """Boxes along the straight line a -> b, at most SWEEP_STEP px apart (the
+    traps are bigger than that, so nothing slips through)."""
+    (ax, ay), (bx, by) = a, b
+    steps = max(1, int(math.ceil(max(abs(bx - ax), abs(by - ay)) / SWEEP_STEP)))
+    return [(ax + (bx - ax) * i / steps, ay + (by - ay) * i / steps, w, h) for i in range(steps + 1)]
+
+
+def _trap_boxes(level, trap):
+    """Boxes (cx, cy, w, h) a trap can occupy: at its start and everywhere on
+    its path - the whole route of a PATH trap (also the segment that closes the
+    loop), the track of a MOVING trap until it leaves the world, the line a
+    CHASE trap sweeps to the right, and the lunge of an AMBUSH trap."""
+    kind = trap["type"]
     x, y = pv.trap_position(trap)
     w, h = trap["width"], trap["height"]
-    if trap["type"] == "PATH" and trap["path"]:
-        return [
-            (trap["x"] + px + trap["offset_x"], trap["y"] + py + trap["offset_y"], w, h)
+    if kind == "PATH" and trap["path"]:
+        route = [
+            (trap["x"] + px + trap["offset_x"], trap["y"] + py + trap["offset_y"])
             for px, py in trap["path"]
         ]
-    if trap["type"] == "AMBUSH":
+        boxes = []
+        for i, node in enumerate(route):
+            boxes += _segment_boxes(node, route[(i + 1) % len(route)], w, h)
+        return boxes
+    if kind == "AMBUSH":
         travel = trap["ambush_speed"] * trap["ambush_duration"]
-        steps = max(1, int(abs(travel)))
-        return [(x + travel * i / steps, y, w, h) for i in range(steps + 1)]
+        return _segment_boxes((x, y), (x + travel, y), w, h)
+    if kind == "MOVING":
+        boxes = []
+        for px, py in pv.moving_track(trap, MOVING_FRAMES):
+            if abs(px) > level.world_w / 2 + pv.TRACK_MARGIN or abs(py) > (
+                level.world_h / 2 + pv.TRACK_MARGIN
+            ):
+                break
+            boxes.append((px, py, w, h))
+        return boxes or [(x, y, w, h)]
+    if kind == "CHASE":
+        # ChaserTrap only ever moves right (it never retreats), along its row.
+        return _segment_boxes((x, y), (max(x, level.world_w / 2 + w), y), w, h)
     return [(x, y, w, h)]
 
 
@@ -140,9 +172,10 @@ def check_level(level, limit=DEFAULT_MAX, reach=True):
                 err(f"{where}: the respawn overlaps platform {p.index}")
 
         for trap in level.traps:
-            for bx, by, bw, bh in _trap_boxes(trap):
+            for bx, by, bw, bh in _trap_boxes(level, trap):
                 if sim.overlap(x, y, DUCK, DUCK, bx, by, bw, bh):
-                    err(f"{where}: the respawn overlaps a {trap['type']} trap at ({bx:g},{by:g})")
+                    what = "trap" if trap["type"] == "BASE" else "trap's path"
+                    err(f"{where}: the respawn overlaps a {trap['type']} {what} at ({bx:g},{by:g})")
                     break
             if trap["type"] == "AMBUSH":
                 tx, _ = pv.trap_position(trap)

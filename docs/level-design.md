@@ -286,9 +286,18 @@ What a respawn does, and what to keep in mind when placing one:
 - **Chase traps start from their start position** (far behind a flag in the
   middle of a level), so the first seconds after a respawn are gentler than at
   the real spawn.
-- **Keep the respawn clear of ambush traps.** A flag inside an ambush trap's
-  range lunges the trap right after the respawn; inside its lunge it is a
-  guaranteed hit. The checker errors on the second and warns on the first.
+- **Keep the respawn clear of every trap and of its whole path.** The flag
+  never stands in a trap, and never anywhere a trap can go: the full route of a
+  PATH trap (the segments between its nodes, including the one that closes the
+  loop), the track a MOVING trap takes once its trigger fires (a falling
+  thwomp's column, a charging can's row), the row a CHASE trap sweeps to the
+  right, and the lunge of an AMBUSH trap. The triggers that were on at the flag
+  are re-armed after a respawn, so a trap on the flag's path would come for the
+  duck again. A flag inside an ambush trap's range also lunges the trap right
+  after the respawn; the checker errors on the lunge and warns on the range.
+- **Some levels get no checkpoint at all.** The World 1 and World 2 bosses
+  charge a pufferfish or a can along the whole floor, so there is no spot on
+  any of their platforms that is clear of a trap's path.
 - **No checkpoints in puzzle levels** like "Lever Hall": a death resets the
   levers, so a flag in the middle would only force the player to redo them.
 - **Restart Level** (pause menu) clears the checkpoint and restarts from the
@@ -297,9 +306,8 @@ What a respawn does, and what to keep in mind when placing one:
 
 `tools/Check_checkpoints.py` verifies all of this on the level data: the flag
 stands on a (non-switched) platform, the respawn box overlaps no platform or
-trap (including a PATH trap's route and an ambush lunge), the platform is
-reachable from the spawn, plus count, order and spacing. It runs in the Python CI
-job.
+trap or its path (see above), the platform is reachable from the spawn, plus
+count, order and spacing. It runs in the Python CI job.
 
 ### Previewing levels
 

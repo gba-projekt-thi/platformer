@@ -194,8 +194,9 @@ Two more static checkers keep level content honest (pure Python, no C++):
   only, never empty. Also a pre-commit hook.
 - `tools/Check_checkpoints.py` - validates `LevelData::checkpoints`: the flag
   stands on a platform that is not switched, the respawn box overlaps no
-  platform, trap start box, PATH route node or ambush lunge, the platform is
-  reachable from the spawn (jump + dash model), count within
+  platform, trap start box or anywhere on a trap's path (the whole PATH route,
+  the MOVING track, the CHASE row, the AMBUSH lunge), the platform is reachable
+  from the spawn (jump + dash model), count within
   `Cfg::Level::Limits::CHECKPOINTS`, plus warnings for an ambush range, order
   and spacing. Runs in the Python CI job.
 - `tools/Check_sprite_budget.py` - checks every level against the entity limits

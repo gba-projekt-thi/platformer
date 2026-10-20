@@ -391,9 +391,8 @@ class RealLevelTests(unittest.TestCase):
 
     def test_long_levels_and_bosses_have_checkpoints(self):
         for name in (
-            "LEVEL_WORLD1_BOSS", "LEVEL_WORLD2_BOSS", "LEVEL_WORLD3_BOSS",
-            "LEVEL_WORLD4_BOSS", "LEVEL_WORLD5_BOSS", "LEVEL_WORLD5_SCROLL",
-            "LEVEL_WORLD5_DASH",
+            "LEVEL_WORLD3_BOSS", "LEVEL_WORLD4_BOSS", "LEVEL_WORLD5_BOSS",
+            "LEVEL_WORLD4_SCROLL", "LEVEL_WORLD5_SCROLL", "LEVEL_WORLD5_DASH",
         ):
             self.assertGreaterEqual(len(self.levels[name].checkpoints), 1, name)
 

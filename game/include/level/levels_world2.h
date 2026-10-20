@@ -220,9 +220,9 @@ constexpr TrapData world2_boss_traps[] = {
     {TrapType::MOVING, 260, 60, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
      TRAP_GRAPHICS_INDEXES_8, -2.4, 0, 3.4, NO_PATH_TRAP, 0, 0, 0, "wave4"}};
 
-// Checkpoint in the middle of the corridor, between the second and third
-// attack.
-constexpr CheckpointData world2_boss_checkpoints[] = {{0, 49}};
+// No checkpoint: the cans charge sideways (wave2, wave4) along the whole
+// corridor, so no flag could stand clear of a trap's path
+// (tools/Check_checkpoints.py).
 
 const LevelData LEVEL_WORLD2_BOSS = {
 
@@ -243,11 +243,4 @@ const LevelData LEVEL_WORLD2_BOSS = {
     {228, 40},
     // World size (enables scrolling)
     480,
-    160,
-    // Ground friction: default
-    1,
-    // No intro hint
-    nullptr,
-    // Checkpoints, in play order
-    world2_boss_checkpoints,
-    sizeof(world2_boss_checkpoints) / sizeof(world2_boss_checkpoints[0])};
+    160};

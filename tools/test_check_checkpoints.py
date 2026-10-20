@@ -18,6 +18,8 @@ _spec.loader.exec_module(cc)
 
 COMMON = """
 constexpr bn::fixed_point ROUTE[] = {bn::fixed_point(0, 0), bn::fixed_point(40, 0)};
+constexpr bn::fixed_point TRI[] = {
+    bn::fixed_point(0, 0), bn::fixed_point(40, 0), bn::fixed_point(40, -40)};
 """
 
 HEAD = """
@@ -34,6 +36,12 @@ constexpr TriggerData trigs[] = {{-120, 30, 16, 16, false, "sw", TriggerMode::To
 BASE = "{TrapType::BASE, %d, %d, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0}"
 PATH = ("{TrapType::PATH, %d, %d, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
         " 0, 0, 0, ROUTE, 15, 0, 0, \"sw\"}")
+PATH_TRI = ("{TrapType::PATH, %d, %d, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
+            " 0, 0, 0, TRI, 15, 0, 0, \"sw\"}")
+MOVING = ("{TrapType::MOVING, %d, %d, 16, 16, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
+          " 0.0, %s, %s, NO_PATH_TRAP, 0, 0, 0, \"sw\"}")
+CHASE = ("{TrapType::CHASE, %d, %d, 32, 16, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
+         " 0, 0, 0, NO_PATH_TRAP, 0, 40, 2.5}")
 AMBUSH = ("{TrapType::AMBUSH, %d, %d, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
           " 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, %d, 1, 5}")
 
@@ -63,6 +71,18 @@ LEVELS = HEAD + "".join(
         level("INSIDE", [(-40, 56)]),
         level("ONTRAP", [(40, 44)], [BASE % (40, 44)]),
         level("ONROUTE", [(40, 44)], [PATH % (0, 44)]),
+        # between the two nodes of the route (4,44) -> (44,44), clear of both
+        level("ON_SEGMENT", [(24, 44)], [PATH % (4, 44)]),
+        # only the segment that closes the loop (60,24) -> (20,64) passes it
+        level("ON_CLOSING_SEGMENT", [(40, 44)], [PATH_TRI % (20, 64)]),
+        # a falling trap's track passes through the flag long after its start
+        level("MOVING_FALLS", [(40, 44)], [MOVING % (40, -60, "4", "4")]),
+        level("MOVING_GOES_UP", [(40, 44)], [MOVING % (40, -60, "-4", "4")]),
+        level("MOVING_STANDS_STILL", [(40, 44)], [MOVING % (40, -60, "4", "0")]),
+        # a chaser sweeps its row to the right and never back
+        level("CHASE_AHEAD", [(40, 44)], [CHASE % (-200, 44)]),
+        level("CHASE_OTHER_ROW", [(40, 44)], [CHASE % (-200, -20)]),
+        level("CHASE_BEHIND", [(40, 44)], [CHASE % (100, 44)]),
         level("AMBUSH_NEAR", [(40, 44)], [AMBUSH % (70, 56, 40)]),
         level("AMBUSH_HIT", [(40, 44)], [AMBUSH % (46, 44, 40)]),
         level("UNREACHABLE", [(300, 44)]),
@@ -123,6 +143,33 @@ class SyntheticTests(unittest.TestCase):
 
     def test_respawn_on_a_path_route_node(self):
         self.assertError("ONROUTE", "overlaps a PATH trap")
+
+    def test_a_flag_between_two_route_nodes_is_on_the_path(self):
+        self.assertError("ON_SEGMENT", "overlaps a PATH trap's path")
+
+    def test_the_segment_that_closes_the_loop_is_part_of_the_path(self):
+        self.assertError("ON_CLOSING_SEGMENT", "overlaps a PATH trap's path")
+
+    def test_the_whole_track_of_a_moving_trap_is_part_of_its_path(self):
+        self.assertError("MOVING_FALLS", "overlaps a MOVING trap's path")
+
+    def test_a_moving_trap_that_leaves_the_flag_behind_is_fine(self):
+        for name in ("MOVING_GOES_UP", "MOVING_STANDS_STILL"):
+            errors, _ = self.run_check(name)
+            self.assertEqual(errors, [], name)
+
+    def test_the_row_a_chaser_sweeps_to_the_right_is_part_of_its_path(self):
+        self.assertError("CHASE_AHEAD", "overlaps a CHASE trap's path")
+
+    def test_a_flag_in_another_row_or_behind_a_chaser_is_fine(self):
+        # the chaser only ever moves right: a flag to its left is never reached
+        for name in ("CHASE_OTHER_ROW", "CHASE_BEHIND"):
+            errors, _ = self.run_check(name)
+            self.assertEqual(errors, [], name)
+
+    def test_a_base_trap_is_called_a_trap_and_a_moving_one_its_path(self):
+        base, _ = self.run_check("ONTRAP")
+        self.assertTrue(any("overlaps a BASE trap at" in e for e in base), base)
 
     def test_ambush_range_is_a_warning(self):
         self.assertWarning("AMBUSH_NEAR", "inside the ambush range")
@@ -197,8 +244,29 @@ class RealLevelTests(unittest.TestCase):
         self.assertTrue(any("only reachable with the dash" in w for w in warnings))
 
     def test_a_boss_checkpoint_is_reachable(self):
-        errors, _ = cc.check_level(self.levels["LEVEL_WORLD1_BOSS"])
+        self.assertEqual(len(self.levels["LEVEL_WORLD3_BOSS"].checkpoints), 1)
+        errors, _ = cc.check_level(self.levels["LEVEL_WORLD3_BOSS"])
         self.assertEqual(errors, [])
+
+    def test_no_real_checkpoint_is_in_a_trap_or_on_its_path(self):
+        for name, lv in self.levels.items():
+            errors, _ = cc.check_level(lv, reach=False)
+            self.assertEqual([e for e in errors if "trap" in e], [], name)
+
+    def test_the_two_charging_boss_floors_have_no_flag_to_place(self):
+        # World 1 and 2 bosses charge a trap along the whole floor, so there is
+        # no spot on any platform that is clear of a trap's path.
+        for name in ("LEVEL_WORLD1_BOSS", "LEVEL_WORLD2_BOSS"):
+            lv = self.levels[name]
+            self.assertEqual(lv.checkpoints, [], name)
+            for p in lv.platforms:
+                x = p.left + 1
+                while x <= p.right - 1:
+                    lv.checkpoints = [(x, p.top - 8)]
+                    errors, _ = cc.check_level(lv, limit=1, reach=False)
+                    self.assertTrue(any("trap" in e for e in errors), (name, x, p.index))
+                    x += 8
+            lv.checkpoints = []
 
     def test_limit_in_cfg_h_matches_the_data(self):
         limit = cc.max_checkpoints(Path(__file__).resolve().parent)

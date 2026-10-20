@@ -249,8 +249,9 @@ constexpr TrapData world3_boss_traps[] = {
      bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, 0, -2.2,
      3.8, NO_PATH_TRAP, 0, 0, 0, "wave4"}};
 
-// Two checkpoints: after the second arm and after the third.
-constexpr CheckpointData world3_boss_checkpoints[] = {{-80, 48}, {112, 48}};
+// One checkpoint, in the middle of the arena after the second arm - clear of
+// every arm's column and of the patrol (a level has at most one).
+constexpr CheckpointData world3_boss_checkpoints[] = {{-80, 48}};
 
 const LevelData LEVEL_WORLD3_BOSS = {
 
