@@ -136,7 +136,7 @@ inline constexpr unsigned int PLATFORMS = 32;
 inline constexpr unsigned int PLATFORM_BODIES = 32;
 inline constexpr unsigned int TRIGGERS = 16;
 inline constexpr unsigned int TOTAL_TRAPS = 32;
-inline constexpr unsigned int CHECKPOINTS = 4;
+inline constexpr unsigned int CHECKPOINTS = 1;
 }  // namespace Limits
 }  // namespace Level
 

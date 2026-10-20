@@ -72,8 +72,8 @@ See [Components — Camera systems](components.md#camera-systems).
 
 **Checkpoint** — A flag (`LevelData::checkpoints`) the duck touches to respawn
 there instead of at the stage's spawn point, until the level is restarted or
-left. The furthest touched flag is the active one; the triggers that were on
-when it was reached fire again after a respawn. See
+left. A level has at most one; the triggers that were on when it was reached
+fire again after a respawn. It never stands in a trap or on its path. See
 [Level Design — Checkpoints](level-design.md#checkpoints).
 
 **Chase trap** — A hazard that trails the player and closes in as they advance,

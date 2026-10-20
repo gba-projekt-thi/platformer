@@ -145,12 +145,12 @@ number:
 
 | Ceiling | Value | What counts against it |
 |---------|-------|------------------------|
-| **Entity limits** (`Cfg::Level::Limits`) | 32 platforms, 32 traps, 16 triggers, 4 checkpoints | Fixed-capacity containers in the level manager. Exactly the limit is valid, one more fails the load-time assertion. |
+| **Entity limits** (`Cfg::Level::Limits`) | 32 platforms, 32 traps, 16 triggers, 1 checkpoint | Fixed-capacity containers in the level manager. Exactly the limit is valid, one more fails the load-time assertion. |
 | **Sprite registry** (`SpriteRegistry`) | 72 | Everything that scrolls with the camera: the duck, the door, platforms, traps, switch sprites, checkpoint flags and the four dash afterimages. A sprite beyond the capacity is dropped (logged) and would stay pinned to its screen position. |
 | **Hardware sprites** (OAM) | 128 | The registered sprites plus all text: death counter and timer, the hidden "Paused" title, the level hint, the "New Best!" banner and the pause overlay. Hidden sprites still occupy a slot. |
 
 The entity limits alone do not keep a stage inside the other two: a stage that
-filled every limit would need 90 registered sprites. In practice the stages are
+filled every limit would need 87 registered sprites. In practice the stages are
 far below that, but the pause overlay is large (up to ~57 glyph sprites in the
 Options sub-menu with Hard Mode on). The level hint is therefore released while
 the game is paused (`hint::should_draw()`; the countdown stops with it and the

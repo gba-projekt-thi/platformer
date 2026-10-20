@@ -509,7 +509,7 @@ calls `_clear_checkpoint()` first: tracker and snapshot reset, spawn point back
 to the level's own, flags lowered. Loading and unloading a level clear
 everything with the other runtime state.
 
-Budget: at most `Cfg::Level::Limits::CHECKPOINTS` (4) per level, one sprite and
+Budget: at most `Cfg::Level::Limits::CHECKPOINTS` (1) per level, one sprite and
 one physics body each - the registries' capacities keep their headroom.
 
 ### Level hints

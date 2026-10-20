@@ -109,6 +109,9 @@ class SyntheticTests(unittest.TestCase):
         cls.tmp.cleanup()
 
     def run_check(self, name, **kwargs):
+        # the synthetic levels use several flags, so the default limit of one
+        # per level would only get in the way of what they test
+        kwargs.setdefault("limit", 4)
         return cc.check_level(self.levels[name], **kwargs)
 
     def assertError(self, name, fragment, **kwargs):
@@ -247,6 +250,12 @@ class RealLevelTests(unittest.TestCase):
         self.assertEqual(len(self.levels["LEVEL_WORLD3_BOSS"].checkpoints), 1)
         errors, _ = cc.check_level(self.levels["LEVEL_WORLD3_BOSS"])
         self.assertEqual(errors, [])
+
+    def test_every_level_has_at_most_one_checkpoint(self):
+        root = Path(__file__).resolve().parent.parent
+        self.assertEqual(cc.max_checkpoints(root), 1)
+        for name, lv in self.levels.items():
+            self.assertLessEqual(len(lv.checkpoints), 1, name)
 
     def test_no_real_checkpoint_is_in_a_trap_or_on_its_path(self):
         for name, lv in self.levels.items():

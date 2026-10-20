@@ -197,8 +197,8 @@ Two more static checkers keep level content honest (pure Python, no C++):
   platform, trap start box or anywhere on a trap's path (the whole PATH route,
   the MOVING track, the CHASE row, the AMBUSH lunge), the platform is reachable
   from the spawn (jump + dash model), count within
-  `Cfg::Level::Limits::CHECKPOINTS`, plus warnings for an ambush range, order
-  and spacing. Runs in the Python CI job.
+  `Cfg::Level::Limits::CHECKPOINTS` (one per level), plus warnings for an ambush
+  range, order and spacing. Runs in the Python CI job.
 - `tools/Check_sprite_budget.py` - checks every level against the entity limits
   (`Cfg::Level::Limits`), the `SpriteRegistry` capacity and the 128 hardware
   sprites, in a worst-case model (see

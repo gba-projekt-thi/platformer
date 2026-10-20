@@ -469,9 +469,10 @@ constexpr TrapData world5_boss_traps[] = {
     {TrapType::MOVING, 80, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, 0.0, 4.5, 4.5, NO_PATH_TRAP, 0, 0, 0, "wave3"}};
 
-// Two checkpoints, each outside both mimics' ambush ranges (a respawn inside
-// one would trigger it).
-constexpr CheckpointData world5_boss_checkpoints[] = {{-48, 47}, {104, 44}};
+// One checkpoint, in the middle of the arena: outside both mimics' ambush
+// ranges (a respawn inside one would trigger it) and clear of the thwomps'
+// columns and of the axe's row (a level has at most one).
+constexpr CheckpointData world5_boss_checkpoints[] = {{-48, 47}};
 
 const LevelData LEVEL_WORLD5_BOSS = {
 

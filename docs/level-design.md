@@ -258,25 +258,28 @@ dash.
 
 ### Checkpoints
 
-A long level or a boss can carry a few **checkpoints**: flags the duck touches
-to respawn there instead of at the spawn point. They are plain level data:
+A long level or a boss can carry **one checkpoint**: a flag the duck touches
+to respawn there instead of at the spawn point. It is plain level data:
 
 ```cpp
-constexpr CheckpointData world1_boss_checkpoints[] = {{-24, 48}};
+constexpr CheckpointData world3_boss_checkpoints[] = {{-80, 48}};
 // ... at the end of the LevelData literal, after ground_friction and intro_hint:
-//     world1_boss_checkpoints, sizeof(world1_boss_checkpoints) / sizeof(...[0])
+//     world3_boss_checkpoints, sizeof(world3_boss_checkpoints) / sizeof(...[0])
 ```
 
 `(x, y)` is the center of the 16x16 flag AND the respawn position. Put the
 flag's bottom on a platform's top: `y = platform top - 8` (the preview shows
-each platform's top; `Preview_level.py` draws the flags in teal). List a level's
-checkpoints in the order it is played, at most `Cfg::Level::Limits::CHECKPOINTS`
-(4).
+each platform's top; `Preview_level.py` draws the flags in teal). A level has at
+most `Cfg::Level::Limits::CHECKPOINTS` of them, and that is 1: the middle of the
+level is the one place worth a retry point, more would turn the level into
+several short ones. The code itself handles several flags (the limit is a
+config value), so the rules below about order still hold if it is ever raised.
 
 What a respawn does, and what to keep in mind when placing one:
 
-- **Furthest one wins.** Touching an earlier flag again never moves the
-  respawn back. Skipping a flag by jumping past it is fine.
+- **Furthest one wins** (only matters with more than one flag). Touching an
+  earlier flag again never moves the respawn back. Skipping a flag by jumping
+  past it is fine.
 - **Traps and triggers still reset on a death**, exactly as before - with one
   addition: the triggers that were ON when the checkpoint was reached (Latch and
   Toggle, not Hold) are switched on again after the respawn. That keeps a boss

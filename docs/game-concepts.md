@@ -436,11 +436,11 @@ invulnerability. Restart Level from the pause menu skips the effect.
 
 ### Checkpoints
 
-The long levels and the bosses have **checkpoints**: small flags. Touching one
-(the grey flag turns green and raises) makes the duck respawn there instead of
-at the start of the stage - until the level is restarted from the pause menu or
-left. Later flags replace earlier ones; walking back to an earlier flag does
-not undo progress. The death counter still counts every death, so a no-death
+Some long levels and bosses have a **checkpoint**: a small flag, at most one per
+level. Touching it (the grey flag turns green and raises) makes the duck
+respawn there instead of at the start of the stage - until the level is
+restarted from the pause menu or left. The flag never stands in a trap or on its
+path. The death counter still counts every death, so a no-death
 clear and the best time are unaffected. Which triggers had fired when the flag
 was reached fire again after the respawn, so a boss fight keeps its patrols
 instead of going quiet behind the flag. See

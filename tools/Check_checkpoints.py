@@ -55,7 +55,7 @@ def _load(name, filename):
 pv = _load("preview_level", "Preview_level.py")
 sim = pv.sim
 
-DEFAULT_MAX = 4
+DEFAULT_MAX = 1
 FLAG_HALF = 8  # the flag sprite is 16x16, its center is the respawn point
 DUCK = 8
 MAX_FLOAT = 4  # px the flag may hover above the platform top
