@@ -238,7 +238,7 @@ const LevelData LEVEL_WORLD2_BOSS = {
     bn::regular_bg_items::world2,
     bn::music_items::world2,
     // Player spawn
-    {-224, 30},
+    {-224, 42},
     // Door position
     {228, 40},
     // World size (enables scrolling)

@@ -5,7 +5,7 @@
 
 set -e
 
-ROM_FILE="${1:-polygons.gba}"
+ROM_FILE="${1:-platformer.gba}"
 
 if [ ! -f "$ROM_FILE" ]; then
     echo "Error: ROM file not found: $ROM_FILE"

@@ -26,7 +26,7 @@
             "type": "shell",
             "command": "mgba-qt",
             "args": [
-                "${workspaceFolder}/game/foo.gba"
+                "${workspaceFolder}/platformer.gba"
             ],
             "problemMatcher": []
         },
@@ -35,7 +35,7 @@
             "type": "shell",
             "command": "./test-rom.sh",
             "args": [
-                "game/foo.gba"
+                "platformer.gba"
             ],
             "problemMatcher": []
         }

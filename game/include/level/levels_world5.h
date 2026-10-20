@@ -81,9 +81,9 @@ const LevelData LEVEL_WORLD5_SCROLL = {
     bn::regular_bg_items::world5,
     bn::music_items::world5,
     // Player spawn
-    {-272, 30},
+    {-272, 42},
     // Door position
-    {296, 40},
+    {296, 52},
     // World size (enables scrolling)
     624,
     160,
@@ -171,9 +171,9 @@ const LevelData LEVEL_WORLD5_SCROLL_2 = {
     bn::regular_bg_items::world5,
     bn::music_items::world5,
     // Player spawn
-    {-168, 30},
+    {-168, 42},
     // Door position
-    {176, 40},
+    {176, 42},
     // World size (enables scrolling)
     380,
     160};
@@ -269,9 +269,9 @@ const LevelData LEVEL_WORLD5_DASH = {
     bn::regular_bg_items::world5,
     bn::music_items::world5,
     // Player spawn
-    {-296, 30},
+    {-296, 42},
     // Door position
-    {320, 40},
+    {320, 42},
     // World size (enables scrolling)
     700,
     160,
@@ -360,9 +360,9 @@ const LevelData LEVEL_WORLD5_LEVERS = {
     bn::regular_bg_items::world5,
     bn::music_items::world5,
     // Player spawn
-    {-232, 30},
+    {-232, 42},
     // Door position
-    {324, 40},
+    {324, 42},
     // World size (enables scrolling)
     700,
     160,
@@ -487,9 +487,9 @@ const LevelData LEVEL_WORLD5_BOSS = {
     bn::regular_bg_items::world5,
     bn::music_items::world5,
     // Player spawn
-    {-296, 30},
+    {-296, 42},
     // Door position
-    {284, 40},
+    {284, 52},
     // World size (enables scrolling)
     650,
     160,
@@ -541,7 +541,7 @@ const LevelData LEVEL_WORLD5_FINALE = {
     bn::regular_bg_items::world5,
     bn::music_items::world5,
     // Player spawn - left end of the walkway.
-    {-160, 30},
+    {-160, 36},
     // Door position - Susanne, standing on the rightmost platform,
     // animated through her own 8-frame loop and flipped to face left,
     // toward the player approaching from spawn. Flip the last bool if she
