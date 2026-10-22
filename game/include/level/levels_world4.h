@@ -76,9 +76,9 @@ const LevelData LEVEL_WORLD4_SCROLL = {
     bn::regular_bg_items::world4,
     bn::music_items::world4,
     // Player spawn
-    {-248, 0},
+    {-248, 42},
     // Door position
-    {254, 40},
+    {254, 42},
     // World size (enables scrolling)
     528,
     160,
@@ -163,9 +163,9 @@ const LevelData LEVEL_WORLD4_SCROLL_2 = {
     bn::regular_bg_items::world4,
     bn::music_items::world4,
     // Player spawn
-    {-144, 0},
+    {-144, 42},
     // Door position
-    {152, 40},
+    {152, 42},
     // World size (enables scrolling)
     320,
     160};
@@ -276,9 +276,9 @@ const LevelData LEVEL_WORLD4_BOSS = {
     bn::regular_bg_items::world4,
     bn::music_items::world4,
     // Player spawn
-    {-224, 0},
+    {-224, 42},
     // Door position
-    {216, 40},
+    {216, 42},
     // World size (enables scrolling)
     480,
     160,

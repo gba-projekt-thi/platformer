@@ -79,7 +79,7 @@ const LevelData LEVEL_3 = {
     bn::regular_bg_items::world3,
     bn::music_items::world3,
     // Player spawn
-    {-96, 40},
+    {-96, 46},
     // Door position
     {72, -64},
     // World size (single-screen; spelled out so ground_friction below can
@@ -163,7 +163,7 @@ const LevelData LEVEL_WORLD3_SCROLL = {
     bn::regular_bg_items::world3,
     bn::music_items::world3,
     // Player spawn
-    {-224, 40},
+    {-224, 46},
     // Door position
     {224, -16},
     // World size (enables scrolling)
@@ -267,9 +267,9 @@ const LevelData LEVEL_WORLD3_BOSS = {
     bn::regular_bg_items::world3,
     bn::music_items::world3,
     // Player spawn
-    {-240, 30},
+    {-240, 42},
     // Door position
-    {246, 40},
+    {246, 42},
     // World size (enables scrolling)
     520,
     160,

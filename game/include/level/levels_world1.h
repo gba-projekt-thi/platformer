@@ -61,9 +61,9 @@ const LevelData LEVEL_0 = {
     bn::regular_bg_items::world1,
     bn::music_items::world1,
     // Player spawn
-    {-96, 0},
+    {-96, 42},
     // Door position
-    {32, 0}};
+    {32, 4}};
 
 // =============================================================================
 // LEVEL 1 (World 1) - unchanged
@@ -118,7 +118,7 @@ const LevelData LEVEL_1 = {
     bn::regular_bg_items::world1,
     bn::music_items::world1,
     // Player spawn
-    {-96, 0},
+    {-96, 42},
     // Door position
     {112, 40}};
 
@@ -193,7 +193,7 @@ const LevelData LEVEL_WORLD1_SCROLL = {
     bn::regular_bg_items::world1,
     bn::music_items::world1,
     // Player spawn
-    {-176, 0},
+    {-176, 42},
     // Door position
     {176, 40},
     // World size (enables scrolling)
@@ -306,7 +306,7 @@ const LevelData LEVEL_WORLD1_BOSS = {
     bn::regular_bg_items::world1,
     bn::music_items::world1,
     // Player spawn
-    {-224, 30},
+    {-224, 42},
     // Door position
     {228, 40},
     // World size (enables scrolling)
