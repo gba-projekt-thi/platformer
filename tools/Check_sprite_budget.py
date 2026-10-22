@@ -15,10 +15,12 @@ long before anybody runs the ROM:
     dash afterimages. A sprite beyond the capacity is dropped by the registry
     (logged, but it then stays pinned to its screen position).
   * the 128 hardware sprite slots (OAM): the registered sprites plus the HUD
-    (death counter, timer), the hidden "Paused" title, the level hint, the
+    (death counter, timer), the level hint, the
     "New Best!" banner and the pause overlay. Butano counts hidden sprites
     too, so all of them are allocated at once in the worst case - except the
-    hint and the pause overlay: LevelScene releases the hint while paused.
+    hint and the pause overlay: LevelScene releases the hint while paused, and
+    PauseController creates its title and rows only while paused and releases
+    them on resume.
   * registry capacities of the collision system (collision_registry.h) against
     the entity limits.
 
@@ -63,7 +65,7 @@ PLAYER_AND_DOOR = 2  # the duck and the level's door are always registered
 # Drawn glyphs of the always-present text (spaces draw nothing).
 DEATH_COUNTER_GLYPHS = 12  # "Deaths:" (7) + up to 5 digits (uint16_t)
 TIMER_GLYPHS = 8  # MM:SS:CC
-PAUSE_TITLE_GLYPHS = 6  # "Paused", allocated hidden at level load
+PAUSE_TITLE_GLYPHS = 6  # "Paused", only while paused (not in the controls view)
 HINT_MAX_GLYPHS = 28  # hint::MAX_CHARS
 BANNER_LINES = ("New Best!", "01:23.45", "Press A to continue")
 
@@ -170,14 +172,26 @@ class Budget:
         except KeyError:
             raise AttributeError(name) from None
 
-    @property
-    def pause_overlay(self):
-        """Worst case of the sprites the pause overlay allocates (menu sprites
-        only - the "Paused" title is counted separately)."""
+    def _pause_views(self):
+        """(menu rows, title) of each view of the pause overlay. Only one view
+        exists at a time; each has one '>' cursor, and the controls view has
+        no 'Paused' title."""
         main = sum(glyphs(r) for r in PAUSE_MAIN_ROWS) + 1
         options = sum(glyphs(r) for r in PAUSE_OPTIONS_ROWS) + 1
         controls = glyphs(CONTROLS_TITLE) + sum(glyphs(r) for r in self.controls_lines)
-        return max(main, options, controls)
+        return ((main, PAUSE_TITLE_GLYPHS), (options, PAUSE_TITLE_GLYPHS), (controls, 0))
+
+    @property
+    def pause_menu(self):
+        """Worst case of the menu rows (the _menu_sprites vector)."""
+        return max(rows for rows, _ in self._pause_views())
+
+    @property
+    def pause_overlay(self):
+        """Worst case of everything the pause overlay allocates while it is
+        open: the rows of the widest view plus its 'Paused' title. All of it is
+        released on resume."""
+        return max(rows + title for rows, title in self._pause_views())
 
     @property
     def banner(self):
@@ -234,7 +248,7 @@ def demand(level, budget):
         # ghost takes one of these slots, since death clears the trail first
         + budget.SLOTS
     )
-    fixed = registry + budget.hud + PAUSE_TITLE_GLYPHS
+    fixed = registry + budget.hud
     hint = hint_glyphs(level)
     scenarios = {
         "play": fixed + hint,
@@ -301,7 +315,6 @@ def check_configuration(budget):
     oam_worst = (
         registry_worst
         + b.hud
-        + PAUSE_TITLE_GLYPHS
         + max(HINT_MAX_GLYPHS + b.banner, b.pause_overlay)
     )
     if oam_worst > b.oam:

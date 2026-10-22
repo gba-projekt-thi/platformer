@@ -31,23 +31,26 @@ void PauseController::_init_pause_menu() {
     _text_gen->set_z_order(Cfg::ZOrder::PAUSE_MENU);
     _text_gen->set_blending_enabled(true);
 
-    _text_gen->generate(
-        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_TITLE, "Paused", _title_sprites);
-    for (bn::sprite_ptr& sprite : _title_sprites) {
-        sprite.set_visible(false);
-        sprite.set_blending_enabled(true);
-    }
-
+    // Only the generator: it owns no sprites. The title and the menu rows are
+    // created when the game is paused and released when it resumes.
     _pause_menu_initialized = true;
 }
 
-void PauseController::_set_visible(bool visible) {
+void PauseController::_show_title() {
+    _title_sprites.clear();
+    _text_gen->generate(
+        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_TITLE, "Paused", _title_sprites);
     for (bn::sprite_ptr& sprite : _title_sprites) {
-        sprite.set_visible(visible);
+        sprite.set_blending_enabled(true);
     }
-    for (bn::sprite_ptr& sprite : _menu_sprites) {
-        sprite.set_visible(visible);
-    }
+}
+
+void PauseController::_release_sprites() {
+    // Butano counts a hidden sprite like a visible one, so the overlay is
+    // released, not hidden: it needs up to ~63 of the 128 sprites while it is
+    // open and must not keep any of them while the level runs.
+    _title_sprites.clear();
+    _menu_sprites.clear();
 }
 
 void PauseController::_rebuild_menu() {
@@ -177,9 +180,7 @@ void PauseController::_rebuild_controls_view() {
     // Title and menu rows make way for the controls list. Sprite budget:
     // the overview is drawn on top of a running level, so ControlsText keeps
     // its lines short (see controls_text.h).
-    for (bn::sprite_ptr& sprite : _title_sprites) {
-        sprite.set_visible(false);
-    }
+    _title_sprites.clear();
     for (bn::sprite_ptr& sprite : _menu_sprites) {
         sprite.set_visible(false);
     }
@@ -258,7 +259,7 @@ void PauseController::reset() {
     _showing_options = false;
     _showing_controls = false;
     _option_row = 0;
-    _set_visible(false);
+    _release_sprites();
 }
 
 PauseController::Action PauseController::update() {
@@ -268,18 +269,17 @@ PauseController::Action PauseController::update() {
 
     if (_prev_paused != _paused) {
         _prev_paused = _paused;
-        _set_visible(_paused);
 
         if (_paused) {
             _selected_index = 0;
             _showing_options = false;
             _showing_controls = false;
             _rebuild_menu();
-            _set_visible(true);
+            _show_title();
             bn::music::pause();
             AudioSettings::instance().play_sfx(bn::sound_items::menu);
         } else {
-            _set_visible(false);
+            _release_sprites();
             AudioSettings::instance().play_sfx(bn::sound_items::cancel);
             bn::music::resume();
         }
@@ -289,9 +289,7 @@ PauseController::Action PauseController::update() {
         if (_showing_controls) {
             if (bn::keypad::a_pressed() || bn::keypad::b_pressed()) {
                 _showing_controls = false;
-                for (bn::sprite_ptr& sprite : _title_sprites) {
-                    sprite.set_visible(true);
-                }
+                _show_title();
                 _rebuild_menu();
                 AudioSettings::instance().play_sfx(bn::sound_items::cancel);
             }
@@ -387,7 +385,7 @@ PauseController::Action PauseController::update() {
             // scene transition that destroys this controller).
             _paused = false;
             _prev_paused = false;
-            _set_visible(false);
+            _release_sprites();
             bn::music::resume();
 
             switch (option) {

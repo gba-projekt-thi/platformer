@@ -89,7 +89,9 @@ class GlyphTests(unittest.TestCase):
         self.assertEqual(b.hud, 20)
         self.assertEqual(b.banner, 8 + 8 + 16)
         # options sub-menu (all rows + info line + cursor) is the widest view
-        self.assertEqual(b.pause_overlay, 10 + 8 + 13 + 15 + 10 + 1)
+        self.assertEqual(b.pause_menu, 10 + 8 + 13 + 15 + 10 + 1)
+        # ... plus the 'Paused' title, which the controls view does not show
+        self.assertEqual(b.pause_overlay, b.pause_menu + sb.PAUSE_TITLE_GLYPHS)
 
 
 class DemandTests(Fixture):
@@ -113,7 +115,7 @@ class DemandTests(Fixture):
         lv = self.load(level("H", plats=1, hint="hello world"))["H"]
         b = self.budget()
         registry, sc = sb.demand(lv, b)
-        fixed = registry + b.hud + sb.PAUSE_TITLE_GLYPHS
+        fixed = registry + b.hud
         self.assertEqual(sc["play"], fixed + 10)  # "helloworld"
         self.assertEqual(sc["banner"], fixed + 10 + b.banner)
         # the hint is released while the pause overlay is open
@@ -129,7 +131,9 @@ class DemandTests(Fixture):
         lv = self.load(level("N", plats=1))["N"]
         b = self.budget()
         registry, sc = sb.demand(lv, b)
-        self.assertEqual(sc["play"], registry + b.hud + sb.PAUSE_TITLE_GLYPHS)
+        # no hidden title, no hidden menu rows: nothing of the pause overlay is
+        # allocated while the level runs
+        self.assertEqual(sc["play"], registry + b.hud)
 
     def test_pause_is_the_peak_with_the_default_model(self):
         lv = self.load(level("P", plats=2))["P"]
@@ -195,7 +199,7 @@ class ConfigurationTests(unittest.TestCase):
         registry = (
             sb.PLAYER_AND_DOOR + b.PLATFORMS + b.TOTAL_TRAPS + b.TRIGGERS + b.CHECKPOINTS + b.SLOTS
         )
-        fixed = registry + b.hud + sb.PAUSE_TITLE_GLYPHS
+        fixed = registry + b.hud
         worst = fixed + max(sb.HINT_MAX_GLYPHS + b.banner, b.pause_overlay)
         _, warnings = sb.check_configuration(sb.Budget(MAX_SPRITES=500, oam=worst))
         self.assertEqual(warnings, [])
@@ -359,7 +363,7 @@ class RealLevelTests(unittest.TestCase):
             self.skipTest("pause_controller.h not found")
         match = re.search(r"bn::vector<bn::sprite_ptr,\s*(\d+)>\s+_menu_sprites", path.read_text())
         self.assertIsNotNone(match)
-        self.assertLessEqual(self.budget.pause_overlay, int(match.group(1)))
+        self.assertLessEqual(self.budget.pause_menu, int(match.group(1)))
 
     def test_hints_are_inside_the_model_limit(self):
         for name, lv in self.levels.items():

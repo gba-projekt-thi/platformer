@@ -254,7 +254,7 @@ A practical manual test checklist for any gameplay change:
 | Switches | Toggle flips per entry, Hold releases on exit; bound platforms appear/vanish with their trigger; a platform never appears inside the duck; death resets switches and platforms |
 | Progression | Door advances to the right stage; final stage triggers the kiss scene |
 | Persistence | Deaths/timer/level saved and reloaded per slot |
-| Pause | Menu navigates; continue/restart/title behave correctly |
+| Pause | Menu navigates; continue/restart/title behave correctly; after resuming (also from inside Options or Controls with Start) the level shows no leftover menu text and the sprite count is back to normal (a mGBA sprite viewer shows the hidden ones) |
 | Dash | Whoosh sound and a flickering afterimage trail while dashing, none left behind after a death or level end; B dashes from World 3 onward (not in Worlds 1-2); one air dash per jump, refilled on landing; wall/edge/death cancel it |
 | Assist / Hard Mode | Toggling one turns the other off; traps and coyote/buffer change from the next level load |
 | Controls overview | Reachable from the start screen's "Controls" entry and the pause menu; A/B returns; text fits on screen in the longest level |

@@ -43,6 +43,8 @@ def _body(text, signature):
 SCENE = _find("level_scene.cpp")
 MANAGER_H = _find("level_manager.h")
 MANAGER = _find("level_manager.cpp")
+PAUSE = _find("pause_controller.cpp")
+PAUSE_H = _find("pause_controller.h")
 PLAYER = _find("player.cpp")
 PLAYER_H = _find("player.h")
 
@@ -257,6 +259,60 @@ class PlayerDeathFeedbackWiringTests(unittest.TestCase):
         self.assertIn("_update_respawn_blink()", self.update)
         self.assertIn("death_fx::blink_visible(", self.blink)
         self.assertIn("is_enabled()", self.blink)
+
+
+@unittest.skipIf(PAUSE is None or PAUSE_H is None, "pause_controller.cpp / pause_controller.h not found")
+class PauseOverlayWiringTests(unittest.TestCase):
+    """The pause overlay must not keep sprites while the level runs: Butano
+    counts hidden sprites too (see tools/Check_sprite_budget.py)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.text = PAUSE.read_text()
+        cls.header = PAUSE_H.read_text()
+        cls.init = _body(cls.text, r"void\s+PauseController::_init_pause_menu\s*\(\s*\)")
+        cls.release = _body(cls.text, r"void\s+PauseController::_release_sprites\s*\(\s*\)")
+        cls.show_title = _body(cls.text, r"void\s+PauseController::_show_title\s*\(\s*\)")
+        cls.reset = _body(cls.text, r"void\s+PauseController::reset\s*\(\s*\)")
+        cls.update = _body(cls.text, r"PauseController::Action\s+PauseController::update\s*\(\s*\)")
+        cls.controls = _body(cls.text, r"void\s+PauseController::_rebuild_controls_view\s*\(\s*\)")
+
+    def test_helpers_are_defined(self):
+        for name in ("init", "release", "show_title", "reset", "update", "controls"):
+            self.assertIsNotNone(getattr(self, name), name)
+
+    def test_nothing_is_hidden_any_more(self):
+        # a hidden sprite keeps its slot: the old _set_visible(false) left the
+        # last menu allocated for the rest of the level after the first pause
+        self.assertNotIn("_set_visible", self.text)
+        self.assertNotIn("_set_visible", self.header)
+
+    def test_the_title_is_not_created_at_level_load(self):
+        self.assertNotIn("generate(", self.init)
+        self.assertNotIn("_title_sprites", self.init)
+
+    def test_the_release_frees_the_title_and_the_rows(self):
+        self.assertIn("_title_sprites.clear()", self.release)
+        self.assertIn("_menu_sprites.clear()", self.release)
+
+    def test_the_title_is_created_when_the_game_pauses_and_when_leaving_the_controls(self):
+        self.assertIn('"Paused"', self.show_title)
+        opened = self.update[self.update.index("if (_paused) {"):]
+        self.assertLess(opened.index("_rebuild_menu()"), opened.index("_show_title()"))
+        back = self.update[self.update.index("if (_showing_controls)"):]
+        self.assertIn("_show_title()", back[: back.index("_showing_options")])
+
+    def test_every_way_of_resuming_releases_the_sprites(self):
+        # level load, Start (also from inside a sub-menu), Continue / Restart / Title
+        self.assertIn("_release_sprites()", self.reset)
+        toggle = self.update[: self.update.index("if (_paused) {\n        if (_showing_controls)")]
+        self.assertIn("_release_sprites()", toggle)
+        action = self.update[self.update.index("Leave the pause state immediately"):]
+        self.assertLess(action.index("_paused = false"), action.index("_release_sprites()"))
+        self.assertLess(action.index("_release_sprites()"), action.index("switch (option)"))
+
+    def test_the_controls_view_drops_the_title(self):
+        self.assertIn("_title_sprites.clear()", self.controls)
 
 
 if __name__ == "__main__":

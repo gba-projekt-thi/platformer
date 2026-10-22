@@ -413,6 +413,12 @@ toggles go through `modes::toggle_hard_mode()` /
 `modes::toggle_assist_mode()` (`game_modes.h`), which keep the two modes
 mutually exclusive.
 
+The overlay's sprites (the 'Paused' title and the rows) are created when the
+game pauses and released - not just hidden - when it resumes, restarts or goes
+to the title: Butano counts hidden sprites like visible ones, and the overlay
+needs up to ~63 of the 128 hardware sprites while it is open. The Controls view
+drops the title as well.
+
 ---
 
 ## 5.3 Level Management
