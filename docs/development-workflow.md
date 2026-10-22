@@ -50,6 +50,13 @@ Pick whichever fits your flow; they all produce the same ROM.
 
 > **First build is slow.** The very first build assembles the container image,
 > which takes a few minutes. After that, incremental builds are fast.
+>
+> Creating the container also runs `post-create.sh` once (`postCreateCommand`):
+> it installs the pre-commit hook and does one full build under `bear` to
+> generate `compile_commands.json` for clang-tidy. That file lives in the
+> workspace and is git-ignored, so rebuilding the container skips the build while
+> it exists. After adding source files or changing the Makefile, regenerate it
+> with `./post-create.sh --force`.
 
 ## Testing methodology
 

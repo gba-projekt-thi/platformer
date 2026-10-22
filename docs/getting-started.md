@@ -90,8 +90,11 @@ Think of setup as three layers coming together:
    that image and mount your workspace inside it, plus which tasks and debug
    launchers to expose.
 3. **The first build.** The first time you open the project in the container,
-   the image is assembled (a few minutes). After that, builds are fast and use
-   the cached image.
+   the image is assembled (a few minutes) and `post-create.sh` does one full
+   build to generate `compile_commands.json` for clang-tidy. After that, builds
+   are fast and use the cached image; rebuilding the container skips that build
+   while `compile_commands.json` exists (`./post-create.sh --force` regenerates
+   it).
 
 When you open the repository in VS Code, you are prompted to **reopen in the
 container**. Doing so gives you a terminal and editor that already know about
