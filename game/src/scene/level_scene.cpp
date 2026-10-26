@@ -8,6 +8,7 @@
 #include "data_manager.h"
 #include "game_session.h"
 #include "level_manager.h"
+#include "level_records.h"
 #include "player.h"
 #include "start_scene.h"
 #include "text_buffer.h"
@@ -155,28 +156,14 @@ void LevelScene::update() {
     // Door reached: advance to the next level (or finish the game).
     // -------------------------------------------------------------------------
 
-    // Record a new best-clear-time for the level just finished, before
-    // anything else touches game_state - covers both the "advance to
-    // next level" and "game completed" paths below, since both start
-    // from having reached this level's door.
-    // Not while Assist Mode is on (see LevelManager::records_allowed()): no
-    // best time, no no-death clear, no "New Best!" banner. The level still
-    // counts as cleared for progress and unlocks below.
-    bool new_best = false;
-    if (_level_index < unsigned(GameState::MAX_LEVELS) &&
-        _level_manager.records_allowed()) {
-        auto& game_state = _data_manager.state();
-        const unsigned frames = _level_manager.level_frame_count();
-        uint32_t& best = game_state.best_time_frames[_level_index];
-        if (best == 0 || frames < best) {
-            best = frames;
-            new_best = true;
-        }
-
-        if (_level_manager.no_deaths_this_attempt()) {
-            set_no_death_clear(game_state, _level_index);
-        }
-    }
+    // Record the clear (best time, no-death mark) before anything else
+    // touches game_state - covers both the "advance to next level" and "game
+    // completed" paths below. Nothing is recorded in Assist Mode; the level
+    // still counts as cleared for progress and unlocks below.
+    const bool new_best = record_clear(
+        _data_manager.state(), _level_index, _level_manager.level_frame_count(),
+        _level_manager.no_deaths_this_attempt(),
+        _level_manager.records_allowed());
 
     const unsigned int next_level_index = _level_index + 1u;
     const bool completes_game =
