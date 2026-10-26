@@ -383,6 +383,21 @@ points), a `flee_range` and a `flee_frames`:
   lead there. Every stop should be visible or reachable on the way - the joke
   is the door running, not a door that hides.
 
+### Lurking arms and runaway platforms
+
+Two more ways for the level itself to go after the duck:
+
+- **Lurking (vertical AMBUSH).** `"ambush_vertical": true` makes an AMBUSH
+  trap lunge along y: put arms or spikes below the screen or inside a tall
+  platform, `ambush_speed` negative (up), and they shoot out the moment the
+  duck is within `ambush_range` horizontally, then sink back
+  (`ambush_logic.h`). Fair only if the duck can see them coming or can keep
+  running: a range a little wider than the trap lets a running duck through.
+- **Runaway platform.** A platform with `flee_path` / `flee_range` /
+  `flee_frames` (like the runaway door) slides on when the duck comes close -
+  typically just as it jumps for it. `Check_level_reachability.py` checks
+  the platform at its last stop, so the route has to work from there.
+
 ### Crumbling platforms
 
 A platform reacts to the duck itself, without any trigger: set

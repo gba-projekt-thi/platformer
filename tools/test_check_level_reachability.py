@@ -337,6 +337,25 @@ class RunningDoorTests(unittest.TestCase):
         _, _, _, door = self.load({"x": 30, "y": 4})
         self.assertEqual(door, (30.0, 10.0))
 
+    def test_a_running_platform_counts_at_its_last_stop(self):
+        spec = importlib.util.spec_from_file_location(
+            "generate_levels", Path(__file__).with_name("Generate_levels.py"))
+        gen = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gen)
+        level = {
+            "name": "LEVEL_X",
+            "platforms": {"name": "x_platforms", "items": [
+                {"x": 0, "y": 60, "width": 32, "height": 16, "offset_x": 0, "offset_y": 0,
+                 "sprite": "stone", "sprite_index": 0,
+                 "flee_path": [[48, -8]], "flee_range": 32, "flee_frames": 8}]},
+            "background": "world9", "music": "world9", "spawn": [0, 40], "door": {"x": 30, "y": 4},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "levels.h"
+            path.write_text(gen.generate({"levels": [level]}, gen.read_structs()))
+            platforms = sim.load_levels(path)["LEVEL_X"][0]
+        self.assertEqual((platforms[0].cx, platforms[0].cy), (48.0, 52.0))
+
     def test_a_running_door_counts_at_its_last_stop(self):
         _, _, _, door = self.load({"x": 30, "y": 4, "flee_path": [[40, 0], [60, -20]],
                                    "flee_range": 24, "flee_frames": 10})

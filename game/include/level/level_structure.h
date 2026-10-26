@@ -75,6 +75,15 @@ struct PlatformData {
     // Frames after which a crumbled platform comes back (once the duck is not
     // in its box); 0 = it stays gone until a death or restart.
     unsigned crumble_respawn_frames = 0;
+
+    // Level Devil: a platform that runs away (fleeing_platforms.h), like the
+    // door's flee_path: whenever the duck comes within flee_range px it slides
+    // to the next point of flee_path (offsets from (x, y)) in flee_frames
+    // frames. In the JSON a list of [x, y] pairs. Not combined with
+    // trigger_name or crumbling. Empty = it stays put.
+    bn::span<const bn::fixed_point> flee_path = {};
+    int flee_range = 0;
+    int flee_frames = 0;
 };
 
 // -----------------------------------------------------------------------------
@@ -272,6 +281,11 @@ struct TrapData {
     // CHASE: how far right of its start the chaser flies at most (it stays
     // out of a boss arena); 0 = no limit (trap_timing::chase_target()).
     bn::fixed chase_limit = 0;
+
+    // AMBUSH: lunge along y instead of x (ambush_speed < 0 = up) - arms or
+    // spikes shooting out of the ground the moment the duck is above them.
+    // The trigger stays the duck's horizontal distance (ambush_range).
+    bool ambush_vertical = false;
 };
 
 // -----------------------------------------------------------------------------

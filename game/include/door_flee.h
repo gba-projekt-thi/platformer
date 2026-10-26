@@ -5,10 +5,11 @@
 // -----------------------------------------------------------------------------
 // door_flee
 //
-// The Level Devil door that runs away (DoorData::flee_path): it waits at its
-// origin, and whenever the duck comes within `range` px of it (on both axes)
-// it slides on to the next stop of its path in `frames` frames. At the last
-// stop it stays and is an ordinary door. A death puts it back (reset()).
+// The Level Devil door that runs away (DoorData::flee_path) - and platforms
+// that do the same (PlatformData::flee_path, fleeing_platforms.h): it waits
+// at its origin, and whenever the duck comes within `range` px of it (on
+// both axes) it slides on to the next stop of its path in `frames` frames.
+// At the last stop it stays put. A death puts it back (reset()).
 //
 // Positions are offsets from the door's origin; the path's points too, like
 // TrapData::path. Point is anything with x() / y() (bn::fixed_point in the
@@ -19,6 +20,7 @@ namespace door_flee {
 template <typename Point>
 class Flee {
    public:
+    Flee() = default;
     Flee(const Point* path, int count, int range, int frames)
         : _path(path), _count(count), _range(range), _frames(frames) {}
 
@@ -69,15 +71,16 @@ class Flee {
             _moving = false;
             return;
         }
-        const bn::fixed ratio = bn::fixed(_frame) / _frames;
-        _x = _from_x + (to.x() - _from_x) * ratio;
-        _y = _from_y + (to.y() - _from_y) * ratio;
+        // distance * frame / frames: bn::fixed * bn::fixed rounds the
+        // ratio away and makes the slide jerk.
+        _x = _from_x + (to.x() - _from_x) * _frame / _frames;
+        _y = _from_y + (to.y() - _from_y) * _frame / _frames;
     }
 
-    const Point* _path;
-    int _count;
-    int _range;
-    int _frames;
+    const Point* _path = nullptr;
+    int _count = 0;
+    int _range = 0;
+    int _frames = 0;
 
     int _stop = 0;
     int _frame = 0;

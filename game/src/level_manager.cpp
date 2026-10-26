@@ -245,6 +245,7 @@ void LevelManager::_finish_respawn() {
         _door->reset_flee();
     }
     _dynamic_platforms.reset_crumbling();
+    _fleeing_platforms.reset();
     _checkpoint_run.restore(_triggers);
     // The duck is back at the spawn point or a checkpoint, possibly far from
     // where it died: cut there instead of gliding across the level.
@@ -255,6 +256,7 @@ void LevelManager::_finish_respawn() {
 void LevelManager::_clear_runtime_state() {
     _boss = nullptr;
     _dynamic_platforms.clear();
+    _fleeing_platforms.clear();
     _platforms.clear();
     _platform_bodies.clear();
     _triggers.clear();
@@ -310,6 +312,13 @@ void LevelManager::_load_platforms(const LevelData& level) {
         _platform_bodies.back().pos.offset_x = platform.offset_x;
         _platform_bodies.back().pos.offset_y = platform.offset_y;
         _platform_bodies.back().sprite = wrapped_sprite.get();
+        if (!platform.flee_path.empty()) {
+            _fleeing_platforms.add(
+                _platform_bodies.back(), *wrapped_sprite, platform.x,
+                platform.y, platform.flee_path.data(),
+                platform.flee_path.size(), platform.flee_range,
+                platform.flee_frames);
+        }
 
         _platforms.push_back(bn::move(wrapped_sprite));
     }
@@ -533,6 +542,7 @@ LevelManager::UpdateResult LevelManager::update() {
     _sync_checkpoints();
     _dynamic_platforms.sync_switched(_player.pos);
     _sync_crumble_platforms();
+    _fleeing_platforms.update(_player.pos.x, _player.pos.y);
     _sync_boss_door();
     _feel_boss_hits();
     if (_door) {

@@ -175,33 +175,39 @@ def positional(struct, item, structs):
 
 
 def _array(struct, array, structs):
-    out = comment(array.get("note"))
-    out += f"constexpr {struct} {array['name']}[] = {{\n"
+    definitions = ""
     items = []
-    for item in array["items"]:
+    for i, item in enumerate(array["items"]):
+        definition, item = _flee_path(item, f"{array['name']}_{i}_flee_path")
+        definitions += definition
         text = ""
         if item.get("blank_before"):
             text += "\n"
         text += comment(item.get("note"), "    ")
         text += "    " + positional(struct, {k: v for k, v in item.items() if k not in META}, structs)
         items.append(text)
+    out = definitions + comment(array.get("note"))
+    out += f"constexpr {struct} {array['name']}[] = {{\n"
     out += ",\n".join(items)
     if array.get("trailing_note"):
         out += "\n" + comment(array["trailing_note"], "    ").rstrip("\n")
     return out + "};\n"
 
 
-def _door(level):
-    """(definitions to put before the level, DoorData fields). A running door's
-    flee_path ([[x, y], ...]) becomes its own bn::fixed_point array."""
-    door = dict(level["door"])
-    path = door.get("flee_path")
+def _flee_path(item, name):
+    """(definition, item) - a running door's or platform's flee_path
+    ([[x, y], ...]) becomes its own bn::fixed_point array called `name`."""
+    path = item.get("flee_path")
     if not isinstance(path, list):
-        return "", door
-    name = f"{level['name']}_door_flee_path"
+        return "", item
+    item = dict(item, flee_path=name)
     points = ", ".join(f"{{{value('DoorData', 'x', x)}, {value('DoorData', 'y', y)}}}" for x, y in path)
-    door["flee_path"] = name
-    return f"constexpr bn::fixed_point {name}[] = {{{points}}};\n\n", door
+    return f"constexpr bn::fixed_point {name}[] = {{{points}}};\n\n", item
+
+
+def _door(level):
+    """(definitions to put before the level, DoorData fields)."""
+    return _flee_path(level["door"], f"{level['name']}_door_flee_path")
 
 
 def _level(level, structs):

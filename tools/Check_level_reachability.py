@@ -664,6 +664,10 @@ def load_levels(path):
                 awo = (pf[9].strip() == "true") if len(pf) > 9 else True
                 crumble = int(_num(pf[10])) if len(pf) > 10 else 0
                 respawn = int(_num(pf[11])) if len(pf) > 11 else 0
+                # a running platform (flee_path) counts where it ends up
+                if len(pf) > 12 and pf[12].strip() in flee_paths:
+                    dx, dy = flee_paths[pf[12].strip()][-1]
+                    x, y = x + dx, y + dy
                 platforms.append(Rect(x + ox, y + oy, w, h, i, trig, awo, crumble, respawn))
         triggers = {}
         if f[2] != "nullptr":

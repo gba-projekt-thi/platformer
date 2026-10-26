@@ -149,6 +149,15 @@ class GenerateTests(unittest.TestCase):
         self.assertIn("LEVEL_X_door_flee_path,24,12}", text)
         self.assertLess(text.index("LEVEL_X_door_flee_path[]"), text.index("constLevelDataLEVEL_X"))
 
+    def test_a_running_platform_gets_its_path_as_an_array(self):
+        lv = level()
+        lv["platforms"]["items"][0].update(
+            {"flee_path": [[48, 0]], "flee_range": 32, "flee_frames": 8})
+        text = squash(gen.generate(world(lv), STRUCTS))
+        self.assertIn("constexprbn::fixed_pointx_platforms_0_flee_path[]={{48,0}};", text)
+        self.assertIn("x_platforms_0_flee_path,32,8}", text)
+        self.assertLess(text.index("x_platforms_0_flee_path[]"), text.index("constexprPlatformDatax_platforms"))
+
     def test_includes_follow_the_assets_used(self):
         out = self.header(level())
         for include in ("bn_music_items.h", "bn_regular_bg_items_world9.h",

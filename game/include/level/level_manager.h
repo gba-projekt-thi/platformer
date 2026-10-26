@@ -21,6 +21,7 @@
 #include "death_fx.h"
 #include "door.h"
 #include "dynamic_platforms.h"
+#include "fleeing_platforms.h"
 #include "game_modes.h"
 #include "game_state.h"
 #include "i_resettable.h"
@@ -193,6 +194,13 @@ class LevelManager {
     // the platform bodies/sprites and triggers live in the containers above.
     DynamicPlatforms<StaticBody, Sprite, Trigger, Cfg::Level::Limits::PLATFORMS>
         _dynamic_platforms;
+    // Platforms that run away from the duck (fleeing_platforms.h).
+    FleeingPlatforms<
+        StaticBody,
+        Sprite,
+        bn::fixed_point,
+        Cfg::Level::Limits::PLATFORMS>
+        _fleeing_platforms;
 
     // Non-owning view over every currently-loaded IResettable entity:
     // the triggers (registered in _load_triggers()) and the traps
