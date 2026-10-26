@@ -40,6 +40,13 @@ TEST_CASE(framework_prints_floating_point) {
     CHECK_EQ(testfw::to_text(0.5), std::string("0.5"));
 }
 
+TEST_CASE(framework_prints_fixed_point_types_by_their_value) {
+    struct Fixed {
+        [[nodiscard]] auto to_double() const -> double { return 1.25; }
+    };
+    CHECK_EQ(testfw::to_text(Fixed{}), std::string("1.25"));
+}
+
 TEST_CASE(framework_prints_unknown_types_as_a_placeholder) {
     struct Opaque {};
     CHECK_EQ(testfw::to_text(Opaque{}), std::string("<?>"));

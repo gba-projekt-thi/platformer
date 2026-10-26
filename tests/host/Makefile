@@ -2,10 +2,11 @@
 # Host unit tests
 #
 # Builds and runs the pure-logic tests in this directory with the system's
-# own g++/clang++ - deliberately NOT the ARM cross-compiler, and nothing
-# here touches Butano. Covers the save-system and game-state logic that
-# has zero GBA-hardware dependency (see the top-of-file comments in
-# save_integrity.h, save_buffer.h, game_state.h, frame_time.h).
+# own g++/clang++ - deliberately NOT the ARM cross-compiler. Nothing here
+# needs Butano's runtime, only its header-only types (bn::fixed), so the
+# rules are tested with the game's own arithmetic. Covers the logic that has
+# zero GBA-hardware dependency (see the top-of-file comments in
+# save_integrity.h, locomotion.h, trigger_logic.h, ...).
 #
 # Usage:
 #   cd tests/host && make                    # build + run (incremental, parallel)
@@ -33,7 +34,8 @@ INCLUDES := \
     $(ROOT)/game/include/level \
     $(ROOT)/game/include/scene \
     $(ROOT)/extern/engine/core/include \
-    $(ROOT)/extern/engine/src/save_system/include
+    $(ROOT)/extern/engine/src/save_system/include \
+    $(ROOT)/extern/engine/extern/butano/butano/include
 
 INCLUDE_FLAGS := $(addprefix -I,$(INCLUDES)) -I.
 

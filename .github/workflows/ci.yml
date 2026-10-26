@@ -12,10 +12,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Only extern/engine itself is needed here (pure save-system
-          # headers) - not its own nested butano submodule, which the
-          # host tests never touch.
-          submodules: true
+          # extern/engine and its nested Butano: the host tests use
+          # Butano's header-only bn::fixed (no ARM toolchain needed).
+          submodules: recursive
 
       - name: Build and run tests/host
         run: make -C tests/host

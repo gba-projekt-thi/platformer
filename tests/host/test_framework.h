@@ -80,6 +80,11 @@ auto to_text(const T& value) -> std::string {
         char buffer[32];
         std::snprintf(buffer, sizeof(buffer), "%g", static_cast<double>(value));
         return buffer;
+    } else if constexpr (requires { value.to_double(); }) {
+        // Fixed-point numbers such as bn::fixed.
+        char buffer[32];
+        std::snprintf(buffer, sizeof(buffer), "%g", value.to_double());
+        return buffer;
     } else {
         return "<?>";
     }
