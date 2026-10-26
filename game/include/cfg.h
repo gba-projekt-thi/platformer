@@ -111,17 +111,16 @@ inline constexpr int LINE_SPACING = 16;
 namespace HardMode {
 // Applied to MOVING (velocity/max_vel), CHASE (chase_speed) and AMBUSH
 // (speed) trap values in TrapFactory::create() when GameState::
-// hard_mode_enabled is set. PATH traps are deliberately left alone -
-// their speed lives in path_waits (an unsigned frame count), which
-// needs its own division/rounding-edge-case handling; a separate
-// change if wanted later.
+// hard_mode_enabled is set. PATH traps get the same factor too, but their
+// speed lives in path_waits (an unsigned frame count per node), so it is
+// divided instead: trap_timing::scaled_frames(path_waits, percent).
 inline constexpr bn::fixed SPEED_MULTIPLIER = 1.35;
 }  // namespace HardMode
 
 namespace AssistMode {
-// Mirror image of HardMode: applied to the same MOVING/CHASE/AMBUSH
-// values in TrapFactory::create(). PATH traps are left alone for the
-// same reason as in Hard Mode (speed lives in path_waits).
+// Mirror image of HardMode: applied to the same MOVING/CHASE/AMBUSH values
+// in TrapFactory::create(), and to PATH traps via trap_timing::scaled_frames()
+// (half speed = twice the frames per node).
 inline constexpr bn::fixed TRAP_SPEED_MULTIPLIER = 0.5;
 // Forgiveness windows, replacing Cfg::Player::COYOTE_FRAMES /
 // JUMP_BUFFER_FRAMES while active. Jump speed, gravity and acceleration

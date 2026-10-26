@@ -214,9 +214,9 @@ value once a save has already finished the game once:
   While it's on, a short "Traps x1.35" line underneath shows the actual
   speed multiplier - informational only, not a selectable row.
 - **Effect.** While enabled, Moving, Chase, and Ambush traps move faster
-  (their velocities are scaled up). Path traps are deliberately unaffected,
-  since a patrol's speed is authored as a frame count between waypoints
-  rather than a velocity.
+  (their velocities are scaled up). Path traps patrol faster too: their speed
+  is authored as a frame count between waypoints, so the count is divided by
+  the multiplier instead (15 frames per node become 11 at x1.35).
 - **Persistence.** The On/Off toggle itself resets to Off on a fresh
   run/reset, the same way the audio volume settings do - only the *unlock*
   is a permanent record.
@@ -233,9 +233,9 @@ the levels without a high skill bar:
 
 - **Availability.** Always available - no unlock. It is the last row of
   the pause menu's Options sub-menu (below Hard Mode once that is unlocked).
-- **Effect.** Moving, Chase, and Ambush traps move at half speed (x0.5;
-  Path traps are unaffected, as in Hard Mode). Coyote time grows from 4 to
-  8 frames and the jump buffer from 6 to 12. Jump height, gravity, and
+- **Effect.** Moving, Chase, and Ambush traps move at half speed (x0.5),
+  and Path traps patrol at half speed as well (twice the frames per node).
+  Coyote time grows from 4 to 8 frames and the jump buffer from 6 to 12. Jump height, gravity, and
   acceleration are untouched, so every platform stays reachable exactly as
   authored.
 - **Exclusive with Hard Mode.** Switching one on switches the other off.
@@ -279,8 +279,8 @@ From a player's perspective, traps come in a few recognizable kinds:
   once and retreat. They punish approaching without care rather than
   punishing hesitation.
 
-Moving, Chase, and Ambush hazards all move faster when Hard Mode is enabled -
-see [Hard Mode](#hard-mode) above.
+Moving, Chase, Ambush, and Path hazards all move faster when Hard Mode is
+enabled (and slower in Assist Mode) - see [Hard Mode](#hard-mode) above.
 
 For the internal behavior of each, see [Components — Trap System](components.md).
 

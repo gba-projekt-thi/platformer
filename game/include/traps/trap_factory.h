@@ -8,6 +8,7 @@
 #include "level_structure.h"
 #include "moving_trap.h"
 #include "path_trap.h"
+#include "trap_timing.h"
 
 namespace TrapFactory {
 
@@ -35,15 +36,20 @@ inline auto create(const TrapData& trap_data, LevelManager& level_manager)
         }
 
         case TrapType::PATH: {
-            // Speed not scaled by Hard Mode here - see
-            // Cfg::HardMode::SPEED_MULTIPLIER's comment
+            // A path trap's speed is a frame count per node (path_waits), not
+            // a velocity: Hard / Assist Mode divide it by the multiplier
+            // instead of multiplying it - see trap_timing::scaled_frames().
             Trigger& trigger =
                 level_manager.get_trigger_by_name(trap_data.trigger_name);
+            const int speed_percent =
+                (level_manager.trap_speed_multiplier() * 100).round_integer();
             return bn::make_unique<PathTrap>(
                 trap_data.x, trap_data.y, trap_data.width, trap_data.height,
                 trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
                 trap_data.sprite_waits, trap_data.graphic_indexes, 0,
-                trap_data.path, trap_data.path_waits, trigger);
+                trap_data.path,
+                trap_timing::scaled_frames(trap_data.path_waits, speed_percent),
+                trigger);
         }
 
         case TrapType::CHASE:

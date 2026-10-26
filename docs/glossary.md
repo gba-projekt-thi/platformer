@@ -168,8 +168,8 @@ of the death feedback (`death_fx.h`, `Cfg::DeathFx`). See
 **Hard Mode** — An unlockable, per-save-slot difficulty toggle: completing the
 game once permanently unlocks it, after which it can be switched on/off from
 the pause menu's Options sub-menu. While enabled, Moving, Chase, and Ambush
-trap speeds are scaled up via a multiplier applied at trap-construction time;
-Path traps are unaffected. The unlock persists across a full-game reset; the
+trap speeds are scaled up via a multiplier applied at trap-construction time
+(Path traps by dividing their frames per node). The unlock persists across a full-game reset; the
 On/Off toggle itself resets to off, like the audio volume settings. See
 [Game Concepts — Hard Mode](game-concepts.md#hard-mode) and
 [Components — Trap System](components.md#hard-mode-speed-scaling).
@@ -251,7 +251,8 @@ leaving gameplay. See [Components — Audio System](components.md).
 ## P
 
 **Path trap** — A hazard that interpolates along a defined route of relative
-waypoints; used for patrols and figure-8 motion. Unaffected by Hard Mode. See
+waypoints; used for patrols and figure-8 motion. Speeds up under Hard Mode (fewer frames
+per node). See
 [Components — Trap System](components.md).
 
 **Pause controller** — Handles pause toggling and the pause menu (continue /

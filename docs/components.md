@@ -370,9 +370,13 @@ returns a configured scale factor when the loaded save slot has Hard Mode
 enabled, or `1` otherwise. The multiplier is applied once, in the **trap
 factory**, to the relevant velocity/speed parameters before the concrete trap
 type is constructed - it is not re-applied per frame, and it never touches
-the underlying level data itself. Path traps are deliberately excluded: their
-pacing is authored as a waypoint-to-waypoint frame count rather than a
-velocity, which would need separate handling to scale safely.
+the underlying level data itself. Path traps are scaled too, but their pacing
+is a waypoint-to-waypoint frame count (`path_waits`) rather than a velocity,
+so the factory divides it by the multiplier instead:
+`trap_timing::scaled_frames(frames, speed_percent)` (`trap_timing.h`,
+Butano-free and unit-tested) rounds to the nearest frame, never turns a
+non-zero count into 0 and leaves 0 ("does not move") alone. With x1.35 a
+15-frame node becomes 11 frames, with Assist Mode's x0.5 it becomes 30.
 
 Because the scaling happens at construction, toggling Hard Mode takes effect
 the next time a level loads (on Continue/Restart from the pause menu, or on
@@ -386,7 +390,8 @@ Assist Mode reuses the Hard Mode plumbing. `LevelManager::
 trap_speed_multiplier()` returns `Cfg::HardMode::SPEED_MULTIPLIER` with Hard
 Mode on, `Cfg::AssistMode::TRAP_SPEED_MULTIPLIER` (0.5) with Assist Mode on,
 or `1`; the trap factory applies it once at construction to Moving, Chase,
-and Ambush traps (Path traps excluded). Additionally,
+and Ambush traps and, as a divisor of the frame count, to Path traps (see
+above). Additionally,
 `LevelManager::_load_player_spawn()` calls `Player::set_assist_mode()`,
 which swaps `PlayerLocomotion`'s coyote and jump-buffer windows to
 `Cfg::AssistMode` values. Only forgiveness timing changes - jump speed,
