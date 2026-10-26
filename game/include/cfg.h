@@ -174,6 +174,14 @@ inline constexpr int SAVE_SLOT_COUNT = 3;
 inline constexpr int ENTRY_COUNT = SAVE_SLOT_COUNT + 1;
 }  // namespace StartScreen
 
+namespace Story {
+// StoryScene: up to story::MAX_LINES centered lines from FIRST_LINE_Y, the
+// prompt below them (checked to fit by tests/host/test_story.cpp).
+inline constexpr int FIRST_LINE_Y = -48;
+inline constexpr int LINE_SPACING = 18;
+inline constexpr int PROMPT_Y = 60;
+}  // namespace Story
+
 namespace LevelSelect {
 // One row per level of the chosen world, from StartScreen::Y down; a world
 // with more levels starts higher (menu_nav::first_row_y()) so its last row

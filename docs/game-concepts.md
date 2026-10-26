@@ -186,6 +186,17 @@ rules in `locomotion::Core`, tests in `tests/host/test_locomotion.cpp`:
   frame by frame (`Duck`) with a few climb policies: up a shaft between two
   walls and up a single wall.
 
+## Story
+
+Hildegart, the duck, is flushed out of the bathtub and travels through the
+worlds to reach her beloved Susanne, who waits at the end of World 5's
+finale. The story is told in short pages (`story.h`, shown by
+`StoryScene`): the intro when a new game starts, and one page the first
+time the duck reaches each later world (not again when the world is
+replayed, not via Level Select). A or Start goes on to the level. Each page
+has at most 5 lines of 28 characters; `tests/host/test_story.cpp` checks
+that and which page shows when.
+
 ## Game progression
 
 ### World sequence

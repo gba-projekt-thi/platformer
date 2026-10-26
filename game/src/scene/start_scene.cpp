@@ -21,6 +21,8 @@
 #include "level_scene.h"
 #include "menu_nav.h"
 #include "player.h"
+#include "story.h"
+#include "story_scene.h"
 #include "text_buffer.h"
 #include "world_index.h"
 #include "world_select_scene.h"
@@ -176,10 +178,18 @@ void StartScene::update() {
             _data_manager.set_slot_index(_selected_slot);
             _data_manager.load_from_save();
 
-            // Transition to level scene
-            auto next = bn::make_unique<LevelScene>(
-                _player, _levels, _data_manager, _level_manager);
-            core::SceneManager::instance().set_next_scene(bn::move(next));
+            // Transition to the level scene - through the story's intro
+            // when the game has not begun yet.
+            if (const story::Page* intro =
+                    story::page_on_continue(_data_manager.state())) {
+                auto next = bn::make_unique<StoryScene>(
+                    *intro, _player, _levels, _data_manager, _level_manager);
+                core::SceneManager::instance().set_next_scene(bn::move(next));
+            } else {
+                auto next = bn::make_unique<LevelScene>(
+                    _player, _levels, _data_manager, _level_manager);
+                core::SceneManager::instance().set_next_scene(bn::move(next));
+            }
             _level_manager.restoreHUD();
 
             AudioSettings::instance().play_sfx(bn::sound_items::confirm);

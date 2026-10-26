@@ -12,6 +12,8 @@
 #include "player.h"
 #include "replay_capture.h"
 #include "start_scene.h"
+#include "story.h"
+#include "story_scene.h"
 #include "text_buffer.h"
 #include "timer.h"
 
@@ -206,6 +208,9 @@ void LevelScene::_finalize_advance(unsigned int next_level_index) {
 
     auto& timer = _player.get_timer();
     auto& game_state = _data_manager.state();
+    // The first arrival in a world tells its part of the story.
+    const story::Page* page = story::page_on_advance(
+        game_state.furthest_level, int(next_level_index));
     game_state.level = next_level_index;
     if (next_level_index >
         static_cast<unsigned int>(game_state.furthest_level)) {
@@ -226,10 +231,17 @@ void LevelScene::_finalize_advance(unsigned int next_level_index) {
         !(_levels[_level_index].back_ground ==
           _levels[next_level_index].back_ground);
 
-    auto next_scene = bn::make_unique<LevelScene>(
-        _player, _levels, _data_manager, _level_manager);
     core::AudioTransitionOptions audio_options;
     audio_options.fade_music = changes_world;
+    if (page != nullptr) {
+        auto next_scene = bn::make_unique<StoryScene>(
+            *page, _player, _levels, _data_manager, _level_manager);
+        core::SceneManager::instance().set_next_scene(
+            bn::move(next_scene), audio_options);
+        return;
+    }
+    auto next_scene = bn::make_unique<LevelScene>(
+        _player, _levels, _data_manager, _level_manager);
     core::SceneManager::instance().set_next_scene(
         bn::move(next_scene), audio_options);
 }
