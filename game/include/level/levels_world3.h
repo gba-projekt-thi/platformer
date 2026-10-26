@@ -7,6 +7,7 @@
 #include "bn_regular_bg_items_world3.h"
 #include "bn_sprite_items_baumstamm.h"
 #include "bn_sprite_items_branch32x16.h"
+#include "bn_sprite_items_door32x32.h"
 #include "bn_sprite_items_mushroom32x32.h"
 #include "bn_sprite_items_nebel.h"
 #include "bn_sprite_items_slithermanarms32x32.h"
@@ -163,6 +164,138 @@ const LevelData LEVEL_WORLD3_SCROLL = {
     160,
     // Ground friction: mossy forest floor, noticeably slippery to stop on
     0.55};
+
+// =============================================================================
+// WORLD 3 TRICK - "Trickwood", a Level Devil level (world_width=512)
+// The forest itself is the enemy: a floor that vanishes, arms lurking below a
+// gap, a floor that sags away, and a door that is no door. Every trick is
+// cleared with a plain jump once it is known.
+// =============================================================================
+constexpr bn::fixed_point world3_trick_platforms_8_flee_path[] = {{0, 60}};
+
+constexpr PlatformData world3_trick_platforms[] = {
+
+    // Start.
+    {-232, 64, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-200, 64, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    // 1 - a false floor: the next piece vanishes when the duck runs into
+    // "drop1". The hole is a plain 32 px jump.
+    {-168, 64, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-136, 64, 32, 8, 0, 0, bn::sprite_items::nebel, 0, "drop1", false},
+    {-104, 64, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    // 2 - lurking arms wait below the 32 px gap before this piece: they shoot
+    // up as soon as the duck is above them. Stand at the edge to lure them out
+    // and jump while they sink back.
+    {-40, 64, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-8, 64, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {24, 64, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    // 3 - looks like floor, but sags out of reach when the duck comes close:
+    // the 48 px gap behind it is a plain jump.
+    {56, 64, 32, 8, 0, 0, bn::sprite_items::nebel, 0, nullptr, true, 0, 0,
+     world3_trick_platforms_8_flee_path, 20, 16},
+    {104, 64, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {136, 64, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {168, 64, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {200, 64, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    // 4 - the end of the floor, with a door that is no door (it does not
+    // animate). The real one waits on the ledge above.
+    {232, 64, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    // Step and ledge up to the real door (18 px each).
+    {152, 46, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {184, 28, 32, 8, 0, 0, bn::sprite_items::nebel, 0}};
+
+constexpr TriggerData world3_trick_triggers[] = {
+
+    // Runs the false floor: the piece right of it vanishes.
+    {-164, 48, 16, 24, false, "drop1"}};
+
+constexpr TrapData world3_trick_traps[] = {
+
+    // The lurking arms below the gap at -120 .. -88.
+    {TrapType::AMBUSH,
+     -72,
+     112,
+     20,
+     24,
+     0,
+     0,
+     bn::sprite_items::slithermanarms32x32,
+     8,
+     TRAP_GRAPHICS_INDEXES_3,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     nullptr,
+     20,
+     -6,
+     14,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     true},
+
+    // The fake door: a static door picture that kills, behind the duck like
+    // the real one (Cfg::ZOrder::DOOR).
+    {TrapType::BASE,
+     236,
+     50,
+     10,
+     16,
+     0,
+     2,
+     bn::sprite_items::door32x32,
+     1,
+     TRAP_GRAPHICS_INDEXES_0,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     nullptr,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     Cfg::ZOrder::DOOR}};
+
+const LevelData LEVEL_WORLD3_TRICK = {
+    world3_trick_platforms,
+    sizeof(world3_trick_platforms) / sizeof(world3_trick_platforms[0]),
+    world3_trick_triggers,
+    sizeof(world3_trick_triggers) / sizeof(world3_trick_triggers[0]),
+    world3_trick_traps,
+    sizeof(world3_trick_traps) / sizeof(world3_trick_traps[0]),
+    bn::regular_bg_items::world3,
+    bn::music_items::world3,
+    // Player spawn
+    {-232, 46},
+    // The real door, on the ledge above the fake one.
+    {184, 14},
+    512,
+    160,
+    1,
+    // The first level made of tricks.
+    "Trust nothing here."};
 
 // =============================================================================
 // WORLD 3 BOSS - "Slitherman, Heart of the Forest" (world_width=520)

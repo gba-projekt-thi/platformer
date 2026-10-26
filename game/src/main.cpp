@@ -60,6 +60,7 @@ int main() {
         LEVEL_WORLD2_BOSS,
         LEVEL_3,
         LEVEL_WORLD3_SCROLL,
+        LEVEL_WORLD3_TRICK,
         LEVEL_WORLD3_BOSS,
         LEVEL_WORLD4_POGO,
         LEVEL_WORLD4_SCROLL,

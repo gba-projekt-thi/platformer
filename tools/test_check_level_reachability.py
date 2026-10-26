@@ -438,6 +438,9 @@ class ConstantsMatchTheGameTests(unittest.TestCase):
             self.assertEqual(sim_value, cfg_value("cfg_wall_jump.h", "WallJump", constant), constant)
         self.assertEqual(sim.JUMP_BUFFER, cfg_value("cfg.h", "Player", "JUMP_BUFFER_FRAMES"))
 
+    def test_edge_margin_matches_cfg_h(self):
+        self.assertEqual(sim.EDGE_MARGIN, cfg_value("cfg.h", "Screen", "EDGE_MARGIN"))
+
     def test_duck_body_matches_cfg_h(self):
         self.assertEqual(
             (sim.BW, sim.BH),
@@ -460,6 +463,23 @@ class WallJumpUnlockTests(unittest.TestCase):
         self.assertTrue(wall["LEVEL_WORLD5_FINALE"])
 
 
+class PlayAreaTests(unittest.TestCase):
+    # The duck bounces back past world_width / 2 - EDGE_MARGIN
+    # (Core::set_horizontal_bound): a spawn or door out there is lost.
+    def test_a_spawn_and_door_inside_the_bounce_are_fine(self):
+        self.assertEqual(sim.outside_play_area((-220, 40), (220, 40), 480), [])
+
+    def test_a_spawn_past_the_left_bounce_is_reported(self):
+        self.assertEqual(sim.outside_play_area((-264, 40), (200, 40), 480), ["spawn"])
+
+    def test_a_door_the_duck_touches_at_the_bounce_is_fine(self):
+        # The duck at the bound (230) overlaps a door up to 230 + 4 + 1.
+        self.assertEqual(sim.outside_play_area((0, 40), (235, 40), 480), [])
+
+    def test_a_door_past_the_right_bounce_is_reported(self):
+        self.assertEqual(sim.outside_play_area((0, 40), (236, 40), 480), ["door"])
+
+
 @unittest.skipIf(REPO is None, "levels_world5.h not found")
 class CampaignTests(unittest.TestCase):
     """Every level of the real game, in play order (main.cpp's levels[])."""
@@ -470,7 +490,7 @@ class CampaignTests(unittest.TestCase):
 
     def test_campaign_follows_main_cpp_levels_in_play_order(self):
         names = [level.name for level in self.campaign]
-        self.assertEqual(len(names), 21)
+        self.assertEqual(len(names), 22)
         self.assertEqual(names[0], "LEVEL_0")
         self.assertEqual(names[-1], "LEVEL_WORLD5_FINALE")
 
@@ -479,6 +499,9 @@ class CampaignTests(unittest.TestCase):
         self.assertFalse(dash["LEVEL_WORLD2_BOSS"])
         self.assertTrue(dash["LEVEL_3"])
         self.assertTrue(dash["LEVEL_WORLD5_DASH"])
+
+    def test_every_spawn_and_door_lies_inside_the_play_area(self):
+        self.assertEqual(sim.outside_play_areas(self.campaign), [])
 
     # ~20 s: the same check runs as `Check_level_reachability.py --all` in CI
     # and as a pre-commit hook whenever level data changes.

@@ -14,7 +14,7 @@
 // - smaller save size
 // - consistent ABI behavior on ARM
 struct GameState {
-    // Headroom above the current 21-level roster (see levels[] in
+    // Headroom above the current 22-level roster (see levels[] in
     // main.cpp / WorldIndex::WORLDS). Bump if the game ever grows past
     // this many levels. Independent from Cfg::Level::Limits, which caps
     // per-level entity counts (platforms/triggers/traps), not level

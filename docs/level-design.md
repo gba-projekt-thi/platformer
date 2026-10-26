@@ -324,7 +324,7 @@ past the edge with coyote time). For switch levels it explores every lever
 configuration the duck can set from the platforms it has reached. A gap meant
 to require the dash must fail the optimistic no-dash run and pass the
 conservative dash run. The check ignores hazards, so traps still need a manual
-look. All 21 current levels pass it conservatively with the abilities of
+look. All 22 current levels pass it conservatively with the abilities of
 their world; "Cloak Corridor" needs the dash, "Bramble Hop" the pogo and
 "Barrel Tower" the wall jump (each checked to fail without it). The pogo is
 simulated off the level's BASE traps (they never move), only for levels the

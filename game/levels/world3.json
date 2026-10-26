@@ -115,6 +115,60 @@
       }
     },
     {
+      "name": "LEVEL_WORLD3_TRICK",
+      "note": "=============================================================================\nWORLD 3 TRICK - \"Trickwood\", a Level Devil level (world_width=512)\nThe forest itself is the enemy: a floor that vanishes, arms lurking below a\ngap, a floor that sags away, and a door that is no door. Every trick is\ncleared with a plain jump once it is known.\n=============================================================================",
+      "platforms": {
+        "name": "world3_trick_platforms",
+        "items": [
+          {"x": -232, "y": 64, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0, "blank_before": true, "note": "Start."},
+          {"x": -200, "y": 64, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": -168, "y": 64, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0, "note": "1 - a false floor: the next piece vanishes when the duck runs into\n\"drop1\". The hole is a plain 32 px jump."},
+          {"x": -136, "y": 64, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0, "trigger_name": "drop1", "active_when_on": false},
+          {"x": -104, "y": 64, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": -40, "y": 64, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0, "note": "2 - lurking arms wait below the 32 px gap before this piece: they shoot\nup as soon as the duck is above them. Stand at the edge to lure them out\nand jump while they sink back."},
+          {"x": -8, "y": 64, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": 24, "y": 64, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": 56, "y": 64, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0, "note": "3 - looks like floor, but sags out of reach when the duck comes close:\nthe 48 px gap behind it is a plain jump.", "flee_path": [[0, 60]], "flee_range": 20, "flee_frames": 16},
+          {"x": 104, "y": 64, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": 136, "y": 64, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": 168, "y": 64, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": 200, "y": 64, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": 232, "y": 64, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0, "note": "4 - the end of the floor, with a door that is no door (it does not\nanimate). The real one waits on the ledge above."},
+          {"x": 152, "y": 46, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0, "note": "Step and ledge up to the real door (18 px each)."},
+          {"x": 184, "y": 28, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0}
+        ]
+      },
+      "triggers": {
+        "name": "world3_trick_triggers",
+        "items": [
+          {"blank_before": true, "note": "Runs the false floor: the piece right of it vanishes.", "x": -164, "y": 48, "width": 16, "height": 24, "name": "drop1"}
+        ]
+      },
+      "traps": {
+        "name": "world3_trick_traps",
+        "items": [
+          {"blank_before": true, "note": "The lurking arms below the gap at -120 .. -88.", "type": "AMBUSH", "x": -72, "y": 112, "width": 20, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "slithermanarms32x32", "sprite_waits": 8, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "ambush_range": 20, "ambush_speed": -6, "ambush_duration": 14, "ambush_vertical": true},
+          {"blank_before": true, "note": "The fake door: a static door picture that kills, behind the duck like\nthe real one (Cfg::ZOrder::DOOR).", "type": "BASE", "x": 236, "y": 50, "width": 10, "height": 16, "offset_x": 0, "offset_y": 2, "sprite": "door32x32", "sprite_z_order": "Cfg::ZOrder::DOOR"}
+        ]
+      },
+      "background": "world3",
+      "music": "world3",
+      "spawn": [-232, 46],
+      "door": {
+        "x": 184,
+        "y": 14
+      },
+      "world_width": 512,
+      "world_height": 160,
+      "ground_friction": 1,
+      "intro_hint": "Trust nothing here.",
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "The real door, on the ledge above the fake one.",
+        "intro_hint": "The first level made of tricks."
+      }
+    },
+    {
       "name": "LEVEL_WORLD3_BOSS",
       "note": "=============================================================================\nWORLD 3 BOSS - \"Slitherman, Heart of the Forest\" (world_width=520)\n=============================================================================",
       "platforms": {

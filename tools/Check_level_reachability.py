@@ -74,6 +74,7 @@ DASH_FRAMES = 8
 BW = 8.0
 BH = 8.0
 DEATH_Y = 100.0
+EDGE_MARGIN = 10  # Cfg::Screen: the duck bounces back past world_width / 2 - this
 MAX_FRAMES = 160
 JUMP_BUFFER = 6
 # Cfg::WallJump
@@ -774,6 +775,41 @@ def campaign(root):
     ]
 
 
+def outside_play_area(spawn, door, world_width):
+    """Which of "spawn" / "door" lies past the world-edge bounce
+    (Core::set_horizontal_bound), where the duck cannot stay. The door
+    counts as reached once the duck's body touches its 2 px point."""
+    bound = world_width / 2 - EDGE_MARGIN
+    reach = {"spawn": bound, "door": bound + BW / 2 + 1}
+    return [name for name, (x, _) in (("spawn", spawn), ("door", door)) if abs(x) > reach[name]]
+
+
+def load_world_widths(path):
+    """{level: LevelData::world_width} (the screen width when not given)."""
+    content = _ctr.strip_comments(Path(path).read_text())
+    widths = {}
+    for m in re.finditer(r"(?:const|constexpr) LevelData ([A-Za-z0-9_]+)\s*=\s*", content):
+        if content[m.end()] != "{":
+            continue
+        f = _ctr.top_level_fields(content[m.end() + 1 : _ctr.find_balanced_block(content, m.end())])
+        widths[m.group(1)] = _num(f[10]) if len(f) > 10 else 240
+    return widths
+
+
+def outside_play_areas(levels):
+    """'LEVEL: spawn' / 'LEVEL: door' for each campaign level whose spawn or
+    door lies past its world-edge bounce."""
+    loaded, widths, bad = {}, {}, []
+    for level in levels:
+        if level.path not in loaded:
+            loaded[level.path] = load_levels(level.path)
+            widths[level.path] = load_world_widths(level.path)
+        _, _, spawn, door = loaded[level.path][level.name]
+        bad += [f"{level.name}: {what}" for what in
+                outside_play_area(spawn, door, widths[level.path][level.name])]
+    return bad
+
+
 def unreachable_doors(levels):
     """Names of the campaign levels whose door the duck cannot reach from a
     conservative start with the abilities of that level."""
@@ -806,7 +842,10 @@ def main_all(root="."):
             n for n, on in (("dash", level.dash), ("pogo", level.pogo), ("wall", level.wall)) if on) or "-"
         print(f"{level.index:2d} {level.name:24s} {abilities:15s} {state}")
     print(f"\nReachability check: {len(bad)} of {len(levels)} level(s) cannot be finished.")
-    return 1 if bad else 0
+    outside = outside_play_areas(levels)
+    for entry in outside:
+        print(f"OUTSIDE THE PLAY AREA {entry}")
+    return 1 if bad or outside else 0
 
 
 def main(argv):

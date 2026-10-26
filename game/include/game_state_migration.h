@@ -84,6 +84,10 @@ inline void upgrade(GameState& state, uint16_t version) {
     if (version < 7) {
         insert_level(state, 10);
     }
+    // Schema 8: LEVEL_WORLD3_TRICK before World 3's boss.
+    if (version < 8) {
+        insert_level(state, 9);
+    }
 }
 
 }  // namespace game_state_migration

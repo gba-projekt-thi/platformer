@@ -26,6 +26,13 @@ constexpr replay::Run LEVEL_WORLD2_BOSS_RUNS[] = {
     {0, 24}, {14, 1},  {10, 10}, {2, 10}, {1, 2},  {33, 1}, {1, 30},
     {0, 38}, {14, 1},  {10, 10}, {2, 12}, {34, 1}, {2, 27}, {0, 4},
     {14, 1}, {10, 28}, {2, 4},   {0, 10}};
+constexpr replay::Run LEVEL_WORLD3_TRICK_RUNS[] = {
+    {0, 30},  {2, 27},  {0, 7},  {14, 1},  {10, 16}, {2, 12}, {0, 8},
+    {2, 12},  {0, 21},  {14, 1}, {10, 16}, {2, 12},  {0, 8},  {2, 31},
+    {0, 6},   {2, 1},   {0, 2},  {14, 1},  {10, 16}, {2, 12}, {0, 8},
+    {2, 17},  {0, 5},   {2, 1},  {0, 2},   {1, 2},   {0, 2},  {14, 1},
+    {10, 16}, {2, 4},   {0, 8},  {1, 5},   {0, 5},   {2, 3},  {0, 3},
+    {14, 1},  {10, 16}, {2, 4},  {0, 8},   {1, 4},   {0, 10}};
 constexpr replay::Run LEVEL_WORLD3_BOSS_RUNS[] = {
     {0, 121}, {14, 1}, {10, 4},  {2, 16}, {1, 4},  {33, 1}, {1, 27},
     {0, 74},  {14, 1}, {10, 10}, {2, 6},  {34, 1}, {2, 3},  {1, 34},
@@ -89,6 +96,7 @@ inline constexpr Entry ENTRIES[] = {
     {"LEVEL_WORLD2_BOSS", LEVEL_WORLD2_BOSS_RUNS, 25, 264, true, 175, 17},
     {"LEVEL_3", nullptr, 0, 0, false, 0, 0},
     {"LEVEL_WORLD3_SCROLL", nullptr, 0, 0, false, 0, 0},
+    {"LEVEL_WORLD3_TRICK", LEVEL_WORLD3_TRICK_RUNS, 41, 365, false, 0, 0},
     {"LEVEL_WORLD3_BOSS", LEVEL_WORLD3_BOSS_RUNS, 26, 460, true, 194, 16},
     {"LEVEL_WORLD4_POGO", LEVEL_WORLD4_POGO_RUNS, 143, 262, false, 0, 0},
     {"LEVEL_WORLD4_SCROLL", nullptr, 0, 0, false, 0, 0},
