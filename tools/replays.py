@@ -28,6 +28,7 @@ import importlib.util
 import json
 import os
 import re
+import shutil
 import struct
 import subprocess
 import sys
@@ -142,6 +143,9 @@ def write_header(check):
         return 0
     if not up_to_date:
         HEADER.write_text(text)
+        # Formatted as committed (the pre-commit hook would do it otherwise).
+        if shutil.which("clang-format"):
+            subprocess.run(["clang-format", "-i", str(HEADER)], check=True)
         print(f"wrote {HEADER.name}")
     return 0
 
