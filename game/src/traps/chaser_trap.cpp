@@ -1,5 +1,7 @@
 #include "chaser_trap.h"
 
+#include "trap_timing.h"
+
 ChaserTrap::ChaserTrap(
     const TrapData& data,
     bn::fixed chase_speed,
@@ -10,12 +12,14 @@ ChaserTrap::ChaserTrap(
       _start_y(data.y),
       _follow_distance(data.chase_follow_distance),
       _chase_speed(chase_speed),
+      _limit(data.chase_limit),
       _player(player) {}
 
 void ChaserTrap::update() {
     BaseTrap::update();
 
-    const bn::fixed target_x = _player.pos.x - _follow_distance;
+    const bn::fixed target_x = trap_timing::chase_target(
+        _player.pos.x, _follow_distance, _start_x, _limit);
 
     // Only ever flies right, chasing the player - never retreats left, so
     // standing still or moving left just widens the gap instead of the

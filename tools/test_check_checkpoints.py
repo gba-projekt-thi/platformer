@@ -291,20 +291,15 @@ class RealLevelTests(unittest.TestCase):
             errors, _ = cc.check_level(lv, reach=False)
             self.assertEqual([e for e in errors if "trap" in e], [], name)
 
-    def test_the_two_charging_boss_floors_have_no_flag_to_place(self):
-        # World 1 and 2 bosses charge a trap along the whole floor, so there is
-        # no spot on any platform that is clear of a trap's path.
+    def test_the_two_charging_boss_floors_keep_their_flag_in_the_arena(self):
+        # World 1 and 2 bosses charge a trap along the whole floor, so no spot
+        # there is clear of a trap's path: their one flag stands on the boss
+        # arena's raised left ledge, above that floor.
         for name in ("LEVEL_WORLD1_BOSS", "LEVEL_WORLD2_BOSS"):
             lv = self.levels[name]
-            self.assertEqual(lv.checkpoints, [], name)
-            for p in lv.platforms:
-                x = p.left + 1
-                while x <= p.right - 1:
-                    lv.checkpoints = [(x, p.top - 8)]
-                    errors, _ = cc.check_level(lv, limit=1, reach=False)
-                    self.assertTrue(any("trap" in e for e in errors), (name, x, p.index))
-                    x += 8
-            lv.checkpoints = []
+            self.assertEqual(len(lv.checkpoints), 1, name)
+            floor_top = min(p.top for p in lv.platforms if p.top > 40)
+            self.assertLess(lv.checkpoints[0][1], floor_top - 20, name)
 
     def test_limit_in_cfg_h_matches_the_data(self):
         limit = cc.max_checkpoints(Path(__file__).resolve().parent)

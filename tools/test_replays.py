@@ -57,14 +57,22 @@ class ImportTests(unittest.TestCase):
 class GenerateTests(unittest.TestCase):
     def test_header_lists_every_level_in_play_order(self):
         text = replays.generate(["LEVEL_0", "LEVEL_1"], {"LEVEL_1": [[2, 30], [10, 4]]})
-        self.assertIn('{"LEVEL_0", nullptr, 0, 0}', text)
+        self.assertIn('{"LEVEL_0", nullptr, 0, 0, false, 0, 0}', text)
         self.assertIn("constexpr replay::Run LEVEL_1_RUNS[] = {{2, 30}, {10, 4}};", text)
-        self.assertIn('{"LEVEL_1", LEVEL_1_RUNS, 2, 34}', text)
+        self.assertIn('{"LEVEL_1", LEVEL_1_RUNS, 2, 34, false, 0, 0}', text)
         self.assertLess(text.index('"LEVEL_0"'), text.index('{"LEVEL_1", LEVEL'))
+
+    def test_a_replay_may_start_somewhere_else(self):
+        # A boss fight is tested on its own: the duck starts in the arena.
+        text = replays.generate(
+            ["LEVEL_0", "LEVEL_1"],
+            {"LEVEL_1": [[2, 30]]}, {"LEVEL_1": [120, 30]})
+        self.assertIn('{"LEVEL_1", LEVEL_1_RUNS, 1, 30, true, 120, 30}', text)
+        self.assertIn('{"LEVEL_0", nullptr, 0, 0, false, 0, 0}', text)
 
     def test_header_without_any_replay_still_compiles_to_a_table(self):
         text = replays.generate(["LEVEL_0"], {})
-        self.assertIn('{"LEVEL_0", nullptr, 0, 0}', text)
+        self.assertIn('{"LEVEL_0", nullptr, 0, 0, false, 0, 0}', text)
 
 
 class WriteHeaderTests(unittest.TestCase):
@@ -80,7 +88,7 @@ class WriteHeaderTests(unittest.TestCase):
     def test_a_header_that_only_differs_in_whitespace_is_kept(self):
         # clang-format reflows the committed header; `make replay` must not
         # undo that and leave the working tree dirty.
-        text = replays.generate(replays._campaign_levels(), replays.load_replays())
+        text = replays.generate(replays._campaign_levels(), *replays.load_replays())
         reflowed = text.replace("};", "\n};")
         replays.HEADER.write_text(reflowed)
         self.assertEqual(replays.write_header(check=False), 0)

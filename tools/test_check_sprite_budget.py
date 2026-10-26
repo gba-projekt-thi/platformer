@@ -88,14 +88,25 @@ class GlyphTests(unittest.TestCase):
         b = sb.Budget()
         self.assertEqual(b.hud, 20)
         self.assertEqual(b.banner, 8 + 8 + 16)
-        # the controls view ("Controls" + six lines) is the widest view ...
-        controls = 8 + sum(sb.glyphs(line) for line in sb.DEFAULT_CONTROLS_LINES)
-        self.assertEqual(controls, 67)
-        self.assertEqual(b.pause_menu, controls)
-        # ... and has no 'Paused' title; the options sub-menu (all rows, info
-        # line, cursor, title) stays below it
+        # the controls view (six lines, no title) ...
+        controls = sum(sb.glyphs(line) for line in sb.DEFAULT_CONTROLS_LINES)
+        self.assertEqual(controls, 59)
         options = 10 + 8 + 13 + 15 + 10 + 1
-        self.assertEqual(b.pause_overlay, max(controls, options + sb.PAUSE_TITLE_GLYPHS))
+        self.assertEqual(b.pause_menu, max(controls, options))
+        # ... stays below the options sub-menu with its 'Paused' title
+        self.assertEqual(b.pause_overlay, options + sb.PAUSE_TITLE_GLYPHS)
+
+
+class AbilityTests(unittest.TestCase):
+    """Which levels can dash / pogo (LevelManager::_load_player_spawn())."""
+
+    def test_abilities_follow_the_unlock_worlds_and_bosses(self):
+        abilities = sb.abilities(Path(__file__).resolve().parent.parent)
+        self.assertEqual(abilities["LEVEL_1"], (False, False))
+        self.assertEqual(abilities["LEVEL_3"], (True, False))
+        self.assertEqual(abilities["LEVEL_WORLD4_SCROLL"], (True, True))
+        # every boss level has the pogo, the weapon against its boss
+        self.assertEqual(abilities["LEVEL_WORLD1_BOSS"], (False, True))
 
 
 class DemandTests(Fixture):
@@ -103,7 +114,18 @@ class DemandTests(Fixture):
         lv = self.load(level("A", plats=3, traps=2, checkpoints=1))["A"]
         b = self.budget()
         registry, _ = sb.demand(lv, b)
-        self.assertEqual(registry, 2 + 3 + 2 + 1 + b.SLOTS)
+        self.assertEqual(registry, 2 + 3 + 2 + 1 + b.SLOTS + sb.POGO_SLASH)
+
+    def test_dash_trail_counts_only_where_the_dash_is(self):
+        lv = self.load(level("A", plats=3))["A"]
+        b = self.budget()
+        # one slot stays: the death ghost
+        self.assertEqual(sb.demand(lv, b, dash=False)[0], sb.demand(lv, b)[0] - (b.SLOTS - 1))
+
+    def test_pogo_slash_counts_only_where_the_pogo_is(self):
+        lv = self.load(level("A", plats=3))["A"]
+        b = self.budget()
+        self.assertEqual(sb.demand(lv, b, pogo=False)[0], sb.demand(lv, b)[0] - sb.POGO_SLASH)
 
     def test_only_triggers_with_a_sprite_count(self):
         levels = self.load(

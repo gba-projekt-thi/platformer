@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include "bn_fixed.h"
+#include "cfg_boss.h"
 #include "cfg_camera.h"
 #include "cfg_dash.h"
 #include "cfg_death_fx.h"

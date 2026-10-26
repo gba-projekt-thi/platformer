@@ -55,6 +55,9 @@ void run_replays(
         playing = &buttons;
         player.set_input_hook(play);
         level_manager.load(levels[index]);
+        if (entry.has_start) {
+            player.teleport_to(entry.start_x, entry.start_y);
+        }
 
         bool door = false;
         int frames = 0;

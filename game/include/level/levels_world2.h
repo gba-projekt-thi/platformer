@@ -129,33 +129,51 @@ const LevelData LEVEL_WORLD2_SCROLL = {
 // =============================================================================
 constexpr PlatformData world2_boss_platforms[] = {
 
-    {-224, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
-    {-192, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
-    {-160, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
-    {-128, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
-    {-96, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
-    {-64, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
-    {-32, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
-    {0, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
-    {32, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
-    {64, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
-    {96, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
-    {128, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
-    {160, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
-    {192, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
-    {224, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1}};
+    {-335, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-303, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-271, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-239, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-207, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-175, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-143, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-111, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-79, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-47, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-15, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {17, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {49, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {81, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {113, 60, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+
+    // Boss arena: the Rusty Can. A step up to the left ledge, a pit the boss
+    // floats in (only pogo strikes on its back cross it), the right ledge with
+    // the door - shut until the boss is beaten, when a bridge spans the pit.
+    {141, 42, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {167, 24, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {183, 24, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {311, 24, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {327, 24, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    // The stepping stone the boss's defeat raises (arena_won).
+    {247, 24, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1, "arena_won"}};
 
 constexpr TriggerData world2_boss_triggers[] = {
-    {-150, 40, 32, 40, false, "wave1"},
-    {-50, 40, 32, 40, false, "wave2"},
-    {50, 40, 32, 40, false, "wave3"},
-    {150, 40, 32, 40, false, "wave4"}};
+    {-261, 40, 32, 40, false, "wave1"},
+    {-161, 40, 32, 40, false, "wave2"},
+    {-61, 40, 32, 40, false, "wave3"},
+    {39, 40, 32, 40, false, "wave4"},
+
+    // The arena: the boss starts when the duck reaches the left ledge.
+    {175, 9, 32, 24, false, "arena"},
+    // Switched on by the boss (BossTrap), never by the duck.
+    {247, -200, 8, 8, false, "arena_won"},
+    {247, -200, 8, 8, false, "arena_p2"},
+    {247, -200, 8, 8, false, "arena_p3"}};
 
 constexpr TrapData world2_boss_traps[] = {
 
     // Idle patrol: a rusty pipe swept back and forth across the corridor.
     // Shares "wave1" with Attack 1 below - starts once the fight begins.
-    {TrapType::PATH, -180, 20, 12, 8, 0, 0, bn::sprite_items::pipe16x16, 10,
+    {TrapType::PATH, -291, 20, 12, 8, 0, 0, bn::sprite_items::pipe16x16, 10,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, LEVEL3_BRANCH_PATH, 15, 0, 0, "wave1"},
 
     // Second pipe, further into the corridor, sweeping the identical
@@ -164,21 +182,21 @@ constexpr TrapData world2_boss_traps[] = {
     // same path_waits, same trigger), no new path data needed. Lands
     // near Attack 3 and the rusty-nails hazard, so the mid-to-late
     // arena isn't just attack waves with no patrol pressure.
-    {TrapType::PATH, 100, 20, 12, 8, 0, 0, bn::sprite_items::pipe16x16, 10,
+    {TrapType::PATH, -11, 20, 12, 8, 0, 0, bn::sprite_items::pipe16x16, 10,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, LEVEL3_BRANCH_PATH_PHASE2, 15, 0, 0,
      "wave1"},
 
     // Attack 1: a can slams down from above, triggered by wave1.
-    {TrapType::MOVING, -145, -40, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
+    {TrapType::MOVING, -256, -40, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
      TRAP_GRAPHICS_INDEXES_8, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "wave1"},
 
     // Attack 2: a second can charges in sideways, triggered by wave2.
-    {TrapType::MOVING, 200, 64, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
+    {TrapType::MOVING, 89, 64, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
      TRAP_GRAPHICS_INDEXES_8, -2.0, 0, 3, NO_PATH_TRAP, 0, 0, 0, "wave2"},
 
     // A crate disguised as scenery - punishes lingering mid-arena.
     {TrapType::AMBUSH,
-     55,
+     -56,
      65,
      20,
      20,
@@ -200,17 +218,60 @@ constexpr TrapData world2_boss_traps[] = {
      18},
 
     // Attack 3: second slam, triggered by wave3.
-    {TrapType::MOVING, 100, -40, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
+    {TrapType::MOVING, -11, -40, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
      TRAP_GRAPHICS_INDEXES_8, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "wave3"},
 
     // A row of rusty nails, always dangerous - forces a precise landing
     // right before the final attack.
-    {TrapType::BASE, 180, 65, 28, 16, 0, 0, bn::sprite_items::rustynails32x16,
+    {TrapType::BASE, 69, 65, 28, 16, 0, 0, bn::sprite_items::rustynails32x16,
      26, TRAP_GRAPHICS_INDEXES_8, 0, 0, 0, NO_PATH_TRAP},
 
     // Attack 4: final charge before the door, triggered by wave4.
-    {TrapType::MOVING, 260, 60, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
-     TRAP_GRAPHICS_INDEXES_8, -2.4, 0, 3.4, NO_PATH_TRAP, 0, 0, 0, "wave4"}};
+    {TrapType::MOVING, 149, 60, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
+     TRAP_GRAPHICS_INDEXES_8, -2.4, 0, 3.4, NO_PATH_TRAP, 0, 0, 0, "wave4"},
+
+    // The Rusty Can: 3 pogo strikes; every hit is a new phase
+    // (faster, and the arena_p<n> traps attack).
+    {TrapType::BOSS,
+     211,
+     37,
+     32,
+     24,
+     0,
+     2,
+     bn::sprite_items::can32x32,
+     10,
+     TRAP_GRAPHICS_INDEXES_8,
+     0,
+     0,
+     0,
+     BOSS_PATH,
+     80,
+     0,
+     0,
+     "arena",
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1.25,
+     3},
+    // Phase attacks: dropped through the pit when arena_p<n> switches on
+    // (in sight after ~37 frames), across the bounces on the boss.
+    {TrapType::MOVING, 228, -180, 24, 24, 0, 0, bn::sprite_items::box32x32, 12,
+     TRAP_GRAPHICS_INDEXES_8, 0.0, 3, 3, NO_PATH_TRAP, 0, 0, 0, "arena_p2"},
+    {TrapType::MOVING, 265, -180, 24, 24, 0, 0, bn::sprite_items::box32x32, 12,
+     TRAP_GRAPHICS_INDEXES_8, 0.0, 3, 3, NO_PATH_TRAP, 0, 0, 0, "arena_p3"}};
+
+// One checkpoint, on the arena's left ledge: a lost boss fight starts there.
+constexpr CheckpointData world2_boss_checkpoints[] = {{167, 13}};
 
 // No checkpoint: the cans charge sideways (wave2, wave4) along the whole
 // corridor, so no flag could stand clear of a trap's path
@@ -225,9 +286,13 @@ const LevelData LEVEL_WORLD2_BOSS = {
     bn::regular_bg_items::world2,
     bn::music_items::world2,
     // Player spawn
-    {-224, 42},
+    {-335, 42},
     // Door position
-    {228, 40},
+    {323, 11},
     // World size (enables scrolling)
-    480,
-    160};
+    702,
+    160,
+    1,
+    nullptr,
+    world2_boss_checkpoints,
+    sizeof(world2_boss_checkpoints) / sizeof(world2_boss_checkpoints[0])};

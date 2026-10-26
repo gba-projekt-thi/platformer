@@ -14,6 +14,7 @@
 #include "bn_sprite_items_rostybar32x32.h"
 #include "bn_sprite_items_susanne16x16.h"
 #include "bn_sprite_items_thwomp32x32.h"
+#include "bn_sprite_items_thwomp64x64.h"
 
 #include "level_structure.h"
 #include "levels_common.h"
@@ -421,43 +422,91 @@ const LevelData LEVEL_WORLD5_CLIMB = {
 // =============================================================================
 constexpr PlatformData world5_boss_platforms[] = {
 
-    {-296, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
-    {-240, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
-    {-200, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {-152, 58, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
-    {-96, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
-    {-48, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {0, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
-    {56, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
-    {104, 60, 26, 16, 0, 0, bn::sprite_items::chest32x32, 0},
-    {152, 70, 26, 10, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {200, 68, 28, 16, 0, -8, bn::sprite_items::bars32x32, 0},
-    {240, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {272, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0}};
+    {-424, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-368, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
+    {-328, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {-280, 58, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-224, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
+    {-176, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {-128, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-72, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
+    {-24, 60, 26, 16, 0, 0, bn::sprite_items::chest32x32, 0},
+    {24, 70, 26, 10, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {72, 68, 28, 16, 0, -8, bn::sprite_items::bars32x32, 0},
+    {112, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {144, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+
+    // Boss arena: the Iron Thwomp. A step up to the left ledge, a pit the boss
+    // floats in (only pogo strikes on its back cross it), the right ledge with
+    // the door - shut until the boss is beaten, when a bridge spans the pit.
+    {182, 50, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {218, 32, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {244, 32, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {398, 32, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {424, 32, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    // The stepping stone the boss's defeat raises (arena_won).
+    {321, 32, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0, "arena_won"}};
 
 constexpr TriggerData world5_boss_triggers[] = {
-    {-180, 48, 32, 24, false, "wave1"},
-    {-80, 48, 32, 24, false, "wave2"},
-    {70, 48, 32, 24, false, "wave3"}};
+    {-308, 48, 32, 24, false, "wave1"},
+    {-208, 48, 32, 24, false, "wave2"},
+    {-58, 48, 32, 24, false, "wave3"},
+
+    // The arena: the boss starts when the duck reaches the left ledge.
+    {231, 4, 52, 24, false, "arena"},
+    // Switched on by the boss (BossTrap), never by the duck.
+    {321, -200, 8, 8, false, "arena_won"},
+    {321, -200, 8, 8, false, "arena_p2"},
+    {321, -200, 8, 8, false, "arena_p4"}};
 
 constexpr TrapData world5_boss_traps[] = {
 
     // The Mimic Lord's axe - relentless, closer and faster than the one
     // in the first World 5 level. Standing still is not an option.
-    {TrapType::CHASE, -324, 20, 32, 16, 0, 0, bn::sprite_items::axe64x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 28, 3.0},
+    {TrapType::CHASE,
+     -452,
+     20,
+     32,
+     16,
+     0,
+     0,
+     bn::sprite_items::axe64x32,
+     1,
+     TRAP_GRAPHICS_INDEXES_0,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     28,
+     3.0,
+     nullptr,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     573},
 
     // Static rusty bar in the first gap - always dangerous.
-    {TrapType::BASE, -264, 60, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
+    {TrapType::BASE, -392, 60, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
 
     // Attack 1: first thwomp slam, triggered by wave1.
-    {TrapType::MOVING, -175, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32,
+    {TrapType::MOVING, -303, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32,
      1, TRAP_GRAPHICS_INDEXES_0, 0.0, 4, 5, NO_PATH_TRAP, 0, 0, 0, "wave1"},
 
     // First mimic, disguised among the real chests.
     {TrapType::AMBUSH,
-     24,
+     -104,
      60,
      16,
      16,
@@ -479,12 +528,12 @@ constexpr TrapData world5_boss_traps[] = {
      16},
 
     // Attack 2: second thwomp slam, triggered by wave2.
-    {TrapType::MOVING, -75, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, 0.0, 4, 5, NO_PATH_TRAP, 0, 0, 0, "wave2"},
+    {TrapType::MOVING, -203, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32,
+     1, TRAP_GRAPHICS_INDEXES_0, 0.0, 4, 5, NO_PATH_TRAP, 0, 0, 0, "wave2"},
 
     // Second mimic, closer to the door.
     {TrapType::AMBUSH,
-     180,
+     52,
      60,
      16,
      16,
@@ -507,13 +556,51 @@ constexpr TrapData world5_boss_traps[] = {
 
     // Attack 3: final thwomp slam right before the door, triggered by
     // wave3.
-    {TrapType::MOVING, 80, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, 0.0, 4.5, 4.5, NO_PATH_TRAP, 0, 0, 0, "wave3"}};
+    {TrapType::MOVING, -48, -20, 32, 32, 0, 0, bn::sprite_items::thwomp32x32, 1,
+     TRAP_GRAPHICS_INDEXES_0, 0.0, 4.5, 4.5, NO_PATH_TRAP, 0, 0, 0, "wave3"},
 
-// One checkpoint, in the middle of the arena: outside both mimics' ambush
-// ranges (a respawn inside one would trigger it) and clear of the thwomps'
-// columns and of the axe's row (a level has at most one).
-constexpr CheckpointData world5_boss_checkpoints[] = {{-48, 47}};
+    // The Iron Thwomp: 5 pogo strikes; every hit is a new phase
+    // (faster, and the arena_p<n> traps attack).
+    {TrapType::BOSS,
+     289,
+     40,
+     56,
+     40,
+     0,
+     2,
+     bn::sprite_items::thwomp64x64,
+     1,
+     TRAP_GRAPHICS_INDEXES_0,
+     0,
+     0,
+     0,
+     BOSS_PATH_WIDE,
+     90,
+     0,
+     0,
+     "arena",
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1.25,
+     5},
+    // Phase attacks: dropped through the pit when arena_p<n> switches on
+    // (in sight after ~37 frames), across the bounces on the boss.
+    {TrapType::MOVING, 299, -180, 16, 16, 0, 0, bn::sprite_items::rostybar32x32,
+     1, TRAP_GRAPHICS_INDEXES_0, 0.0, 3, 3, NO_PATH_TRAP, 0, 0, 0, "arena_p2"},
+    {TrapType::MOVING, 342, -180, 28, 28, 0, 0, bn::sprite_items::thwomp32x32,
+     1, TRAP_GRAPHICS_INDEXES_0, 0.0, 3, 3, NO_PATH_TRAP, 0, 0, 0, "arena_p4"}};
+
+// One checkpoint, on the arena's left ledge: a lost boss fight starts there.
+constexpr CheckpointData world5_boss_checkpoints[] = {{223, 8}};
 
 const LevelData LEVEL_WORLD5_BOSS = {
     world5_boss_platforms,
@@ -525,11 +612,11 @@ const LevelData LEVEL_WORLD5_BOSS = {
     bn::regular_bg_items::world5,
     bn::music_items::world5,
     // Player spawn
-    {-296, 42},
+    {-424, 42},
     // Door position
-    {284, 42},
+    {415, 6},
     // World size (enables scrolling)
-    650,
+    906,
     160,
     // Ground friction: default
     1,

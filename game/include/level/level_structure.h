@@ -26,8 +26,19 @@
 //           once in one direction and returns to its start position
 // CYCLE  -> Moves out by (cycle_dx, cycle_dy), stays, moves back and waits,
 //           again and again on its own clock (spikes out of the floor)
+// BOSS   -> The one enemy the duck can beat: follows `path` like PATH (faster
+//           every phase), kills on touch, and loses one of its boss_hits to
+//           every pogo strike from above (see BossTrap / boss_logic.h)
 // -----------------------------------------------------------------------------
-enum class TrapType : uint8_t { BASE, MOVING, PATH, CHASE, AMBUSH, CYCLE };
+enum class TrapType : uint8_t {
+    BASE,
+    MOVING,
+    PATH,
+    CHASE,
+    AMBUSH,
+    CYCLE,
+    BOSS
+};
 
 // -----------------------------------------------------------------------------
 // PlatformData
@@ -240,6 +251,27 @@ struct TrapData {
     // that stands behind the duck uses Cfg::ZOrder::DOOR / CHECKPOINT (1): a
     // fake door or fake checkpoint then looks exactly like the real one.
     int sprite_z_order = 0;
+
+    // Draws the sprite this many times larger (up to 2, the GBA's affine
+    // double size); width / height are the scaled hitbox. 1 = as drawn.
+    bn::fixed sprite_scale = 1;
+
+    // -------------------------------------------------------------------------
+    // Boss
+    // -------------------------------------------------------------------------
+
+    // Pogo strikes it takes (= phases, at most Cfg::Boss::MAX_PHASES). It
+    // moves along `path` with `path_waits` frames per segment in phase 1,
+    // faster in every later one (boss::phase_frames()). trigger_name is the
+    // arena: the fight starts when it is on (nullptr = at once), and phase n
+    // >= 2 switches on the trigger "<trigger_name>_p<n>" so more traps
+    // attack; the last hit switches on "<trigger_name>_won" (both optional).
+    // While a level's boss lives, its door stays shut.
+    unsigned boss_hits = 0;
+
+    // CHASE: how far right of its start the chaser flies at most (it stays
+    // out of a boss arena); 0 = no limit (trap_timing::chase_target()).
+    bn::fixed chase_limit = 0;
 };
 
 // -----------------------------------------------------------------------------

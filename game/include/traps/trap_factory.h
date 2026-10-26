@@ -3,6 +3,7 @@
 #include "ambush_trap.h"
 #include "base_trap.h"
 #include "bn_unique_ptr.h"
+#include "boss_trap.h"
 #include "chaser_trap.h"
 #include "cycle_trap.h"
 #include "level_manager.h"
@@ -76,6 +77,16 @@ inline auto create_trap(const TrapData& trap_data, LevelManager& level_manager)
                 trap_timing::scaled_frames(
                     trap_data.cycle_phase_frames, speed_percent),
                 trigger);
+        }
+
+        case TrapType::BOSS: {
+            // Like PATH: a frame count per segment, scaled by the modes.
+            const int speed_percent =
+                (level_manager.trap_speed_multiplier() * 100).round_integer();
+            return bn::make_unique<BossTrap>(
+                trap_data,
+                trap_timing::scaled_frames(trap_data.path_waits, speed_percent),
+                level_manager);
         }
 
         default:

@@ -25,6 +25,8 @@ class Door : public PhysicsBody {
     void flee_from(bn::fixed duck_x, bn::fixed duck_y);
     // Back to its origin (death, restart).
     void reset_flee();
+    // A locked door (a boss still lives) is hidden and cannot be entered.
+    void set_locked(bool locked);
     // Mark the door as reached when the player collides with it.
     void on_enter(
         [[maybe_unused]] uint16_t hit_layers,

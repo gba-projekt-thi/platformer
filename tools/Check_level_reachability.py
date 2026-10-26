@@ -211,7 +211,7 @@ def simulate(
                 vx = min(0.0, vx + DECEL)
             vy += G
             if not a_held and vy < 0:
-                vy *= 0.5
+                vy = 0.0  # letting go of A ends the rise (locomotion::Core)
             if vy > MAXFALL:
                 vy = MAXFALL
         # ground state (probe 1px below, width-2)
@@ -250,15 +250,31 @@ def simulate(
     return None, door_touched
 
 
+def fx(value):
+    """`value` as bn::fixed stores it (12 fraction bits, truncated)."""
+    return int(value * 4096) / 4096
+
+
+def fx_mul(a, b):
+    """bn::fixed * bn::fixed: both reduced to 6 fraction bits first."""
+    return int(int(a * 4096) / 64) * int(int(b * 4096) / 64) / 4096
+
+
 def _probe(plats, x, y, w, h):
     return _hits(plats, x, y, w, h) is not None
+
+
+# Braking in the game: DECELERATION * ground friction 1 as bn::fixed computes it.
+BRAKE = fx_mul(fx(DECEL), 1)
 
 
 class Duck:
     """One frame of locomotion::Core::step() and PhysicsBody::move(), button by
     button, with the jump buffer, the wall slide / wall jump and the pogo
     strike off `pogo_targets` (trap boxes; no dash and no world-edge bounce).
-    Drives the wall-climb policies below and scripted replays."""
+    Uses the constants as bn::fixed stores them (fx()), so a scripted run
+    stays frame-exact with the ROM. Drives the wall-climb policies below and
+    scripted replays."""
 
     def __init__(self, plats, x, y, vx=0.0, wall_jump=True, pogo_targets=()):
         self.plats = plats
@@ -309,16 +325,16 @@ class Duck:
             self.lock -= 1
         elif left or right:
             d = -1 if left else 1
-            self.vx = max(-MAXS, min(MAXS, self.vx + d * ACC))
+            self.vx = max(-MAXS, min(MAXS, self.vx + d * fx(ACC)))
         elif self.vx > 0:
-            self.vx = max(0.0, self.vx - DECEL)
+            self.vx = max(0.0, self.vx - BRAKE)
         elif self.vx < 0:
-            self.vx = min(0.0, self.vx + DECEL)
-        self.vy += G
+            self.vx = min(0.0, self.vx + BRAKE)
+        self.vy += fx(G)
         if self.vy >= 0:
             self.pogo_rise = False
         if not a_held and self.vy < 0 and not self.pogo_rise:
-            self.vy *= 0.5
+            self.vy = 0.0
         self.vy = min(self.vy, MAXFALL)
         toward = (wall < 0 and left) or (wall > 0 and right)
         if toward and not self.on_ground and self.vy > SLIDE:
@@ -533,7 +549,9 @@ def reach_with_levers(platforms, triggers, spawn, door, allow_dash, optimistic, 
                     out.append(p)
         return out
 
-    start = tuple((n, triggers[n]["default_on"]) for n in names)
+    # A boss's "<arena>_won" trigger (BossTrap) counts as on: the check
+    # assumes the fight is won (the emulator replays prove that).
+    start = tuple((n, triggers[n]["default_on"] or n.endswith("_won")) for n in names)
     seen = {start}
     todo = [start]
     all_reached = set()

@@ -95,4 +95,16 @@ inline auto scaled_cycle(const CycleTiming& t, int speed_percent)
         scaled_frames(t.wait, speed_percent)};
 }
 
+// Where a ChaserTrap heads: `follow` px behind the duck, but never more than
+// `limit` px right of its start (0 = no limit) - so a boss arena can be kept
+// free of it.
+template <typename T>
+inline auto chase_target(T duck_x, T follow, T start_x, T limit) -> T {
+    const T target = duck_x - follow;
+    if (limit > 0 && target > start_x + limit) {
+        return start_x + limit;
+    }
+    return target;
+}
+
 }  // namespace trap_timing

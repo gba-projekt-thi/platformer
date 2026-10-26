@@ -108,52 +108,65 @@
       "platforms": {
         "name": "world4_boss_platforms",
         "items": [
-          {"blank_before": true, "x": -224, "y": 64, "width": 16, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "beet", "sprite_index": 0},
-          {"x": -168, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower1", "sprite_index": 0},
-          {"x": -128, "y": 44, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower2", "sprite_index": 0},
-          {"x": -88, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
-          {"x": -56, "y": 44, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower3", "sprite_index": 0},
-          {"x": 8, "y": 64, "width": 16, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "beet", "sprite_index": 0},
-          {"x": 64, "y": 44, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower1", "sprite_index": 0},
-          {"x": 104, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
-          {"x": 152, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower2", "sprite_index": 0},
-          {"x": 200, "y": 64, "width": 16, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "beet", "sprite_index": 0}
+          {"blank_before": true, "x": -363, "y": 64, "width": 16, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "beet", "sprite_index": 0},
+          {"x": -307, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower1", "sprite_index": 0},
+          {"x": -267, "y": 44, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower2", "sprite_index": 0},
+          {"x": -227, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": -195, "y": 44, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower3", "sprite_index": 0},
+          {"x": -131, "y": 64, "width": 16, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "beet", "sprite_index": 0},
+          {"x": -75, "y": 44, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower1", "sprite_index": 0},
+          {"x": -35, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 13, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower2", "sprite_index": 0},
+          {"x": 61, "y": 64, "width": 16, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "beet", "sprite_index": 0},
+          {"x": 97, "y": 46, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "blank_before": true, "note": "Boss arena: the Beetle. A step up to the left ledge, a pit the boss\nfloats in (only pogo strikes on its back cross it), the right ledge with\nthe door - shut until the boss is beaten, when a bridge spans the pit."},
+          {"x": 139, "y": 28, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 171, "y": 28, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 315, "y": 28, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 347, "y": 28, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 243, "y": 28, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "trigger_name": "arena_won", "note": "The stepping stone the boss's defeat raises (arena_won)."}
         ]
       },
       "triggers": {
         "name": "world4_boss_triggers",
         "items": [
-          {"x": -140, "y": 40, "width": 32, "height": 40, "name": "wave1"},
-          {"x": -20, "y": 40, "width": 32, "height": 40, "name": "wave2"},
-          {"x": 90, "y": 40, "width": 32, "height": 40, "name": "wave3"}
+          {"x": -279, "y": 40, "width": 32, "height": 40, "name": "wave1"},
+          {"x": -159, "y": 40, "width": 32, "height": 40, "name": "wave2"},
+          {"x": -49, "y": 40, "width": 32, "height": 40, "name": "wave3"},
+          {"blank_before": true, "note": "The arena: the boss starts when the duck reaches the left ledge.", "x": 155, "y": 4, "width": 64, "height": 24, "name": "arena"},
+          {"note": "Switched on by the boss (BossTrap), never by the duck.", "x": 243, "y": -200, "width": 8, "height": 8, "name": "arena_won"},
+          {"x": 243, "y": -200, "width": 8, "height": 8, "name": "arena_p2"},
+          {"x": 243, "y": -200, "width": 8, "height": 8, "name": "arena_p3"}
         ]
       },
       "traps": {
         "name": "world4_boss_traps",
         "items": [
-          {"blank_before": true, "note": "The Hive Queen herself: a bug that trails the duck the whole fight,\nclosing the gap whenever the duck advances - constant pressure, like\nan enrage timer forcing forward movement.", "type": "CHASE", "x": -260, "y": 20, "width": 12, "height": 12, "offset_x": 0, "offset_y": 4, "sprite": "bug16x16", "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "chase_follow_distance": 50, "chase_speed": 1.8},
-          {"blank_before": true, "note": "A bush disguised as scenery, lunging if the duck lingers near it.", "type": "AMBUSH", "x": -100, "y": 56, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16, "ambush_range": 30, "ambush_speed": 1.6, "ambush_duration": 20},
-          {"blank_before": true, "note": "Attack 1: a brick dive-bombs down, triggered by wave1.", "type": "MOVING", "x": -140, "y": -90, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 5, "max_vel": 5, "trigger_name": "wave1"},
-          {"blank_before": true, "note": "Attack 2: a second dive-bomb, triggered by wave2.", "type": "MOVING", "x": -20, "y": -106, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 5, "max_vel": 5, "trigger_name": "wave2"},
-          {"blank_before": true, "note": "A second, faster worker bug lunges in once the duck nears the door.", "type": "AMBUSH", "x": 90, "y": 50, "width": 12, "height": 12, "offset_x": 0, "offset_y": 4, "sprite": "bug16x16", "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "ambush_range": 32, "ambush_speed": 2.2, "ambush_duration": 16},
-          {"blank_before": true, "note": "Attack 3: final dive-bomb right before the door, triggered by wave3.", "type": "MOVING", "x": 100, "y": -90, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4.5, "trigger_name": "wave3"}
+          {"blank_before": true, "note": "The Hive Queen herself: a bug that trails the duck the whole fight,\nclosing the gap whenever the duck advances - constant pressure, like\nan enrage timer forcing forward movement.", "type": "CHASE", "x": -399, "y": 20, "width": 12, "height": 12, "offset_x": 0, "offset_y": 4, "sprite": "bug16x16", "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "chase_follow_distance": 50, "chase_speed": 1.8, "chase_limit": 432},
+          {"blank_before": true, "note": "A bush disguised as scenery, lunging if the duck lingers near it.", "type": "AMBUSH", "x": -239, "y": 56, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16, "ambush_range": 30, "ambush_speed": 1.6, "ambush_duration": 20},
+          {"blank_before": true, "note": "Attack 1: a brick dive-bombs down, triggered by wave1.", "type": "MOVING", "x": -279, "y": -90, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 5, "max_vel": 5, "trigger_name": "wave1"},
+          {"blank_before": true, "note": "Attack 2: a second dive-bomb, triggered by wave2.", "type": "MOVING", "x": -159, "y": -106, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 5, "max_vel": 5, "trigger_name": "wave2"},
+          {"blank_before": true, "note": "A second, faster worker bug lunges in once the duck nears the door.", "type": "AMBUSH", "x": -49, "y": 50, "width": 12, "height": 12, "offset_x": 0, "offset_y": 4, "sprite": "bug16x16", "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "ambush_range": 32, "ambush_speed": 2.2, "ambush_duration": 16},
+          {"blank_before": true, "note": "Attack 3: final dive-bomb right before the door, triggered by wave3.", "type": "MOVING", "x": -39, "y": -90, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4.5, "trigger_name": "wave3"},
+          {"blank_before": true, "note": "The Beetle: 3 pogo strikes; every hit is a new phase\n(faster, and the arena_p<n> traps attack).", "type": "BOSS", "x": 204, "y": 29, "width": 26, "height": 18, "offset_x": 0, "offset_y": 2, "sprite": "bug32x32", "sprite_waits": 8, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "path": "BOSS_PATH", "path_waits": 80, "trigger_name": "arena", "sprite_scale": 1.25, "boss_hits": 3},
+          {"note": "Phase attacks: dropped through the pit when arena_p<n> switches on\n(in sight after ~37 frames), across the bounces on the boss.", "type": "MOVING", "x": 224, "y": -180, "width": 12, "height": 12, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 3, "max_vel": 3, "trigger_name": "arena_p2"},
+          {"type": "MOVING", "x": 261, "y": -180, "width": 12, "height": 12, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 3, "max_vel": 3, "trigger_name": "arena_p3"}
         ]
       },
       "checkpoints": {
         "name": "world4_boss_checkpoints",
-        "note": "Checkpoint on the beet in the middle of the arena, clear of both ambush\nranges.",
+        "note": "One checkpoint, on the arena's left ledge: a lost boss fight starts there.",
         "items": [
-          {"x": 8, "y": 44}
+          {"x": 147, "y": 8}
         ]
       },
       "background": "world4",
       "music": "world4",
-      "spawn": [-224, 42],
+      "spawn": [-363, 42],
       "door": {
-        "x": 216,
-        "y": 42
+        "x": 335,
+        "y": 6
       },
-      "world_width": 480,
+      "world_width": 758,
       "world_height": 160,
       "ground_friction": 1,
       "intro_hint": null,

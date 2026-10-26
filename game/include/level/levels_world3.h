@@ -169,42 +169,60 @@ const LevelData LEVEL_WORLD3_SCROLL = {
 // =============================================================================
 constexpr PlatformData world3_boss_platforms[] = {
 
-    {-240, 60, 16, 8, 0, 0, bn::sprite_items::baumstamm, 0},
-    {-208, 60, 16, 8, 0, 0, bn::sprite_items::baumstamm, 2},
-    {-176, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
-    {-128, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
-    {-80, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
-    {-32, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
-    {16, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
-    {64, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
-    {112, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
-    {160, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
-    {208, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
-    {236, 60, 16, 8, 0, 0, bn::sprite_items::baumstamm, 0},
-    {258, 60, 16, 8, 0, 0, bn::sprite_items::baumstamm, 1}};
+    {-398, 60, 16, 8, 0, 0, bn::sprite_items::baumstamm, 0},
+    {-366, 60, 16, 8, 0, 0, bn::sprite_items::baumstamm, 2},
+    {-334, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-286, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-238, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-190, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-142, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-94, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {-46, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {2, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {50, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {78, 60, 16, 8, 0, 0, bn::sprite_items::baumstamm, 0},
+    {100, 60, 16, 8, 0, 0, bn::sprite_items::baumstamm, 1},
+
+    // Boss arena: the Toadstool. A step up to the left ledge, a pit the boss
+    // floats in (only pogo strikes on its back cross it), the right ledge with
+    // the door - shut until the boss is beaten, when a bridge spans the pit.
+    {136, 42, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {178, 24, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {210, 24, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {354, 24, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    {386, 24, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
+    // The stepping stone the boss's defeat raises (arena_won).
+    {282, 24, 32, 8, 0, 0, bn::sprite_items::nebel, 0, "arena_won"}};
 
 constexpr TriggerData world3_boss_triggers[] = {
-    {-160, 40, 32, 40, false, "wave1"},
-    {-40, 40, 32, 40, false, "wave2"},
-    {80, 40, 32, 40, false, "wave3"},
-    {200, 40, 32, 40, false, "wave4"}};
+    {-318, 40, 32, 40, false, "wave1"},
+    {-198, 40, 32, 40, false, "wave2"},
+    {-78, 40, 32, 40, false, "wave3"},
+    {42, 40, 32, 40, false, "wave4"},
+
+    // The arena: the boss starts when the duck reaches the left ledge.
+    {194, 8, 64, 24, false, "arena"},
+    // Switched on by the boss (BossTrap), never by the duck.
+    {282, -200, 8, 8, false, "arena_won"},
+    {282, -200, 8, 8, false, "arena_p2"},
+    {282, -200, 8, 8, false, "arena_p3"}};
 
 constexpr TrapData world3_boss_traps[] = {
 
     // Idle patrol: a branch sweeping the corridor throughout the fight.
     // Shares "wave1" with Attack 1 below - starts once the fight begins.
-    {TrapType::PATH, -190, 0, 32, 16, 0, 0, bn::sprite_items::branch32x16, 10,
+    {TrapType::PATH, -348, 0, 32, 16, 0, 0, bn::sprite_items::branch32x16, 10,
      TRAP_GRAPHICS_INDEXES_8, 0, 0, 0, LEVEL3_BRANCH_PATH, 20, 0, 0, "wave1"},
 
     // Attack 1: an arm rises up out of the mist, triggered by wave1.
-    {TrapType::MOVING, -150, 96, 32, 32, 0, 0,
+    {TrapType::MOVING, -308, 96, 32, 32, 0, 0,
      bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, 0, -1.8,
      3.3, NO_PATH_TRAP, 0, 0, 0, "wave1"},
 
     // A disguised mushroom - punishes lingering near the middle of the
     // arena instead of pressing forward.
     {TrapType::AMBUSH,
-     25,
+     -133,
      64,
      24,
      24,
@@ -226,23 +244,63 @@ constexpr TrapData world3_boss_traps[] = {
      10},
 
     // Attack 2: a second arm, further along, triggered by wave2.
-    {TrapType::MOVING, -20, 96, 32, 32, 0, 0,
+    {TrapType::MOVING, -178, 96, 32, 32, 0, 0,
      bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, 0, -1.8,
      3.3, NO_PATH_TRAP, 0, 0, 0, "wave2"},
 
     // Attack 3: a third arm, triggered by wave3.
-    {TrapType::MOVING, 100, 96, 32, 32, 0, 0,
+    {TrapType::MOVING, -58, 96, 32, 32, 0, 0,
      bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, 0, -2.0,
      3.6, NO_PATH_TRAP, 0, 0, 0, "wave3"},
 
     // Attack 4: final arm right before the door, triggered by wave4.
-    {TrapType::MOVING, 220, 96, 32, 32, 0, 0,
+    {TrapType::MOVING, 62, 96, 32, 32, 0, 0,
      bn::sprite_items::slithermanarms32x32, 8, TRAP_GRAPHICS_INDEXES_8, 0, -2.2,
-     3.8, NO_PATH_TRAP, 0, 0, 0, "wave4"}};
+     3.8, NO_PATH_TRAP, 0, 0, 0, "wave4"},
 
-// One checkpoint, in the middle of the arena after the second arm - clear of
-// every arm's column and of the patrol (a level has at most one).
-constexpr CheckpointData world3_boss_checkpoints[] = {{-80, 48}};
+    // The Toadstool: 3 pogo strikes; every hit is a new phase
+    // (faster, and the arena_p<n> traps attack).
+    {TrapType::BOSS,
+     246,
+     36,
+     32,
+     24,
+     0,
+     2,
+     bn::sprite_items::mushroom32x32,
+     10,
+     TRAP_GRAPHICS_INDEXES_8,
+     0,
+     0,
+     0,
+     BOSS_PATH,
+     80,
+     0,
+     0,
+     "arena",
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1.25,
+     3},
+    // Phase attacks: dropped through the pit when arena_p<n> switches on
+    // (in sight after ~37 frames), across the bounces on the boss.
+    {TrapType::MOVING, 263, -180, 20, 20, 0, 0, bn::sprite_items::mushroom32x32,
+     10, TRAP_GRAPHICS_INDEXES_8, 0.0, 3, 3, NO_PATH_TRAP, 0, 0, 0, "arena_p2"},
+    {TrapType::MOVING, 300, -180, 20, 20, 0, 0, bn::sprite_items::mushroom32x32,
+     10, TRAP_GRAPHICS_INDEXES_8, 0.0, 3, 3, NO_PATH_TRAP, 0, 0, 0,
+     "arena_p3"}};
+
+// One checkpoint, on the arena's left ledge: a lost boss fight starts there.
+constexpr CheckpointData world3_boss_checkpoints[] = {{186, 12}};
 
 const LevelData LEVEL_WORLD3_BOSS = {
     world3_boss_platforms,
@@ -254,11 +312,11 @@ const LevelData LEVEL_WORLD3_BOSS = {
     bn::regular_bg_items::world3,
     bn::music_items::world3,
     // Player spawn
-    {-240, 42},
+    {-398, 42},
     // Door position
-    {246, 42},
+    {374, 10},
     // World size (enables scrolling)
-    520,
+    836,
     160,
     // Ground friction: default
     1,

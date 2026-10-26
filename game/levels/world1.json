@@ -150,59 +150,79 @@
       "platforms": {
         "name": "world1_boss_platforms",
         "items": [
-          {"blank_before": true, "x": -224, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0},
-          {"x": -192, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
-          {"x": -160, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
-          {"x": -128, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world1", "sprite_index": 2},
-          {"x": -88, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0},
-          {"x": -56, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
-          {"x": -24, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
-          {"x": 8, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world1", "sprite_index": 2},
-          {"x": 48, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0},
-          {"x": 80, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
-          {"x": 112, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
-          {"x": 144, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world1", "sprite_index": 2},
-          {"x": 176, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0},
-          {"x": 208, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
-          {"x": 220, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0}
+          {"blank_before": true, "x": -333, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0},
+          {"x": -301, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": -269, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": -237, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world1", "sprite_index": 2},
+          {"x": -197, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0},
+          {"x": -165, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": -133, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": -101, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world1", "sprite_index": 2},
+          {"x": -61, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0},
+          {"x": -29, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": 3, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": 35, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world1", "sprite_index": 2},
+          {"x": 67, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0},
+          {"x": 99, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": 111, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0},
+          {"x": 139, "y": 42, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1, "blank_before": true, "note": "Boss arena: the Kugelfisch King. A step up to the left ledge, a pit the boss\nfloats in (only pogo strikes on its back cross it), the right ledge with\nthe door - shut until the boss is beaten, when a bridge spans the pit."},
+          {"x": 165, "y": 24, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": 181, "y": 24, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": 309, "y": 24, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": 325, "y": 24, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": 245, "y": 24, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1, "trigger_name": "arena_won", "note": "The stepping stone the boss's defeat raises (arena_won)."}
         ]
       },
       "triggers": {
         "name": "world1_boss_triggers",
         "items": [
-          {"x": -160, "y": 40, "width": 32, "height": 40, "name": "wave1"},
-          {"x": -50, "y": 40, "width": 32, "height": 40, "name": "wave2"},
-          {"x": 50, "y": 40, "width": 32, "height": 40, "name": "wave3"},
-          {"x": 150, "y": 40, "width": 32, "height": 40, "name": "wave4"}
+          {"x": -269, "y": 40, "width": 32, "height": 40, "name": "wave1"},
+          {"x": -159, "y": 40, "width": 32, "height": 40, "name": "wave2"},
+          {"x": -59, "y": 40, "width": 32, "height": 40, "name": "wave3"},
+          {"x": 41, "y": 40, "width": 32, "height": 40, "name": "wave4"},
+          {"blank_before": true, "note": "The arena: the boss starts when the duck reaches the left ledge.", "x": 173, "y": 8, "width": 32, "height": 24, "name": "arena"},
+          {"note": "Switched on by the boss (BossTrap), never by the duck.", "x": 245, "y": -200, "width": 8, "height": 8, "name": "arena_won"},
+          {"x": 245, "y": -200, "width": 8, "height": 8, "name": "arena_p2"},
+          {"x": 245, "y": -200, "width": 8, "height": 8, "name": "arena_p3"}
         ]
       },
       "traps": {
         "name": "world1_boss_traps",
         "items": [
-          {"blank_before": true, "note": "Idle patrol - the boss's passive figure-8 drift, active the whole\nfight (Hollow Knight bosses rarely stand still between attacks).\nShares \"wave1\" with Attack 1 below - starts once the fight begins.", "type": "PATH", "x": -180, "y": -10, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "bubbles", "sprite_waits": 30, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "path": "FIGURE_8_PATH", "path_waits": 15, "trigger_name": "wave1"},
-          {"blank_before": true, "note": "Second bubble, further into the arena, sweeping the identical\nfigure-8 exactly out of phase with the one above (same sprite,\nsame path_waits, same trigger, FIGURE_8_PATH_PHASE2 instead of\nFIGURE_8_PATH) - together the two patrols cover nearly the whole\narena instead of just the opening section, so the mid-to-late\nfight (ambush pufferfish, Attacks 3-4) has patrol pressure too.", "type": "PATH", "x": 140, "y": -10, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "bubbles", "sprite_waits": 30, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "path": "FIGURE_8_PATH_PHASE2", "path_waits": 15, "trigger_name": "wave1"},
-          {"blank_before": true, "note": "Attack 1: telegraphed overhead slam, drops once the duck enters wave1.", "type": "MOVING", "x": -150, "y": -40, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "bubbles", "sprite_waits": 40, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4, "trigger_name": "wave1"},
-          {"blank_before": true, "note": "Attack 2: charging pufferfish dash, triggered by wave2.", "type": "MOVING", "x": 200, "y": 50, "width": 24, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "kugelfisch16x16", "sprite_waits": 30, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_x": -2.2, "max_vel": 3, "trigger_name": "wave2"},
-          {"blank_before": true, "note": "Mid-arena ambush: a smaller pufferfish disguised as scenery, lunges\nif the duck lingers nearby - punishes hesitation, not advancing.", "type": "AMBUSH", "x": 40, "y": 60, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "kugelfisch16x16", "sprite_waits": 10, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "ambush_range": 40, "ambush_speed": 1.5, "ambush_duration": 20},
-          {"blank_before": true, "note": "Attack 3: second overhead slam, triggered by wave3.", "type": "MOVING", "x": 120, "y": -40, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "bubbles", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4, "trigger_name": "wave3"},
-          {"blank_before": true, "note": "Attack 4: final charge before the door, triggered by wave4.", "type": "MOVING", "x": 260, "y": 50, "width": 24, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "kugelfisch16x16", "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_x": -2.5, "max_vel": 3, "trigger_name": "wave4"}
+          {"blank_before": true, "note": "Idle patrol - the boss's passive figure-8 drift, active the whole\nfight (Hollow Knight bosses rarely stand still between attacks).\nShares \"wave1\" with Attack 1 below - starts once the fight begins.", "type": "PATH", "x": -289, "y": -10, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "bubbles", "sprite_waits": 30, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "path": "FIGURE_8_PATH", "path_waits": 15, "trigger_name": "wave1"},
+          {"blank_before": true, "note": "Second bubble, further into the arena, sweeping the identical\nfigure-8 exactly out of phase with the one above (same sprite,\nsame path_waits, same trigger, FIGURE_8_PATH_PHASE2 instead of\nFIGURE_8_PATH) - together the two patrols cover nearly the whole\narena instead of just the opening section, so the mid-to-late\nfight (ambush pufferfish, Attacks 3-4) has patrol pressure too.", "type": "PATH", "x": 31, "y": -10, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "bubbles", "sprite_waits": 30, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "path": "FIGURE_8_PATH_PHASE2", "path_waits": 15, "trigger_name": "wave1"},
+          {"blank_before": true, "note": "Attack 1: telegraphed overhead slam, drops once the duck enters wave1.", "type": "MOVING", "x": -259, "y": -40, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "bubbles", "sprite_waits": 40, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4, "trigger_name": "wave1"},
+          {"blank_before": true, "note": "Attack 2: charging pufferfish dash, triggered by wave2.", "type": "MOVING", "x": 91, "y": 50, "width": 24, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "kugelfisch16x16", "sprite_waits": 30, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_x": -2.2, "max_vel": 3, "trigger_name": "wave2"},
+          {"blank_before": true, "note": "Mid-arena ambush: a smaller pufferfish disguised as scenery, lunges\nif the duck lingers nearby - punishes hesitation, not advancing.", "type": "AMBUSH", "x": -69, "y": 60, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "kugelfisch16x16", "sprite_waits": 10, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "ambush_range": 40, "ambush_speed": 1.5, "ambush_duration": 20},
+          {"blank_before": true, "note": "Attack 3: second overhead slam, triggered by wave3.", "type": "MOVING", "x": 11, "y": -40, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "bubbles", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4, "trigger_name": "wave3"},
+          {"blank_before": true, "note": "Attack 4: final charge before the door, triggered by wave4.", "type": "MOVING", "x": 151, "y": 50, "width": 24, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "kugelfisch16x16", "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_x": -2.5, "max_vel": 3, "trigger_name": "wave4"},
+          {"blank_before": true, "note": "The Kugelfisch King: 3 pogo strikes; every hit is a new phase\n(faster, and the arena_p<n> traps attack).", "type": "BOSS", "x": 209, "y": 36, "width": 32, "height": 24, "offset_x": 0, "offset_y": 2, "sprite": "kugelfisch32x32", "sprite_waits": 12, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "path": "BOSS_PATH", "path_waits": 80, "trigger_name": "arena", "sprite_scale": 1.25, "boss_hits": 3},
+          {"note": "Phase attacks: dropped through the pit when arena_p<n> switches on\n(in sight after ~37 frames), across the bounces on the boss.", "type": "MOVING", "x": 226, "y": -180, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "bubbles", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "velocity_x": 0.0, "velocity_y": 3, "max_vel": 3, "trigger_name": "arena_p2"},
+          {"type": "MOVING", "x": 263, "y": -180, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "bubbles", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "velocity_x": 0.0, "velocity_y": 3, "max_vel": 3, "trigger_name": "arena_p3"}
         ]
       },
       "background": "world1",
       "music": "world1",
-      "spawn": [-224, 42],
+      "spawn": [-333, 42],
       "door": {
-        "x": 228,
-        "y": 40
+        "x": 321,
+        "y": 10
       },
-      "world_width": 480,
+      "world_width": 698,
       "world_height": 160,
       "field_notes": {
         "spawn": "Player spawn",
         "door": "Door position",
         "world_width": "World size (enables scrolling)"
       },
-      "data_note": "No checkpoint: the pufferfish charges (wave2, wave4) sweep the whole floor,\nso no flag could stand clear of a trap's path (tools/Check_checkpoints.py)."
+      "data_note": "No checkpoint: the pufferfish charges (wave2, wave4) sweep the whole floor,\nso no flag could stand clear of a trap's path (tools/Check_checkpoints.py).",
+      "checkpoints": {
+        "name": "world1_boss_checkpoints",
+        "note": "One checkpoint, on the arena's left ledge: a lost boss fight starts there.",
+        "items": [
+          {"x": 165, "y": 12}
+        ]
+      }
     }
   ]
 }

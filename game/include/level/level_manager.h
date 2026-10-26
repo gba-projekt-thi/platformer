@@ -44,6 +44,8 @@
 //
 // Uses fixed-capacity containers to avoid heap allocation and fragmentation.
 // -----------------------------------------------------------------------------
+class BossTrap;
+
 class LevelManager {
    public:
     // Result of a single update() call.
@@ -76,6 +78,9 @@ class LevelManager {
     // shouldn't happen now that every MOVING/PATH trap's trigger_name is
     // set (see level_structure.h), but stays defensive.
     Trigger& get_trigger_by_name(const char* name);
+    // Same, but nullptr when there is none (optional triggers, e.g. a boss's
+    // phase triggers).
+    Trigger* find_trigger(const char* name);
 
     auto player() -> Player& { return _player; }
 
@@ -212,6 +217,11 @@ class LevelManager {
     bool _skip_death_fx = false;
     bool _respawn_pending = false;
     bn::optional<Door> _door;
+    // The level's boss (TrapType::BOSS, owned by _traps) or nullptr. While
+    // it lives the door stays shut (_sync_boss_door()).
+    BossTrap* _boss = nullptr;
+    bool _door_locked = false;
+    void _sync_boss_door();
     bn::optional<bn::music_item> _music;
     PauseController _pause_controller;
     DataManager& _data_manager;

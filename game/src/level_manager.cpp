@@ -1,7 +1,9 @@
 #include "level_manager.h"
+
 #include "audio_settings.h"
 #include "background.h"
 #include "bn_keypad.h"
+#include "boss_trap.h"
 #include "level_limits.h"
 #include "player_events.h"
 #include "replay_capture.h"
@@ -37,6 +39,20 @@ void LevelManager::restoreHUD() {
     // this constructor and StartScene's post-load_from_save() call.
     AudioSettings::instance().set_music_level(game_state.music_volume);
     AudioSettings::instance().set_sfx_level(game_state.sfx_volume);
+}
+
+Trigger* LevelManager::find_trigger(const char* name) {
+    if (name == nullptr) {
+        return nullptr;
+    }
+    for (Trigger& trigger : _triggers) {
+        const char* candidate = trigger.name();
+        if (candidate != nullptr &&
+            bn::string_view(candidate) == bn::string_view(name)) {
+            return &trigger;
+        }
+    }
+    return nullptr;
 }
 
 Trigger& LevelManager::get_trigger_by_name(const char* name) {
@@ -79,10 +95,16 @@ void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.set_dash_enabled(
         _data_manager.state().level >=
         WorldIndex::WORLDS[Cfg::Dash::UNLOCK_WORLD].start_index);
-    // The pogo and wall jumps likewise from their own UNLOCK_WORLD onward.
+    // The pogo and wall jumps likewise from their own UNLOCK_WORLD onward -
+    // the pogo also in every level with a boss, the one weapon against it.
+    bool has_boss = false;
+    for (int i = 0; i < level.trap_count; ++i) {
+        has_boss |= level.traps[i].type == TrapType::BOSS;
+    }
     _player.set_pogo_enabled(
+        has_boss ||
         _data_manager.state().level >=
-        WorldIndex::WORLDS[Cfg::Pogo::UNLOCK_WORLD].start_index);
+            WorldIndex::WORLDS[Cfg::Pogo::UNLOCK_WORLD].start_index);
     _player.set_wall_jump_enabled(
         _data_manager.state().level >=
         WorldIndex::WORLDS[Cfg::WallJump::UNLOCK_WORLD].start_index);
@@ -231,6 +253,7 @@ void LevelManager::_finish_respawn() {
 }
 
 void LevelManager::_clear_runtime_state() {
+    _boss = nullptr;
     _dynamic_platforms.clear();
     _platforms.clear();
     _platform_bodies.clear();
@@ -355,7 +378,26 @@ void LevelManager::_load_traps(const LevelData& level) {
     for (int i = 0; i < level.trap_count; ++i) {
         _traps.push_back(TrapFactory::create(level.traps[i], *this));
         _resettables.push_back(_traps.back().get());
+        if (level.traps[i].type == TrapType::BOSS) {
+            _boss = static_cast<BossTrap*>(_traps.back().get());
+        }
     }
+    _door_locked = false;
+    _sync_boss_door();
+}
+
+// The door opens once the level's boss is beaten (and shuts again when a
+// death starts the fight over).
+void LevelManager::_sync_boss_door() {
+    const bool locked = _boss != nullptr && !_boss->defeated();
+    if (locked == _door_locked || !_door) {
+        return;
+    }
+    if (_door_locked && !locked) {
+        AudioSettings::instance().play_sfx(bn::sound_items::confirm);
+    }
+    _door_locked = locked;
+    _door->set_locked(locked);
 }
 
 void LevelManager::_load_checkpoints(const LevelData& level) {
@@ -479,6 +521,7 @@ LevelManager::UpdateResult LevelManager::update() {
     _sync_checkpoints();
     _dynamic_platforms.sync_switched(_player.pos);
     _sync_crumble_platforms();
+    _sync_boss_door();
     if (_door) {
         _door->flee_from(_player.pos.x, _player.pos.y);
     }

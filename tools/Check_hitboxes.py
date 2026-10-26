@@ -207,6 +207,20 @@ def _union(boxes):
             max(b[2] for b in boxes), max(b[3] for b in boxes))
 
 
+def scaled_box(box, scale):
+    """`box` (relative to the sprite's center) drawn `scale` times larger."""
+    return tuple(v * scale for v in box)
+
+
+def trap_field_index(field):
+    """Position of a TrapData field in the generated (positional) literals."""
+    spec = importlib.util.spec_from_file_location(
+        "generate_levels", Path(__file__).with_name("Generate_levels.py"))
+    gen = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gen)
+    return [name for name, _ in gen.read_structs()["TrapData"]].index(field)
+
+
 def _world(box, x, y):
     return (x + box[0], y + box[1], x + box[2], y + box[3])
 
@@ -220,6 +234,7 @@ def check(root):
     texts = {path: _ctr.strip_comments(path.read_text()) for path in files}
     sequences = _index_arrays([(level_dir / "levels_common.h").read_text(), *texts.values()])
     problems = []
+    scale_at = trap_field_index("sprite_scale")
 
     for path, text in texts.items():
         for array, body in _ctr.extract_named_arrays(text, "PlatformData").items():
@@ -255,6 +270,8 @@ def check(root):
                     continue
                 frames = sequences.get(f[9].strip(), [0]) if len(f) > 9 else [0]
                 img = _union([sprites.box(name, k) for k in frames])
+                if len(f) > scale_at and img:
+                    img = scaled_box(img, _num(f[scale_at]))
                 hit = (x + ox - w / 2, y + oy - h / 2, x + ox + w / 2, y + oy + h / 2)
                 unfair = trap_unfair_by(hit, _world(img, x, y), duck)
                 if unfair > TRAP_TOLERANCE:

@@ -156,7 +156,7 @@ void PauseController::_rebuild_options_menu() {
 }
 
 void PauseController::_rebuild_controls_view() {
-    // Title and menu rows make way for the controls list. Sprite budget:
+    // The menu rows make way for the controls list. Sprite budget:
     // the overview is drawn on top of a running level, so ControlsText keeps
     // its lines short (see controls_text.h).
     _title_sprites.clear();
@@ -165,8 +165,8 @@ void PauseController::_rebuild_controls_view() {
     }
     _menu_sprites.clear();
 
-    _text_gen->generate(
-        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_TITLE, "Controls", _menu_sprites);
+    // No "Controls" title: the menu row just chosen says it, and every glyph
+    // is a sprite on top of a running level (tools/Check_sprite_budget.py).
     for (int i = 0; i < ControlsText::LINE_COUNT; ++i) {
         _text_gen->generate(
             Cfg::PauseMenu::X,

@@ -8,6 +8,7 @@
 #include "bn_sprite_items_bubbles.h"
 #include "bn_sprite_items_connector16x16.h"
 #include "bn_sprite_items_kugelfisch16x16.h"
+#include "bn_sprite_items_kugelfisch32x32.h"
 #include "bn_sprite_items_platforms_world1.h"
 
 #include "level_structure.h"
@@ -197,34 +198,53 @@ const LevelData LEVEL_WORLD1_SCROLL = {
 // =============================================================================
 constexpr PlatformData world1_boss_platforms[] = {
 
-    {-224, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
-    {-192, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
-    {-160, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
-    {-128, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
-    {-88, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
-    {-56, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
-    {-24, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
-    {8, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
-    {48, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
-    {80, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
-    {112, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
-    {144, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
-    {176, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
-    {208, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
-    {220, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0}};
+    {-333, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {-301, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {-269, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {-237, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
+    {-197, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {-165, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {-133, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {-101, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
+    {-61, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {-29, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {3, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {35, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
+    {67, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {99, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {111, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+
+    // Boss arena: the Kugelfisch King. A step up to the left ledge, a pit the
+    // boss floats in (only pogo strikes on its back cross it), the right ledge
+    // with the door - shut until the boss is beaten, when a bridge spans the
+    // pit.
+    {139, 42, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {165, 24, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {181, 24, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {309, 24, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {325, 24, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    // The stepping stone the boss's defeat raises (arena_won).
+    {245, 24, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1, "arena_won"}};
 
 constexpr TriggerData world1_boss_triggers[] = {
-    {-160, 40, 32, 40, false, "wave1"},
-    {-50, 40, 32, 40, false, "wave2"},
-    {50, 40, 32, 40, false, "wave3"},
-    {150, 40, 32, 40, false, "wave4"}};
+    {-269, 40, 32, 40, false, "wave1"},
+    {-159, 40, 32, 40, false, "wave2"},
+    {-59, 40, 32, 40, false, "wave3"},
+    {41, 40, 32, 40, false, "wave4"},
+
+    // The arena: the boss starts when the duck reaches the left ledge.
+    {173, 8, 32, 24, false, "arena"},
+    // Switched on by the boss (BossTrap), never by the duck.
+    {245, -200, 8, 8, false, "arena_won"},
+    {245, -200, 8, 8, false, "arena_p2"},
+    {245, -200, 8, 8, false, "arena_p3"}};
 
 constexpr TrapData world1_boss_traps[] = {
 
     // Idle patrol - the boss's passive figure-8 drift, active the whole
     // fight (Hollow Knight bosses rarely stand still between attacks).
     // Shares "wave1" with Attack 1 below - starts once the fight begins.
-    {TrapType::PATH, -180, -10, 32, 32, 0, 0, bn::sprite_items::bubbles, 30,
+    {TrapType::PATH, -289, -10, 32, 32, 0, 0, bn::sprite_items::bubbles, 30,
      TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, FIGURE_8_PATH, 15, 0, 0, "wave1"},
 
     // Second bubble, further into the arena, sweeping the identical
@@ -233,21 +253,21 @@ constexpr TrapData world1_boss_traps[] = {
     // FIGURE_8_PATH) - together the two patrols cover nearly the whole
     // arena instead of just the opening section, so the mid-to-late
     // fight (ambush pufferfish, Attacks 3-4) has patrol pressure too.
-    {TrapType::PATH, 140, -10, 32, 32, 0, 0, bn::sprite_items::bubbles, 30,
+    {TrapType::PATH, 31, -10, 32, 32, 0, 0, bn::sprite_items::bubbles, 30,
      TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, FIGURE_8_PATH_PHASE2, 15, 0, 0, "wave1"},
 
     // Attack 1: telegraphed overhead slam, drops once the duck enters wave1.
-    {TrapType::MOVING, -150, -40, 32, 32, 0, 0, bn::sprite_items::bubbles, 40,
+    {TrapType::MOVING, -259, -40, 32, 32, 0, 0, bn::sprite_items::bubbles, 40,
      TRAP_GRAPHICS_INDEXES_3, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "wave1"},
 
     // Attack 2: charging pufferfish dash, triggered by wave2.
-    {TrapType::MOVING, 200, 50, 24, 16, 0, 0, bn::sprite_items::kugelfisch16x16,
+    {TrapType::MOVING, 91, 50, 24, 16, 0, 0, bn::sprite_items::kugelfisch16x16,
      30, TRAP_GRAPHICS_INDEXES_8, -2.2, 0, 3, NO_PATH_TRAP, 0, 0, 0, "wave2"},
 
     // Mid-arena ambush: a smaller pufferfish disguised as scenery, lunges
     // if the duck lingers nearby - punishes hesitation, not advancing.
     {TrapType::AMBUSH,
-     40,
+     -69,
      60,
      16,
      16,
@@ -269,12 +289,55 @@ constexpr TrapData world1_boss_traps[] = {
      20},
 
     // Attack 3: second overhead slam, triggered by wave3.
-    {TrapType::MOVING, 120, -40, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
+    {TrapType::MOVING, 11, -40, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
      TRAP_GRAPHICS_INDEXES_3, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "wave3"},
 
     // Attack 4: final charge before the door, triggered by wave4.
-    {TrapType::MOVING, 260, 50, 24, 16, 0, 0, bn::sprite_items::kugelfisch16x16,
-     1, TRAP_GRAPHICS_INDEXES_8, -2.5, 0, 3, NO_PATH_TRAP, 0, 0, 0, "wave4"}};
+    {TrapType::MOVING, 151, 50, 24, 16, 0, 0, bn::sprite_items::kugelfisch16x16,
+     1, TRAP_GRAPHICS_INDEXES_8, -2.5, 0, 3, NO_PATH_TRAP, 0, 0, 0, "wave4"},
+
+    // The Kugelfisch King: 3 pogo strikes; every hit is a new phase
+    // (faster, and the arena_p<n> traps attack).
+    {TrapType::BOSS,
+     209,
+     36,
+     32,
+     24,
+     0,
+     2,
+     bn::sprite_items::kugelfisch32x32,
+     12,
+     TRAP_GRAPHICS_INDEXES_8,
+     0,
+     0,
+     0,
+     BOSS_PATH,
+     80,
+     0,
+     0,
+     "arena",
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1.25,
+     3},
+    // Phase attacks: dropped through the pit when arena_p<n> switches on
+    // (in sight after ~37 frames), across the bounces on the boss.
+    {TrapType::MOVING, 226, -180, 24, 24, 0, 0, bn::sprite_items::bubbles, 26,
+     TRAP_GRAPHICS_INDEXES_3, 0.0, 3, 3, NO_PATH_TRAP, 0, 0, 0, "arena_p2"},
+    {TrapType::MOVING, 263, -180, 24, 24, 0, 0, bn::sprite_items::bubbles, 26,
+     TRAP_GRAPHICS_INDEXES_3, 0.0, 3, 3, NO_PATH_TRAP, 0, 0, 0, "arena_p3"}};
+
+// One checkpoint, on the arena's left ledge: a lost boss fight starts there.
+constexpr CheckpointData world1_boss_checkpoints[] = {{165, 12}};
 
 // No checkpoint: the pufferfish charges (wave2, wave4) sweep the whole floor,
 // so no flag could stand clear of a trap's path (tools/Check_checkpoints.py).
@@ -288,9 +351,13 @@ const LevelData LEVEL_WORLD1_BOSS = {
     bn::regular_bg_items::world1,
     bn::music_items::world1,
     // Player spawn
-    {-224, 42},
+    {-333, 42},
     // Door position
-    {228, 40},
+    {321, 10},
     // World size (enables scrolling)
-    480,
-    160};
+    698,
+    160,
+    1,
+    nullptr,
+    world1_boss_checkpoints,
+    sizeof(world1_boss_checkpoints) / sizeof(world1_boss_checkpoints[0])};

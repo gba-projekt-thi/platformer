@@ -396,9 +396,10 @@ restarts the clock.
 
 ## Boss levels
 
-Every world's gameplay culminates in a **boss level**: a single, mostly flat corridor
-where the challenge is entirely about reading and dodging a sequence of
-attacks rather than platforming, the way a Hollow Knight boss arena plays.
+Every world's gameplay culminates in a **boss level**: a mostly flat corridor
+where the challenge is reading and dodging a sequence of attacks, the way a
+Hollow Knight boss arena plays, and at its end the one enemy the duck can
+beat - a **boss** (see [Bosses](#bosses)).
 
 - **Attack waves.** Invisible trigger zones fire hazards in sequence as
   the duck advances - falling slams, charging dashes, or rising arms,
@@ -412,15 +413,39 @@ attacks rather than platforming, the way a Hollow Knight boss arena plays.
 - **Punish lingering, not hesitating.** A mid-arena `AMBUSH` hazard,
   disguised as scenery, lunges only if the duck stays close - it rewards
   pressing on rather than camping a safe spot.
-- **An enrage pursuer (Worlds 4-5).** A `CHASE` hazard trails the duck for
-  the whole fight, closing the gap whenever the duck advances. It keeps
-  forward momentum mandatory in the two hardest boss fights. World 4's
+- **An enrage pursuer (Worlds 4-5).** A `CHASE` hazard trails the duck
+  through the corridor, closing the gap whenever the duck advances. It keeps
+  forward momentum mandatory in the two hardest boss levels and stops before
+  the boss arena (`chase_limit`). World 4's
   second scroll level gives it a gentler non-boss preview - paired with an
   `AMBUSH` bug there, so pursuit pressure and dodge timing aren't both new
   at once when the boss tightens both.
-- **The door is the win condition.** There is no health bar or hit
-  count - reaching the door at the far end of the arena is "defeating"
-  the boss.
+- **The door is the win condition** - but it stays shut until the boss is
+  beaten.
+
+### Bosses
+
+The game's rule is that nothing can be killed: the environment is the enemy.
+The one exception is a boss at the end of each boss level - four mini bosses
+(Worlds 1-4: the Kugelfisch King, the Rusty Can, the Toadstool, the Beetle)
+and a big one in World 5 (the Iron Thwomp). `TrapType::BOSS`,
+`boss_logic.h`, `BossTrap`:
+
+- **The arena.** A step up to a left ledge (with the level's checkpoint), a
+  pit, a right ledge with the door. The boss floats back and forth in the
+  pit; falling in is death, touching the boss is death.
+- **Pogo only.** A pogo strike from above costs it a hit (3 for the mini
+  bosses, 5 for the big one) and bounces the duck - across the pit, too.
+  The pogo is always available in a boss level, even before World 4.
+- **Phases.** Every hit starts a new phase: the boss gets faster
+  (`boss::phase_frames()`) and switches on the trigger `arena_p<n>`, which
+  drops the world's traps through the pit - across the bounces, while the
+  ledges stay safe. After a hit it blinks and takes no further hit for 45
+  frames.
+- **Victory.** The last hit removes it, raises a stepping stone in the pit
+  (`arena_won`) and opens the door. A death starts the fight over.
+- **Tested.** An emulator replay per boss starts on the arena ledge and wins
+  the fight (`make replay`); without its R presses each one fails.
 
 ### World 5's coda: the finale
 

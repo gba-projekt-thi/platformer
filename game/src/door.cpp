@@ -55,6 +55,15 @@ void Door::flee_from(bn::fixed duck_x, bn::fixed duck_y) {
     _place();
 }
 
+void Door::set_locked(bool locked) {
+    if (locked) {
+        disable();
+    } else {
+        enable();
+    }
+    _door_sprite.sprite().set_visible(!locked);
+}
+
 void Door::reset_flee() {
     _flee.reset();
     _place();

@@ -33,6 +33,7 @@ class ChaserTrap : public BaseTrap {
 
     // Max horizontal distance closed per frame while chasing.
     bn::fixed _chase_speed;
+    bn::fixed _limit;  // TrapData::chase_limit
 
     Player& _player;
 };

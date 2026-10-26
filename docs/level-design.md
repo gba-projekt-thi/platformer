@@ -262,6 +262,26 @@ worlds) a chase hazard keeping forward momentum mandatory. Used for the
 one boss level that closes out each world; see
 [Game Concepts — Boss levels](game-concepts.md#boss-levels).
 
+### The boss arena
+
+Each boss level ends in an arena (data in the level JSON, built by the same
+pattern in every world):
+
+- A step 18 px up from the floor, the left ledge 36 px up (two pieces, the
+  checkpoint and the `arena` trigger on it), a pit of 112 px (128 px for
+  World 5), the right ledge with the door.
+- The `BOSS` trap: `path` `BOSS_PATH` / `BOSS_PATH_WIDE` across the pit,
+  `path_waits` frames per crossing in phase 1, `trigger_name` `arena`,
+  `boss_hits`, its hitbox top 6 px below the ledges (a strike from a ledge
+  jump reaches it) and `sprite_scale` 1.25 of a world trap's picture
+  (`tools/Upscale_sprite.py` made 2x versions of 16 px pictures).
+- Triggers `arena_p<n>` (out of reach, the boss switches them on) with
+  MOVING traps that fall through the pit, and `arena_won` with the stepping
+  stone platform it raises.
+- A `CHASE` trap of the corridor gets a `chase_limit` so it stays out.
+- `Check_level_reachability.py` counts `*_won` triggers as on (it assumes
+  the fight is won); the replays in `game/replays/` prove the fights.
+
 ### Dash and switch levels
 
 World 5 has two levels built on the newer mechanics; they double as worked

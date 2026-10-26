@@ -43,6 +43,19 @@ constexpr bn::span<const uint16_t> TRAP_GRAPHICS_INDEXES_0(nullptr, 0);
 constexpr bn::span<const bn::fixed_point> NO_PATH_TRAP(nullptr, 0);
 
 // -----------------------------------------------------------------------------
+// Boss Paths
+//
+// Back and forth across a boss arena's pit (TrapType::BOSS): 112 px wide for
+// the World 1-4 bosses (32 px hitbox), 128 px for World 5's (56 px), 4 px
+// clear of the ledges on either side.
+// -----------------------------------------------------------------------------
+
+constexpr bn::fixed_point BOSS_PATH[] = {
+    bn::fixed_point(0, 0), bn::fixed_point(72, 0)};
+constexpr bn::fixed_point BOSS_PATH_WIDE[] = {
+    bn::fixed_point(0, 0), bn::fixed_point(64, 0)};
+
+// -----------------------------------------------------------------------------
 // Shared Paths
 //
 // FIGURE_8_PATH: used by World 1 (LEVEL_0 and LEVEL_WORLD1_BOSS).

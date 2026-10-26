@@ -108,6 +108,19 @@ class TrapRuleTests(unittest.TestCase):
 
 
 @unittest.skipUnless(HAS_GAME, "game/ not found")
+class ScaledSpriteTests(unittest.TestCase):
+    """TrapData::sprite_scale draws the picture larger around its center."""
+
+    def test_scale_one_keeps_the_box(self):
+        self.assertEqual(checker.scaled_box((-8, -6, 8, 6), 1), (-8, -6, 8, 6))
+
+    def test_a_scaled_picture_grows_around_its_center(self):
+        self.assertEqual(checker.scaled_box((-8, -6, 8, 4), 1.5), (-12, -9, 12, 6))
+
+    def test_the_trap_scale_field_is_found_in_level_structure_h(self):
+        self.assertGreater(checker.trap_field_index("sprite_scale"), 9)
+
+
 class RealDataTests(unittest.TestCase):
     def test_duck_feet_rest_on_the_bottom_of_its_body(self):
         _, _, _, below_feet = checker.duck_margins(REPO)

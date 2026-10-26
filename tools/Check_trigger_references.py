@@ -2,7 +2,7 @@
 """
 Check_trigger_references.py
 
-Statically validates every TrapData::trigger_name a MOVING/PATH/CYCLE trap - and
+Statically validates every TrapData::trigger_name a MOVING/PATH/CYCLE/BOSS trap - and
 every PlatformData::trigger_name a switched platform - references against the TriggerData::name entries actually defined for
 THAT SAME LEVEL - the exact per-level lookup
 LevelManager::get_trigger_by_name() performs at runtime, but checked here
@@ -180,7 +180,7 @@ def check_file(path: Path):
                     if not fields or "::" not in fields[0]:
                         continue
                     trap_type = fields[0].split("::")[-1]
-                    if trap_type in ("MOVING", "PATH", "CYCLE"):
+                    if trap_type in ("MOVING", "PATH", "CYCLE", "BOSS"):
                         names = quoted_strings_in(fields)
                         referenced_names.update(names)
                         for n in names:
@@ -213,7 +213,7 @@ def check_file(path: Path):
             warnings.append(
                 f"{path.name}: {level_name} - trigger \"{n}\" in "
                 f"'{trigger_array_name}' is never referenced by any "
-                f"MOVING/PATH/CYCLE trap or platform in this level"
+                f"MOVING/PATH/CYCLE/BOSS trap or platform in this level"
             )
 
     return errors, warnings

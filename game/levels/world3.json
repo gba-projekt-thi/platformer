@@ -120,56 +120,69 @@
       "platforms": {
         "name": "world3_boss_platforms",
         "items": [
-          {"blank_before": true, "x": -240, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "baumstamm", "sprite_index": 0},
-          {"x": -208, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "baumstamm", "sprite_index": 2},
-          {"x": -176, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
-          {"x": -128, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
-          {"x": -80, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
-          {"x": -32, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
-          {"x": 16, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
-          {"x": 64, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
-          {"x": 112, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
-          {"x": 160, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
-          {"x": 208, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
-          {"x": 236, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "baumstamm", "sprite_index": 0},
-          {"x": 258, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "baumstamm", "sprite_index": 1}
+          {"blank_before": true, "x": -398, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "baumstamm", "sprite_index": 0},
+          {"x": -366, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "baumstamm", "sprite_index": 2},
+          {"x": -334, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": -286, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": -238, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": -190, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": -142, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": -94, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": -46, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": 2, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": 50, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": 78, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "baumstamm", "sprite_index": 0},
+          {"x": 100, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "baumstamm", "sprite_index": 1},
+          {"x": 136, "y": 42, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0, "blank_before": true, "note": "Boss arena: the Toadstool. A step up to the left ledge, a pit the boss\nfloats in (only pogo strikes on its back cross it), the right ledge with\nthe door - shut until the boss is beaten, when a bridge spans the pit."},
+          {"x": 178, "y": 24, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": 210, "y": 24, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": 354, "y": 24, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": 386, "y": 24, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0},
+          {"x": 282, "y": 24, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel", "sprite_index": 0, "trigger_name": "arena_won", "note": "The stepping stone the boss's defeat raises (arena_won)."}
         ]
       },
       "triggers": {
         "name": "world3_boss_triggers",
         "items": [
-          {"x": -160, "y": 40, "width": 32, "height": 40, "name": "wave1"},
-          {"x": -40, "y": 40, "width": 32, "height": 40, "name": "wave2"},
-          {"x": 80, "y": 40, "width": 32, "height": 40, "name": "wave3"},
-          {"x": 200, "y": 40, "width": 32, "height": 40, "name": "wave4"}
+          {"x": -318, "y": 40, "width": 32, "height": 40, "name": "wave1"},
+          {"x": -198, "y": 40, "width": 32, "height": 40, "name": "wave2"},
+          {"x": -78, "y": 40, "width": 32, "height": 40, "name": "wave3"},
+          {"x": 42, "y": 40, "width": 32, "height": 40, "name": "wave4"},
+          {"blank_before": true, "note": "The arena: the boss starts when the duck reaches the left ledge.", "x": 194, "y": 8, "width": 64, "height": 24, "name": "arena"},
+          {"note": "Switched on by the boss (BossTrap), never by the duck.", "x": 282, "y": -200, "width": 8, "height": 8, "name": "arena_won"},
+          {"x": 282, "y": -200, "width": 8, "height": 8, "name": "arena_p2"},
+          {"x": 282, "y": -200, "width": 8, "height": 8, "name": "arena_p3"}
         ]
       },
       "traps": {
         "name": "world3_boss_traps",
         "items": [
-          {"blank_before": true, "note": "Idle patrol: a branch sweeping the corridor throughout the fight.\nShares \"wave1\" with Attack 1 below - starts once the fight begins.", "type": "PATH", "x": -190, "y": 0, "width": 32, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "branch32x16", "sprite_waits": 10, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "path": "LEVEL3_BRANCH_PATH", "path_waits": 20, "trigger_name": "wave1"},
-          {"blank_before": true, "note": "Attack 1: an arm rises up out of the mist, triggered by wave1.", "type": "MOVING", "x": -150, "y": 96, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "slithermanarms32x32", "sprite_waits": 8, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_y": -1.8, "max_vel": 3.3, "trigger_name": "wave1"},
-          {"blank_before": true, "note": "A disguised mushroom - punishes lingering near the middle of the\narena instead of pressing forward.", "type": "AMBUSH", "x": 25, "y": 64, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "mushroom32x32", "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "ambush_range": 3, "ambush_speed": 1.8, "ambush_duration": 10},
-          {"blank_before": true, "note": "Attack 2: a second arm, further along, triggered by wave2.", "type": "MOVING", "x": -20, "y": 96, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "slithermanarms32x32", "sprite_waits": 8, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_y": -1.8, "max_vel": 3.3, "trigger_name": "wave2"},
-          {"blank_before": true, "note": "Attack 3: a third arm, triggered by wave3.", "type": "MOVING", "x": 100, "y": 96, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "slithermanarms32x32", "sprite_waits": 8, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_y": -2.0, "max_vel": 3.6, "trigger_name": "wave3"},
-          {"blank_before": true, "note": "Attack 4: final arm right before the door, triggered by wave4.", "type": "MOVING", "x": 220, "y": 96, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "slithermanarms32x32", "sprite_waits": 8, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_y": -2.2, "max_vel": 3.8, "trigger_name": "wave4"}
+          {"blank_before": true, "note": "Idle patrol: a branch sweeping the corridor throughout the fight.\nShares \"wave1\" with Attack 1 below - starts once the fight begins.", "type": "PATH", "x": -348, "y": 0, "width": 32, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "branch32x16", "sprite_waits": 10, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "path": "LEVEL3_BRANCH_PATH", "path_waits": 20, "trigger_name": "wave1"},
+          {"blank_before": true, "note": "Attack 1: an arm rises up out of the mist, triggered by wave1.", "type": "MOVING", "x": -308, "y": 96, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "slithermanarms32x32", "sprite_waits": 8, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_y": -1.8, "max_vel": 3.3, "trigger_name": "wave1"},
+          {"blank_before": true, "note": "A disguised mushroom - punishes lingering near the middle of the\narena instead of pressing forward.", "type": "AMBUSH", "x": -133, "y": 64, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "mushroom32x32", "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "ambush_range": 3, "ambush_speed": 1.8, "ambush_duration": 10},
+          {"blank_before": true, "note": "Attack 2: a second arm, further along, triggered by wave2.", "type": "MOVING", "x": -178, "y": 96, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "slithermanarms32x32", "sprite_waits": 8, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_y": -1.8, "max_vel": 3.3, "trigger_name": "wave2"},
+          {"blank_before": true, "note": "Attack 3: a third arm, triggered by wave3.", "type": "MOVING", "x": -58, "y": 96, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "slithermanarms32x32", "sprite_waits": 8, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_y": -2.0, "max_vel": 3.6, "trigger_name": "wave3"},
+          {"blank_before": true, "note": "Attack 4: final arm right before the door, triggered by wave4.", "type": "MOVING", "x": 62, "y": 96, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "slithermanarms32x32", "sprite_waits": 8, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_y": -2.2, "max_vel": 3.8, "trigger_name": "wave4"},
+          {"blank_before": true, "note": "The Toadstool: 3 pogo strikes; every hit is a new phase\n(faster, and the arena_p<n> traps attack).", "type": "BOSS", "x": 246, "y": 36, "width": 32, "height": 24, "offset_x": 0, "offset_y": 2, "sprite": "mushroom32x32", "sprite_waits": 10, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "path": "BOSS_PATH", "path_waits": 80, "trigger_name": "arena", "sprite_scale": 1.25, "boss_hits": 3},
+          {"note": "Phase attacks: dropped through the pit when arena_p<n> switches on\n(in sight after ~37 frames), across the bounces on the boss.", "type": "MOVING", "x": 263, "y": -180, "width": 20, "height": 20, "offset_x": 0, "offset_y": 0, "sprite": "mushroom32x32", "sprite_waits": 10, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_x": 0.0, "velocity_y": 3, "max_vel": 3, "trigger_name": "arena_p2"},
+          {"type": "MOVING", "x": 300, "y": -180, "width": 20, "height": 20, "offset_x": 0, "offset_y": 0, "sprite": "mushroom32x32", "sprite_waits": 10, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_x": 0.0, "velocity_y": 3, "max_vel": 3, "trigger_name": "arena_p3"}
         ]
       },
       "checkpoints": {
         "name": "world3_boss_checkpoints",
-        "note": "One checkpoint, in the middle of the arena after the second arm - clear of\nevery arm's column and of the patrol (a level has at most one).",
+        "note": "One checkpoint, on the arena's left ledge: a lost boss fight starts there.",
         "items": [
-          {"x": -80, "y": 48}
+          {"x": 186, "y": 12}
         ]
       },
       "background": "world3",
       "music": "world3",
-      "spawn": [-240, 42],
+      "spawn": [-398, 42],
       "door": {
-        "x": 246,
-        "y": 42
+        "x": 374,
+        "y": 10
       },
-      "world_width": 520,
+      "world_width": 836,
       "world_height": 160,
       "ground_friction": 1,
       "intro_hint": null,

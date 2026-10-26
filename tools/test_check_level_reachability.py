@@ -206,6 +206,20 @@ class WallJumpModelTests(unittest.TestCase):
         self.assertEqual(duck.vy, sim.JUMP)
         self.assertEqual(duck.x, x - sim.PUSH)
 
+    def test_the_duck_uses_the_games_fixed_point_values(self):
+        # bn::fixed keeps 12 fraction bits: 0.38 is stored as 1556 / 4096.
+        self.assertEqual(sim.fx(0.38), 1556 / 4096)
+        self.assertEqual(sim.fx(-3), -3)
+        duck = sim.Duck([], 0.0, 0.0)
+        duck.on_ground = False
+        duck.step(right=True)
+        self.assertEqual(duck.vx, 1556 / 4096)
+
+    def test_fixed_times_fixed_uses_half_precision_like_butano(self):
+        # (a / 64) * (b / 64): Cfg::Player::DECELERATION * friction 1.
+        self.assertEqual(sim.fx_mul(sim.fx(0.3), sim.fx(1)), 1216 / 4096)
+        self.assertEqual(sim.fx_mul(-1.5, 2), -3)
+
     def test_without_wall_jumps_the_wall_is_ignored(self):
         duck = sim.Duck(self.WALL, 3.0, -40.0, wall_jump=False)
         for _ in range(40):
@@ -243,7 +257,7 @@ class PogoModelTests(unittest.TestCase):
         duck = self.falling_above_the_spikes()
         duck.step(r_pressed=True)
         duck.step(a_held=False)
-        self.assertAlmostEqual(duck.vy, sim.POGO_BOUNCE + sim.G)
+        self.assertEqual(duck.vy, sim.POGO_BOUNCE + sim.fx(sim.G))
 
     def test_no_strike_without_a_trap_below(self):
         duck = sim.Duck([], 0.0, 0.0, pogo_targets=[sim.Rect(0, 80, 16, 16, 0)])
@@ -260,6 +274,21 @@ class PogoModelTests(unittest.TestCase):
             (sim.POGO_REACH, "REACH"), (sim.POGO_WIDTH, "WIDTH"), (sim.POGO_BOUNCE, "BOUNCE_SPEED"),
         ):
             self.assertEqual(sim_value, cfg_value("cfg_pogo.h", "Pogo", constant), constant)
+
+
+class BossBridgeTests(unittest.TestCase):
+    """A bridge bound to "<arena>_won" appears when the boss is beaten; the
+    check assumes it is (the fight is the emulator replays' job)."""
+
+    def test_the_bridge_of_a_beaten_boss_counts(self):
+        plats = [sim.Rect(0, 60, 32, 16, 0), sim.Rect(150, 60, 32, 16, 1)]
+        plats += [sim.Rect(x, 60, 32, 16, 2 + k, "arena_won", True)
+                  for k, x in enumerate((40, 75, 110))]
+        triggers = {"arena_won": {"default_on": False, "rect": (0, -200, 1, 1)}}
+        sim.attach_lever_platforms(plats, triggers)
+        _, ok, _ = sim.reach_with_levers(plats, triggers, (0, 40), (150, 48), False, False)
+        self.assertTrue(ok)
+        self.assertFalse(sim.reach(plats[:2], (0, 40), (150, 48), False, True)[1])
 
 
 class RunningDoorTests(unittest.TestCase):

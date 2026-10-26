@@ -183,3 +183,16 @@ TEST_CASE(cycle_scaling_keeps_a_zero_phase_at_zero) {
     CHECK_EQ(hard.retract, 0u);
     CHECK(hard.hold >= 1u);
 }
+
+// ---- chaser target ----------------------------------------------------------
+
+TEST_CASE(chase_target_follows_behind_the_duck) {
+    CHECK_EQ(trap_timing::chase_target(100, 28, -400, 0), 72);
+}
+
+TEST_CASE(chase_target_stops_at_its_limit) {
+    // A limit keeps the chaser out of a boss arena: at most `limit` px right
+    // of where it started.
+    CHECK_EQ(trap_timing::chase_target(300, 28, -400, 600), 200);
+    CHECK_EQ(trap_timing::chase_target(100, 28, -400, 600), 72);
+}

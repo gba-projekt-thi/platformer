@@ -12,8 +12,30 @@ struct Entry {
     const replay::Run* runs;
     int run_count;
     int steps;
+    bool has_start;  // the duck starts at (start_x, start_y)
+    int start_x;
+    int start_y;
 };
 
+constexpr replay::Run LEVEL_WORLD1_BOSS_RUNS[] = {
+    {0, 5},  {14, 1},  {10, 4}, {2, 6},  {34, 1}, {2, 9},   {1, 24}, {0, 24},
+    {14, 1}, {10, 10}, {2, 10}, {33, 1}, {1, 32}, {0, 38},  {14, 1}, {10, 10},
+    {2, 12}, {34, 1},  {2, 27}, {0, 4},  {14, 1}, {10, 28}, {2, 4},  {0, 10}};
+constexpr replay::Run LEVEL_WORLD2_BOSS_RUNS[] = {
+    {0, 5},  {14, 1},  {10, 4},  {2, 6},  {34, 1}, {2, 9},  {1, 24},
+    {0, 24}, {14, 1},  {10, 10}, {2, 10}, {1, 2},  {33, 1}, {1, 30},
+    {0, 38}, {14, 1},  {10, 10}, {2, 12}, {34, 1}, {2, 27}, {0, 4},
+    {14, 1}, {10, 28}, {2, 4},   {0, 10}};
+constexpr replay::Run LEVEL_WORLD3_BOSS_RUNS[] = {
+    {0, 121}, {14, 1}, {10, 4},  {2, 16}, {1, 4},  {33, 1}, {1, 27},
+    {0, 74},  {14, 1}, {10, 10}, {2, 6},  {34, 1}, {2, 3},  {1, 34},
+    {0, 40},  {14, 1}, {10, 10}, {2, 14}, {34, 1}, {2, 37}, {0, 4},
+    {2, 3},   {14, 1}, {10, 28}, {2, 8},  {0, 10}};
+constexpr replay::Run LEVEL_WORLD4_BOSS_RUNS[] = {
+    {0, 121}, {14, 1}, {10, 4},  {2, 16}, {1, 4},  {33, 1}, {1, 27},
+    {0, 74},  {14, 1}, {10, 10}, {2, 6},  {34, 1}, {2, 3},  {1, 34},
+    {0, 40},  {14, 1}, {10, 10}, {2, 14}, {34, 1}, {2, 37}, {0, 4},
+    {2, 3},   {14, 1}, {10, 28}, {2, 8},  {0, 10}};
 constexpr replay::Run LEVEL_WORLD5_SCROLL_RUNS[] = {
     {0, 30},  {2, 8},   {14, 1},  {10, 3},  {2, 3},   {34, 1},  {2, 39},
     {14, 1},  {10, 16}, {2, 2},   {0, 19},  {2, 4},   {14, 1},  {10, 16},
@@ -28,30 +50,37 @@ constexpr replay::Run LEVEL_WORLD5_CLIMB_RUNS[] = {
     {2, 1},  {14, 1},  {10, 14}, {2, 1},   {14, 1}, {9, 14}, {1, 1},
     {13, 1}, {10, 14}, {2, 1},   {14, 1},  {9, 24}, {14, 1}, {2, 10},
     {14, 1}, {2, 10},  {14, 1},  {2, 9},   {0, 10}};
+constexpr replay::Run LEVEL_WORLD5_BOSS_RUNS[] = {
+    {0, 129}, {14, 1}, {10, 4}, {2, 16}, {1, 2},  {33, 1},  {1, 27}, {0, 90},
+    {14, 1},  {10, 4}, {2, 16}, {1, 6},  {33, 1}, {1, 26},  {0, 34}, {14, 1},
+    {10, 4},  {34, 1}, {2, 15}, {34, 1}, {2, 15}, {34, 1},  {2, 15}, {34, 1},
+    {2, 15},  {34, 1}, {2, 15}, {34, 1}, {2, 5},  {0, 4},   {13, 1}, {9, 4},
+    {1, 6},   {2, 6},  {34, 1}, {2, 27}, {0, 6},  {13, 1},  {9, 10}, {1, 14},
+    {33, 1},  {1, 34}, {0, 4},  {2, 14}, {14, 1}, {10, 28}, {2, 11}, {0, 10}};
 constexpr replay::Run LEVEL_WORLD5_FINALE_RUNS[] = {{2, 400}};
 
 // One entry per level, in play order (main.cpp's levels[]).
 inline constexpr Entry ENTRIES[] = {
-    {"LEVEL_0", nullptr, 0, 0},
-    {"LEVEL_1", nullptr, 0, 0},
-    {"LEVEL_WORLD1_SCROLL", nullptr, 0, 0},
-    {"LEVEL_WORLD1_BOSS", nullptr, 0, 0},
-    {"LEVEL_2", nullptr, 0, 0},
-    {"LEVEL_WORLD2_SCROLL", nullptr, 0, 0},
-    {"LEVEL_WORLD2_BOSS", nullptr, 0, 0},
-    {"LEVEL_3", nullptr, 0, 0},
-    {"LEVEL_WORLD3_SCROLL", nullptr, 0, 0},
-    {"LEVEL_WORLD3_BOSS", nullptr, 0, 0},
-    {"LEVEL_WORLD4_SCROLL", nullptr, 0, 0},
-    {"LEVEL_WORLD4_SCROLL_2", nullptr, 0, 0},
-    {"LEVEL_WORLD4_BOSS", nullptr, 0, 0},
-    {"LEVEL_WORLD5_SCROLL", LEVEL_WORLD5_SCROLL_RUNS, 51, 466},
-    {"LEVEL_WORLD5_SCROLL_2", nullptr, 0, 0},
-    {"LEVEL_WORLD5_DASH", nullptr, 0, 0},
-    {"LEVEL_WORLD5_LEVERS", nullptr, 0, 0},
-    {"LEVEL_WORLD5_CLIMB", LEVEL_WORLD5_CLIMB_RUNS, 26, 251},
-    {"LEVEL_WORLD5_BOSS", nullptr, 0, 0},
-    {"LEVEL_WORLD5_FINALE", LEVEL_WORLD5_FINALE_RUNS, 1, 400}};
+    {"LEVEL_0", nullptr, 0, 0, false, 0, 0},
+    {"LEVEL_1", nullptr, 0, 0, false, 0, 0},
+    {"LEVEL_WORLD1_SCROLL", nullptr, 0, 0, false, 0, 0},
+    {"LEVEL_WORLD1_BOSS", LEVEL_WORLD1_BOSS_RUNS, 24, 264, true, 173, 16},
+    {"LEVEL_2", nullptr, 0, 0, false, 0, 0},
+    {"LEVEL_WORLD2_SCROLL", nullptr, 0, 0, false, 0, 0},
+    {"LEVEL_WORLD2_BOSS", LEVEL_WORLD2_BOSS_RUNS, 25, 264, true, 175, 17},
+    {"LEVEL_3", nullptr, 0, 0, false, 0, 0},
+    {"LEVEL_WORLD3_SCROLL", nullptr, 0, 0, false, 0, 0},
+    {"LEVEL_WORLD3_BOSS", LEVEL_WORLD3_BOSS_RUNS, 26, 460, true, 194, 16},
+    {"LEVEL_WORLD4_SCROLL", nullptr, 0, 0, false, 0, 0},
+    {"LEVEL_WORLD4_SCROLL_2", nullptr, 0, 0, false, 0, 0},
+    {"LEVEL_WORLD4_BOSS", LEVEL_WORLD4_BOSS_RUNS, 26, 460, true, 155, 12},
+    {"LEVEL_WORLD5_SCROLL", LEVEL_WORLD5_SCROLL_RUNS, 51, 466, false, 0, 0},
+    {"LEVEL_WORLD5_SCROLL_2", nullptr, 0, 0, false, 0, 0},
+    {"LEVEL_WORLD5_DASH", nullptr, 0, 0, false, 0, 0},
+    {"LEVEL_WORLD5_LEVERS", nullptr, 0, 0, false, 0, 0},
+    {"LEVEL_WORLD5_CLIMB", LEVEL_WORLD5_CLIMB_RUNS, 26, 251, false, 0, 0},
+    {"LEVEL_WORLD5_BOSS", LEVEL_WORLD5_BOSS_RUNS, 48, 632, true, 231, 12},
+    {"LEVEL_WORLD5_FINALE", LEVEL_WORLD5_FINALE_RUNS, 1, 400, false, 0, 0}};
 
 inline constexpr int ENTRY_COUNT = sizeof(ENTRIES) / sizeof(ENTRIES[0]);
 

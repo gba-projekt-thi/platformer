@@ -21,6 +21,7 @@ The game includes:
 - A death counter and run timer HUD
 - A pause menu with Continue / Restart Level / Options / Title Screen; Options lets the player adjust music and SFX volume (0-4), persisted per save slot, plus - once unlocked by completing the game - toggle Hard Mode, which speeds up Moving/Chase/Ambush trap velocities and Path trap patrols for a tougher replay, and an always-available Assist Mode (halved Moving/Chase/Ambush/Path trap speeds plus longer coyote/jump-buffer windows) for a gentler run - the two modes are mutually exclusive, and no best times or no-death clears are recorded while Assist Mode is on
 - A dash (B button) from World 3 onward: a short horizontal burst with gravity suspended, a cooldown, and one use per air time; no invincibility, adds horizontal reach only, so no existing layout becomes unreachable; a dedicated sound and a flickering afterimage trail give feedback
+- A boss at the end of every boss level (`TrapType::BOSS`, `boss_logic.h`): beaten only by pogo strikes, faster each phase, door shut until it falls
 - A pogo strike (R) from World 4 onward: striking a trap from above bounces the duck off it, the trap stays (`Cfg::Pogo`, `locomotion::Core`)
 - A wall slide and wall jump from World 5 onward: holding toward a wall slows the fall, A jumps off it, away from the wall (`Cfg::WallJump`, `locomotion::Core`)
 - A controls overview screen, reachable from the start screen (a "Controls" entry below the save slots) and from the pause menu

@@ -8,6 +8,7 @@
 #include "bn_sprite_items_beet.h"
 #include "bn_sprite_items_brick16x16.h"
 #include "bn_sprite_items_bug16x16.h"
+#include "bn_sprite_items_bug32x32.h"
 #include "bn_sprite_items_flower1.h"
 #include "bn_sprite_items_flower2.h"
 #include "bn_sprite_items_flower3.h"
@@ -168,33 +169,81 @@ const LevelData LEVEL_WORLD4_SCROLL_2 = {
 // =============================================================================
 constexpr PlatformData world4_boss_platforms[] = {
 
-    {-224, 64, 16, 16, 0, -4, bn::sprite_items::beet, 0},
-    {-168, 60, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
-    {-128, 44, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
-    {-88, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
-    {-56, 44, 16, 10, 0, 0, bn::sprite_items::flower3, 0},
-    {8, 64, 16, 16, 0, -4, bn::sprite_items::beet, 0},
-    {64, 44, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
-    {104, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
-    {152, 60, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
-    {200, 64, 16, 16, 0, -4, bn::sprite_items::beet, 0}};
+    {-363, 64, 16, 16, 0, -4, bn::sprite_items::beet, 0},
+    {-307, 60, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
+    {-267, 44, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
+    {-227, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+    {-195, 44, 16, 10, 0, 0, bn::sprite_items::flower3, 0},
+    {-131, 64, 16, 16, 0, -4, bn::sprite_items::beet, 0},
+    {-75, 44, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
+    {-35, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+    {13, 60, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
+    {61, 64, 16, 16, 0, -4, bn::sprite_items::beet, 0},
+
+    // Boss arena: the Beetle. A step up to the left ledge, a pit the boss
+    // floats in (only pogo strikes on its back cross it), the right ledge with
+    // the door - shut until the boss is beaten, when a bridge spans the pit.
+    {97, 46, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+    {139, 28, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+    {171, 28, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+    {315, 28, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+    {347, 28, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+    // The stepping stone the boss's defeat raises (arena_won).
+    {243, 28, 32, 16, 0, -4, bn::sprite_items::korb, 0, "arena_won"}};
 
 constexpr TriggerData world4_boss_triggers[] = {
-    {-140, 40, 32, 40, false, "wave1"},
-    {-20, 40, 32, 40, false, "wave2"},
-    {90, 40, 32, 40, false, "wave3"}};
+    {-279, 40, 32, 40, false, "wave1"},
+    {-159, 40, 32, 40, false, "wave2"},
+    {-49, 40, 32, 40, false, "wave3"},
+
+    // The arena: the boss starts when the duck reaches the left ledge.
+    {155, 4, 64, 24, false, "arena"},
+    // Switched on by the boss (BossTrap), never by the duck.
+    {243, -200, 8, 8, false, "arena_won"},
+    {243, -200, 8, 8, false, "arena_p2"},
+    {243, -200, 8, 8, false, "arena_p3"}};
 
 constexpr TrapData world4_boss_traps[] = {
 
     // The Hive Queen herself: a bug that trails the duck the whole fight,
     // closing the gap whenever the duck advances - constant pressure, like
     // an enrage timer forcing forward movement.
-    {TrapType::CHASE, -260, 20, 12, 12, 0, 4, bn::sprite_items::bug16x16, 1,
-     TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, NO_PATH_TRAP, 0, 50, 1.8},
+    {TrapType::CHASE,
+     -399,
+     20,
+     12,
+     12,
+     0,
+     4,
+     bn::sprite_items::bug16x16,
+     1,
+     TRAP_GRAPHICS_INDEXES_3,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     50,
+     1.8,
+     nullptr,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     432},
 
     // A bush disguised as scenery, lunging if the duck lingers near it.
     {TrapType::AMBUSH,
-     -100,
+     -239,
      56,
      24,
      24,
@@ -216,16 +265,16 @@ constexpr TrapData world4_boss_traps[] = {
      20},
 
     // Attack 1: a brick dive-bombs down, triggered by wave1.
-    {TrapType::MOVING, -140, -90, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
+    {TrapType::MOVING, -279, -90, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
      TRAP_GRAPHICS_INDEXES_0, 0.0, 5, 5, NO_PATH_TRAP, 0, 0, 0, "wave1"},
 
     // Attack 2: a second dive-bomb, triggered by wave2.
-    {TrapType::MOVING, -20, -106, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
-     TRAP_GRAPHICS_INDEXES_0, 0.0, 5, 5, NO_PATH_TRAP, 0, 0, 0, "wave2"},
+    {TrapType::MOVING, -159, -106, 16, 16, 0, 0, bn::sprite_items::brick16x16,
+     1, TRAP_GRAPHICS_INDEXES_0, 0.0, 5, 5, NO_PATH_TRAP, 0, 0, 0, "wave2"},
 
     // A second, faster worker bug lunges in once the duck nears the door.
     {TrapType::AMBUSH,
-     90,
+     -49,
      50,
      12,
      12,
@@ -247,12 +296,51 @@ constexpr TrapData world4_boss_traps[] = {
      16},
 
     // Attack 3: final dive-bomb right before the door, triggered by wave3.
-    {TrapType::MOVING, 100, -90, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
-     TRAP_GRAPHICS_INDEXES_0, 0.0, 4, 4.5, NO_PATH_TRAP, 0, 0, 0, "wave3"}};
+    {TrapType::MOVING, -39, -90, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
+     TRAP_GRAPHICS_INDEXES_0, 0.0, 4, 4.5, NO_PATH_TRAP, 0, 0, 0, "wave3"},
 
-// Checkpoint on the beet in the middle of the arena, clear of both ambush
-// ranges.
-constexpr CheckpointData world4_boss_checkpoints[] = {{8, 44}};
+    // The Beetle: 3 pogo strikes; every hit is a new phase
+    // (faster, and the arena_p<n> traps attack).
+    {TrapType::BOSS,
+     204,
+     29,
+     26,
+     18,
+     0,
+     2,
+     bn::sprite_items::bug32x32,
+     8,
+     TRAP_GRAPHICS_INDEXES_3,
+     0,
+     0,
+     0,
+     BOSS_PATH,
+     80,
+     0,
+     0,
+     "arena",
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1.25,
+     3},
+    // Phase attacks: dropped through the pit when arena_p<n> switches on
+    // (in sight after ~37 frames), across the bounces on the boss.
+    {TrapType::MOVING, 224, -180, 12, 12, 0, 0, bn::sprite_items::brick16x16, 1,
+     TRAP_GRAPHICS_INDEXES_0, 0.0, 3, 3, NO_PATH_TRAP, 0, 0, 0, "arena_p2"},
+    {TrapType::MOVING, 261, -180, 12, 12, 0, 0, bn::sprite_items::brick16x16, 1,
+     TRAP_GRAPHICS_INDEXES_0, 0.0, 3, 3, NO_PATH_TRAP, 0, 0, 0, "arena_p3"}};
+
+// One checkpoint, on the arena's left ledge: a lost boss fight starts there.
+constexpr CheckpointData world4_boss_checkpoints[] = {{147, 8}};
 
 const LevelData LEVEL_WORLD4_BOSS = {
     world4_boss_platforms,
@@ -264,11 +352,11 @@ const LevelData LEVEL_WORLD4_BOSS = {
     bn::regular_bg_items::world4,
     bn::music_items::world4,
     // Player spawn
-    {-224, 42},
+    {-363, 42},
     // Door position
-    {216, 42},
+    {335, 6},
     // World size (enables scrolling)
-    480,
+    758,
     160,
     // Ground friction: default
     1,

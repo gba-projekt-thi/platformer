@@ -6,6 +6,7 @@
 #include "locomotion.h"
 #include "physics_body.h"
 #include "sprite.h"
+#include "strike_targets.h"
 
 // -----------------------------------------------------------------------------
 // PlayerDeathHandler
@@ -82,14 +83,18 @@ class PlayerLocomotion {
         bool probe_ceiling() { return body.probe_top(block_mask).any(); }
         bool probe_left() { return body.probe_left(block_mask).any(); }
         bool probe_right() { return body.probe_right(block_mask).any(); }
-        // A trap in the pogo strike's box (Cfg::Pogo) below the body.
+        // A trap in the pogo strike's box (Cfg::Pogo) below the body; a
+        // boss among them is told it was struck (StrikeTargets).
         bool probe_pogo() {
             const bn::fixed below = body.pos.y + body.pos.height / 2 +
                                     bn::fixed(Cfg::Pogo::REACH) / 2;
-            return CollisionRegistry::check_rect(
-                       body.pos.x, below, Cfg::Pogo::WIDTH, Cfg::Pogo::REACH,
-                       Cfg::Layer::TRAP, &body)
-                .any();
+            const CollisionResult hits = CollisionRegistry::check_rect(
+                body.pos.x, below, Cfg::Pogo::WIDTH, Cfg::Pogo::REACH,
+                Cfg::Layer::TRAP, &body);
+            for (int i = 0; i < hits.count; ++i) {
+                StrikeTargets::instance().strike(hits.hits[i].body);
+            }
+            return hits.any();
         }
         void die() { death_handler.on_locomotion_death(); }
     };

@@ -41,6 +41,7 @@ Pure text parsing; reuses the level loader of Preview_level.py.
 """
 
 import importlib.util
+import json
 import re
 import sys
 from pathlib import Path
@@ -60,6 +61,7 @@ pv = _load("preview_level", "Preview_level.py")
 OAM_SLOTS = 128  # GBA hardware: 128 sprites
 WARN_HEADROOM = 8
 PLAYER_AND_DOOR = 2  # the duck and the level's door are always registered
+POGO_SLASH = 1  # Player's slash while a pogo strike reaches (cfg_pogo.h)
 
 # Drawn glyphs of the always-present text (spaces draw nothing).
 DEATH_COUNTER_GLYPHS = 12  # "Deaths:" (7) + up to 5 digits (uint16_t)
@@ -176,10 +178,11 @@ class Budget:
     def _pause_views(self):
         """(menu rows, title) of each view of the pause overlay. Only one view
         exists at a time; each has one '>' cursor, and the controls view has
-        no 'Paused' title."""
+        no title at all."""
         main = sum(glyphs(r) for r in PAUSE_MAIN_ROWS) + 1
         options = sum(glyphs(r) for r in PAUSE_OPTIONS_ROWS) + 1
-        controls = glyphs(CONTROLS_TITLE) + sum(glyphs(r) for r in self.controls_lines)
+        # the controls view has no title (pause_controller.cpp)
+        controls = sum(glyphs(r) for r in self.controls_lines)
         return ((main, PAUSE_TITLE_GLYPHS), (options, PAUSE_TITLE_GLYPHS), (controls, 0))
 
     @property
@@ -232,11 +235,13 @@ def hint_glyphs(level):
     return glyphs(level.hint) if level.hint else 0
 
 
-def demand(level, budget):
+def demand(level, budget, dash=True, pogo=True):
     """Worst-case sprite demand of one level.
 
     registry: sprites registered with SpriteRegistry.
     scenarios: total allocated sprites (OAM) in each situation.
+    dash / pogo: whether the level has them (abilities()); without them the
+    dash afterimages / the pogo slash never exist.
     """
     switch_sprites = sum(1 for t in level.triggers if t.get("has_sprite"))
     registry = (
@@ -245,9 +250,10 @@ def demand(level, budget):
         + len(level.traps)
         + switch_sprites
         + len(level.checkpoints)
-        # dash afterimages, counted for every level (conservative); the death
-        # ghost takes one of these slots, since death clears the trail first
-        + budget.SLOTS
+        # dash afterimages; the death ghost takes one of these slots, since
+        # death clears the trail first (one slot without the dash)
+        + (budget.SLOTS if dash else 1)
+        + (POGO_SLASH if pogo else 0)
     )
     fixed = registry + budget.hud
     hint = hint_glyphs(level)
@@ -261,7 +267,38 @@ def demand(level, budget):
     return registry, scenarios
 
 
-def check_level(level, budget):
+def abilities(root):
+    """{level name: (dash, pogo)} as LevelManager::_load_player_spawn() sets
+    them: from their Cfg::...::UNLOCK_WORLD on, the pogo also in every level
+    with a boss. Read from main.cpp's levels[], world_index.h and the level
+    JSON; {} when they cannot be found (then every level counts both)."""
+    root = Path(root)
+    try:
+        spec = importlib.util.spec_from_file_location(
+            "check_world_index", Path(__file__).with_name("Check_world_index.py"))
+        cwi = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cwi)
+        order = cwi.parse_levels((root / "game/src/main.cpp").read_text())
+        worlds = cwi.parse_worlds((root / "game/include/world_index.h").read_text())
+
+        def unlock(header):
+            text = (root / "game/include" / header).read_text()
+            return worlds[int(re.search(r"UNLOCK_WORLD\s*=\s*(\d+)", text).group(1))][1]
+
+        dash_from, pogo_from = unlock("cfg_dash.h"), unlock("cfg_pogo.h")
+        bosses = set()
+        for path in sorted((root / "game/levels").glob("*.json")):
+            for lv in json.loads(path.read_text())["levels"]:
+                traps = (lv.get("traps") or {}).get("items", [])
+                if any(t.get("type") == "BOSS" for t in traps):
+                    bosses.add(lv["name"])
+    except (OSError, AttributeError, IndexError, KeyError, ValueError):
+        return {}
+    return {name: (i >= dash_from, i >= pogo_from or name in bosses)
+            for i, name in enumerate(order)}
+
+
+def check_level(level, budget, dash=True, pogo=True):
     """Returns (errors, warnings, (registry, oam_peak, peak_scenario))."""
     errors, warnings = [], []
 
@@ -280,7 +317,7 @@ def check_level(level, budget):
         if count > limit:
             err(f"{count} {label}, Cfg::Level::Limits allows {limit}")
 
-    registry, scenarios = demand(level, budget)
+    registry, scenarios = demand(level, budget, dash, pogo)
     if registry > budget.MAX_SPRITES:
         err(
             f"{registry} registered sprites, SpriteRegistry holds {budget.MAX_SPRITES} "
@@ -344,10 +381,12 @@ def main(argv, root="."):
         return 1
 
     budget = load_budget(root)
+    can = abilities(root)
     all_errors, all_warnings, rows = [], [], []
     for path in paths:
         for level in pv.load_level_file(path).values():
-            errors, warnings, (registry, peak, scenario) = check_level(level, budget)
+            dash, pogo = can.get(level.name, (True, True))
+            errors, warnings, (registry, peak, scenario) = check_level(level, budget, dash, pogo)
             all_errors.extend(errors)
             all_warnings.extend(warnings)
             rows.append((level.name, len(level.platforms), len(level.traps), registry, peak, scenario))
