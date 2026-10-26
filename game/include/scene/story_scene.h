@@ -21,23 +21,28 @@ class LevelManager;
 //
 // One page of Hildegart's story (story.h) on a black screen, centered, with
 // a prompt; A or Start goes on to the level (GameState::level) in a
-// LevelScene. Shown by StartScene before a new game and by LevelScene when
-// the door leads into a world for the first time.
+// LevelScene, or to the reunion (KissingScene) after the ending. Shown by
+// StartScene before a new game, by LevelScene when the door leads into a
+// world for the first time, and by main() when the game is finished.
 // -----------------------------------------------------------------------------
 class StoryScene : public core::Scene {
    public:
+    enum class Then { Level, Reunion };
+
     StoryScene(
         const story::Page& page,
         Player& player,
         bn::span<const LevelData> levels,
         DataManager& data_manager,
-        LevelManager& level_manager);
+        LevelManager& level_manager,
+        Then then = Then::Level);
 
     void init() override;
     void update() override;
 
    private:
     const story::Page& _page;
+    Then _then;
     Player& _player;
     bn::span<const LevelData> _levels;
     DataManager& _data_manager;

@@ -11,12 +11,13 @@
 // Our team
 #include "data_manager.h"
 #include "game_session.h"
-#include "kissing_scene.h"
 #include "level_manager.h"
 #include "levels.h"
 #include "player.h"
 #include "replay_runner.h"
 #include "start_scene.h"
+#include "story.h"
+#include "story_scene.h"
 #include "world_index.h"
 
 int main() {
@@ -112,15 +113,17 @@ int main() {
         }
 
         // -------------------------------------------------------------------------
-        // After the final level completes, switch into a dedicated endgame
-        // scene instead of directly showing the kiss background from main.
+        // After the final level completes, switch into dedicated endgame
+        // scenes instead of directly showing the kiss background from main.
         // This ensures the previous level and its palettes are released first.
         // -------------------------------------------------------------------------
 
-        auto kissing_scene = bn::make_unique<KissingScene>(
-            player, bn::span<const LevelData>(levels), data_manager,
-            level_manager);
-        core::SceneManager::instance().set_next_scene(bn::move(kissing_scene));
+        // The story's ending first, then the reunion (StoryScene goes on to
+        // KissingScene).
+        auto ending = bn::make_unique<StoryScene>(
+            story::ENDING, player, bn::span<const LevelData>(levels),
+            data_manager, level_manager, StoryScene::Then::Reunion);
+        core::SceneManager::instance().set_next_scene(bn::move(ending));
 
         // Reset the completion flag so the next scene can run normally.
         GameSession::instance().reset();

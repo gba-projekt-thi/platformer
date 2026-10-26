@@ -75,6 +75,7 @@ TEST_CASE(story_no_page_inside_a_world) {
 
 TEST_CASE(story_every_page_fits_the_screen) {
     check_fits(story::INTRO);
+    check_fits(story::ENDING);
     for (int world = 1; world < WorldIndex::WORLD_COUNT; ++world) {
         check_fits(story::WORLDS[world]);
     }
@@ -103,4 +104,30 @@ TEST_CASE(story_layout_keeps_the_page_and_its_prompt_on_screen) {
     CHECK(Cfg::Story::FIRST_LINE_Y - 8 >= -80);
     CHECK(last + 8 <= Cfg::Story::PROMPT_Y - 8);
     CHECK(Cfg::Story::PROMPT_Y + 8 <= 80);
+}
+
+namespace {
+
+auto mentions(const story::Page& page, const char* word) -> bool {
+    for (int i = 0; i < page.line_count; ++i) {
+        if (std::strstr(page.lines[i], word) != nullptr) {
+            return true;
+        }
+    }
+    return false;
+}
+
+}  // namespace
+
+TEST_CASE(story_the_ending_reunites_hildegart_and_susanne) {
+    CHECK(mentions(story::ENDING, "Susanne"));
+    CHECK(mentions(story::ENDING, "Hildegart"));
+}
+
+TEST_CASE(story_a_world_page_names_the_ability_it_unlocks) {
+    // Same idea as the controls text: if Cfg moves an unlock, the story has
+    // to follow.
+    CHECK(mentions(story::WORLDS[Cfg::Dash::UNLOCK_WORLD], "dash"));
+    CHECK(mentions(story::WORLDS[Cfg::Pogo::UNLOCK_WORLD], "R"));
+    CHECK(mentions(story::WORLDS[Cfg::WallJump::UNLOCK_WORLD], "wall"));
 }

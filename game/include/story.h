@@ -8,9 +8,10 @@
 //
 // Hildegart's journey: flushed out of the bathtub, she travels through the
 // worlds to reach her beloved Susanne (the World 5 finale). StoryScene shows
-// a page of a few lines - the intro when a new game starts, and a page the
-// first time the duck reaches each later world. No Butano: host-tested in
-// tests/host/test_story.cpp (which page when, and that every page fits).
+// a page of a few lines - the intro when a new game starts, a page the first
+// time the duck reaches each later world, and the ending before the reunion. No
+// Butano: host-tested in tests/host/test_story.cpp (which page when, and that
+// every page fits).
 // -----------------------------------------------------------------------------
 namespace story {
 
@@ -28,28 +29,36 @@ struct Page {
 };
 
 inline constexpr Page INTRO = {
-    {"Bath time for Hildegart.", "Then someone pulls the plug!",
-     "Down the drain she goes,", "far away from Susanne.",
+    {"Hildegart's best bath ever.", "Then someone pulls the plug!",
+     "Down the drain she swirls,", "far away from Susanne.",
      "Hold on, Hildegart!"},
     5};
 
 // One page per world, by index into WorldIndex::WORLDS. World 1 starts with
-// the INTRO instead.
+// the INTRO instead. A world that unlocks an ability (Cfg::...::
+// UNLOCK_WORLD) teaches it here too - the tests check that.
 inline constexpr Page WORLDS[] = {
     INTRO,
-    {{"The sewers. Dark, wet and", "full of nasty surprises.",
-      "Somewhere out there,", "Susanne is waiting."},
+    {{"Dark, damp, rusty: the", "sewers. Every pipe leads",
+      "somewhere - one of them", "must lead to Susanne."},
      4},
-    {{"Daylight at last!", "The pipe spits Hildegart",
-      "into a deep, green forest.", "Which way to Susanne?"},
+    {{"A pipe spits Hildegart out", "into a misty forest. Far",
+      "too far to jump? Then dash:", "press B in mid-air!"},
      4},
-    {{"A village! Someone here", "must have seen Susanne.",
-      "Hildegart keeps asking", "and keeps on running."},
+    {{"A village! The ducks here", "saw Susanne pass by - and",
+      "show Hildegart a trick:", "press R to strike down."},
      4},
-    {{"The trail ends at an old,", "crumbling castle.",
-      "Susanne must be inside.", "One last stretch!"},
+    {{"Susanne's trail leads down", "into a deep, steep dungeon.",
+      "Hold toward a wall and", "press A: wall jump!"},
      4},
 };
+
+// After the finale, before the reunion (KissingScene).
+inline constexpr Page ENDING = {
+    {"Bath, sewers, forest,", "village and dungeon -",
+     "Hildegart made it through", "all of them. Susanne!",
+     "Never pull the plug again."},
+    5};
 
 inline constexpr int WORLD_PAGE_COUNT = sizeof(WORLDS) / sizeof(WORLDS[0]);
 

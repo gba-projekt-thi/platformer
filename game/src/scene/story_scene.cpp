@@ -11,6 +11,7 @@
 #include "cfg.h"
 #include "common_variable_8x16_sprite_font.h"
 #include "data_manager.h"
+#include "kissing_scene.h"
 #include "level_manager.h"
 #include "level_scene.h"
 #include "player.h"
@@ -20,8 +21,10 @@ StoryScene::StoryScene(
     Player& player,
     bn::span<const LevelData> levels,
     DataManager& data_manager,
-    LevelManager& level_manager)
+    LevelManager& level_manager,
+    Then then)
     : _page(page),
+      _then(then),
       _player(player),
       _levels(levels),
       _data_manager(data_manager),
@@ -51,9 +54,15 @@ void StoryScene::update() {
         _transition_requested = true;
         _sprites.clear();
 
-        auto next_scene = bn::make_unique<LevelScene>(
-            _player, _levels, _data_manager, _level_manager);
-        core::SceneManager::instance().set_next_scene(bn::move(next_scene));
+        if (_then == Then::Reunion) {
+            auto next_scene = bn::make_unique<KissingScene>(
+                _player, _levels, _data_manager, _level_manager);
+            core::SceneManager::instance().set_next_scene(bn::move(next_scene));
+        } else {
+            auto next_scene = bn::make_unique<LevelScene>(
+                _player, _levels, _data_manager, _level_manager);
+            core::SceneManager::instance().set_next_scene(bn::move(next_scene));
+        }
 
         AudioSettings::instance().play_sfx(bn::sound_items::confirm);
     }

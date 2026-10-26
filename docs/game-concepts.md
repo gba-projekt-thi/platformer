@@ -191,11 +191,13 @@ rules in `locomotion::Core`, tests in `tests/host/test_locomotion.cpp`:
 Hildegart, the duck, is flushed out of the bathtub and travels through the
 worlds to reach her beloved Susanne, who waits at the end of World 5's
 finale. The story is told in short pages (`story.h`, shown by
-`StoryScene`): the intro when a new game starts, and one page the first
-time the duck reaches each later world (not again when the world is
-replayed, not via Level Select). A or Start goes on to the level. Each page
-has at most 5 lines of 28 characters; `tests/host/test_story.cpp` checks
-that and which page shows when.
+`StoryScene`): the intro when a new game starts, one page the first time
+the duck reaches each later world (not again when the world is replayed,
+not via Level Select), and the ending after the finale, before the reunion
+scene. A or Start goes on. A world that unlocks an ability (dash, pogo,
+wall jump) teaches it on its page. Each page has at most 5 lines of 28
+characters; `tests/host/test_story.cpp` checks that, which page shows when,
+and that the ability pages follow the `Cfg` unlock worlds.
 
 ## Game progression
 
