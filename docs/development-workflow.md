@@ -194,8 +194,10 @@ Two more static checkers keep level content honest (pure Python, no C++):
   can set. Use it when placing platforms: a gap meant to need the dash must
   fail the no-dash optimistic run (see [Level Design](level-design.md#dash-and-switch-levels)).
   Its tests calibrate the model against the documented jump/dash envelope and
-  check the two World 5 levels' design intent; a whole-roster run takes a few
-  minutes, the tests about 15 seconds.
+  check the two World 5 levels' design intent. `--all` checks the whole
+  roster in play order (the dash only from `Cfg::Dash::UNLOCK_WORLD` on) and
+  fails if any door cannot be reached; it runs in CI and as a pre-commit hook
+  and takes about 20 seconds.
 - `tools/Check_world_index.py` - confirms `WorldIndex::WORLDS` still describes
   main.cpp's `levels[]` (no gaps or overlaps, same total, no duplicates; warns
   about levels defined but not listed). It also runs as a pre-commit hook.

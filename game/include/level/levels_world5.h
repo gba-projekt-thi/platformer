@@ -83,7 +83,7 @@ const LevelData LEVEL_WORLD5_SCROLL = {
     // Player spawn
     {-272, 42},
     // Door position
-    {296, 52},
+    {296, 42},
     // World size (enables scrolling)
     624,
     160,
@@ -490,7 +490,7 @@ const LevelData LEVEL_WORLD5_BOSS = {
     // Player spawn
     {-296, 42},
     // Door position
-    {284, 52},
+    {284, 42},
     // World size (enables scrolling)
     650,
     160,

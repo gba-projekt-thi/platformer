@@ -59,3 +59,13 @@ repos:
         language: system
         files: ^(game/include/level/levels_world.*\.h|game/include/cfg\.h|game/include/pause_controller\.h|extern/engine/core/include/(sprite|collision)_registry\.h|tools/Check_sprite_budget\.py)$
         pass_filenames: false
+      - id: check-level-reachability
+        name: Validate that every level can be finished
+        description: >-
+          Every door must be reachable with the abilities of its level (the
+          dash only from Cfg::Dash::UNLOCK_WORLD on) - see
+          tools/Check_level_reachability.py.
+        entry: python3 tools/Check_level_reachability.py --all
+        language: system
+        files: ^(game/include/level/levels_world.*\.h|game/src/main\.cpp|game/include/world_index\.h|game/include/cfg(_dash)?\.h|tools/Check_level_reachability\.py)$
+        pass_filenames: false

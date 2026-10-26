@@ -39,6 +39,9 @@ jobs:
       - name: Checkpoint placement
         run: python3 tools/Check_checkpoints.py
 
+      - name: Every level can be finished
+        run: python3 tools/Check_level_reachability.py --all
+
       - name: Sprite and entity budgets
         run: python3 tools/Check_sprite_budget.py
 

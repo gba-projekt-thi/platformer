@@ -27,17 +27,23 @@ Two start assumptions bracket real play:
 
 Traps are ignored (this checks geometry, not hazard timing).
 
-Usage:
-    python3 tools/Check_level_reachability.py [--dash-from-index N] FILE LEVEL...
+Usage (from the repository root):
+    python3 tools/Check_level_reachability.py --all
+        Every level of main.cpp's levels[] in play order; the dash counts only
+        from the world Cfg::Dash::UNLOCK_WORLD on, as in the game.
+    python3 tools/Check_level_reachability.py FILE LEVEL...
+        Detailed report (with and without dash, both start assumptions) for
+        the named levels of one file.
 
-Exit code 0 if every requested level's door is reachable conservatively with
-all abilities it is allowed to use; 1 otherwise. The module is also imported
-by tools/test_check_level_reachability.py.
+Exit code 0 if every checked level's door is reachable conservatively (with
+the dash where --all allows it, always with it for FILE LEVEL...); 1
+otherwise. The module is also imported by tools/test_check_level_reachability.py.
 """
 
 import importlib.util
 import re
 import sys
+from collections import namedtuple
 from pathlib import Path
 
 _here = Path(__file__).resolve().parent
@@ -46,6 +52,11 @@ _spec = importlib.util.spec_from_file_location(
 )
 _ctr = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_ctr)
+_spec = importlib.util.spec_from_file_location(
+    "check_world_index", _here / "Check_world_index.py"
+)
+_cwi = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_cwi)
 
 # ---- constants mirrored from cfg.h / cfg_dash.h ---------------------------
 ACC = 0.38
@@ -442,8 +453,64 @@ def check_level(platforms, triggers, spawn, door, dash):
     return out
 
 
+def dash_allowed(level_index, worlds, unlock_world):
+    """Mirrors LevelManager::_load_player_spawn(): the dash is on from the first
+    level of WorldIndex::WORLDS[Cfg::Dash::UNLOCK_WORLD] onward."""
+    return level_index >= worlds[unlock_world][1]
+
+
+CampaignLevel = namedtuple("CampaignLevel", "index name path dash")
+
+
+def campaign(root):
+    """Every level of the game in play order (main.cpp's levels[]), with the
+    file that defines it and whether the dash is available there."""
+    root = Path(root)
+    order = _cwi.parse_levels((root / "game/src/main.cpp").read_text())
+    worlds = _cwi.parse_worlds((root / "game/include/world_index.h").read_text())
+    unlock = int(re.search(
+        r"UNLOCK_WORLD\s*=\s*(\d+)", (root / "game/include/cfg_dash.h").read_text()
+    ).group(1))
+    defined = {}
+    for path in sorted((root / "game/include/level").glob("levels_world*.h")):
+        for name in re.findall(r"(?:const|constexpr) LevelData (\w+)", path.read_text()):
+            defined[name] = path
+    return [
+        CampaignLevel(i, name, defined[name], dash_allowed(i, worlds, unlock))
+        for i, name in enumerate(order)
+    ]
+
+
+def unreachable_doors(levels):
+    """Names of the campaign levels whose door the duck cannot reach from a
+    conservative start with the abilities of that level."""
+    loaded = {}
+    bad = []
+    for level in levels:
+        if level.path not in loaded:
+            loaded[level.path] = load_levels(level.path)
+        platforms, triggers, spawn, door = loaded[level.path][level.name]
+        attach_lever_platforms(platforms, triggers)
+        _, ok, _ = reach_with_levers(platforms, triggers, spawn, door, level.dash, False)
+        if not ok:
+            bad.append(level.name)
+    return bad
+
+
+def main_all(root="."):
+    levels = campaign(root)
+    bad = unreachable_doors(levels)
+    for level in levels:
+        state = "NO DOOR" if level.name in bad else "ok"
+        print(f"{level.index:2d} {level.name:24s} {'dash' if level.dash else 'no dash':8s} {state}")
+    print(f"\nReachability check: {len(bad)} of {len(levels)} level(s) cannot be finished.")
+    return 1 if bad else 0
+
+
 def main(argv):
     args = argv[:]
+    if args == ["--all"]:
+        return main_all()
     if len(args) < 2:
         print(__doc__)
         return 2

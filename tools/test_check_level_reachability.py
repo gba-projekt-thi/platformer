@@ -12,6 +12,7 @@ when it cannot be found. Run from the repository root:
 
 import importlib.util
 import itertools
+import re
 import unittest
 from pathlib import Path
 
@@ -160,6 +161,84 @@ class NewLevelTests(unittest.TestCase):
         _, triggers, _, _ = self.level("LEVEL_WORLD5_LEVERS")
         for name, t in triggers.items():
             self.assertIsNotNone(t["platform"], name)
+
+
+class DashUnlockTests(unittest.TestCase):
+    WORLDS = [("World 1", 0, 4), ("World 2", 4, 3), ("World 3", 7, 3)]
+
+    def test_levels_before_the_unlock_world_have_no_dash(self):
+        for index in range(7):
+            self.assertFalse(sim.dash_allowed(index, self.WORLDS, 2), index)
+
+    def test_the_unlock_world_and_everything_after_it_have_the_dash(self):
+        for index in (7, 8, 9, 30):
+            self.assertTrue(sim.dash_allowed(index, self.WORLDS, 2), index)
+
+
+REPO = WORLD5.parents[3] if WORLD5 is not None else None
+
+
+def cfg_value(header, namespace, constant):
+    """`inline constexpr ... CONSTANT = value;` inside `namespace NAMESPACE { }`."""
+    text = (REPO / "game/include" / header).read_text()
+    block = re.search(
+        r"namespace " + namespace + r" \{(.*?)\}  // namespace " + namespace, text, re.DOTALL
+    ).group(1)
+    return float(re.search(r"\b" + constant + r"\s*=\s*(-?[\d.]+)", block).group(1))
+
+
+@unittest.skipIf(REPO is None, "levels_world5.h not found")
+class ConstantsMatchTheGameTests(unittest.TestCase):
+    """The simulator copies the duck's physics; a tuning change in cfg.h must
+    show up here instead of silently invalidating every reachability result."""
+
+    def test_player_constants_match_cfg_h(self):
+        for sim_value, constant in (
+            (sim.ACC, "ACCELERATION"),
+            (sim.DECEL, "DECELERATION"),
+            (sim.MAXS, "MAX_SPEED"),
+            (sim.JUMP, "JUMP_SPEED"),
+            (sim.G, "GRAVITY"),
+            (sim.MAXFALL, "MAX_FALL_SPEED"),
+            (sim.COYOTE, "COYOTE_FRAMES"),
+            (sim.DEATH_Y, "DEATH_HEIGHT"),
+        ):
+            self.assertEqual(sim_value, cfg_value("cfg.h", "Player", constant), constant)
+
+    def test_dash_constants_match_cfg_dash_h(self):
+        self.assertEqual(sim.DASH_SPEED, cfg_value("cfg_dash.h", "Dash", "SPEED"))
+        self.assertEqual(sim.DASH_FRAMES, cfg_value("cfg_dash.h", "Dash", "DURATION_FRAMES"))
+
+    def test_duck_body_matches_main_cpp(self):
+        text = (REPO / "game/src/main.cpp").read_text()
+        w, h = re.search(r"Player player\(\s*\S+,\s*\S+,\s*(\d+),\s*(\d+)\)", text).groups()
+        self.assertEqual((sim.BW, sim.BH), (float(w), float(h)))
+
+
+@unittest.skipIf(REPO is None, "levels_world5.h not found")
+class CampaignTests(unittest.TestCase):
+    """Every level of the real game, in play order (main.cpp's levels[])."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.campaign = sim.campaign(REPO)
+
+    def test_campaign_follows_main_cpp_levels_in_play_order(self):
+        names = [level.name for level in self.campaign]
+        self.assertEqual(len(names), 19)
+        self.assertEqual(names[0], "LEVEL_0")
+        self.assertEqual(names[-1], "LEVEL_WORLD5_FINALE")
+
+    def test_campaign_unlocks_the_dash_with_world_3(self):
+        dash = {level.name: level.dash for level in self.campaign}
+        self.assertFalse(dash["LEVEL_WORLD2_BOSS"])
+        self.assertTrue(dash["LEVEL_3"])
+        self.assertTrue(dash["LEVEL_WORLD5_DASH"])
+
+    def test_every_door_is_reachable_with_the_abilities_of_its_level(self):
+        # Conservative start (no coyote time, no run-up): a normal player can
+        # finish every level, so the game can be played to the end.
+        self.assertEqual(sim.unreachable_doors(self.campaign), [])
 
 
 if __name__ == "__main__":
