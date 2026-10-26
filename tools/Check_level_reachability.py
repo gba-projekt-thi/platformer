@@ -107,6 +107,23 @@ class Rect:
         return self.cy - self.h / 2
 
 
+def resolve_axis(frm, delta, blocked):
+    """PhysicsBody::move() on one axis (move_resolution.h): the whole move if
+    it is free, else steps of at most 1 px up to the obstacle. Returns
+    (position, blocked)."""
+    if delta == 0 or not blocked(frm + delta):
+        return frm + delta, False
+    one = 1.0 if delta > 0 else -1.0
+    pos, remaining = frm, delta
+    while remaining != 0:
+        step = one if abs(remaining) > 1.0 else remaining
+        if blocked(pos + step):
+            break
+        pos += step
+        remaining -= step
+    return pos, True
+
+
 def overlap(ax, ay, aw, ah, bx, by, bw, bh):
     return (
         ax - aw / 2 < bx + bw / 2
@@ -196,16 +213,12 @@ def simulate(
             vy = JUMP
             on_ground = False
             coyote = 0
-        # move: X then Y, blocked -> velocity zeroed
-        nx = x + vx
-        if _hits(plats, nx, y, BW, BH) is None:
-            x = nx
-        else:
+        # move: X then Y up to any obstacle, blocked -> velocity zeroed
+        x, blocked = resolve_axis(x, vx, lambda nx: _hits(plats, nx, y, BW, BH) is not None)
+        if blocked:
             vx = 0.0
-        ny = y + vy
-        if _hits(plats, x, ny, BW, BH) is None:
-            y = ny
-        else:
+        y, blocked = resolve_axis(y, vy, lambda ny: _hits(plats, x, ny, BW, BH) is not None)
+        if blocked:
             vy = 0.0
         if trace is not None:
             trace.append((x, y))

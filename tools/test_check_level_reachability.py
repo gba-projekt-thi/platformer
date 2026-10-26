@@ -163,6 +163,29 @@ class NewLevelTests(unittest.TestCase):
             self.assertIsNotNone(t["platform"], name)
 
 
+class ResolveAxisTests(unittest.TestCase):
+    """Mirrors resolve_axis() in the engine's move_resolution.h."""
+
+    @staticmethod
+    def floor(p):
+        return p + 4 > 10  # 8 px body over a floor whose top is at 10
+
+    def test_a_free_move_goes_all_the_way(self):
+        self.assertEqual(sim.resolve_axis(0.0, 2.5, self.floor), (2.5, False))
+
+    def test_a_fall_ends_less_than_a_pixel_above_the_floor(self):
+        pos, blocked = sim.resolve_axis(3.5, 3.0, self.floor)
+        self.assertTrue(blocked)
+        self.assertFalse(self.floor(pos))
+        self.assertGreater(pos + 4, 9)
+
+    def test_a_small_blocked_step_does_not_move(self):
+        self.assertEqual(sim.resolve_axis(5.5, 0.75, self.floor), (5.5, True))
+
+    def test_no_move_is_never_blocked(self):
+        self.assertEqual(sim.resolve_axis(6.0, 0.0, self.floor), (6.0, False))
+
+
 class DashUnlockTests(unittest.TestCase):
     WORLDS = [("World 1", 0, 4), ("World 2", 4, 3), ("World 3", 7, 3)]
 
