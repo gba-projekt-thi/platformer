@@ -8,8 +8,13 @@
 # save_integrity.h, save_buffer.h, game_state.h, frame_time.h).
 #
 # Usage:
-#   cd tests/host && make            # build + run
+#   cd tests/host && make                    # build + run (incremental, parallel)
+#   cd tests/host && make FILTER=crumble     # only tests whose name contains it
+#   cd tests/host && make coverage           # + line coverage of game/include
 #   cd tests/host && make clean
+#
+# Every test file is its own object (in build/host-tests/, already ignored by
+# git) with header dependencies, so a change only recompiles what includes it.
 #
 # Include paths mirror the real Makefile's INCLUDES list (bare #include
 # filenames, one -I per directory - see the root Makefile/README) so these
@@ -32,20 +37,50 @@ INCLUDES := \
 
 INCLUDE_FLAGS := $(addprefix -I,$(INCLUDES)) -I.
 
+OBJ_DIR := $(ROOT)/build/host-tests
 TEST_SRC := $(wildcard *.cpp)
 ENGINE_SRC := $(ROOT)/extern/engine/src/save_system/src/save_integrity.cpp
+OBJS := $(addprefix $(OBJ_DIR)/,$(TEST_SRC:.cpp=.o)) $(OBJ_DIR)/save_integrity.o
 
 BIN := host_tests
 
-.PHONY: test run clean
+# Runs the build on every core unless the caller chose -j itself.
+ifeq ($(findstring j,$(firstword -$(MAKEFLAGS))),)
+MAKEFLAGS += -j$(shell nproc 2>/dev/null || echo 4)
+endif
+
+.PHONY: test run coverage clean FORCE
 
 test: run
 
 run: $(BIN)
-	./$(BIN)
+	./$(BIN) $(FILTER)
 
-$(BIN): $(TEST_SRC) $(ENGINE_SRC) test_framework.h
-	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) $(TEST_SRC) $(ENGINE_SRC) -o $(BIN)
+# Always relinked (a few ms): a deleted test file leaves every remaining
+# object up to date, but its test must leave the binary too.
+$(BIN): $(OBJS) FORCE
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $(BIN)
+
+$(OBJ_DIR)/%.o: %.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) -MMD -MP -c $< -o $@
+
+$(OBJ_DIR)/save_integrity.o: $(ENGINE_SRC) | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_FLAGS) -MMD -MP -c $< -o $@
+
+$(OBJ_DIR):
+	mkdir -p $@
+
+# Line coverage of the game code the tests exercise, per file (see
+# tools/coverage_summary.py; needs only gcov).
+COV_DIR := $(ROOT)/build/host-tests-coverage
+
+coverage:
+	rm -f $(COV_DIR)/*.gcda
+	$(MAKE) OBJ_DIR=$(COV_DIR) BIN=$(COV_DIR)/host_tests \
+	    CXXFLAGS="$(CXXFLAGS) -O0 --coverage" run >/dev/null
+	python3 $(ROOT)/tools/coverage_summary.py $(COV_DIR) $(ROOT)/game
 
 clean:
-	rm -f $(BIN)
+	rm -rf $(BIN) $(OBJ_DIR) $(COV_DIR)
+
+-include $(OBJS:.o=.d)

@@ -78,3 +78,12 @@ repos:
         language: system
         files: ^(game/include/level/levels.*\.h|game/include/cfg\.h|game/graphics/.*\.(bmp|json)|tools/Check_hitboxes\.py)$
         pass_filenames: false
+      - id: host-tests
+        name: Host unit tests
+        description: >-
+          Builds (incrementally) and runs tests/host whenever game headers or
+          the tests change - see tests/host/Makefile.
+        entry: make -C tests/host
+        language: system
+        files: ^(game/include/.*\.h|tests/host/.*|extern/engine/src/save_system/.*)$
+        pass_filenames: false
