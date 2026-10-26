@@ -21,19 +21,19 @@
 
 constexpr PlatformData world4_scroll_platforms[] = {
 
-    {-248, 60, 32, 16, 0, 0, bn::sprite_items::beet, 0},
+    {-248, 64, 16, 16, 0, -4, bn::sprite_items::beet, 0},
     {-192, 60, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
     {-160, 44, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
-    {-120, 60, 32, 16, 0, 0, bn::sprite_items::korb, 0},
+    {-120, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
     {-64, 44, 16, 10, 0, 0, bn::sprite_items::flower3, 0},
     {-32, 28, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
-    {8, 44, 32, 16, 0, 0, bn::sprite_items::beet, 0},
+    {8, 48, 16, 16, 0, -4, bn::sprite_items::beet, 0},
     {64, 60, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
-    {104, 44, 32, 16, 0, 0, bn::sprite_items::korb, 0},
+    {104, 48, 32, 16, 0, -4, bn::sprite_items::korb, 0},
     {152, 28, 16, 10, 0, 0, bn::sprite_items::flower3, 0},
-    {192, 44, 32, 16, 0, 0, bn::sprite_items::beet, 0},
+    {192, 48, 16, 16, 0, -4, bn::sprite_items::beet, 0},
     {240, 60, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
-    {264, 60, 32, 16, 0, 0, bn::sprite_items::korb, 0}};
+    {264, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0}};
 
 constexpr TriggerData world4_scroll_triggers[] = {
     {8, 44, 32, 16, false, "brick_release"},
@@ -56,7 +56,7 @@ constexpr TrapData world4_scroll_traps[] = {
      "brick_release"},
 
     // Flying pest, drifts right once "bug_release" fires.
-    {TrapType::MOVING, 192, 50, 12, 12, 0, 0, bn::sprite_items::bug16x16, 1,
+    {TrapType::MOVING, 192, 50, 12, 12, 0, 4, bn::sprite_items::bug16x16, 1,
      TRAP_GRAPHICS_INDEXES_0, 1.2, 0, 2, NO_PATH_TRAP, 0, 0, 0, "bug_release"}};
 
 // Checkpoint on the middle korb platform of the long garden level.
@@ -102,12 +102,12 @@ const LevelData LEVEL_WORLD4_SCROLL = {
 
 constexpr PlatformData world4b_scroll_platforms[] = {
 
-    {-144, 60, 32, 16, 0, 0, bn::sprite_items::beet, 0},
+    {-144, 64, 16, 16, 0, -4, bn::sprite_items::beet, 0},
     {-88, 60, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
     {-48, 44, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
-    {0, 60, 32, 16, 0, 0, bn::sprite_items::korb, 0},
+    {0, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
     {56, 44, 16, 10, 0, 0, bn::sprite_items::flower3, 0},
-    {104, 60, 32, 16, 0, 0, bn::sprite_items::beet, 0},
+    {104, 64, 16, 16, 0, -4, bn::sprite_items::beet, 0},
     {152, 60, 16, 10, 0, 0, bn::sprite_items::flower1, 0}};
 
 constexpr TrapData world4b_scroll_traps[] = {
@@ -118,7 +118,7 @@ constexpr TrapData world4b_scroll_traps[] = {
     // Combined with the ambush bug below, standing still to plan the
     // ambush dodge lets the chaser close the gap - the level's first
     // taste of "pursuer pressure plus dodge timing" at once.
-    {TrapType::CHASE, -180, 24, 12, 12, 0, 0, bn::sprite_items::bug16x16, 1,
+    {TrapType::CHASE, -180, 24, 12, 12, 0, 4, bn::sprite_items::bug16x16, 1,
      TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, NO_PATH_TRAP, 0, 65, 1.3},
 
     // Static bush hazard right after the first platform.
@@ -133,7 +133,7 @@ constexpr TrapData world4b_scroll_traps[] = {
      12,
      12,
      0,
-     0,
+     4,
      bn::sprite_items::bug16x16,
      1,
      TRAP_GRAPHICS_INDEXES_3,
@@ -176,16 +176,16 @@ const LevelData LEVEL_WORLD4_SCROLL_2 = {
 
 constexpr PlatformData world4_boss_platforms[] = {
 
-    {-224, 60, 32, 16, 0, 0, bn::sprite_items::beet, 0},
+    {-224, 64, 16, 16, 0, -4, bn::sprite_items::beet, 0},
     {-168, 60, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
     {-128, 44, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
-    {-88, 60, 32, 16, 0, 0, bn::sprite_items::korb, 0},
+    {-88, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
     {-56, 44, 16, 10, 0, 0, bn::sprite_items::flower3, 0},
-    {8, 60, 32, 16, 0, 0, bn::sprite_items::beet, 0},
+    {8, 64, 16, 16, 0, -4, bn::sprite_items::beet, 0},
     {64, 44, 16, 10, 0, 0, bn::sprite_items::flower1, 0},
-    {104, 60, 32, 16, 0, 0, bn::sprite_items::korb, 0},
+    {104, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
     {152, 60, 16, 10, 0, 0, bn::sprite_items::flower2, 0},
-    {200, 60, 32, 16, 0, 0, bn::sprite_items::beet, 0}};
+    {200, 64, 16, 16, 0, -4, bn::sprite_items::beet, 0}};
 
 constexpr TriggerData world4_boss_triggers[] = {
     {-140, 40, 32, 40, false, "wave1"},
@@ -197,7 +197,7 @@ constexpr TrapData world4_boss_traps[] = {
     // The Hive Queen herself: a bug that trails the duck the whole fight,
     // closing the gap whenever the duck advances - constant pressure, like
     // an enrage timer forcing forward movement.
-    {TrapType::CHASE, -260, 20, 12, 12, 0, 0, bn::sprite_items::bug16x16, 1,
+    {TrapType::CHASE, -260, 20, 12, 12, 0, 4, bn::sprite_items::bug16x16, 1,
      TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, NO_PATH_TRAP, 0, 50, 1.8},
 
     // A bush disguised as scenery, lunging if the duck lingers near it.
@@ -238,7 +238,7 @@ constexpr TrapData world4_boss_traps[] = {
      12,
      12,
      0,
-     0,
+     4,
      bn::sprite_items::bug16x16,
      1,
      TRAP_GRAPHICS_INDEXES_3,

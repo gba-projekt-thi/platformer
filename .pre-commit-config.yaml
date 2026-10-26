@@ -69,3 +69,12 @@ repos:
         language: system
         files: ^(game/include/level/levels_world.*\.h|game/src/main\.cpp|game/include/world_index\.h|game/include/cfg(_dash)?\.h|tools/Check_level_reachability\.py)$
         pass_filenames: false
+      - id: check-hitboxes
+        name: Validate hitboxes against their pictures
+        description: >-
+          Platform and trap collision boxes must match the opaque pixels of
+          their sprites - see tools/Check_hitboxes.py.
+        entry: python3 tools/Check_hitboxes.py
+        language: system
+        files: ^(game/include/level/levels.*\.h|game/include/cfg\.h|game/graphics/.*\.(bmp|json)|tools/Check_hitboxes\.py)$
+        pass_filenames: false

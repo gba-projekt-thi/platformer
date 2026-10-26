@@ -19,8 +19,8 @@ constexpr PlatformData level2_platforms[] = {
 
     {-96, -16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
     {-72, 40, 16, 18, 0, 0, bn::sprite_items::platforms_world2, 2},
-    {-24, 40, 16, 11, 0, 0, bn::sprite_items::platforms_world2, 0},
-    {24, 40, 16, 11, 0, 0, bn::sprite_items::platforms_world2, 0},
+    {-24, 36, 16, 11, 0, 4, bn::sprite_items::platforms_world2, 0},
+    {24, 36, 16, 11, 0, 4, bn::sprite_items::platforms_world2, 0},
     {64, 24, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
     {96, 16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
     {112, 16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1}};
@@ -73,8 +73,8 @@ constexpr PlatformData world2_scroll_platforms[] = {
 
     {-96, -16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
     {-72, 40, 16, 18, 0, 0, bn::sprite_items::platforms_world2, 2},
-    {-24, 40, 16, 11, 0, 0, bn::sprite_items::platforms_world2, 0},
-    {24, 40, 16, 11, 0, 0, bn::sprite_items::platforms_world2, 0},
+    {-24, 36, 16, 11, 0, 4, bn::sprite_items::platforms_world2, 0},
+    {24, 36, 16, 11, 0, 4, bn::sprite_items::platforms_world2, 0},
     {64, 24, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
     {96, 16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
     {112, 16, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},

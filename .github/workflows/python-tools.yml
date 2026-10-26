@@ -42,6 +42,9 @@ jobs:
       - name: Every level can be finished
         run: python3 tools/Check_level_reachability.py --all
 
+      - name: Hitboxes match their pictures
+        run: python3 tools/Check_hitboxes.py
+
       - name: Sprite and entity budgets
         run: python3 tools/Check_sprite_budget.py
 

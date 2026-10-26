@@ -45,7 +45,7 @@ constexpr TriggerData level3_triggers[] = {
 
 constexpr TrapData level3_traps[] = {
     // Early mushroom forcing careful jump
-    {TrapType::BASE, 0, 48, 32, 32, 0, 0, bn::sprite_items::mushroom32x32, 16,
+    {TrapType::BASE, 0, 48, 32, 28, 0, 2, bn::sprite_items::mushroom32x32, 16,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0},
 
     // Slither arms rise upward after upper trigger. Shares
@@ -62,7 +62,7 @@ constexpr TrapData level3_traps[] = {
      "climb_trigger"},
 
     // Final mushroom guarding exit
-    {TrapType::BASE, 80, 48, 32, 32, 0, 0, bn::sprite_items::mushroom32x32, 16,
+    {TrapType::BASE, 80, 48, 32, 28, 0, 2, bn::sprite_items::mushroom32x32, 16,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0}};
 
 const LevelData LEVEL_3 = {

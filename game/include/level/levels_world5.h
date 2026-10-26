@@ -23,19 +23,19 @@
 
 constexpr PlatformData world5_scroll_platforms[] = {
 
-    {-272, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {-216, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
-    {-176, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {-128, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {-72, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
-    {-24, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {24, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {80, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
-    {128, 60, 32, 16, 0, 0, bn::sprite_items::chest32x32, 0},
-    {176, 70, 16, 10, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {224, 60, 32, 16, 0, 0, bn::sprite_items::bars32x32, 0},
-    {272, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {296, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0}};
+    {-272, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-216, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
+    {-176, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {-128, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-72, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
+    {-24, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {24, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {80, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
+    {128, 60, 26, 16, 0, 0, bn::sprite_items::chest32x32, 0},
+    {176, 70, 26, 10, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {224, 68, 28, 16, 0, -8, bn::sprite_items::bars32x32, 0},
+    {272, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {296, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0}};
 
 constexpr TriggerData world5_scroll_triggers[] = {
     // Fires just before the thwomp's drop zone near x=156.
@@ -108,14 +108,14 @@ const LevelData LEVEL_WORLD5_SCROLL = {
 
 constexpr PlatformData world5b_scroll_platforms[] = {
 
-    {-168, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {-112, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
-    {-72, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {-24, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {32, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
-    {72, 60, 32, 16, 0, 0, bn::sprite_items::chest32x32, 0},
-    {128, 70, 16, 10, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {176, 60, 32, 16, 0, 0, bn::sprite_items::bars32x32, 0}};
+    {-168, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-112, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
+    {-72, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {-24, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {32, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
+    {72, 60, 26, 16, 0, 0, bn::sprite_items::chest32x32, 0},
+    {128, 70, 26, 10, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {176, 68, 28, 16, 0, -8, bn::sprite_items::bars32x32, 0}};
 
 constexpr TrapData world5b_scroll_traps[] = {
 
@@ -197,19 +197,19 @@ const LevelData LEVEL_WORLD5_SCROLL_2 = {
 constexpr PlatformData world5_dash_platforms[] = {
 
     // Spawn platform; first dash gap (84px) follows.
-    {-296, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {-180, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {-296, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-180, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
     // Ordinary hops: 32px and 40px gaps.
-    {-124, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {-68, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
+    {-124, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {-68, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
     // Second dash gap (88px), then a landing barrel.
-    {44, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {44, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
     // Short hops across the mimic's gap (32px / 30px).
-    {100, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {146, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
+    {100, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {146, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
     // Last dash gap (92px), then the exit stretch.
-    {262, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {314, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0}};
+    {262, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {314, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0}};
 
 constexpr TrapData world5_dash_traps[] = {
 
@@ -303,28 +303,27 @@ const LevelData LEVEL_WORLD5_DASH = {
 constexpr PlatformData world5_levers_platforms[] = {
 
     // Room 1: two adjacent barrels, lever1 on the right one.
-    {-232, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {-200, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {-232, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-200, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
     // Gate stone over the first chasm (appears when lever1 is on). The
     // chasm is 120px wide - beyond even a dash - so lever1 is mandatory;
     // with the stone every jump is 44px.
-    {-124, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0, "lever1",
-     true},
+    {-124, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0, "lever1", true},
     // Room 2: landing barrels, lever2 on the right one.
-    {-48, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {-16, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {-48, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-16, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
     // The stone that lever2 takes away (present while lever2 is off):
     // two 26px hops. Without it the chasm is 84px - dash territory.
-    {42, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0, "lever2", false},
+    {42, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0, "lever2", false},
     // Room 3: two adjacent barrels with lever3 / lever4.
-    {100, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {132, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {100, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {132, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
     // Two stones over the last 160px chasm, one per lever: both on = four
     // 32px hops; one lever + the dash (96px) also works; none is impossible.
-    {196, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0, "lever3", true},
-    {260, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0, "lever4", true},
+    {196, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0, "lever3", true},
+    {260, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0, "lever4", true},
     // Exit platform.
-    {324, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0}};
+    {324, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0}};
 
 constexpr TriggerData world5_levers_triggers[] = {
     {-196, 44, 16, 16, false, "lever1", TriggerMode::Toggle,
@@ -380,19 +379,19 @@ const LevelData LEVEL_WORLD5_LEVERS = {
 
 constexpr PlatformData world5_boss_platforms[] = {
 
-    {-296, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {-240, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
-    {-200, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {-152, 60, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {-96, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
-    {-48, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {0, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {56, 60, 16, 10, 0, 0, bn::sprite_items::bars32x32, 0},
-    {104, 60, 32, 16, 0, 0, bn::sprite_items::chest32x32, 0},
-    {152, 70, 16, 10, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {200, 60, 32, 16, 0, 0, bn::sprite_items::bars32x32, 0},
-    {240, 60, 16, 10, 0, 0, bn::sprite_items::chest32x32, 0},
-    {272, 70, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0}};
+    {-296, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-240, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
+    {-200, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {-152, 58, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-96, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
+    {-48, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {0, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {56, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
+    {104, 60, 26, 16, 0, 0, bn::sprite_items::chest32x32, 0},
+    {152, 70, 26, 10, 0, -10, bn::sprite_items::barrel32x32, 0},
+    {200, 68, 28, 16, 0, -8, bn::sprite_items::bars32x32, 0},
+    {240, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
+    {272, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0}};
 
 constexpr TriggerData world5_boss_triggers[] = {
     {-180, 48, 32, 24, false, "wave1"},
@@ -514,17 +513,17 @@ const LevelData LEVEL_WORLD5_BOSS = {
 
 constexpr PlatformData world5_finale_platforms[] = {
 
-    {-160, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {-128, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {-96, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {-64, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {-32, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {0, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {32, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {64, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {96, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {128, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0},
-    {160, 64, 32, 16, 0, -10, bn::sprite_items::barrel32x32, 0}};
+    {-160, 62, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-128, 62, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-96, 62, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-64, 62, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-32, 62, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {0, 62, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {32, 62, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {64, 62, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {96, 62, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {128, 62, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {160, 62, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0}};
 
 const LevelData LEVEL_WORLD5_FINALE = {
 
