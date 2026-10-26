@@ -164,7 +164,12 @@ the enemy: traps cannot be destroyed, but they can be used. Tuned in
 - **Miss.** A strike that meets nothing is followed by 8 frames without one.
 - **Death stays instant.** Touching a trap any other way still kills.
 - **Availability.** From World 4 onward (`Cfg::Pogo::UNLOCK_WORLD`), like the
-  dash. The reachability check ignores traps, so it never counts on a bounce.
+  dash, and in every boss level. World 4 opens with "Bramble Hop", which
+  teaches it: two pits wider than jump + dash, crossed only by bouncing off
+  thorn bushes - once, then twice in a row.
+- **Reachability.** `tools/Check_level_reachability.py` lets the duck bounce
+  off a level's BASE traps (they never move), only where a level cannot be
+  finished without it.
 
 ### Wall jump
 

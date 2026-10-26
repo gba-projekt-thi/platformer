@@ -20,6 +20,53 @@
 #include "levels_common.h"
 
 // =============================================================================
+// WORLD 4 POGO - "Bramble Hop", the pogo level (world_width=460)
+// Three baskets with pits between them that neither a jump nor a dash
+// crosses (120 and 152 px). Thorn bushes float in them: strike down with R
+// and bounce off - once over the first pit, twice in a row over the second.
+// =============================================================================
+constexpr PlatformData world4_pogo_platforms[] = {
+
+    // Start: two baskets, top at y=52.
+    {-200, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+    {-168, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+    // The middle island, 120 px past the first.
+    {-16, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+    {16, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+    // The door's basket, 152 px past the middle island.
+    {200, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0}};
+
+constexpr TrapData world4_pogo_traps[] = {
+
+    // One bush in the first pit, 44 px out: a jump reaches it from above.
+    {TrapType::BASE, -108, 60, 24, 24, 0, 0, bn::sprite_items::strauch32x32, 16,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
+    // Two bushes in the second pit, a bounce apart.
+    {TrapType::BASE, 60, 60, 24, 24, 0, 0, bn::sprite_items::strauch32x32, 16,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
+    {TrapType::BASE, 108, 60, 24, 24, 0, 0, bn::sprite_items::strauch32x32, 16,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP}};
+
+const LevelData LEVEL_WORLD4_POGO = {
+    world4_pogo_platforms,
+    sizeof(world4_pogo_platforms) / sizeof(world4_pogo_platforms[0]),
+    nullptr,
+    0,
+    world4_pogo_traps,
+    sizeof(world4_pogo_traps) / sizeof(world4_pogo_traps[0]),
+    bn::regular_bg_items::world4,
+    bn::music_items::world4,
+    // Player spawn
+    {-200, 40},
+    // Door position
+    {200, 42},
+    460,
+    160,
+    1,
+    // First level built on the pogo (Cfg::Pogo::UNLOCK_WORLD = World 4).
+    "New: strike down with R"};
+
+// =============================================================================
 // WORLD 4 SCROLL - garden theme (world_width=528)
 // =============================================================================
 constexpr PlatformData world4_scroll_platforms[] = {

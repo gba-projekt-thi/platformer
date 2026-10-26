@@ -43,6 +43,7 @@ otherwise. The module is also imported by tools/test_check_level_reachability.py
 """
 
 import importlib.util
+import json
 import re
 import sys
 from collections import namedtuple
@@ -398,6 +399,38 @@ def climb(plats, door, start, x0, vx0, d, mode, slide, jump):
     return None, door_touched
 
 
+def pogo_hop(plats, traps, door, start, x0, vx0, d, r_from, wall_jump):
+    """A pogo policy from `start`: jump toward d holding A, and from frame
+    `r_from` on press R every other frame, bouncing off any trap (`traps`)
+    below. Returns (landed platform or None, door touched), like simulate().
+    Touching a trap with the body is death."""
+    duck = Duck(plats, x0, start.top - BH / 2, vx0, wall_jump=wall_jump, pogo_targets=traps)
+    airborne = False
+    door_touched = False
+    bounces = 0
+    for f in range(WALL_FRAMES):
+        if bounces > 4:  # hopping in place on one trap leads nowhere
+            return None, door_touched
+        r = f >= r_from and (f - r_from) % 2 == 0
+        duck.step(left=d < 0, right=d > 0, a_pressed=f == 0, a_held=True, r_pressed=r)
+        bounces += duck.pogo_bounced
+        if any(overlap(duck.x, duck.y, BW, BH, t.cx, t.cy, t.w, t.h) for t in traps):
+            return None, door_touched
+        if door is not None and overlap(duck.x, duck.y, BW, BH, door[0], door[1], 2, 2):
+            door_touched = True
+        if duck.y > DEATH_Y:
+            return None, door_touched
+        ground = _hits(plats, duck.x, duck.y + BH / 2 + 1, BW - 2, 1)
+        if ground is not None and (ground is not start or airborne) and duck.vy >= 0 and f >= 1:
+            return ground, door_touched
+        if duck.y < start.top - BH / 2 - 1 or duck.vy != 0:
+            airborne = True
+    return None, door_touched
+
+
+POGO_STARTS = (0, 8, 14, 20)
+
+
 WALL_POLICIES = [
     (d, mode, slide, jump)
     for d in (1, -1) for mode in ("chimney", "same") for slide in (0, 8) for jump in (True, False)
@@ -420,7 +453,8 @@ def policies(allow_dash):
 START_OFFSETS = (0.0, 10.0, 20.0, 30.0)  # px back from the edge (conservative)
 
 
-def landings(active, start, door, allow_dash, optimistic, traces=None, allow_wall=False):
+def landings(active, start, door, allow_dash, optimistic, traces=None, allow_wall=False,
+             pogo_targets=()):
     """Platforms (and door contact) reachable in ONE action from `start`.
 
     `traces`, when a dict, collects one jump trajectory per
@@ -465,6 +499,23 @@ def landings(active, start, door, allow_dash, optimistic, traces=None, allow_wal
                     key = (start.index, landed.index, dash_t is not None)
                     if key not in traces or len(trace) < len(traces[key]):
                         traces[key] = trace
+    # only traps a jump from here can reach (about 60 px past either edge)
+    near = [t for t in pogo_targets if start.left - 80 < t.cx < start.right + 80]
+    if near:
+        for d in (1, -1):
+            edge = start.right if d == 1 else start.left
+            for k in START_OFFSETS:
+                x0 = edge - d * k
+                if not start.left <= x0 <= start.right:
+                    continue
+                runway = (x0 - start.left) if d == 1 else (start.right - x0)
+                vx0 = d * MAXS if runway >= 12 else 0.0
+                for r_from in POGO_STARTS:
+                    landed, touched = pogo_hop(
+                        active, near, door, start, x0, vx0, d, r_from, allow_wall)
+                    door_hit |= touched
+                    if landed is not None and landed is not start:
+                        found.add(landed)
     if allow_wall:
         for d, mode, slide, jump in WALL_POLICIES:
             edge = start.right if d == 1 else start.left
@@ -495,7 +546,7 @@ def spawn_platform(active, spawn):
     return None
 
 
-def reach(active, spawn, door, allow_dash, optimistic, allow_wall=False):
+def reach(active, spawn, door, allow_dash, optimistic, allow_wall=False, pogo_targets=()):
     """Returns (reached platforms, door reachable) for a fixed platform set."""
     first = spawn_platform(active, spawn)
     if first is None:
@@ -505,7 +556,8 @@ def reach(active, spawn, door, allow_dash, optimistic, allow_wall=False):
     door_ok = False
     while frontier:
         cur = frontier.pop()
-        found, touched = landings(active, cur, door, allow_dash, optimistic, allow_wall=allow_wall)
+        found, touched = landings(active, cur, door, allow_dash, optimistic, allow_wall=allow_wall,
+                                  pogo_targets=pogo_targets)
         door_ok |= touched
         for p in found:
             if p not in reached:
@@ -532,7 +584,8 @@ def _clamp(v, lo, hi):
     return max(lo, min(hi, v))
 
 
-def reach_with_levers(platforms, triggers, spawn, door, allow_dash, optimistic, allow_wall=False):
+def reach_with_levers(platforms, triggers, spawn, door, allow_dash, optimistic, allow_wall=False,
+                      pogo_targets=()):
     """Fixpoint over lever configurations. `triggers` maps name -> dict with
     default_on and the Rect of the platform the lever stands on (or None).
     Returns (reached_ids, door_ok, configs_explored)."""
@@ -559,7 +612,7 @@ def reach_with_levers(platforms, triggers, spawn, door, allow_dash, optimistic, 
     while todo:
         cfg = dict(todo.pop())
         active = active_for(cfg)
-        reached, ok = reach(active, spawn, door, allow_dash, optimistic, allow_wall)
+        reached, ok = reach(active, spawn, door, allow_dash, optimistic, allow_wall, pogo_targets)
         door_ok |= ok
         all_reached |= {p.index for p in reached}
         for n in names:
@@ -634,6 +687,29 @@ def load_levels(path):
     return levels
 
 
+def load_static_traps(path):
+    """{level: [Rect]} of the BASE traps (they never move): what a pogo strike
+    can bounce off for sure."""
+    content = _ctr.strip_comments(Path(path).read_text())
+    trap_arrays = _ctr.extract_named_arrays(content, "TrapData")
+    out = {}
+    for m in re.finditer(r"(?:const|constexpr) LevelData ([A-Za-z0-9_]+)\s*=\s*", content):
+        ob = m.end()
+        if content[ob] != "{":
+            continue
+        cb = _ctr.find_balanced_block(content, ob)
+        f = _ctr.top_level_fields(content[ob + 1: cb])
+        traps = []
+        if f[4] != "nullptr":
+            for i, lit in enumerate(_ctr.extract_top_level_literals(trap_arrays[f[4]])):
+                tf = _ctr.top_level_fields(lit)
+                if tf[0].strip() == "TrapType::BASE":
+                    x, y, w, h, ox, oy = (_num(v) for v in tf[1:7])
+                    traps.append(Rect(x + ox, y + oy, w, h, i))
+        out[m.group(1)] = traps
+    return out
+
+
 def attach_lever_platforms(platforms, triggers):
     """A lever 'stands on' the platform whose top meets the trigger's bottom."""
     for name, t in triggers.items():
@@ -662,13 +738,13 @@ def dash_allowed(level_index, worlds, unlock_world):
     return level_index >= worlds[unlock_world][1]
 
 
-CampaignLevel = namedtuple("CampaignLevel", "index name path dash wall")
+CampaignLevel = namedtuple("CampaignLevel", "index name path dash wall pogo")
 
 
 def campaign(root):
     """Every level of the game in play order (main.cpp's levels[]), with the
-    file that defines it and whether the dash and wall jumps are available
-    there."""
+    file that defines it and whether the dash, wall jumps and the pogo are
+    available there (the pogo also in every level with a boss)."""
     root = Path(root)
     order = _cwi.parse_levels((root / "game/src/main.cpp").read_text())
     worlds = _cwi.parse_worlds((root / "game/include/world_index.h").read_text())
@@ -680,10 +756,16 @@ def campaign(root):
     for path in sorted((root / "game/include/level").glob("levels_world*.h")):
         for name in re.findall(r"(?:const|constexpr) LevelData (\w+)", path.read_text()):
             defined[name] = path
+    bosses = set()
+    for path in sorted((root / "game/levels").glob("*.json")):
+        for lv in json.loads(path.read_text())["levels"]:
+            if any(t.get("type") == "BOSS" for t in (lv.get("traps") or {}).get("items", [])):
+                bosses.add(lv["name"])
     return [
         CampaignLevel(i, name, defined[name],
                       dash_allowed(i, worlds, unlock("cfg_dash.h")),
-                      dash_allowed(i, worlds, unlock("cfg_wall_jump.h")))
+                      dash_allowed(i, worlds, unlock("cfg_wall_jump.h")),
+                      dash_allowed(i, worlds, unlock("cfg_pogo.h")) or name in bosses)
         for i, name in enumerate(order)
     ]
 
@@ -692,13 +774,20 @@ def unreachable_doors(levels):
     """Names of the campaign levels whose door the duck cannot reach from a
     conservative start with the abilities of that level."""
     loaded = {}
+    traps = {}
     bad = []
     for level in levels:
         if level.path not in loaded:
             loaded[level.path] = load_levels(level.path)
+            traps[level.path] = load_static_traps(level.path)
         platforms, triggers, spawn, door = loaded[level.path][level.name]
         attach_lever_platforms(platforms, triggers)
         _, ok, _ = reach_with_levers(platforms, triggers, spawn, door, level.dash, False, level.wall)
+        # the pogo only adds reach: simulated only where it is needed
+        if not ok and level.pogo:
+            _, ok, _ = reach_with_levers(
+                platforms, triggers, spawn, door, level.dash, False, level.wall,
+                traps[level.path].get(level.name, []))
         if not ok:
             bad.append(level.name)
     return bad
@@ -709,8 +798,9 @@ def main_all(root="."):
     bad = unreachable_doors(levels)
     for level in levels:
         state = "NO DOOR" if level.name in bad else "ok"
-        abilities = "+".join(n for n, on in (("dash", level.dash), ("wall", level.wall)) if on) or "-"
-        print(f"{level.index:2d} {level.name:24s} {abilities:10s} {state}")
+        abilities = "+".join(
+            n for n, on in (("dash", level.dash), ("pogo", level.pogo), ("wall", level.wall)) if on) or "-"
+        print(f"{level.index:2d} {level.name:24s} {abilities:15s} {state}")
     print(f"\nReachability check: {len(bad)} of {len(levels)} level(s) cannot be finished.")
     return 1 if bad else 0
 

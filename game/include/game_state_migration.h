@@ -75,9 +75,14 @@ inline void insert_level(GameState& state, int index) {
 
 // Applies the roster changes made since `version` (the slot's schema).
 inline void upgrade(GameState& state, uint16_t version) {
+    // Oldest first, each at its index in the roster of its time.
     // Schema 6: LEVEL_WORLD5_CLIMB before World 5's boss.
     if (version < 6) {
         insert_level(state, 17);
+    }
+    // Schema 7: LEVEL_WORLD4_POGO as World 4's first level.
+    if (version < 7) {
+        insert_level(state, 10);
     }
 }
 

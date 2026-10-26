@@ -8,6 +8,7 @@
 #include "game_state_migration.h"
 #include "save_header.h"
 #include "save_migration.h"
+#include "world_index.h"
 
 using engine::save::restore_state;
 using engine::save::RestoreResult;
@@ -173,7 +174,7 @@ TEST_CASE(game_state_layout_lock) {
     CHECK_EQ(static_cast<int>(offsetof(GameState, best_time_frames)), 16);
     CHECK_EQ(static_cast<int>(offsetof(GameState, no_death_clears)), 112);
     CHECK_EQ(static_cast<int>(offsetof(GameState, assist_mode_enabled)), 118);
-    CHECK_EQ(SAVE_VERSION, 6);
+    CHECK_EQ(SAVE_VERSION, 7);
 }
 
 TEST_CASE(game_state_current_payload_roundtrips_exactly) {
@@ -207,15 +208,16 @@ TEST_CASE(game_state_schema_4_payload_is_still_rejected) {
             out) == RestoreResult::Incompatible);
 }
 
-// ---- schema 6: a level inserted into the roster
-// ------------------------------
+// ---- levels inserted into the roster
+// -----------------------------------------
 //
 // Schema 6 inserted LEVEL_WORLD5_CLIMB at level index 17 (before World 5's
-// boss): everything indexed by level from there on moves up by one.
+// boss), schema 7 LEVEL_WORLD4_POGO at 10 (World 4's first level): everything
+// indexed by level from there on moves up by one.
 
 namespace {
 
-auto v5_save() -> GameState {
+auto numbered_save() -> GameState {
     GameState state{};
     for (int i = 0; i < 19; ++i) {
         state.best_time_frames[i] = 1000u + unsigned(i);
@@ -226,43 +228,66 @@ auto v5_save() -> GameState {
 
 }  // namespace
 
-TEST_CASE(game_state_v5_records_of_the_boss_and_finale_move_up) {
-    GameState state = v5_save();
-    game_state_migration::upgrade(state, 5);
-    CHECK_EQ(state.best_time_frames[16], 1016u);  // LEVERS stays
+TEST_CASE(game_state_inserting_a_level_moves_the_records_behind_it) {
+    GameState state = numbered_save();
+    game_state_migration::insert_level(state, 17);
+    CHECK_EQ(state.best_time_frames[16], 1016u);  // before it: stays
     CHECK_EQ(state.best_time_frames[17], 0u);     // the new level: no record
-    CHECK_EQ(state.best_time_frames[18], 1017u);  // the boss
-    CHECK_EQ(state.best_time_frames[19], 1018u);  // the finale
+    CHECK_EQ(state.best_time_frames[18], 1017u);
+    CHECK_EQ(state.best_time_frames[19], 1018u);
     CHECK_EQ(state.best_time_frames[3], 1003u);
 }
 
-TEST_CASE(game_state_v5_no_death_badges_move_up) {
-    GameState state = v5_save();
-    game_state_migration::upgrade(state, 5);
+TEST_CASE(game_state_inserting_a_level_moves_the_no_death_badges) {
+    GameState state = numbered_save();
+    game_state_migration::insert_level(state, 17);
     CHECK_EQ(
         state.no_death_clears,
         (1u << 3) | (1u << 16) | (1u << 18) | (1u << 19));
 }
 
-TEST_CASE(game_state_v5_progress_at_or_after_the_boss_moves_up) {
+TEST_CASE(game_state_inserting_a_level_moves_progress_at_or_after_it) {
     GameState at_boss{};
     at_boss.level = 17;
     at_boss.furthest_level = 18;
-    game_state_migration::upgrade(at_boss, 5);
+    game_state_migration::insert_level(at_boss, 17);
     CHECK_EQ(int(at_boss.level), 18);
     CHECK_EQ(int(at_boss.furthest_level), 19);
 
-    // Before the boss: the new level simply comes next.
-    GameState at_levers{};
-    at_levers.level = 16;
-    at_levers.furthest_level = 16;
-    game_state_migration::upgrade(at_levers, 5);
-    CHECK_EQ(int(at_levers.level), 16);
-    CHECK_EQ(int(at_levers.furthest_level), 16);
+    // Before it: the new level simply comes next.
+    GameState before{};
+    before.level = 16;
+    before.furthest_level = 16;
+    game_state_migration::insert_level(before, 17);
+    CHECK_EQ(int(before.level), 16);
+    CHECK_EQ(int(before.furthest_level), 16);
+}
+
+TEST_CASE(game_state_v6_saves_get_the_world_4_level) {
+    GameState state = numbered_save();
+    state.level = 12;  // World 4's boss in schema 6
+    game_state_migration::upgrade(state, 6);
+    CHECK_EQ(int(state.level), 13);
+    CHECK_EQ(state.best_time_frames[9], 1009u);
+    CHECK_EQ(state.best_time_frames[10], 0u);
+    CHECK_EQ(state.best_time_frames[11], 1010u);
+}
+
+TEST_CASE(game_state_v5_saves_get_both_levels_in_order) {
+    // Schema 6 first (index 17 of the v5 roster), then schema 7 (index 10).
+    GameState state = numbered_save();
+    state.level = 17;  // World 5's boss in schema 5
+    game_state_migration::upgrade(state, 5);
+    CHECK_EQ(int(state.level), 19);
+    CHECK_EQ(state.best_time_frames[10], 0u);  // World 4's new level
+    CHECK_EQ(state.best_time_frames[11], 1010u);
+    CHECK_EQ(state.best_time_frames[17], 1016u);  // LEVERS
+    CHECK_EQ(state.best_time_frames[18], 0u);     // World 5's new level
+    CHECK_EQ(state.best_time_frames[19], 1017u);  // the boss
 }
 
 TEST_CASE(game_state_current_saves_are_not_upgraded) {
-    GameState state = v5_save();
+    GameState state = numbered_save();
     state.level = 18;
     game_state_migration::upgrade(state, SAVE_VERSION);
     CHECK_EQ(state.best_time_frames[17], 1017u);
@@ -270,5 +295,5 @@ TEST_CASE(game_state_current_saves_are_not_upgraded) {
 }
 
 TEST_CASE(game_state_roster_still_fits_the_save) {
-    CHECK(19 + 1 <= GameState::MAX_LEVELS);
+    CHECK(WorldIndex::LEVEL_COUNT <= GameState::MAX_LEVELS);
 }

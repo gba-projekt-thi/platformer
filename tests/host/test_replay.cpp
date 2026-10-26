@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "replay.h"
+#include "world_index.h"
 
 // Recording and playing back the duck's buttons (replay.h), one InputState
 // per movement step, stored as runs of equal buttons.
@@ -137,7 +138,7 @@ TEST_CASE(replay_level_blocks_fill_the_sram_behind_the_saves) {
     CHECK_EQ(
         replay::SRAM_OFFSET + replay::LEVEL_BLOCKS * replay::BLOCK_SIZE,
         0x8000);
-    CHECK(replay::LEVEL_BLOCKS >= 20);
+    CHECK(replay::LEVEL_BLOCKS >= WorldIndex::LEVEL_COUNT);
     CHECK_EQ(replay::block_offset(0), replay::SRAM_OFFSET);
     CHECK_EQ(
         replay::block_offset(2), replay::SRAM_OFFSET + 2 * replay::BLOCK_SIZE);

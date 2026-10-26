@@ -1,6 +1,44 @@
 {
   "levels": [
     {
+      "name": "LEVEL_WORLD4_POGO",
+      "note": "=============================================================================\nWORLD 4 POGO - \"Bramble Hop\", the pogo level (world_width=460)\nThree baskets with pits between them that neither a jump nor a dash\ncrosses (120 and 152 px). Thorn bushes float in them: strike down with R\nand bounce off - once over the first pit, twice in a row over the second.\n=============================================================================",
+      "platforms": {
+        "name": "world4_pogo_platforms",
+        "items": [
+          {"x": -200, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "blank_before": true, "note": "Start: two baskets, top at y=52."},
+          {"x": -168, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": -16, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "note": "The middle island, 120 px past the first."},
+          {"x": 16, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 200, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "note": "The door's basket, 152 px past the middle island."}
+        ]
+      },
+      "traps": {
+        "name": "world4_pogo_traps",
+        "items": [
+          {"type": "BASE", "x": -108, "y": 60, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16, "blank_before": true, "note": "One bush in the first pit, 44 px out: a jump reaches it from above."},
+          {"type": "BASE", "x": 60, "y": 60, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16, "note": "Two bushes in the second pit, a bounce apart."},
+          {"type": "BASE", "x": 108, "y": 60, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16}
+        ]
+      },
+      "background": "world4",
+      "music": "world4",
+      "spawn": [-200, 40],
+      "door": {
+        "x": 200,
+        "y": 42
+      },
+      "world_width": 460,
+      "world_height": 160,
+      "ground_friction": 1,
+      "intro_hint": "New: strike down with R",
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "Door position",
+        "intro_hint": "First level built on the pogo (Cfg::Pogo::UNLOCK_WORLD = World 4)."
+      }
+    },
+    {
       "name": "LEVEL_WORLD4_SCROLL",
       "note": "=============================================================================\nWORLD 4 SCROLL - garden theme (world_width=528)\n=============================================================================",
       "platforms": {

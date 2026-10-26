@@ -291,6 +291,26 @@ class BossBridgeTests(unittest.TestCase):
         self.assertFalse(sim.reach(plats[:2], (0, 40), (150, 48), False, True)[1])
 
 
+class PogoReachTests(unittest.TestCase):
+    """A gap wider than jump + dash, with a bush to bounce off in it."""
+
+    def gap(self):
+        plats = [sim.Rect(-200, 60, 32, 16, 0), sim.Rect(-168, 60, 32, 16, 1),
+                 sim.Rect(-12, 60, 32, 16, 2), sim.Rect(20, 60, 32, 16, 3)]
+        bush = sim.Rect(-108, 60, 24, 24, 0)  # pit -152 .. -28, 124 px
+        return plats, bush
+
+    def test_a_gap_beyond_the_dash_needs_the_pogo(self):
+        plats, bush = self.gap()
+        door = (20.0, 48.0)
+        self.assertFalse(sim.reach(plats, (-200, 40), door, True, True)[1])
+        self.assertTrue(sim.reach(plats, (-200, 40), door, True, False, pogo_targets=[bush])[1])
+
+    def test_static_traps_are_read_from_the_level(self):
+        traps = sim.load_static_traps(WORLD5)["LEVEL_WORLD5_SCROLL"]
+        self.assertIn((-240.0, 60.0, 16.0, 16.0), [(t.cx, t.cy, t.w, t.h) for t in traps])
+
+
 class RunningDoorTests(unittest.TestCase):
     """A door with DoorData::flee_path has to be reached at its last stop."""
 
@@ -408,6 +428,12 @@ class ConstantsMatchTheGameTests(unittest.TestCase):
 
 class WallJumpUnlockTests(unittest.TestCase):
     @unittest.skipIf(REPO is None, "levels_world5.h not found")
+    def test_campaign_has_the_pogo_from_world_4_and_in_every_boss_level(self):
+        pogo = {level.name: level.pogo for level in sim.campaign(REPO)}
+        self.assertFalse(pogo["LEVEL_3"])
+        self.assertTrue(pogo["LEVEL_WORLD1_BOSS"])
+        self.assertTrue(pogo["LEVEL_WORLD4_SCROLL"])
+
     def test_campaign_unlocks_wall_jumps_with_world_5(self):
         wall = {level.name: level.wall for level in sim.campaign(REPO)}
         self.assertFalse(wall["LEVEL_WORLD4_BOSS"])
@@ -425,7 +451,7 @@ class CampaignTests(unittest.TestCase):
 
     def test_campaign_follows_main_cpp_levels_in_play_order(self):
         names = [level.name for level in self.campaign]
-        self.assertEqual(len(names), 20)
+        self.assertEqual(len(names), 21)
         self.assertEqual(names[0], "LEVEL_0")
         self.assertEqual(names[-1], "LEVEL_WORLD5_FINALE")
 
