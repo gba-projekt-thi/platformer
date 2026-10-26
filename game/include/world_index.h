@@ -6,9 +6,9 @@
 // Describes how the flat levels[] array in main.cpp is grouped into worlds,
 // for use by WorldSelectScene / LevelSelectScene. This table is NOT derived
 // from levels[] automatically - it must be kept in sync by hand whenever
-// main.cpp's levels[] array changes (add/remove/reorder a level). Same
-// maintenance burden as the 'Ordered old-then-new per world in main.cpp's
-// levels[] array' convention already governing levels.h.
+// main.cpp's levels[] array changes (add/remove/reorder a level). The
+// compiler catches gaps, overlaps and a wrong total (static_asserts below and
+// in main.cpp); tools/Check_world_index.py also catches duplicates.
 //
 // start_index/level_count are indices into the SAME bn::span<const LevelData>
 // every scene already receives (StartScene, LevelScene, KissingScene) - not
@@ -36,6 +36,25 @@ inline constexpr WorldEntry WORLDS[] = {
 };
 
 inline constexpr int WORLD_COUNT = sizeof(WORLDS) / sizeof(WORLDS[0]);
+
+// The worlds follow each other without gaps or overlaps, starting at level 0,
+// and none is empty. Checked at compile time below (and by
+// tools/Check_world_index.py against main.cpp's levels[]).
+constexpr auto contiguous() -> bool {
+    int expected_start = 0;
+    for (const WorldEntry& world : WORLDS) {
+        if (world.start_index != expected_start || world.level_count <= 0) {
+            return false;
+        }
+        expected_start += world.level_count;
+    }
+    return true;
+}
+static_assert(contiguous(), "WorldIndex::WORLDS must be contiguous");
+
+// Levels covered by all worlds: main.cpp static_asserts levels[] against it.
+inline constexpr int LEVEL_COUNT =
+    WORLDS[WORLD_COUNT - 1].start_index + WORLDS[WORLD_COUNT - 1].level_count;
 
 // Returns the index into WORLDS of the world that `level_index` belongs to
 // - the highest-indexed world whose start_index is <= level_index. Same

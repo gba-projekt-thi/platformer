@@ -16,6 +16,7 @@
 #include "levels.h"
 #include "player.h"
 #include "start_scene.h"
+#include "world_index.h"
 
 int main() {
     // -------------------------------------------------------------------------
@@ -57,6 +58,9 @@ int main() {
         LEVEL_WORLD5_LEVERS,
         LEVEL_WORLD5_BOSS,
         LEVEL_WORLD5_FINALE};
+    static_assert(
+        sizeof(levels) / sizeof(levels[0]) == WorldIndex::LEVEL_COUNT,
+        "levels[] and WorldIndex::WORLDS must list the same number of levels");
 
     // -------------------------------------------------------------------------
     // Create the player entity and apply an offset for the sprite anchor point.

@@ -46,6 +46,13 @@ TEST_CASE(world_index_worlds_are_contiguous_and_cover_the_roster) {
     CHECK_EQ(expected_start, 19);
 }
 
+TEST_CASE(world_index_contiguity_rule_and_level_count) {
+    // The same rule as a constant expression: world_index.h static_asserts
+    // it, and main.cpp static_asserts levels[] against LEVEL_COUNT.
+    CHECK(WorldIndex::contiguous());
+    CHECK_EQ(WorldIndex::LEVEL_COUNT, 19);
+}
+
 TEST_CASE(world_for_level_exhaustive_sweep_over_every_real_level) {
     // Every one of the 19 levels currently in the roster (see
     // levels_common.h / main.cpp's levels[]), checked against the exact
