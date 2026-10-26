@@ -313,6 +313,17 @@ resets on death. An optional sprite (`TriggerData::sprite` plus an off and an
 on tile index) is wrapped in `Sprite` and registered with `SpriteRegistry`;
 both tile sets are created up front, so a state change is a tile swap.
 
+`TriggerState` also carries the delay and the timer. `triggered()` is what
+traps and switched platforms read; `pressed()` is what the duck caused and is
+what a visible switch shows. With `TriggerData::delay_frames` > 0 the first
+follows the second after that many frames (a change that is undone in time
+never shows); a **Timer** trigger sets itself `delay_frames` frames after the
+last `reset()`. `Trigger::update()` - called every frame through
+`CollisionRegistry::update_all()` like any collision shape - runs
+`TriggerState::tick()`, so neither needs a second update path, and both stand
+still while the game is paused or frozen by the death feedback. A checkpoint
+respawn restores a snapshot immediately (`TriggerState::restore()`).
+
 Platforms bind to a trigger through `PlatformData::trigger_name`. After the
 triggers load, `LevelManager::_bind_switched_platforms()` resolves each name
 once with `get_trigger_by_name()`. Every frame, right after the collision

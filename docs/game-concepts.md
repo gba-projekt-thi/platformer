@@ -310,6 +310,12 @@ always the helpful one - without any new trap type. Death resets every
 switch, so a puzzle always starts from the same state, and a platform that
 would appear on top of the duck waits until the duck has moved clear.
 
+A trigger can also act **late**: with a delay the hazard it releases only
+starts a moment after the duck stepped on the zone or flipped the lever, and a
+**timer** trigger needs no duck at all - it starts its hazards on its own a few
+seconds after the level begins. Both keep a death cheap, because a respawn
+restarts the clock.
+
 ## Boss levels
 
 Every world's gameplay culminates in a **boss level**: a single, mostly flat corridor

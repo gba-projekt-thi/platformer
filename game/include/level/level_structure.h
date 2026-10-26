@@ -93,6 +93,13 @@ struct TriggerData {
     const bn::sprite_item* sprite = nullptr;
     int sprite_index_off = 0;
     int sprite_index_on = 1;
+
+    // Frames between the player's action and the effect on traps/platforms
+    // (every mode except Timer), or the timer length of a Timer trigger: it
+    // switches on by itself this many frames after the level (re)starts. 0 =
+    // immediate, as every trigger so far. Appended last so positional
+    // literals that stop earlier keep compiling unchanged.
+    unsigned delay_frames = 0;
 };
 
 // -----------------------------------------------------------------------------

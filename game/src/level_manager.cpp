@@ -283,7 +283,8 @@ void LevelManager::_load_triggers(const LevelData& level) {
         _triggers.emplace_back(
             trigger.x, trigger.y, trigger.width, trigger.height,
             trigger.default_on, trigger.name, trigger.mode, trigger.sprite,
-            trigger.sprite_index_off, trigger.sprite_index_on);
+            trigger.sprite_index_off, trigger.sprite_index_on,
+            trigger.delay_frames);
     }
 
     // Fallback trigger prevents invalid references.

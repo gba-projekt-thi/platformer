@@ -388,8 +388,37 @@ changes its state:
 | **Latch** (default) | Turns on at the first entry and stays on until the next death/restart. | Everything authored so far: releasing a falling hazard. |
 | **Toggle** | Every *entry* flips it; standing inside does not flip it again. | A switch the duck steps on and off again. |
 | **Hold** | On only while the duck is inside. | A pressure plate. |
+| **Timer** | Ignores the duck: turns on by itself `delay_frames` frames after the level (re)starts and stays on until the next death/restart. | A hazard that starts on its own clock, e.g. a patrol that wakes up after two seconds. |
 
 Existing levels do not set a mode and keep Latch, so none of them changes.
+
+### Delayed triggers
+
+`TriggerData::delay_frames` (the last field, default 0) puts a lag between what
+the duck does and what the traps and platforms bound to the trigger do:
+
+- The delay applies in both directions: a Hold plate that is left keeps its
+  hazard running for `delay_frames` more frames.
+- A change that is undone before the delay has elapsed never shows (step on
+  a Hold plate and off again within the delay, and nothing happens).
+- A visible switch sprite flips at once - the duck sees its own action and
+  feels the consequence later. An invisible trigger gives no hint at all, so
+  use short delays (10-30 frames) for hazards the duck can still react to and
+  long ones (60+ frames) for "what did I do?" surprises.
+- For a **Timer** trigger the field is the timer length instead; it adds no
+  extra lag. `delay_frames` 0 on a Timer trigger turns it on at the first
+  frame.
+- Death resets the delay and the timer. After a respawn at a checkpoint a
+  trigger that was on when the flag was reached is on again at once (no
+  delay), and a Timer that had not fired yet starts counting again.
+
+```cpp
+// a patrol that wakes up 3 seconds after the level starts
+{600, 0, 8, 8, false, "wake", TriggerMode::Timer, nullptr, 0, 1, 180}
+// a lever whose falling brick only drops half a second after the flip
+{-196, 44, 16, 16, false, "late", TriggerMode::Toggle,
+ &bn::sprite_items::lever16x16, 0, 1, 30}
+```
 
 A trigger can also have an optional **visible sprite** with an "off" and an
 "on" tile, so a switch reads as a switch. Without one it stays invisible,

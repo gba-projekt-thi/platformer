@@ -336,9 +336,15 @@ by the handheld audio hardware. See [Asset Management](asset-management.md).
 the duck enters it; may start active or inactive. See
 [Level Design](level-design.md).
 
+**Trigger delay** — `TriggerData::delay_frames`: the frames between the duck's
+action and the effect on the traps and platforms bound to the trigger, in both
+directions; a visible switch flips at once. For a Timer trigger it is the timer
+length. See [Level Design — Delayed triggers](level-design.md#delayed-triggers).
+
 **Trigger mode** — How a [trigger](#t) reacts to the duck: **Latch** (default;
-on at the first entry until death/restart), **Toggle** (every entry flips it)
-or **Hold** (on only while the duck is inside). See
+on at the first entry until death/restart), **Toggle** (every entry flips it),
+**Hold** (on only while the duck is inside) or **Timer** (turns on by itself
+`delay_frames` frames after the level starts, ignoring the duck). See
 [Level Design — Trigger modes](level-design.md#trigger-modes-and-switched-platforms).
 
 **Trap factory** — The mechanism that constructs the correct trap subtype from a

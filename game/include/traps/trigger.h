@@ -19,6 +19,9 @@
 // - Latch (default): stays on after the player enters, until reset
 // - Toggle: every entry flips it (a switch)
 // - Hold: on only while the player is inside (a pressure plate)
+// - Timer: switches on by itself delay_frames after the level (re)starts
+// - delay_frames > 0: traps and platforms follow the player's action only
+//   after that many frames; a visible switch still flips at once
 // - Can start enabled or disabled
 // - Resettable on death/restart: LevelManager resets triggers directly, so a
 //   trigger driving only platforms resets too
@@ -36,8 +39,11 @@ class Trigger : public PhysicsBody, public IResettable {
         TriggerMode t_mode = TriggerMode::Latch,
         const bn::sprite_item* t_sprite = nullptr,
         int t_sprite_index_off = 0,
-        int t_sprite_index_on = 1);
+        int t_sprite_index_on = 1,
+        unsigned t_delay_frames = 0);
     bool is_triggered() const;
+    // Runs the delay / timer of the trigger state (see trigger_logic.h).
+    void update() override;
     void on_enter(uint16_t hit_layers, StaticBody* body) override;
     void on_exit(uint16_t hit_layers, StaticBody* body) override;
     void reset() override;
@@ -47,7 +53,7 @@ class Trigger : public PhysicsBody, public IResettable {
     [[nodiscard]] const char* name() const { return _name; }
 
    private:
-    // Shows the tile matching the current state (no-op without a sprite).
+    // Shows the tile matching the pressed state (no-op without a sprite).
     void _refresh_visual();
 
     TriggerState _state;

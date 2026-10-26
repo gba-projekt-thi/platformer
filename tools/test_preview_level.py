@@ -37,7 +37,9 @@ constexpr PlatformData plats[] = {
 
 constexpr TriggerData trigs[] = {
     {0, 30, 20, 20, false, "go"},
-    {100, 30, 10, 10, false, "lev", TriggerMode::Toggle}};
+    {100, 30, 10, 10, false, "lev", TriggerMode::Toggle},
+    {200, 30, 10, 10, false, "slow", TriggerMode::Latch, nullptr, 0, 1, 45},
+    {220, 30, 10, 10, false, "clock", TriggerMode::Timer, nullptr, 0, 1, 120}};
 
 constexpr TrapData traps[] = {
     {TrapType::BASE, 0, 40, 12, 12, 0, 0, bn::sprite_items::t, 1,
@@ -153,8 +155,20 @@ class ParsingTests(Fixture):
         self.assertEqual(self.levels["LEVEL_T2"].checkpoints, [])
 
     def test_trigger_modes_and_names(self):
-        self.assertEqual([t["name"] for t in self.level.triggers], ["go", "lev"])
-        self.assertEqual([t["mode"] for t in self.level.triggers], ["Latch", "Toggle"])
+        self.assertEqual(
+            [t["name"] for t in self.level.triggers], ["go", "lev", "slow", "clock"]
+        )
+        self.assertEqual(
+            [t["mode"] for t in self.level.triggers],
+            ["Latch", "Toggle", "Latch", "Timer"],
+        )
+
+    def test_trigger_delay_is_parsed_and_defaults_to_zero(self):
+        self.assertEqual([t["delay"] for t in self.level.triggers], [0, 0, 45, 120])
+
+    def test_trigger_note_names_delay_and_timer(self):
+        notes = [pv.trigger_note(t) for t in self.level.triggers]
+        self.assertEqual(notes, ["", " [Toggle]", " +45f", " [Timer 120f]"])
 
 
 class GeometryTests(Fixture):
@@ -228,6 +242,11 @@ class DrawingTests(Fixture):
                 if title_of(r)  # the legend swatches have no title
             ]
             self.assertEqual(len(drawn), 1, kind)
+
+    def test_delayed_and_timer_triggers_are_labelled(self):
+        text = " ".join(t.text or "" for t in self.svg(arcs="none").iter(SVG + "text"))
+        self.assertIn("slow +45f", text)
+        self.assertIn("clock [Timer 120f]", text)
 
     def test_triggers_are_linked_to_their_traps_and_labelled(self):
         root = self.svg(arcs="none")

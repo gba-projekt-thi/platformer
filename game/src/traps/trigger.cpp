@@ -12,7 +12,8 @@ Trigger::Trigger(
     TriggerMode t_mode,
     const bn::sprite_item* t_sprite,
     int t_sprite_index_off,
-    int t_sprite_index_on)
+    int t_sprite_index_on,
+    unsigned t_delay_frames)
     : PhysicsBody(
           t_x,
           t_y,
@@ -21,7 +22,7 @@ Trigger::Trigger(
           Cfg::Layer::TRIGGER,
           Cfg::Layer::PLAYER,
           0),
-      _state(t_default_on, t_mode),
+      _state(t_default_on, t_mode, t_delay_frames),
       _name(t_name) {
     if (t_sprite != nullptr) {
         const int graphics_count = t_sprite->tiles_item().graphics_count();
@@ -43,6 +44,12 @@ Trigger::Trigger(
 
 bool Trigger::is_triggered() const {
     return _state.triggered();
+}
+
+void Trigger::update() {
+    _state.tick();
+    // A Timer trigger changes its pressed state on its own.
+    _refresh_visual();
 }
 
 void Trigger::on_enter(
@@ -73,5 +80,6 @@ void Trigger::_refresh_visual() {
     if (!_sprite) {
         return;
     }
-    _sprite->sprite().set_tiles(_state.triggered() ? *_tiles_on : *_tiles_off);
+    // Follows what the player did, not the delayed state traps see.
+    _sprite->sprite().set_tiles(_state.pressed() ? *_tiles_on : *_tiles_off);
 }

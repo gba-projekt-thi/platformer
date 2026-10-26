@@ -137,6 +137,8 @@ def parse_triggers(array_body):
                 "default_on": len(f) > 4 and f[4].strip() == "true",
                 "name": _string(f[5]) if len(f) > 5 else None,
                 "mode": mode,
+                # TriggerData::delay_frames (field 10): lag, or timer length
+                "delay": int(_num(f[10])) if len(f) > 10 else 0,
                 # TriggerData::sprite (field 7): a visible switch uses a sprite slot.
                 "has_sprite": len(f) > 7 and f[7].strip() not in ("", "nullptr"),
             }
@@ -545,11 +547,21 @@ def render(level, arcs="all", optimistic=False, show_traps=True, scale=2.0, reac
     )
 
 
+def trigger_note(t):
+    """' [Toggle]', ' [Timer 120f]', ' +30f' ... - what sets a trigger apart
+    from the plain latching zone."""
+    delay = t.get("delay", 0)
+    if t["mode"] == "Timer":
+        return f" [Timer {delay}f]"
+    note = "" if t["mode"] == "Latch" else f" [{t['mode']}]"
+    return note + (f" +{delay}f" if delay else "")
+
+
 def _draw_triggers_and_traps(svg, level):
     svg.add('<g id="triggers">')
     by_name = {}
     for t in level.triggers:
-        mode = "" if t["mode"] == "Latch" else f" [{t['mode']}]"
+        mode = trigger_note(t)
         title = f"trigger {t['name'] or '(unnamed)'}{mode}"
         svg.rect(t["x"], t["y"], t["width"], t["height"], "trigger", title)
         if t["name"]:

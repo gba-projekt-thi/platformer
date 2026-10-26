@@ -131,7 +131,7 @@ A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each 
 - A Hollow-Knight-style dash on B, available from World 3 onward: a short horizontal burst with gravity suspended, a cooldown, and one use per air time (refilled on landing). It grants no invincibility and only adds horizontal reach, so every existing layout stays clearable; a dedicated sound and a flickering afterimage trail give feedback
 - A controls overview screen, reachable from the start screen (a "Controls" entry below the save slots) and from the pause menu
 - One-time level hints that teach the dash and the levers when a level is first played (until it is cleared once)
-- Switch mechanics: triggers can be latching (default), toggling switches or hold-down pressure plates, optionally drawn as a two-state sprite, and platforms can be bound to a trigger so a switch opens one path and closes another; everything resets on death
+- Switch mechanics: triggers can be latching (default), toggling switches, hold-down pressure plates or self-starting timers, can act after a delay (`delay_frames`), and are optionally drawn as a two-state sprite, and platforms can be bound to a trigger so a switch opens one path and closes another; everything resets on death
 - Player movement with acceleration, maximum speed, gravity, and fall speed clamping
 - Jump mechanics with jump buffering and coyote time for more forgiving platforming
 - Variable jump height based on how long the jump button is held

@@ -16,48 +16,123 @@
 //            inside does not flip it again; leaving does nothing.
 //   Hold   - on only while the player is inside: entering sets !default_on,
 //            leaving restores default_on (a pressure plate).
+//   Timer  - ignores the player completely: !default_on is set by itself
+//            `delay_frames` frames after the level (re)starts and stays until
+//            the next reset(). A trap bound to it starts on its own.
+//
+// Delay: with delay_frames > 0 the state seen by traps and platforms
+// (triggered()) follows the state the player caused (pressed()) only after
+// delay_frames frames, in both directions. A change that is undone before the
+// delay has elapsed never shows (the lever flips back in time). A visible
+// switch sprite follows pressed(), so the player sees the lever flip at once
+// and only feels the trap later. delay_frames has no extra effect on Timer
+// triggers - it is their timer length.
 //
 // In every mode reset() restores default_on.
 // -----------------------------------------------------------------------------
 
-enum class TriggerMode : uint8_t { Latch, Toggle, Hold };
+enum class TriggerMode : uint8_t { Latch, Toggle, Hold, Timer };
 
 class TriggerState {
    public:
-    TriggerState(bool default_on, TriggerMode mode)
-        : _triggered(default_on), _default_on(default_on), _mode(mode) {}
+    TriggerState(bool default_on, TriggerMode mode, unsigned delay_frames = 0)
+        : _effective(default_on),
+          _pressed(default_on),
+          _default_on(default_on),
+          _mode(mode),
+          _delay(delay_frames) {}
 
-    [[nodiscard]] auto triggered() const -> bool { return _triggered; }
+    // The state traps and switched platforms follow (after the delay).
+    [[nodiscard]] auto triggered() const -> bool { return _effective; }
+
+    // The state the player caused, ahead of triggered() by the delay. What a
+    // visible switch shows.
+    [[nodiscard]] auto pressed() const -> bool { return _pressed; }
+
+    // A change of pressed() is on its way to triggered().
+    [[nodiscard]] auto pending() const -> bool { return _countdown > 0; }
 
     void on_enter() {
+        if (_mode == TriggerMode::Timer) {
+            return;
+        }
         if (_mode == TriggerMode::Toggle) {
-            _triggered = !_triggered;
+            _set_pressed(!_pressed);
         } else {
             // Latch and Hold: same entry behavior as the legacy Trigger.
-            _triggered = !_default_on;
+            _set_pressed(!_default_on);
         }
     }
 
     void on_exit() {
         if (_mode == TriggerMode::Hold) {
-            _triggered = _default_on;
+            _set_pressed(_default_on);
         }
     }
 
-    void reset() { _triggered = _default_on; }
+    // One frame (Trigger::update()): runs the delay and the timer.
+    void tick() {
+        if (_mode == TriggerMode::Timer) {
+            if (_pressed == _default_on) {
+                ++_clock;
+                if (_clock >= _delay) {
+                    _pressed = !_default_on;
+                    _effective = _pressed;
+                }
+            }
+            return;
+        }
+        if (_countdown > 0) {
+            --_countdown;
+            if (_countdown == 0) {
+                _effective = _pressed;
+            }
+        }
+    }
+
+    void reset() {
+        _pressed = _default_on;
+        _effective = _default_on;
+        _countdown = 0;
+        _clock = 0;
+    }
 
     // Puts the state back to `triggered` (a checkpoint's snapshot, see
-    // checkpoint_logic.h). Hold triggers are left alone: they are only on
-    // while the duck stands in them and would stay on forever, because the
-    // exit that turns them off never comes.
+    // checkpoint_logic.h) without any delay. Hold triggers are left alone:
+    // they are only on while the duck stands in them and would stay on
+    // forever, because the exit that turns them off never comes. A Timer
+    // trigger that had fired stays fired, one that had not starts counting
+    // again from the respawn.
     void restore(bool triggered) {
-        if (_mode != TriggerMode::Hold) {
-            _triggered = triggered;
+        if (_mode == TriggerMode::Hold) {
+            return;
         }
+        _pressed = triggered;
+        _effective = triggered;
+        _countdown = 0;
+        _clock = (_mode == TriggerMode::Timer && triggered != _default_on)
+                     ? _delay
+                     : 0;
     }
 
    private:
-    bool _triggered;
+    void _set_pressed(bool pressed) {
+        _pressed = pressed;
+        if (_delay == 0) {
+            _effective = pressed;
+            _countdown = 0;
+        } else if (pressed == _effective) {
+            _countdown = 0;  // changed back in time: nothing to follow
+        } else {
+            _countdown = _delay;
+        }
+    }
+
+    bool _effective;
+    bool _pressed;
     bool _default_on;
     TriggerMode _mode;
+    unsigned _delay;
+    unsigned _countdown = 0;
+    unsigned _clock = 0;
 };
