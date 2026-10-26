@@ -117,7 +117,7 @@ This repository includes a small GBA platformer built with the Butano engine. Yo
 - A "New Best!" banner shown on finishing a level faster than its stored personal-best time, held until the player presses A/Start to continue
 - A run-complete summary screen shown once after the kiss scene (total time across every level's best, total deaths, and how many levels were cleared without dying), before the save slot resets for a fresh playthrough
 A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each culminating in a Hollow-Knight-style boss gauntlet level, defined across `game/include/level/levels_world1.h`-`levels_world5.h` (21 levels total). World 4 opens with a pogo level, World 5 adds a dash level, a lever-puzzle level and a wall-jump tower with a runaway door before its boss, and one more after it: a quiet, trap-free finale ending in a reunion with Susanne.
-- A story told in short pages: Hildegart is flushed out of the bathtub and travels through the worlds to reach her beloved Susanne (an intro for a new game, one page on first reaching each world)
+- A story told in short pages: Hildegard is flushed out of the bathtub and travels through the worlds to reach her beloved Susanne (an intro for a new game, one page on first reaching each world)
 - Level progression through a door at the end of each stage (occasionally a narrative stand-in for the door, like Susanne in World 5's finale), ending in a celebratory kiss scene
 - Platform placement and collision defined by level data, including crumbling platforms that give way under the duck (and optionally come back)
 - Trigger zones that activate hazards when the player enters them

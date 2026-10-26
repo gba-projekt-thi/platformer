@@ -7,7 +7,7 @@
 #include "story.h"
 #include "world_index.h"
 
-// Hildegart's journey to Susanne (story.h): which page shows when, and that
+// Hildegard's journey to Susanne (story.h): which page shows when, and that
 // every page fits the screen and its sprite buffer.
 
 namespace {
@@ -85,14 +85,14 @@ TEST_CASE(story_has_a_page_for_every_world) {
     CHECK_EQ(story::WORLD_PAGE_COUNT, WorldIndex::WORLD_COUNT);
 }
 
-TEST_CASE(story_tells_of_hildegart_and_susanne) {
-    bool hildegart = false;
+TEST_CASE(story_tells_of_hildegard_and_susanne) {
+    bool hildegard = false;
     bool susanne = false;
     for (int i = 0; i < story::INTRO.line_count; ++i) {
-        hildegart |= std::strstr(story::INTRO.lines[i], "Hildegart") != nullptr;
+        hildegard |= std::strstr(story::INTRO.lines[i], "Hildegard") != nullptr;
         susanne |= std::strstr(story::INTRO.lines[i], "Susanne") != nullptr;
     }
-    CHECK(hildegart);
+    CHECK(hildegard);
     CHECK(susanne);
 }
 
@@ -119,9 +119,9 @@ auto mentions(const story::Page& page, const char* word) -> bool {
 
 }  // namespace
 
-TEST_CASE(story_the_ending_reunites_hildegart_and_susanne) {
+TEST_CASE(story_the_ending_reunites_hildegard_and_susanne) {
     CHECK(mentions(story::ENDING, "Susanne"));
-    CHECK(mentions(story::ENDING, "Hildegart"));
+    CHECK(mentions(story::ENDING, "Hildegard"));
 }
 
 TEST_CASE(story_a_world_page_names_the_ability_it_unlocks) {

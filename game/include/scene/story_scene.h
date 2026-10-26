@@ -19,7 +19,7 @@ class LevelManager;
 // -----------------------------------------------------------------------------
 // StoryScene
 //
-// One page of Hildegart's story (story.h) on a black screen, centered, with
+// One page of Hildegard's story (story.h) on a black screen, centered, with
 // a prompt; A or Start goes on to the level (GameState::level) in a
 // LevelScene, or to the reunion (KissingScene) after the ending. Shown by
 // StartScene before a new game, by LevelScene when the door leads into a

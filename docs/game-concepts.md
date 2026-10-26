@@ -193,7 +193,7 @@ rules in `locomotion::Core`, tests in `tests/host/test_locomotion.cpp`:
 
 ## Story
 
-Hildegart, the duck, is flushed out of the bathtub and travels through the
+Hildegard, the duck, is flushed out of the bathtub and travels through the
 worlds to reach her beloved Susanne, who waits at the end of World 5's
 finale. The story is told in short pages (`story.h`, shown by
 `StoryScene`): the intro when a new game starts, one page the first time

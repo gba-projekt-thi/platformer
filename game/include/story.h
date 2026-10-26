@@ -6,7 +6,7 @@
 // -----------------------------------------------------------------------------
 // story
 //
-// Hildegart's journey: flushed out of the bathtub, she travels through the
+// Hildegard's journey: flushed out of the bathtub, she travels through the
 // worlds to reach her beloved Susanne (the World 5 finale). StoryScene shows
 // a page of a few lines - the intro when a new game starts, a page the first
 // time the duck reaches each later world, and the ending before the reunion. No
@@ -29,9 +29,9 @@ struct Page {
 };
 
 inline constexpr Page INTRO = {
-    {"Hildegart's best bath ever.", "Then someone pulls the plug!",
+    {"Hildegard's best bath ever.", "Then someone pulls the plug!",
      "Down the drain she swirls,", "far away from Susanne.",
-     "Hold on, Hildegart!"},
+     "Hold on, Hildegard!"},
     5};
 
 // One page per world, by index into WorldIndex::WORLDS. World 1 starts with
@@ -42,11 +42,11 @@ inline constexpr Page WORLDS[] = {
     {{"Dark, damp, rusty: the", "sewers. Every pipe leads",
       "somewhere - one of them", "must lead to Susanne."},
      4},
-    {{"A pipe spits Hildegart out", "into a misty forest. Far",
+    {{"A pipe spits Hildegard out", "into a misty forest. Far",
       "too far to jump? Then dash:", "press B in mid-air!"},
      4},
     {{"A village! The ducks here", "saw Susanne pass by - and",
-      "show Hildegart a trick:", "press R to strike down."},
+      "show Hildegard a trick:", "press R to strike down."},
      4},
     {{"Susanne's trail leads down", "into a deep, steep dungeon.",
       "Hold toward a wall and", "press A: wall jump!"},
@@ -56,7 +56,7 @@ inline constexpr Page WORLDS[] = {
 // After the finale, before the reunion (KissingScene).
 inline constexpr Page ENDING = {
     {"Bath, sewers, forest,", "village and dungeon -",
-     "Hildegart made it through", "all of them. Susanne!",
+     "Hildegard made it through", "all of them. Susanne!",
      "Never pull the plug again."},
     5};
 
