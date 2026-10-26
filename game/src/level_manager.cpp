@@ -214,8 +214,8 @@ void LevelManager::_advance_death_fx() {
 
 void LevelManager::_finish_respawn() {
     _reset_entities();
-    _reset_crumble_platforms();
-    _restore_checkpoint_triggers();
+    _dynamic_platforms.reset_crumbling();
+    _checkpoint_run.restore(_triggers);
     // The duck is back at the spawn point or a checkpoint, possibly far from
     // where it died: cut there instead of gliding across the level.
     _camera_rig.snap(_player.pos.x, _player.pos.y);
@@ -223,15 +223,13 @@ void LevelManager::_finish_respawn() {
 }
 
 void LevelManager::_clear_runtime_state() {
-    _crumble_platforms.clear();
-    _switched_platforms.clear();
+    _dynamic_platforms.clear();
     _platforms.clear();
     _platform_bodies.clear();
     _triggers.clear();
     _traps.clear();
     _checkpoints.clear();
-    _checkpoint_tracker.reset();
-    _checkpoint_triggers = 0;
+    _checkpoint_run = CheckpointRun();
     _resettables.clear();
 }
 
@@ -308,119 +306,41 @@ void LevelManager::_load_triggers(const LevelData& level) {
     }
 }
 
-void LevelManager::_bind_switched_platforms(const LevelData& level) {
+void LevelManager::_load_dynamic_platforms(const LevelData& level) {
     // _platforms / _platform_bodies hold exactly one entry per platform, in
     // the same order as level.platforms (see _load_platforms()).
     for (int i = 0; i < level.platform_count; ++i) {
         const PlatformData& platform = level.platforms[i];
-        if (platform.trigger_name == nullptr) {
-            continue;
+        if (platform.trigger_name != nullptr) {
+            BN_ASSERT(
+                platform.crumble_frames == 0,
+                "A platform cannot be switched and crumbling");
+            _dynamic_platforms.add_switched(
+                get_trigger_by_name(platform.trigger_name), _platform_bodies[i],
+                *_platforms[i], platform.active_when_on);
+        } else if (platform.crumble_frames > 0) {
+            _dynamic_platforms.add_crumbling(
+                _platform_bodies[i], *_platforms[i], platform.crumble_frames,
+                platform.crumble_respawn_frames);
         }
-        _switched_platforms.push_back(SwitchedPlatform{
-            &get_trigger_by_name(platform.trigger_name), &_platform_bodies[i],
-            _platforms[i].get(), platform.active_when_on});
-    }
-}
-
-void LevelManager::_sync_switched_platforms() {
-    for (SwitchedPlatform& switched : _switched_platforms) {
-        const bool want = switch_logic::platform_active(
-            switched.trigger->is_triggered(), switched.active_when_on);
-        if (want == switched.body->is_enabled()) {
-            continue;
-        }
-
-        if (want) {
-            // A platform re-appearing on top of the duck would trap it (every
-            // move into an overlapping body is blocked), so hold it back
-            // until the duck has stepped clear.
-            if (switch_logic::boxes_overlap(
-                    _player.pos.get_x(), _player.pos.get_y(), _player.pos.width,
-                    _player.pos.height, switched.body->pos.get_x(),
-                    switched.body->pos.get_y(), switched.body->pos.width,
-                    switched.body->pos.height)) {
-                continue;
-            }
-            switched.body->enable();
-            switched.sprite->enable();
-        } else {
-            switched.body->disable();
-            switched.sprite->disable();
-        }
-    }
-}
-
-void LevelManager::_load_crumble_platforms(const LevelData& level) {
-    // _platforms / _platform_bodies hold one entry per platform, in the order
-    // of level.platforms (see _load_platforms()).
-    for (int i = 0; i < level.platform_count; ++i) {
-        const PlatformData& platform = level.platforms[i];
-        if (platform.crumble_frames == 0) {
-            continue;
-        }
-        BN_ASSERT(
-            platform.trigger_name == nullptr,
-            "A platform cannot be switched and crumbling");
-        _crumble_platforms.push_back(CrumblePlatform{
-            &_platform_bodies[i], _platforms[i].get(),
-            crumble::State(
-                platform.crumble_frames, platform.crumble_respawn_frames)});
     }
 }
 
 void LevelManager::_sync_crumble_platforms() {
-    if (_crumble_platforms.empty()) {
+    if (!_dynamic_platforms.has_crumbling()) {
         return;
     }
-
     // What the duck stands on right now (1px probe below its feet).
     const CollisionResult below = _player.probe_bottom(Cfg::Layer::PLATFORM);
-
-    for (CrumblePlatform& crumbling : _crumble_platforms) {
-        bool standing = false;
-        for (int hit = 0; hit < below.count; ++hit) {
-            if (below.hits[hit].body == crumbling.body) {
-                standing = true;
+    _dynamic_platforms.sync_crumbling(
+        _player.pos, [&below](const StaticBody& body) {
+            for (int hit = 0; hit < below.count; ++hit) {
+                if (below.hits[hit].body == &body) {
+                    return true;
+                }
             }
-        }
-        // A platform coming back on top of the duck would trap it (see
-        // _sync_switched_platforms()).
-        const bool blocked = switch_logic::boxes_overlap(
-            _player.pos.get_x(), _player.pos.get_y(), _player.pos.width,
-            _player.pos.height, crumbling.body->pos.get_x(),
-            crumbling.body->pos.get_y(), crumbling.body->pos.width,
-            crumbling.body->pos.height);
-
-        switch (crumbling.state.update(standing, blocked)) {
-            case crumble::Event::Fell:
-                crumbling.body->disable();
-                break;
-            case crumble::Event::Vanished:
-                crumbling.sprite->disable();
-                break;
-            case crumble::Event::Respawned:
-                crumbling.body->enable();
-                crumbling.sprite->enable();
-                break;
-            case crumble::Event::Started:
-            case crumble::Event::None:
-            default:
-                break;
-        }
-
-        crumbling.sprite->pos.offset_x = crumbling.state.shake_offset();
-        crumbling.sprite->pos.offset_y = crumbling.state.fall_offset();
-    }
-}
-
-void LevelManager::_reset_crumble_platforms() {
-    for (CrumblePlatform& crumbling : _crumble_platforms) {
-        crumbling.state.reset();
-        crumbling.body->enable();
-        crumbling.sprite->enable();
-        crumbling.sprite->pos.offset_x = 0;
-        crumbling.sprite->pos.offset_y = 0;
-    }
+            return false;
+        });
 }
 
 void LevelManager::_load_traps(const LevelData& level) {
@@ -439,44 +359,18 @@ void LevelManager::_load_checkpoints(const LevelData& level) {
 }
 
 void LevelManager::_sync_checkpoints() {
-    for (int i = 0; i < _checkpoints.size(); ++i) {
-        if (!_checkpoints[i].take_hit() || !_checkpoint_tracker.reach(i)) {
-            continue;
-        }
-
-        _player.set_spawn_point(_checkpoints[i].pos.x, _checkpoints[i].pos.y);
-
-        bool on[Cfg::Level::Limits::TRIGGERS] = {};
-        for (int t = 0; t < _triggers.size(); ++t) {
-            on[t] = _triggers[t].is_triggered();
-        }
-        _checkpoint_triggers = pack_flags(on, _triggers.size());
-
-        for (int c = 0; c < _checkpoints.size(); ++c) {
-            _checkpoints[c].set_active(c == _checkpoint_tracker.active());
-        }
-        AudioSettings::instance().play_sfx(bn::sound_items::confirm);
-    }
-}
-
-void LevelManager::_restore_checkpoint_triggers() {
-    if (!_checkpoint_tracker.has_active()) {
+    const int reached = _checkpoint_run.sync(_checkpoints, _triggers);
+    if (reached < 0) {
         return;
     }
-    for (int t = 0; t < _triggers.size(); ++t) {
-        if (flag_at(_checkpoint_triggers, t)) {
-            _triggers[t].restore(true);
-        }
-    }
+    _player.set_spawn_point(
+        _checkpoints[reached].pos.x, _checkpoints[reached].pos.y);
+    AudioSettings::instance().play_sfx(bn::sound_items::confirm);
 }
 
 void LevelManager::_clear_checkpoint() {
-    _checkpoint_tracker.reset();
-    _checkpoint_triggers = 0;
+    _checkpoint_run.clear(_checkpoints);
     _player.set_spawn_point(_spawn_x, _spawn_y);
-    for (Checkpoint& checkpoint : _checkpoints) {
-        checkpoint.set_active(false);
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -497,11 +391,10 @@ void LevelManager::load(const LevelData& level) {
 
     _load_platforms(level);
     _load_triggers(level);
-    _bind_switched_platforms(level);
-    _load_crumble_platforms(level);
+    _load_dynamic_platforms(level);
     _load_traps(level);
     _load_checkpoints(level);
-    _sync_switched_platforms();
+    _dynamic_platforms.sync_switched(_player.pos);
 }
 
 void LevelManager::unload() {
@@ -512,16 +405,7 @@ void LevelManager::unload() {
     _background.reset();
     _door.reset();
     _music.reset();
-    _crumble_platforms.clear();
-    _switched_platforms.clear();
-    _platforms.clear();
-    _platform_bodies.clear();
-    _triggers.clear();
-    _traps.clear();
-    _checkpoints.clear();
-    _checkpoint_tracker.reset();
-    _checkpoint_triggers = 0;
-    _resettables.clear();
+    _clear_runtime_state();
 }
 
 LevelManager::UpdateResult LevelManager::update() {
@@ -584,7 +468,7 @@ LevelManager::UpdateResult LevelManager::update() {
 
     CollisionRegistry::instance().update_all();
     _sync_checkpoints();
-    _sync_switched_platforms();
+    _dynamic_platforms.sync_switched(_player.pos);
     _sync_crumble_platforms();
     _check_player_died();
 

@@ -209,8 +209,8 @@ class DeathFeedbackWiringTests(unittest.TestCase):
         self.assertIn("_respawn_pending = true", death)
         self.assertIn("_finish_respawn()", death)
 
-    def test_the_respawn_resets_entities_and_cuts_the_camera(self):
-        self.assertLess(self.finish.index("_reset_entities()"), self.finish.index("_restore_checkpoint_triggers()"))
+    def test_the_respawn_cuts_the_camera(self):
+        # The reset order is pinned in test_level_manager_wiring.py.
         self.assertIn("_camera_rig.snap(", self.finish)
 
     def test_level_load_and_unload_leave_no_feedback_behind(self):

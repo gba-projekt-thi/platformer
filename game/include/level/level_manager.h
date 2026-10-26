@@ -20,6 +20,7 @@
 #include "data_manager.h"
 #include "death_fx.h"
 #include "door.h"
+#include "dynamic_platforms.h"
 #include "game_modes.h"
 #include "game_state.h"
 #include "i_resettable.h"
@@ -150,26 +151,17 @@ class LevelManager {
     void _load_triggers(const LevelData& level);
     void _load_traps(const LevelData& level);
     void _load_checkpoints(const LevelData& level);
-    // Takes this frame's checkpoint touches, makes the furthest one the
-    // respawn point and snapshots the triggers that are on.
+    // Takes this frame's checkpoint touches (CheckpointRun) and makes a newly
+    // reached flag the respawn point.
     void _sync_checkpoints();
-    // After a death reset: switches the triggers that were on when the active
-    // checkpoint was reached back on.
-    void _restore_checkpoint_triggers();
     // Restart Level / level load: no checkpoint, respawn at the level spawn.
     void _clear_checkpoint();
-    // Resolves every platform's trigger_name to its Trigger (after the
-    // triggers are loaded) and records the binding.
-    void _bind_switched_platforms(const LevelData& level);
-    // Enables/disables switched platforms to match their triggers. Called
-    // once at load and every frame after the collision update.
-    void _sync_switched_platforms();
-    // Crumbling platforms (PlatformData::crumble_frames): created after the
-    // platforms, stepped every frame after the collision update, put back by
-    // _finish_respawn().
-    void _load_crumble_platforms(const LevelData& level);
+    // Hands the switched (trigger_name) and crumbling (crumble_frames)
+    // platforms to _dynamic_platforms, after the platforms and triggers are
+    // loaded.
+    void _load_dynamic_platforms(const LevelData& level);
+    // One frame of the crumbling platforms, after the collision update.
     void _sync_crumble_platforms();
-    void _reset_crumble_platforms();
 
     // Resets all resettable entities (currently: traps) after player
     // death or a manual level restart. Iterates a generic list rather
@@ -186,36 +178,16 @@ class LevelManager {
         _traps;
     bn::vector<Checkpoint, Cfg::Level::Limits::CHECKPOINTS> _checkpoints;
 
-    // Active checkpoint (furthest touched) and the level's own spawn point
-    // to fall back to; _checkpoint_triggers is the snapshot taken when the
-    // active checkpoint was reached. See checkpoint_logic.h.
-    CheckpointTracker _checkpoint_tracker;
-    uint16_t _checkpoint_triggers = 0;
+    // Active checkpoint and the triggers that were on when it was reached
+    // (checkpoint_logic.h); the level's own spawn point to fall back to.
+    CheckpointRun _checkpoint_run;
     bn::fixed _spawn_x = 0;
     bn::fixed _spawn_y = 0;
 
-    // Platforms bound to a trigger (PlatformData::trigger_name): the
-    // trigger decides whether the platform body and sprite are enabled.
-    // Non-owning - the platform bodies/sprites and triggers live in the
-    // containers above.
-    struct SwitchedPlatform {
-        Trigger* trigger;
-        StaticBody* body;
-        Sprite* sprite;
-        bool active_when_on;
-    };
-    bn::vector<SwitchedPlatform, Cfg::Level::Limits::PLATFORMS>
-        _switched_platforms;
-
-    // Platforms that give way under the duck. Non-owning like the switched
-    // ones; the state machine decides, LevelManager applies it.
-    struct CrumblePlatform {
-        StaticBody* body;
-        Sprite* sprite;
-        crumble::State state;
-    };
-    bn::vector<CrumblePlatform, Cfg::Level::Limits::PLATFORMS>
-        _crumble_platforms;
+    // Switched and crumbling platforms (dynamic_platforms.h). Non-owning -
+    // the platform bodies/sprites and triggers live in the containers above.
+    DynamicPlatforms<StaticBody, Sprite, Trigger, Cfg::Level::Limits::PLATFORMS>
+        _dynamic_platforms;
 
     // Non-owning view over every currently-loaded IResettable entity:
     // the triggers (registered in _load_triggers()) and the traps
