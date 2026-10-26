@@ -26,6 +26,9 @@ void PlayerLocomotion::update() {
     input.a_pressed = bn::keypad::a_pressed();
     input.a_held = bn::keypad::a_held();
     input.b_pressed = bn::keypad::b_pressed();
+    if (_input_hook != nullptr) {
+        _input_hook(input);
+    }
 
     World world{_body, _block_mask, _death_handler};
     const locomotion::Effects effects = _core.step(_body, input, world);

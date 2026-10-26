@@ -53,6 +53,10 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
     void set_assist_mode(bool enabled);
     // Dash (B): enabled per level by LevelManager::load().
     void set_dash_enabled(bool enabled);
+    // Emulator tests: see PlayerLocomotion::set_input_hook().
+    void set_input_hook(PlayerLocomotion::InputHook hook) {
+        _locomotion.set_input_hook(hook);
+    }
     // Removes the dash's afterimage ghosts at once (level complete, menus,
     // death) so none stays frozen on screen.
     void clear_dash_trail();

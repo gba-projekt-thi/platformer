@@ -96,6 +96,7 @@ test:
 
 checks:
 	python3 tools/Generate_levels.py --check
+	python3 tools/replays.py generate --check
 	python3 tools/Check_trigger_references.py
 	python3 tools/Check_level_hints.py
 	python3 tools/Check_world_index.py
@@ -106,3 +107,19 @@ checks:
 
 coverage:
 	$(MAKE) -C tests/host coverage
+
+#---------------------------------------------------------------------------------------------------------------------
+# Emulator tests (ARM toolchain needed, see tools/replays.py):
+#   make record   platformer.record/platformer.gba records the duck's buttons into its save file
+#   make replay   plays every recorded level headless; fails unless each one reaches its door
+# (Butano needs a one-level build directory; platformer.* is already ignored by git.)
+#---------------------------------------------------------------------------------------------------------------------
+.PHONY: record replay
+
+record:
+	$(MAKE) TARGET=platformer.record/platformer BUILD=platformer.record USERFLAGS=-DPLATFORMER_RECORD
+
+replay:
+	python3 tools/replays.py generate
+	$(MAKE) TARGET=platformer.replay/platformer BUILD=platformer.replay USERFLAGS=-DPLATFORMER_REPLAY
+	python3 tools/replays.py run platformer.replay/platformer.gba

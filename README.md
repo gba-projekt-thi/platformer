@@ -242,6 +242,10 @@ make checks                        # level data checks only
 make coverage                      # line coverage of game/ by the host tests
 ```
 
+In the dev container, `make replay` also plays every recorded level to its door
+in a test build of the ROM (headless mGBA, a few seconds), and `make record`
+builds the game that records new solutions - see `tools/replays.py`.
+
 None of these need the ARM toolchain. CI (`.github/workflows/ci.yml`) runs this on every push/PR, plus a separate job that builds the actual ROM in the devcontainer image and boots it headlessly. See [`docs/development-workflow.md`](docs/development-workflow.md#testing-methodology) for what's covered and what still has to be tested manually in the emulator.
 
 ## Links

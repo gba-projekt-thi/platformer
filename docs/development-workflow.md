@@ -135,6 +135,29 @@ file where it becomes untestable on the host. Hardware input reaches a rule
 as a value (see `InputState` in `locomotion.h`), collision queries through a
 small interface the test can fake.
 
+### Automated: replays in the emulator (`make replay`)
+
+The host tests check rules; whether a level can really be played to its door
+with the real game, traps and all, is checked by **replays**: recorded buttons
+of a finished attempt, one file per level in `game/replays/`.
+
+- `make replay` (dev container) generates `game/include/replay_data.h` from
+  the recordings, builds `platformer.replay/platformer.gba` (the game with
+  `PLATFORMER_REPLAY`: no title screen, it plays every recorded level and logs
+  the result) and runs it in mGBA without a frame limit. It fails unless every
+  recorded level reaches its door; levels without a recording are listed. CI
+  runs it in the `gba-build` job.
+- To record: `make record` builds `platformer.record/platformer.gba`. Play the
+  level(s) to the door in mGBA (Restart Level starts a level's recording over;
+  deaths, pauses and checkpoints are fine), quit, then
+  `python3 tools/replays.py import platformer.record/platformer.sav`. Each
+  finished level's last attempt is stored in SRAM behind the save slots
+  (`game/include/replay.h`), so any mGBA frontend works.
+- Buttons are recorded per movement step, not per frame, so the death freeze
+  and pauses do not shift them. A change to movement, physics, traps or level
+  data that breaks a recorded solution fails the replay: re-record that level
+  if the change is intended.
+
 ### Automated: CI (`.github/workflows/ci.yml`)
 
 Two independent jobs, so the fast check isn't blocked by the slow one:

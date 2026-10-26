@@ -10,6 +10,7 @@
 #include "level_manager.h"
 #include "level_records.h"
 #include "player.h"
+#include "replay_capture.h"
 #include "start_scene.h"
 #include "text_buffer.h"
 #include "timer.h"
@@ -36,6 +37,7 @@ LevelScene::~LevelScene() {
 }
 
 void LevelScene::init() {
+    replay_capture::level_started(_player, _level_index);
     _level_manager.load(_levels[_level_index]);
     _player.set_visible(true);
     _player.set_hud_visible(true);
@@ -155,6 +157,8 @@ void LevelScene::update() {
     // -------------------------------------------------------------------------
     // Door reached: advance to the next level (or finish the game).
     // -------------------------------------------------------------------------
+
+    replay_capture::level_finished();
 
     // Record the clear (best time, no-death mark) before anything else
     // touches game_state - covers both the "advance to next level" and "game

@@ -58,6 +58,12 @@ class PlayerLocomotion {
     // Cancels a running dash (death, level load).
     void reset_dash() { _core.reset_dash(); }
 
+    // Emulator tests (replay.h): called with the buttons read from the
+    // keypad every movement step; may record them or replace them.
+    // nullptr (the default) = the keypad as it is.
+    using InputHook = void (*)(InputState& input);
+    void set_input_hook(InputHook hook) { _input_hook = hook; }
+
    private:
     // The collision probes and the death of the real body, for Core::step().
     struct World {
@@ -74,5 +80,6 @@ class PlayerLocomotion {
     Sprite& _sprite;
     uint16_t _block_mask;
     PlayerDeathHandler& _death_handler;
+    InputHook _input_hook = nullptr;
     locomotion::Core _core;
 };

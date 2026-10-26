@@ -15,6 +15,7 @@
 #include "level_manager.h"
 #include "levels.h"
 #include "player.h"
+#include "replay_runner.h"
 #include "start_scene.h"
 #include "world_index.h"
 
@@ -88,6 +89,12 @@ int main() {
 
     static LevelManager level_manager
         __attribute__((section(".ewram"))) (player, data_manager);
+
+#if defined(PLATFORMER_REPLAY)
+    // Emulator test build (`make replay`): plays every recorded level instead.
+    run_replays(
+        player, bn::span<const LevelData>(levels), data_manager, level_manager);
+#endif
 
     auto first_scene = bn::make_unique<StartScene>(
         player, bn::span<const LevelData>(levels), data_manager, level_manager);

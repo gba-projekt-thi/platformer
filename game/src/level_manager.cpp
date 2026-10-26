@@ -4,6 +4,7 @@
 #include "bn_keypad.h"
 #include "level_limits.h"
 #include "player_events.h"
+#include "replay_capture.h"
 #include "switch_logic.h"
 #include "trap_factory.h"
 #include "world_index.h"
@@ -418,6 +419,7 @@ LevelManager::UpdateResult LevelManager::update() {
         // Restart Level starts over from the level's spawn point, not from a
         // checkpoint. Still counts as a death, as before.
         _clear_checkpoint();
+        replay_capture::level_restarted();
         // Pausing during a death freeze and restarting must not leave the
         // rest of that freeze (or its ghost) behind; the restart's own death
         // triggers the reset below.

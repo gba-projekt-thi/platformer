@@ -83,3 +83,11 @@ jobs:
           docker run --rm --user "$(id -u):$(id -g)" \
             -v ${{ github.workspace }}:/workspace -w /workspace \
             projectgba bash -c "./test-rom.sh platformer.gba"
+
+      # Plays every recorded level (game/replays/) to its door in a test
+      # build of the ROM, headless - see tools/replays.py.
+      - name: Replays
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -v ${{ github.workspace }}:/workspace -w /workspace \
+            projectgba bash -c "make replay"
