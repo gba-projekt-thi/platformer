@@ -159,8 +159,9 @@ rules in `locomotion::Core`, tests in `tests/host/test_locomotion.cpp`:
   like the dash. Earlier worlds play as authored. Walls are platform sides
   only (the collision layer the duck stands on), never traps or the world
   edge.
-- **Reachability.** `tools/Check_level_reachability.py` does not model wall
-  jumps: they only add reach, so a level it proves reachable stays so.
+- **Reachability.** `tools/Check_level_reachability.py` simulates wall jumps
+  frame by frame (`Duck`) with a few climb policies: up a shaft between two
+  walls and up a single wall.
 
 ## Game progression
 

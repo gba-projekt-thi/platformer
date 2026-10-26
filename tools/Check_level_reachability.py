@@ -26,13 +26,13 @@ Two start assumptions bracket real play:
     a gap that is meant to require the dash must fail this check without dash.
 
 Traps are ignored (this checks geometry, not hazard timing). Wall jumps
-(World 5 on) are not modelled either: they only add reach, so a door found
-reachable without them stays reachable.
+(from Cfg::WallJump::UNLOCK_WORLD on) are simulated frame by frame by Duck,
+with a few climb policies (between two walls, up one wall).
 
 Usage (from the repository root):
     python3 tools/Check_level_reachability.py --all
-        Every level of main.cpp's levels[] in play order; the dash counts only
-        from the world Cfg::Dash::UNLOCK_WORLD on, as in the game.
+        Every level of main.cpp's levels[] in play order; the dash and wall
+        jumps count only from their Cfg::...::UNLOCK_WORLD on, as in the game.
     python3 tools/Check_level_reachability.py FILE LEVEL...
         Detailed report (with and without dash, both start assumptions) for
         the named levels of one file.
@@ -74,6 +74,12 @@ BW = 8.0
 BH = 8.0
 DEATH_Y = 100.0
 MAX_FRAMES = 160
+JUMP_BUFFER = 6
+# Cfg::WallJump
+SLIDE = 1.0
+PUSH = 2.0
+LOCK = 8
+WALL_FRAMES = 400  # a climb up a shaft takes longer than one jump
 
 
 class Rect:
@@ -238,6 +244,117 @@ def simulate(
     return None, door_touched
 
 
+def _probe(plats, x, y, w, h):
+    return _hits(plats, x, y, w, h) is not None
+
+
+class Duck:
+    """One frame of locomotion::Core::step() and PhysicsBody::move(), button by
+    button, with the jump buffer and the wall slide / wall jump (no dash and
+    no world-edge bounce). Drives the wall-climb policies below."""
+
+    def __init__(self, plats, x, y, vx=0.0, wall_jump=True):
+        self.plats = plats
+        self.x, self.y, self.vx, self.vy = x, y, vx, 0.0
+        self.wall_jump = wall_jump
+        self.on_ground = True
+        self.coyote = 0
+        self.buffer = 0
+        self.lock = 0
+        self.wall_jumped = False
+
+    def wall(self):
+        """-1 / 1 = a wall touches the left / right side, 0 = none."""
+        if not self.wall_jump:
+            return 0
+        if _probe(self.plats, self.x - BW / 2 - 1, self.y, 1, BH - 2):
+            return -1
+        return 1 if _probe(self.plats, self.x + BW / 2 + 1, self.y, 1, BH - 2) else 0
+
+    def step(self, left=False, right=False, a_pressed=False, a_held=True):
+        if a_pressed:
+            self.buffer = JUMP_BUFFER
+        wall = self.wall()
+        if self.lock > 0:
+            self.lock -= 1
+        elif left or right:
+            d = -1 if left else 1
+            self.vx = max(-MAXS, min(MAXS, self.vx + d * ACC))
+        elif self.vx > 0:
+            self.vx = max(0.0, self.vx - DECEL)
+        elif self.vx < 0:
+            self.vx = min(0.0, self.vx + DECEL)
+        self.vy += G
+        if not a_held and self.vy < 0:
+            self.vy *= 0.5
+        self.vy = min(self.vy, MAXFALL)
+        toward = (wall < 0 and left) or (wall > 0 and right)
+        if toward and not self.on_ground and self.vy > SLIDE:
+            self.vy = SLIDE
+        if _probe(self.plats, self.x, self.y + BH / 2 + 1, BW - 2, 1):
+            self.on_ground, self.coyote, self.lock = True, COYOTE, 0
+        elif self.coyote > 0:
+            self.coyote -= 1
+            self.on_ground = True
+        else:
+            self.on_ground = False
+        self.wall_jumped = False
+        if self.buffer > 0 and self.on_ground:
+            self.vy, self.on_ground, self.buffer, self.coyote = JUMP, False, 0, 0
+        elif self.buffer > 0 and wall != 0:
+            self.vy, self.vx = JUMP, -wall * PUSH
+            self.lock, self.buffer = LOCK, 0
+            self.wall_jumped = True
+        if self.vy < 0 and _probe(self.plats, self.x, self.y - BH / 2 - 1, BW - 2, 1):
+            self.vy = 0.0
+        if self.buffer > 0:
+            self.buffer -= 1
+        self.x, blocked = resolve_axis(self.x, self.vx, lambda nx: _probe(self.plats, nx, self.y, BW, BH))
+        if blocked:
+            self.vx = 0.0
+        self.y, blocked = resolve_axis(self.y, self.vy, lambda ny: _probe(self.plats, self.x, ny, BW, BH))
+        if blocked:
+            self.vy = 0.0
+
+
+def climb(plats, door, start, x0, vx0, d, mode, slide, jump):
+    """A wall-jump policy from `start`: run toward d (jumping first if `jump`),
+    and at every wall touched in the air slide `slide` frames, let go of A for
+    a frame and jump off it - then hold toward the next wall ("chimney", the
+    one the push leads to) or back toward the same one ("same"). Returns
+    (landed platform or None, door touched), like simulate()."""
+    duck = Duck(plats, x0, start.top - BH / 2, vx0)
+    touching = 0
+    airborne = False
+    door_touched = False
+    for f in range(WALL_FRAMES):
+        at = duck.wall()
+        touching = touching + 1 if (at == d and not duck.on_ground) else 0
+        a_held = touching != slide + 1
+        pressed = (jump and f == 0) or touching == slide + 2
+        duck.step(left=d < 0, right=d > 0, a_pressed=pressed, a_held=a_held)
+        if duck.wall_jumped:
+            touching = 0
+            if mode == "chimney":
+                d = -d
+        if door is not None and overlap(duck.x, duck.y, BW, BH, door[0], door[1], 2, 2):
+            door_touched = True
+        if duck.y > DEATH_Y:
+            return None, door_touched
+        ground = _hits(plats, duck.x, duck.y + BH / 2 + 1, BW - 2, 1)
+        if ground is not None and (ground is not start or airborne) and duck.vy >= 0 and f >= 1:
+            return ground, door_touched
+        if duck.y < start.top - BH / 2 - 1 or duck.vy != 0:
+            airborne = True
+    return None, door_touched
+
+
+WALL_POLICIES = [
+    (d, mode, slide, jump)
+    for d in (1, -1) for mode in ("chimney", "same") for slide in (0, 8) for jump in (True, False)
+]
+
+
 def policies(allow_dash):
     dash_ts = [None]
     if allow_dash:
@@ -254,7 +371,7 @@ def policies(allow_dash):
 START_OFFSETS = (0.0, 10.0, 20.0, 30.0)  # px back from the edge (conservative)
 
 
-def landings(active, start, door, allow_dash, optimistic, traces=None):
+def landings(active, start, door, allow_dash, optimistic, traces=None, allow_wall=False):
     """Platforms (and door contact) reachable in ONE action from `start`.
 
     `traces`, when a dict, collects one jump trajectory per
@@ -299,6 +416,17 @@ def landings(active, start, door, allow_dash, optimistic, traces=None):
                     key = (start.index, landed.index, dash_t is not None)
                     if key not in traces or len(trace) < len(traces[key]):
                         traces[key] = trace
+    if allow_wall:
+        for d, mode, slide, jump in WALL_POLICIES:
+            edge = start.right if d == 1 else start.left
+            for k in START_OFFSETS:
+                x0 = edge - d * k
+                if not start.left <= x0 <= start.right:
+                    continue
+                landed, touched = climb(active, door, start, x0, 0.0, d, mode, slide, jump)
+                door_hit |= touched
+                if landed is not None and landed is not start:
+                    found.add(landed)
     return found, door_hit
 
 
@@ -318,7 +446,7 @@ def spawn_platform(active, spawn):
     return None
 
 
-def reach(active, spawn, door, allow_dash, optimistic):
+def reach(active, spawn, door, allow_dash, optimistic, allow_wall=False):
     """Returns (reached platforms, door reachable) for a fixed platform set."""
     first = spawn_platform(active, spawn)
     if first is None:
@@ -328,7 +456,7 @@ def reach(active, spawn, door, allow_dash, optimistic):
     door_ok = False
     while frontier:
         cur = frontier.pop()
-        found, touched = landings(active, cur, door, allow_dash, optimistic)
+        found, touched = landings(active, cur, door, allow_dash, optimistic, allow_wall=allow_wall)
         door_ok |= touched
         for p in found:
             if p not in reached:
@@ -355,7 +483,7 @@ def _clamp(v, lo, hi):
     return max(lo, min(hi, v))
 
 
-def reach_with_levers(platforms, triggers, spawn, door, allow_dash, optimistic):
+def reach_with_levers(platforms, triggers, spawn, door, allow_dash, optimistic, allow_wall=False):
     """Fixpoint over lever configurations. `triggers` maps name -> dict with
     default_on and the Rect of the platform the lever stands on (or None).
     Returns (reached_ids, door_ok, configs_explored)."""
@@ -380,7 +508,7 @@ def reach_with_levers(platforms, triggers, spawn, door, allow_dash, optimistic):
     while todo:
         cfg = dict(todo.pop())
         active = active_for(cfg)
-        reached, ok = reach(active, spawn, door, allow_dash, optimistic)
+        reached, ok = reach(active, spawn, door, allow_dash, optimistic, allow_wall)
         door_ok |= ok
         all_reached |= {p.index for p in reached}
         for n in names:
@@ -468,11 +596,11 @@ def attach_lever_platforms(platforms, triggers):
         t["platform"] = holder
 
 
-def check_level(platforms, triggers, spawn, door, dash):
+def check_level(platforms, triggers, spawn, door, dash, wall=False):
     attach_lever_platforms(platforms, triggers)
     out = {}
     for opt in (False, True):
-        r, ok, n = reach_with_levers(platforms, triggers, spawn, door, dash, opt)
+        r, ok, n = reach_with_levers(platforms, triggers, spawn, door, dash, opt, wall)
         out[("optimistic" if opt else "conservative", "dash" if dash else "no dash")] = (r, ok, n)
     return out
 
@@ -483,24 +611,28 @@ def dash_allowed(level_index, worlds, unlock_world):
     return level_index >= worlds[unlock_world][1]
 
 
-CampaignLevel = namedtuple("CampaignLevel", "index name path dash")
+CampaignLevel = namedtuple("CampaignLevel", "index name path dash wall")
 
 
 def campaign(root):
     """Every level of the game in play order (main.cpp's levels[]), with the
-    file that defines it and whether the dash is available there."""
+    file that defines it and whether the dash and wall jumps are available
+    there."""
     root = Path(root)
     order = _cwi.parse_levels((root / "game/src/main.cpp").read_text())
     worlds = _cwi.parse_worlds((root / "game/include/world_index.h").read_text())
-    unlock = int(re.search(
-        r"UNLOCK_WORLD\s*=\s*(\d+)", (root / "game/include/cfg_dash.h").read_text()
-    ).group(1))
+    def unlock(header):
+        return int(re.search(
+            r"UNLOCK_WORLD\s*=\s*(\d+)", (root / "game/include" / header).read_text()
+        ).group(1))
     defined = {}
     for path in sorted((root / "game/include/level").glob("levels_world*.h")):
         for name in re.findall(r"(?:const|constexpr) LevelData (\w+)", path.read_text()):
             defined[name] = path
     return [
-        CampaignLevel(i, name, defined[name], dash_allowed(i, worlds, unlock))
+        CampaignLevel(i, name, defined[name],
+                      dash_allowed(i, worlds, unlock("cfg_dash.h")),
+                      dash_allowed(i, worlds, unlock("cfg_wall_jump.h")))
         for i, name in enumerate(order)
     ]
 
@@ -515,7 +647,7 @@ def unreachable_doors(levels):
             loaded[level.path] = load_levels(level.path)
         platforms, triggers, spawn, door = loaded[level.path][level.name]
         attach_lever_platforms(platforms, triggers)
-        _, ok, _ = reach_with_levers(platforms, triggers, spawn, door, level.dash, False)
+        _, ok, _ = reach_with_levers(platforms, triggers, spawn, door, level.dash, False, level.wall)
         if not ok:
             bad.append(level.name)
     return bad
@@ -526,7 +658,8 @@ def main_all(root="."):
     bad = unreachable_doors(levels)
     for level in levels:
         state = "NO DOOR" if level.name in bad else "ok"
-        print(f"{level.index:2d} {level.name:24s} {'dash' if level.dash else 'no dash':8s} {state}")
+        abilities = "+".join(n for n, on in (("dash", level.dash), ("wall", level.wall)) if on) or "-"
+        print(f"{level.index:2d} {level.name:24s} {abilities:10s} {state}")
     print(f"\nReachability check: {len(bad)} of {len(levels)} level(s) cannot be finished.")
     return 1 if bad else 0
 
@@ -544,14 +677,14 @@ def main(argv):
     for name in names:
         platforms, triggers, spawn, door = levels[name]
         print(f"== {name}: {len(platforms)} platforms, {len(triggers)} triggers")
-        for dash in (False, True):
-            res = check_level(platforms, triggers, spawn, door, dash)
+        for dash, wall in ((False, False), (True, False), (True, True)):
+            res = check_level(platforms, triggers, spawn, door, dash, wall)
             for key, (r, ok, n) in res.items():
                 print(
-                    f"  {key[0]:12s} {key[1]:8s} reached {len(r):2d}/{len(platforms)} "
-                    f"door={'yes' if ok else 'NO '} configs={n}"
+                    f"  {key[0]:12s} {key[1]:8s} {'wall' if wall else '':4s} reached "
+                    f"{len(r):2d}/{len(platforms)} door={'yes' if ok else 'NO '} configs={n}"
                 )
-        cons_dash = check_level(platforms, triggers, spawn, door, True)[("conservative", "dash")]
+        cons_dash = check_level(platforms, triggers, spawn, door, True, True)[("conservative", "dash")]
         if not cons_dash[1]:
             bad = True
     return 1 if bad else 0

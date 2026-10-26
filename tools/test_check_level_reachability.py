@@ -164,6 +164,63 @@ class NewLevelTests(unittest.TestCase):
             self.assertIsNotNone(t["platform"], name)
 
 
+def shaft(gap=14, walls=3):
+    """A floor, and on it a shaft between two columns of 26x32 barrels with
+    `gap` px between them; the left column leaves a 32 px doorway at the
+    bottom. Returns (platforms, spawn, door on top of the right column)."""
+    plats = [sim.Rect(x, 76, 26, 32, i) for i, x in enumerate(range(-104, 120, 26))]
+    left, right = 0.0, 26.0 + gap
+    for k in range(walls):
+        plats.append(sim.Rect(right, 44 - 32 * k, 26, 32, len(plats)))
+        if k > 0:
+            plats.append(sim.Rect(left, 44 - 32 * k, 26, 32, len(plats)))
+    top = 44 - 32 * (walls - 1) - 16
+    return plats, (-90.0, 40.0), (right, top - 4.0)
+
+
+class WallJumpModelTests(unittest.TestCase):
+    """Duck mirrors locomotion::Core::step() with the wall jump
+    (tests/host/test_locomotion.cpp)."""
+
+    WALL = [sim.Rect(20, 0, 26, 200, 0)]  # a wall right of the duck
+
+    def at_the_wall(self):
+        duck = sim.Duck(self.WALL, 3.0, -40.0, wall_jump=True)
+        duck.on_ground = False
+        for _ in range(10):
+            duck.step(right=True)
+        return duck
+
+    def test_holding_toward_a_wall_slides(self):
+        duck = self.at_the_wall()
+        self.assertEqual(duck.wall(), 1)
+        self.assertEqual(duck.vy, sim.SLIDE)
+
+    def test_a_wall_jump_pushes_away_and_up(self):
+        duck = self.at_the_wall()
+        duck.step(right=True, a_held=False)
+        x = duck.x
+        duck.step(right=True, a_pressed=True)
+        self.assertTrue(duck.wall_jumped)
+        self.assertEqual(duck.vx, -sim.PUSH)
+        self.assertEqual(duck.vy, sim.JUMP)
+        self.assertEqual(duck.x, x - sim.PUSH)
+
+    def test_without_wall_jumps_the_wall_is_ignored(self):
+        duck = sim.Duck(self.WALL, 3.0, -40.0, wall_jump=False)
+        for _ in range(40):
+            duck.step(right=True)
+        self.assertEqual(duck.wall(), 0)
+        self.assertEqual(duck.vy, sim.MAXFALL)
+
+    def test_a_shaft_needs_wall_jumps(self):
+        plats, spawn, door = shaft()
+        _, plain = sim.reach(plats, spawn, door, True, True)
+        _, climbed = sim.reach(plats, spawn, door, False, False, allow_wall=True)
+        self.assertFalse(plain)
+        self.assertTrue(climbed)
+
+
 class RunningDoorTests(unittest.TestCase):
     """A door with DoorData::flee_path has to be reached at its last stop."""
 
@@ -265,11 +322,27 @@ class ConstantsMatchTheGameTests(unittest.TestCase):
         self.assertEqual(sim.DASH_SPEED, cfg_value("cfg_dash.h", "Dash", "SPEED"))
         self.assertEqual(sim.DASH_FRAMES, cfg_value("cfg_dash.h", "Dash", "DURATION_FRAMES"))
 
+    def test_wall_jump_constants_match_cfg_wall_jump_h(self):
+        for sim_value, constant in (
+            (sim.SLIDE, "SLIDE_SPEED"), (sim.PUSH, "PUSH_SPEED"), (sim.LOCK, "LOCK_FRAMES"),
+        ):
+            self.assertEqual(sim_value, cfg_value("cfg_wall_jump.h", "WallJump", constant), constant)
+        self.assertEqual(sim.JUMP_BUFFER, cfg_value("cfg.h", "Player", "JUMP_BUFFER_FRAMES"))
+
     def test_duck_body_matches_cfg_h(self):
         self.assertEqual(
             (sim.BW, sim.BH),
             (cfg_value("cfg.h", "Player", "BODY_WIDTH"), cfg_value("cfg.h", "Player", "BODY_HEIGHT")),
         )
+
+
+class WallJumpUnlockTests(unittest.TestCase):
+    @unittest.skipIf(REPO is None, "levels_world5.h not found")
+    def test_campaign_unlocks_wall_jumps_with_world_5(self):
+        wall = {level.name: level.wall for level in sim.campaign(REPO)}
+        self.assertFalse(wall["LEVEL_WORLD4_BOSS"])
+        self.assertTrue(wall["LEVEL_WORLD5_SCROLL"])
+        self.assertTrue(wall["LEVEL_WORLD5_FINALE"])
 
 
 @unittest.skipIf(REPO is None, "levels_world5.h not found")
