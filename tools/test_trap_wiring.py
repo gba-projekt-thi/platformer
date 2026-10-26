@@ -71,6 +71,37 @@ class FactoryWiringTests(unittest.TestCase):
         self.assertIn("cycle_length(timing) > 0", self.cycle)
 
 
+@unittest.skipIf(FACTORY is None, "trap_factory.h not found")
+class ZOrderWiringTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.text = FACTORY.read_text()
+        cls.create = cls.text[cls.text.index("inline auto create("):]
+
+    def test_every_trap_type_goes_through_the_z_order_step(self):
+        # the per-type switch is wrapped, not duplicated per case
+        self.assertIn("detail::create_trap(", self.create)
+        self.assertIn("trap_data.sprite_z_order != 0", self.create)
+        self.assertIn("set_sprite_z_order(trap_data.sprite_z_order)", self.create)
+        self.assertLess(
+            self.create.index("detail::create_trap("),
+            self.create.index("set_sprite_z_order("),
+        )
+
+    def test_the_default_z_order_leaves_the_sprite_alone(self):
+        self.assertRegex(self.create, r"if\s*\(trap_data\.sprite_z_order\s*!=\s*0\)")
+
+
+@unittest.skipIf(_find("base_trap.h") is None, "base_trap.h not found")
+class BaseTrapZOrderTests(unittest.TestCase):
+    def test_base_trap_exposes_the_setter(self):
+        text = _find("base_trap.h").read_text()
+        self.assertRegex(
+            text,
+            r"void\s+set_sprite_z_order\(int\s+\w+\)\s*\{\s*_trap_sprite\.sprite\(\)\.set_z_order\(",
+        )
+
+
 @unittest.skipIf(CYCLE is None, "cycle_trap.cpp not found")
 class CycleTrapWiringTests(unittest.TestCase):
     @classmethod

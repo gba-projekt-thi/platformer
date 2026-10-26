@@ -303,6 +303,14 @@ mid-jump, a hazard that rises as the duck climbs, a flying pest released later
 in the run. Without triggers, every moving hazard would be permanently active,
 which would be hard to design around and visually chaotic.
 
+### Fakes
+
+Not every door is a door. A **fake door** or **fake checkpoint** looks exactly
+like the real one - same sprite, same animation, standing behind the duck - and
+kills on touch like any static hazard. They exist for the levels that want to
+be mean on purpose; the real checkpoint's flag turns green when it is reached,
+which is the one thing a fake never does.
+
 ### Crumbling platforms
 
 Some platforms do not wait for a trigger: they react to the duck itself. A

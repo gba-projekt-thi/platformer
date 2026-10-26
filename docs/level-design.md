@@ -291,6 +291,42 @@ conservative dash run. The check ignores hazards, so traps still need a manual
 look. All 19 current levels pass it conservatively, and 18 of them without the
 dash.
 
+### Fake doors and fake checkpoints
+
+A hazard that looks like the real thing needs no new trap type: a static BASE
+trap that wears the sprite of a door or a checkpoint kills on touch like any
+other. The one missing piece was the draw order - the real door and checkpoint
+stand behind the duck (`Cfg::ZOrder::DOOR` / `CHECKPOINT`, 1), a trap defaults
+to the duck's own layer - so `TrapData::sprite_z_order` (the last field, 0 =
+unchanged) sets it, for any trap type.
+
+```cpp
+#include "bn_sprite_items_checkpoint16x16.h"   // at the top of the world header
+
+// Fake door: the animation, the speed and the layer of the real one; the box
+// covers the doorway, not the whole 32x32 sprite.
+{TrapType::BASE, 140, 40, 10, 20, 0, 0, bn::sprite_items::door32x32, 8,
+ DOOR32X32_GRAPHICS_INDEXES, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0,
+ 0, 0, 0, 0, 0, 0, 0, Cfg::ZOrder::DOOR},
+
+// Fake checkpoint: the grey (not reached) flag, standing on a platform.
+{TrapType::BASE, -60, 44, 10, 16, 0, 0, bn::sprite_items::checkpoint16x16, 1,
+ TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0,
+ 0, 0, 0, 0, 0, 0, 0, Cfg::ZOrder::CHECKPOINT},
+```
+
+- Leave `offset_x` / `offset_y` at 0: a trap's sprite follows its collision box.
+- The fake door is only convincing next to a level whose real door looks the
+  same (`door32x32` with the default animation).
+- Combine it with the other tools for the cruel version: a fake door in a
+  dead end with a real door above it, a fake checkpoint before a long
+  stretch, a CYCLE or MOVING trap bound to a trigger that fires when the duck
+  *reaches* the fake (a trap's trigger zone can sit on top of it).
+- Keep it fair: let the duck see the difference when it stops to look (a flag
+  of the wrong colour, no light behind the door), and never put the only way
+  forward behind an unmarked fake. `Check_checkpoints.py` only knows real
+  checkpoints, so a fake one is not subject to its placement rules.
+
 ### Crumbling platforms
 
 A platform reacts to the duck itself, without any trigger: set

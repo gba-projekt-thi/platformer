@@ -50,6 +50,11 @@ class BaseTrap : public PhysicsBody, public IResettable {
     // Reset trap state after player death or level restart.
     void reset() override {}
 
+    // Draw order of the trap's sprite (see TrapData::sprite_z_order).
+    void set_sprite_z_order(int z_order) {
+        _trap_sprite.sprite().set_z_order(z_order);
+    }
+
    protected:
     // Sprite wrapper synchronized through SpriteRegistry.
     Sprite _trap_sprite;

@@ -76,6 +76,11 @@ left. A level has at most one; the triggers that were on when it was reached
 fire again after a respawn. It never stands in a trap or on its path. See
 [Level Design — Checkpoints](level-design.md#checkpoints).
 
+**Fake door / fake checkpoint** — A BASE trap dressed as a door or a checkpoint
+flag (same sprite, animation and draw order via `TrapData::sprite_z_order`) that
+kills on touch. See [Level Design — Fake doors and fake
+checkpoints](level-design.md#fake-doors-and-fake-checkpoints).
+
 **Cycle trap** — A hazard that moves out by a fixed offset, stays, moves back
 and rests, on repeat (spikes out of the floor). Its round is four frame counts
 plus a phase offset; an optional trigger gates it. Speeds up under Hard Mode.

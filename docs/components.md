@@ -288,6 +288,10 @@ The base trap owns:
   directly rather than reacting to a Trigger, but activation is
   proximity-based rather than continuous tracking, and movement is a single
   bounded lunge rather than an ongoing pursuit.
+- **Fakes** are ordinary BASE traps with the sprite of a door or a checkpoint.
+  `TrapData::sprite_z_order` (any trap type) is applied by `TrapFactory::create()`
+  after the concrete trap is built, through `BaseTrap::set_sprite_z_order()`, so
+  the fake stands behind the duck like the real one.
 - **Cycle traps** run a fixed timeline (`trap_timing::CycleTiming`, pure and
   unit-tested: `cycle_progress()` returns how far out the trap is in permille
   for a frame of the round, `next_cycle_frame()` wraps the round without a

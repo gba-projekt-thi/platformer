@@ -59,7 +59,11 @@ constexpr TrapData traps[] = {
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 40, 2.5},
     {TrapType::CYCLE, 300, 56, 12, 12, 0, 0, bn::sprite_items::t, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, "go", 0, 0, 0,
-     0, -12, 8, 40, 8, 60, 5}};
+     0, -12, 8, 40, 8, 60, 5},
+    // a fake door: a BASE trap that looks like the real one
+    {TrapType::BASE, 340, 40, 10, 20, 0, 0, bn::sprite_items::door32x32, 8,
+     DOOR32X32_GRAPHICS_INDEXES, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 1}};
 
 constexpr CheckpointData cps[] = {{-40, 44}, {40, 44}};
 
@@ -148,7 +152,9 @@ class ParsingTests(Fixture):
 
     def test_trap_fields(self):
         kinds = [t["type"] for t in self.level.traps]
-        self.assertEqual(kinds, ["BASE", "MOVING", "PATH", "AMBUSH", "CHASE", "CYCLE"])
+        self.assertEqual(
+            kinds, ["BASE", "MOVING", "PATH", "AMBUSH", "CHASE", "CYCLE", "BASE"]
+        )
         moving, path, ambush, chase, cycle = (self.level.traps[i] for i in (1, 2, 3, 4, 5))
         self.assertEqual((cycle["cycle_dx"], cycle["cycle_dy"]), (0.0, -12.0))
         self.assertEqual(
@@ -156,6 +162,7 @@ class ParsingTests(Fixture):
             [8.0, 40.0, 8.0, 60.0, 5.0],
         )
         self.assertEqual(cycle["trigger"], "go")
+        self.assertEqual([t["sprite_z_order"] for t in self.level.traps], [0] * 6 + [1])
         self.assertEqual((moving["velocity_y"], moving["max_vel"]), (4.0, 4.0))
         self.assertEqual(moving["trigger"], "go")
         self.assertEqual(path["path"], [(0.0, 0.0), (20.0, 0.0), (20.0, 10.0)])
@@ -282,7 +289,8 @@ class DrawingTests(Fixture):
                 for r in rects_with(root, "trap", f"trap-{kind}")
                 if title_of(r)  # the legend swatches have no title
             ]
-            self.assertEqual(len(drawn), 1, kind)
+            # the fake door is a second BASE trap
+            self.assertEqual(len(drawn), 2 if kind == "base" else 1, kind)
 
     def test_delayed_and_timer_triggers_are_labelled(self):
         text = " ".join(t.text or "" for t in self.svg(arcs="none").iter(SVG + "text"))

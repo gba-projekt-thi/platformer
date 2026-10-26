@@ -230,6 +230,16 @@ struct TrapData {
     // trap: with one it only cycles while that trigger is on, without it it
     // cycles from the start of the level.
     unsigned cycle_phase_frames = 0;
+
+    // -------------------------------------------------------------------------
+    // Any trap
+    // -------------------------------------------------------------------------
+
+    // Draw order of the trap's sprite (smaller = in front). 0 = the default of
+    // every trap so far, level with the duck. A trap that imitates something
+    // that stands behind the duck uses Cfg::ZOrder::DOOR / CHECKPOINT (1): a
+    // fake door or fake checkpoint then looks exactly like the real one.
+    int sprite_z_order = 0;
 };
 
 // -----------------------------------------------------------------------------

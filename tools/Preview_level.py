@@ -73,7 +73,8 @@ TRAP_FIELDS = (
     "type x y width height offset_x offset_y sprite sprite_waits graphic_indexes "
     "velocity_x velocity_y max_vel path path_waits chase_follow_distance chase_speed "
     "trigger_name ambush_range ambush_speed ambush_duration "
-    "cycle_dx cycle_dy cycle_extend cycle_hold cycle_retract cycle_wait cycle_phase"
+    "cycle_dx cycle_dy cycle_extend cycle_hold cycle_retract cycle_wait cycle_phase "
+    "sprite_z_order"
 ).split()
 
 
@@ -115,7 +116,8 @@ def parse_traps(array_body, paths):
         for key in (
             "velocity_x velocity_y max_vel chase_follow_distance chase_speed "
             "ambush_range ambush_speed ambush_duration path_waits "
-            "cycle_dx cycle_dy cycle_extend cycle_hold cycle_retract cycle_wait cycle_phase"
+            "cycle_dx cycle_dy cycle_extend cycle_hold cycle_retract cycle_wait cycle_phase "
+            "sprite_z_order"
         ).split():
             trap[key] = _num(fields.get(key, 0))
         trap["trigger"] = _string(fields.get("trigger_name", "nullptr"))

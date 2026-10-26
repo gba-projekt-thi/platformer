@@ -120,6 +120,7 @@ A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each 
 - Level progression through a door at the end of each stage (occasionally a narrative stand-in for the door, like Susanne in World 5's finale), ending in a celebratory kiss scene
 - Platform placement and collision defined by level data, including crumbling platforms that give way under the duck (and optionally come back)
 - Trigger zones that activate hazards when the player enters them
+- Fake doors and fake checkpoints (static traps with the real sprite and draw order) for devilish levels
 - Six trap categories: static (base), trigger-activated moving, path-following patrol, player-chasing, proximity-triggered ambush, and self-timed cycling hazards (spikes out of the floor)
 - Animated sprites (duck, door, mimics) and decorative tiles using Butano sprite items
 - Background music per world and tilemap backgrounds

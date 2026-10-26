@@ -13,9 +13,10 @@
 
 namespace TrapFactory {
 
-// Factory function that translates TrapData into a concrete Trap
-// Defined in header to allow inlining
-inline auto create(const TrapData& trap_data, LevelManager& level_manager)
+namespace detail {
+
+// Picks the concrete trap class of a TrapData and scales its speed values.
+inline auto create_trap(const TrapData& trap_data, LevelManager& level_manager)
     -> bn::unique_ptr<BaseTrap> {
     switch (trap_data.type) {
         case TrapType::BASE:
@@ -105,5 +106,21 @@ inline auto create(const TrapData& trap_data, LevelManager& level_manager)
                 0, 0, 0, 0, 0, 0, trap_data.sprite, trap_data.sprite_waits,
                 trap_data.graphic_indexes, 0);
     }
+}
+
+}  // namespace detail
+
+// Factory function that translates TrapData into a concrete Trap
+// Defined in header to allow inlining
+inline auto create(const TrapData& trap_data, LevelManager& level_manager)
+    -> bn::unique_ptr<BaseTrap> {
+    bn::unique_ptr<BaseTrap> trap =
+        detail::create_trap(trap_data, level_manager);
+    // Common to every trap type: where the sprite is drawn relative to the
+    // duck (a fake door stands behind it like the real one).
+    if (trap_data.sprite_z_order != 0) {
+        trap->set_sprite_z_order(trap_data.sprite_z_order);
+    }
+    return trap;
 }
 }  // namespace TrapFactory
