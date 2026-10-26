@@ -96,8 +96,9 @@ Several mechanics exist purely to make the duck *feel* responsive:
   Every world uses the same, snappy default - except Forest's mossy floor
   (see below), which trades some of that precision for a distinct feel.
 
-- **Smoothed camera.** On scrolling levels the camera glides after the duck
-  instead of being glued to it, looks ahead in the direction of travel and cuts
+- **Calm camera.** On scrolling levels the camera ignores small steps (a dead
+  zone around the duck), then moves exactly with it, looks ahead once the duck
+  really runs in one direction and cuts
   (not glides) to the respawn point after a death. Holding up or down looks
   that way once a level is taller than the screen.
 

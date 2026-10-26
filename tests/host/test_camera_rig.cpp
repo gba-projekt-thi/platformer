@@ -46,7 +46,6 @@ void run(Rig& rig, int frames, double x, double y, double vel, int look = 0) {
 
 TEST_CASE(camera_rig_constants_are_sane) {
     // A fraction below 1 per frame never overshoots its aim.
-    CHECK(C::FOLLOW_X_NUM > 0 && C::FOLLOW_X_NUM < C::FOLLOW_X_DEN);
     CHECK(C::FOLLOW_Y_NUM > 0 && C::FOLLOW_Y_NUM < C::FOLLOW_Y_DEN);
     CHECK(C::LOOKAHEAD_NUM > 0 && C::LOOKAHEAD_NUM < C::LOOKAHEAD_DEN);
     CHECK(C::LOOK_Y_NUM > 0 && C::LOOK_Y_NUM < C::LOOK_Y_DEN);
@@ -54,6 +53,11 @@ TEST_CASE(camera_rig_constants_are_sane) {
     CHECK(C::LOOKAHEAD_PX > 0 && C::LOOKAHEAD_PX < 120 / 2);
     CHECK(C::LOOK_Y_PX > 0 && C::LOOK_Y_PX < 80 / 2);
     CHECK(C::LOOKAHEAD_MIN_SPEED >= 1);
+    // A tap (a few frames) never counts as running.
+    CHECK(C::LOOKAHEAD_HOLD_FRAMES >= 8);
+    // The dead zone keeps the duck near the middle, the look-ahead still
+    // frames more room in front of it than behind.
+    CHECK(C::DEADZONE_X >= 0 && C::DEADZONE_X < C::LOOKAHEAD_PX);
     CHECK(C::LOOK_Y_HOLD_FRAMES >= 1);
 }
 
@@ -78,21 +82,53 @@ TEST_CASE(camera_rig_snap_puts_it_on_the_target_without_any_look) {
     CHECK_EQ(rig.look_y(), 0.0);
 }
 
-TEST_CASE(camera_rig_standing_duck_is_reached_without_overshoot) {
+TEST_CASE(camera_rig_small_moves_inside_the_dead_zone_do_not_move_it) {
     Rig rig;
     rig.snap(0, 0);
-    double previous_gap = 1e9;
-    for (int i = 0; i < 200; ++i) {
-        rig.update(80, 30, 0, 0);
-        const double gap = std::fabs(80 + rig.look_x() - rig.x());
-        CHECK(rig.x() <= 80 + rig.look_x() + 1e-9);  // never past the aim
-        previous_gap = gap;
+    run(rig, 30, C::DEADZONE_X, 0, 0);
+    CHECK_EQ(rig.x(), 0.0);
+    run(rig, 30, -C::DEADZONE_X, 0, 0);
+    CHECK_EQ(rig.x(), 0.0);
+}
+
+TEST_CASE(camera_rig_leaving_the_dead_zone_drags_it_exactly_with_the_duck) {
+    // No easing horizontally: the camera moves as far as the duck does, so
+    // the duck keeps its spot on the screen and nothing slides after a stop.
+    Rig rig;
+    rig.snap(0, 0);
+    double duck = 0;
+    for (int i = 0; i < C::LOOKAHEAD_HOLD_FRAMES - 1; ++i) {
+        duck += 1.5;
+        rig.update(duck, 0, 1.5, 0);
+        if (duck > C::DEADZONE_X) {
+            CHECK_EQ(rig.x(), duck - C::DEADZONE_X);
+        }
     }
-    CHECK(previous_gap < 0.01);
+    run(rig, 60, duck, 0, 0);  // the duck stops: the camera stops too
+    CHECK_EQ(rig.x(), duck - C::DEADZONE_X);
+}
+
+TEST_CASE(camera_rig_a_far_duck_is_brought_to_the_edge_of_the_dead_zone) {
+    Rig rig;
+    rig.snap(0, 0);
+    rig.update(80, 30, 0, 0);
+    CHECK_EQ(rig.x(), 80.0 - C::DEADZONE_X);
+}
+
+TEST_CASE(camera_rig_vertical_follow_is_smooth_and_never_overshoots) {
+    Rig rig;
+    rig.snap(0, 0);
+    double previous = 0;
+    for (int i = 0; i < 200; ++i) {
+        rig.update(0, 30, 0, 0);
+        CHECK(rig.y() >= previous);
+        CHECK(rig.y() <= 30.0 + 1e-9);
+        previous = rig.y();
+    }
     CHECK(std::fabs(rig.y() - 30) < 0.01);
 }
 
-TEST_CASE(camera_rig_trails_a_running_duck_but_is_ahead_of_it_in_the_end) {
+TEST_CASE(camera_rig_frames_more_room_ahead_of_a_running_duck) {
     Rig rig;
     rig.snap(0, 0);
     double duck = 0;
@@ -100,25 +136,19 @@ TEST_CASE(camera_rig_trails_a_running_duck_but_is_ahead_of_it_in_the_end) {
         duck += 2;
         rig.update(duck, 0, 2, 0);
     }
-    // Steady state: look-ahead 20px, lag 2px/frame * (1 - k) / k = 10px.
-    const double ahead = rig.x() - duck;
-    CHECK(ahead > 5 && ahead < 15);
+    // Steady state: the full look-ahead minus the dead zone in front.
+    CHECK(std::fabs(rig.x() - duck - (C::LOOKAHEAD_PX - C::DEADZONE_X)) < 0.5);
 }
 
-TEST_CASE(camera_rig_a_dash_is_followed_with_a_larger_trail) {
-    Rig walk;
-    Rig dash;
-    walk.snap(0, 0);
-    dash.snap(0, 0);
-    double w = 0;
-    double d = 0;
-    for (int i = 0; i < 300; ++i) {
-        w += 2;
-        d += 4;
-        walk.update(w, 0, 2, 0);
-        dash.update(d, 0, 4, 0);
+TEST_CASE(camera_rig_tapping_does_not_set_a_direction) {
+    // A short tap reaches walking speed for a few frames only.
+    Rig rig;
+    rig.snap(0, 0);
+    for (int tap = 0; tap < 5; ++tap) {
+        run(rig, 4, 0, 0, 1.5);
+        run(rig, 10, 0, 0, 0);
     }
-    CHECK((w - walk.x()) < (d - dash.x()));
+    CHECK_EQ(rig.look_x(), 0.0);
 }
 
 TEST_CASE(camera_rig_look_ahead_is_kept_when_the_duck_stops) {

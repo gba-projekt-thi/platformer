@@ -5,8 +5,10 @@
 // -----------------------------------------------------------------------------
 // CameraRig
 //
-// Decides where the camera aims each frame: a smoothed follow of the duck with
-// a look-ahead in its direction of travel and an optional look up / down.
+// Decides where the camera aims each frame: horizontally a dead zone around the
+// duck (the camera moves exactly as far as the duck once it leaves it, so the
+// duck never wobbles on screen) plus an eased look-ahead in the direction it
+// runs; vertically a smoothed follow with an optional look up / down.
 // Split out of LevelManager so it has no Butano dependency and can be
 // unit-tested on the host (see tests/host/test_camera_rig.cpp).
 //
@@ -53,9 +55,12 @@ class CameraRig {
     void snap(T x, T y) {
         _x = _bounded ? _clamp(x, _max_x) : x;
         _y = _bounded ? _clamp(y, _max_y) : y;
+        _focus_x = _x;
         _look_x = T(0);
         _look_y = T(0);
         _dir = 0;
+        _run_dir = 0;
+        _run_frames = 0;
         _look_held = 0;
         _look_hold_frames = 0;
     }
@@ -65,11 +70,18 @@ class CameraRig {
     void update(T target_x, T target_y, T vel_x, int look) {
         namespace C = Cfg::CameraFollow;
 
-        // Direction of travel; a duck that stands (or creeps) keeps the last.
-        if (vel_x >= T(C::LOOKAHEAD_MIN_SPEED)) {
-            _dir = 1;
-        } else if (vel_x <= T(-C::LOOKAHEAD_MIN_SPEED)) {
-            _dir = -1;
+        // Direction of travel: only a run of LOOKAHEAD_HOLD_FRAMES counts, so
+        // a tap does not swing the view; a duck that stands (or creeps) keeps
+        // the last direction.
+        const int run_dir = vel_x >= T(C::LOOKAHEAD_MIN_SPEED)    ? 1
+                            : vel_x <= T(-C::LOOKAHEAD_MIN_SPEED) ? -1
+                                                                  : 0;
+        _run_frames = run_dir != 0 && run_dir == _run_dir ? _run_frames + 1
+                      : run_dir != 0                      ? 1
+                                                          : 0;
+        _run_dir = run_dir;
+        if (_run_dir != 0 && _run_frames >= C::LOOKAHEAD_HOLD_FRAMES) {
+            _dir = _run_dir;
         }
         const T want_look_x = T(_dir * C::LOOKAHEAD_PX);
         _look_x +=
@@ -91,13 +103,24 @@ class CameraRig {
                                   : T(0);
         _look_y += (want_look_y - _look_y) * C::LOOK_Y_NUM / C::LOOK_Y_DEN;
 
-        T aim_x = target_x + _look_x;
+        // Dead zone: the focus only moves once the duck is DEADZONE_X away.
+        const T dead_zone = T(C::DEADZONE_X);
+        if (target_x > _focus_x + dead_zone) {
+            _focus_x = target_x - dead_zone;
+        } else if (target_x < _focus_x - dead_zone) {
+            _focus_x = target_x + dead_zone;
+        }
+        if (_bounded) {
+            _focus_x = _clamp(_focus_x, _max_x);
+        }
+
+        T aim_x = _focus_x + _look_x;
         T aim_y = target_y + _look_y;
         if (_bounded) {
             aim_x = _clamp(aim_x, _max_x);
             aim_y = _clamp(aim_y, _max_y);
         }
-        _x += (aim_x - _x) * C::FOLLOW_X_NUM / C::FOLLOW_X_DEN;
+        _x = aim_x;
         _y += (aim_y - _y) * C::FOLLOW_Y_NUM / C::FOLLOW_Y_DEN;
     }
 
@@ -119,12 +142,15 @@ class CameraRig {
 
     T _x = T(0);
     T _y = T(0);
+    T _focus_x = T(0);
     T _look_x = T(0);
     T _look_y = T(0);
     T _max_x = T(0);
     T _max_y = T(0);
     bool _bounded = false;
     int _dir = 0;
+    int _run_dir = 0;
+    int _run_frames = 0;
     int _look_held = 0;
     int _look_hold_frames = 0;
 };

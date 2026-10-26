@@ -8,15 +8,17 @@
 // tests under tests/host/ can check the constants' invariants; cfg.h includes
 // it. Every smoothing factor is a fraction NUM/DEN of the remaining gap that
 // is closed per frame, so it must stay below 1 (it then never overshoots).
+// Horizontally only the look-ahead eases; the follow itself is a dead zone.
 // -----------------------------------------------------------------------------
 
 namespace Cfg {
 
 namespace CameraFollow {
-// The camera closes 1/6 of the horizontal gap per frame: at the duck's top
-// speed (2px/frame) it trails by ~10px, at a dash (4px/frame) by ~20px.
-inline constexpr int FOLLOW_X_NUM = 1;
-inline constexpr int FOLLOW_X_DEN = 6;
+// Horizontal dead zone: the duck may move DEADZONE_X px either way from the
+// camera's focus before the camera moves; beyond it the camera moves exactly
+// as far as the duck (no easing), so the duck keeps its spot on the screen
+// and nothing slides on after it stops - small steps do not scroll at all.
+inline constexpr int DEADZONE_X = 8;
 // Vertical follow is lazier, so a jump does not shake the picture.
 inline constexpr int FOLLOW_Y_NUM = 1;
 inline constexpr int FOLLOW_Y_DEN = 8;
@@ -26,8 +28,10 @@ inline constexpr int FOLLOW_Y_DEN = 8;
 inline constexpr int LOOKAHEAD_PX = 20;
 inline constexpr int LOOKAHEAD_NUM = 1;
 inline constexpr int LOOKAHEAD_DEN = 24;
-// Horizontal speed (px/frame) from which a movement counts as a direction.
+// Horizontal speed (px/frame) from which a movement counts as a direction,
+// and for how many frames in a row: a tap never moves the look-ahead.
 inline constexpr int LOOKAHEAD_MIN_SPEED = 1;
+inline constexpr int LOOKAHEAD_HOLD_FRAMES = 15;
 
 // Look up / down: holding the D-Pad up or down for LOOK_Y_HOLD_FRAMES moves
 // the camera LOOK_Y_PX that way (only visible in levels taller than the

@@ -634,12 +634,18 @@ the duck's position and horizontal velocity into a `CameraRig`
 `cfg_camera.h`) and hands the result to `Camera::follow()`, which still clamps
 it to the world:
 
-- **Smoothed follow.** Each frame the camera closes a fixed fraction of the gap
-  (1/6 horizontally, 1/8 vertically), so it trails a running duck by ~10px and
-  a dashing one by ~20px and never overshoots.
+- **Dead zone (horizontal).** The duck can move 8px either way before the
+  camera moves; beyond that the camera moves exactly as far as the duck, with
+  no easing. The duck keeps its spot on the screen, small steps do not scroll
+  at all and nothing slides on after it stops (an eased follow used to make the
+  duck wobble by a pixel when tapping the D-Pad). Vertically the camera still
+  closes 1/8 of the gap per frame and never overshoots.
 - **Look-ahead.** It aims 20px in front of the duck in its direction of travel,
-  easing in slowly, and keeps that direction while the duck stands still.
-  Creeping slower than 1px/frame does not flip it.
+  easing in slowly, and keeps that direction while the duck stands still. Only
+  a run of 15 frames at 1px/frame or more sets the direction, so taps and
+  creeping do not swing the view. `tests/host/test_camera_view.cpp` checks what
+  the player sees: the real movement rules, `CameraRig` and `Camera` together,
+  rounded to pixels like the sprite hardware.
 - **Look up / down.** Holding the D-Pad up or down for 24 frames moves the view
   32px that way and back on release. This only shows in levels taller than the
   screen (`LevelData::world_height` above 160): in a 160px world the camera
