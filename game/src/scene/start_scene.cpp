@@ -24,6 +24,7 @@
 #include "story.h"
 #include "story_scene.h"
 #include "text_buffer.h"
+#include "tour.h"
 #include "world_index.h"
 #include "world_select_scene.h"
 
@@ -90,6 +91,7 @@ void StartScene::_rebuild_slot_list() {
 }
 
 void StartScene::init() {
+    tour::start_screen(_data_manager);
     // Hide the persistent player sprite while the start screen is visible.
     _player.set_visible(false);
     _player.set_hud_visible(false);

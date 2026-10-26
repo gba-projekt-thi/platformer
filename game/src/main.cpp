@@ -18,6 +18,10 @@
 #include "start_scene.h"
 #include "story.h"
 #include "story_scene.h"
+#if defined(PLATFORMER_TOUR)
+#include "tour.h"
+#include "tour_data.h"
+#endif
 #include "world_index.h"
 
 int main() {
@@ -27,7 +31,13 @@ int main() {
     // features.
     // -------------------------------------------------------------------------
 
+#if defined(PLATFORMER_TOUR)
+    // The tour's menu buttons (tools/tour.py), replayed by Butano.
+    bn::core::init(bn::string_view(tour_data::KEYPAD));
+    tour::boot();
+#else
     bn::core::init();
+#endif
 
     // Configure global fade behavior once.
     bn::blending::set_fade_color(bn::blending::fade_color_type::BLACK);

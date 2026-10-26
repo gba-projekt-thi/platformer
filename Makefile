@@ -114,10 +114,18 @@ coverage:
 #   make replay   plays every recorded level headless; fails unless each one reaches its door
 # (Butano needs a one-level build directory; platformer.* is already ignored by git.)
 #---------------------------------------------------------------------------------------------------------------------
-.PHONY: record replay
+.PHONY: record replay tour
 
 record:
 	$(MAKE) TARGET=platformer.record/platformer BUILD=platformer.record USERFLAGS=-DPLATFORMER_RECORD
+
+# A scripted walk through the real game, photographed in mGBA (tools/tour.py);
+# the pictures and report.html land in platformer.tour/shots.
+tour:
+	python3 tools/replays.py generate
+	python3 tools/tour.py generate
+	$(MAKE) TARGET=platformer.tour/platformer BUILD=platformer.tour USERFLAGS="-DPLATFORMER_TOUR -I$(CURDIR)/platformer.tour"
+	python3 tools/tour.py run platformer.tour/platformer.gba platformer.tour/shots
 
 replay:
 	python3 tools/replays.py generate

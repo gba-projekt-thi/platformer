@@ -16,6 +16,7 @@
 #include "story_scene.h"
 #include "text_buffer.h"
 #include "timer.h"
+#include "tour.h"
 
 LevelScene::LevelScene(
     Player& player,
@@ -41,6 +42,7 @@ LevelScene::~LevelScene() {
 void LevelScene::init() {
     replay_capture::level_started(_player, _level_index);
     _level_manager.load(_levels[_level_index]);
+    tour::level_started(_player, _level_index);
     _player.set_visible(true);
     _player.set_hud_visible(true);
     _show_hint_if_needed();

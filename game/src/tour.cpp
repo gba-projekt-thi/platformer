@@ -1,0 +1,81 @@
+#include "tour.h"
+
+#if defined(PLATFORMER_TOUR)
+
+#include "bn_core.h"
+#include "bn_log.h"
+
+#include "data_manager.h"
+#include "player.h"
+#include "replay.h"
+#include "replay_data.h"
+#include "tour_data.h"
+#include "world_index.h"
+
+namespace {
+
+int part = 0;
+int frame = 0;
+int next_shot = 0;
+
+// Every bn::core::update(): one frame of the keypad commands has passed.
+void on_update() {
+    ++frame;
+    if (next_shot < tour_data::SHOT_COUNT &&
+        frame >= tour_data::SHOT_FRAMES[next_shot]) {
+        BN_LOG("TOUR SHOT ", next_shot);
+        ++next_shot;
+    }
+}
+replay::Player buttons(nullptr, 0);
+
+void play(InputState& input) {
+    input = buttons.next();
+}
+
+void seed(DataManager& data_manager, int slot, int level, int furthest) {
+    GameState state{};
+    state.level = int16_t(level);
+    state.furthest_level = int16_t(furthest);
+    data_manager.set_slot_index(slot);
+    data_manager.state() = state;
+    data_manager.save();
+}
+
+}  // namespace
+
+namespace tour {
+
+void boot() {
+    bn::core::set_update_callback(on_update);
+}
+
+void start_screen(DataManager& data_manager) {
+    const int index =
+        part < tour_data::SLOT_1_COUNT ? part : tour_data::SLOT_1_COUNT - 1;
+    seed(
+        data_manager, 0, tour_data::SLOT_1[index].level,
+        tour_data::SLOT_1[index].furthest);
+    if (part == 0) {
+        seed(data_manager, 1, 0, WorldIndex::LEVEL_COUNT - 1);
+    }
+    data_manager.set_slot_index(0);
+    ++part;
+}
+
+void level_started(Player& player, unsigned level_index) {
+    const replay_data::Entry& entry = replay_data::ENTRIES[level_index];
+    if (entry.runs == nullptr) {
+        player.set_input_hook(nullptr);
+        return;
+    }
+    buttons = replay::Player(entry.runs, entry.run_count);
+    player.set_input_hook(play);
+    if (entry.has_start) {
+        player.teleport_to(entry.start_x, entry.start_y);
+    }
+}
+
+}  // namespace tour
+
+#endif

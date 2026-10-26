@@ -158,6 +158,29 @@ of a finished attempt, one file per level in `game/replays/`.
   data that breaks a recorded solution fails the replay: re-record that level
   if the change is intended.
 
+### Semi-automated: the photographed tour (`make tour`)
+
+What only shows on screen - story pages, menus, the pause overlay, banners,
+the bosses, the ending - is checked by looking. `make tour` (dev container,
+about 4 minutes) does the playing:
+
+- `tools/tour.py` describes a walk through the real game: start screen,
+  controls, a new game's intro, the pause menu, every boss fight and the
+  story page behind it, the finale, the ending, the reunion, the summary, the
+  level selects, "Bramble Hop" and "Barrel Tower". It builds
+  `platformer.tour/platformer.gba` (`PLATFORMER_TOUR`, `game/src/tour.cpp`):
+  Butano replays the menu buttons, the recordings in `game/replays/` play the
+  levels, and slot 1 gets a fitting save each time the start screen opens.
+- mgba-qt runs without a window (Qt's VNC platform, its own save file); the
+  ROM logs `TOUR SHOT <n>` at the frame of every shot and the script keeps the
+  screen then. Results in `platformer.tour/shots/`: one PNG per shot,
+  `report.html` (each picture with what to look for), `contact.png` (all on
+  one sheet) and `shots.json`.
+- `python3 tools/tour.py compare OLD NEW` lists the shots whose picture
+  changed between two runs of the same tour: copy `shots/` away, change
+  something, run `make tour` again. Menus and story pages compare pixel for
+  pixel; action shots move a little with capture timing.
+
 ### Automated: CI (`.github/workflows/ci.yml`)
 
 Two independent jobs, so the fast check isn't blocked by the slow one:
