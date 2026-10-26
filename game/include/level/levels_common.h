@@ -7,7 +7,7 @@
 // Level design notes (physics-derived spacing limits)
 //
 // In this coordinate system, smaller y = higher up (gravity increases y,
-// jumping decreases it). Based on Cfg::Player (ACCELERATION=0.3,
+// jumping decreases it). Based on Cfg::Player (ACCELERATION=0.38,
 // MAX_SPEED=2, JUMP_SPEED=-3, GRAVITY=0.22, MAX_FALL_SPEED=3), a single
 // fully-held jump reaches:
 //   - max CLIMB (y decrease):        ~22px above the takeoff point
