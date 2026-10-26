@@ -18,6 +18,7 @@ struct InputState {
     bool a_pressed = false;
     bool a_held = false;
     bool b_pressed = false;
+    bool r_pressed = false;
 };
 
 namespace locomotion {
@@ -29,6 +30,8 @@ struct Effects {
     bool jumped = false;
     bool dash_started = false;
     bool step_sound = false;
+    bool pogo_started = false;
+    bool pogo_bounced = false;
 };
 
 // -----------------------------------------------------------------------------
@@ -36,7 +39,8 @@ struct Effects {
 //
 // The duck's per-frame movement rules: running and braking, gravity, jump
 // buffer and coyote time, variable jump height, the world-edge bounce, the
-// fall death, the dash and the wall slide / wall jump. No Butano runtime and no
+// fall death, the dash, the wall slide / wall jump and the pogo strike. No
+// Butano runtime and no
 // hardware: step() works on any Body with `pos.x`, `pos.y`, `vel_x`, `vel_y`
 // (PhysicsBody in the game) and asks a World for the collision probes and the
 // death:
@@ -46,6 +50,8 @@ struct Effects {
 //   bool probe_left();     // something solid 1 px left of the body
 //   bool probe_right();    // something solid 1 px right of the body
 //                          // (both only asked with wall jumps enabled)
+//   bool probe_pogo();     // a trap in the strike's box below the body
+//                          // (only asked while a pogo strike reaches)
 //   void die();            // respawn (may move the body, calls reset_dash())
 //
 // Host-tested in tests/host/test_locomotion.cpp with the game's bn::fixed.
@@ -74,8 +80,12 @@ class Core {
             _run(body, in, effects);
 
             body.vel_y += _gravity;
-            // Variable jump height: releasing A cuts the rise.
-            if (!in.a_held && body.vel_y < 0) {
+            // Variable jump height: releasing A cuts the rise (not a pogo
+            // bounce's, which ends at its top).
+            if (body.vel_y >= 0) {
+                _pogo_rise = false;
+            }
+            if (!in.a_held && body.vel_y < 0 && !_pogo_rise) {
                 body.vel_y *= 0.5;
             }
             if (body.vel_y > _max_fall_speed) {
@@ -94,6 +104,10 @@ class Core {
                 body.pos.x > _horizontal_bound) {
                 body.vel_x = -body.vel_x;
             }
+        }
+
+        if (!dash_owns_frame) {
+            _update_pogo(body, in, world, effects);
         }
 
         if (body.pos.y > _death_height) {
@@ -115,6 +129,9 @@ class Core {
     [[nodiscard]] auto on_ground() const -> bool { return _on_ground; }
     [[nodiscard]] auto facing() const -> Facing { return _facing; }
     [[nodiscard]] auto dashing() const -> bool { return _dash.dashing(); }
+    [[nodiscard]] auto pogo_striking() const -> bool {
+        return _pogo_frames > 0;
+    }
 
     // The world-edge bounce (world_width / 2 - Cfg::Screen::EDGE_MARGIN).
     void set_horizontal_bound(bn::fixed bound) { _horizontal_bound = bound; }
@@ -142,11 +159,17 @@ class Core {
         _wall_jump_lock = 0;
     }
 
+    void set_pogo_enabled(bool enabled) {
+        _pogo_enabled = enabled;
+        _reset_pogo();
+    }
+
     // Cancels a running dash and clears its cooldown / air use, and ends the
-    // D-pad lock of a wall jump (death, level load).
+    // D-pad lock of a wall jump and a pogo strike (death, level load).
     void reset_dash() {
         _dash.reset();
         _wall_jump_lock = 0;
+        _reset_pogo();
     }
 
    private:
@@ -187,6 +210,43 @@ class Core {
             body.vel_y = 0;
         }
         return step.moving;
+    }
+
+    // R in the air strikes down for Cfg::Pogo::STRIKE_FRAMES; a trap in
+    // reach bounces the duck up (and refills the air dash, as landing does),
+    // and the next strike may follow at once. A strike that meets nothing
+    // is followed by COOLDOWN_FRAMES without one.
+    template <typename Body, typename World>
+    void _update_pogo(
+        Body& body,
+        const InputState& in,
+        World& world,
+        Effects& effects) {
+        if (in.r_pressed && _pogo_enabled && !_on_ground && _pogo_frames == 0 &&
+            _pogo_cooldown == 0) {
+            _pogo_frames = Cfg::Pogo::STRIKE_FRAMES;
+            effects.pogo_started = true;
+        } else if (_pogo_cooldown > 0) {
+            --_pogo_cooldown;
+        }
+        if (_pogo_frames == 0) {
+            return;
+        }
+        if (world.probe_pogo()) {
+            body.vel_y = Cfg::Pogo::BOUNCE_SPEED;
+            _pogo_rise = true;
+            _pogo_frames = 0;
+            _dash.land();
+            effects.pogo_bounced = true;
+        } else if (--_pogo_frames == 0) {
+            _pogo_cooldown = Cfg::Pogo::COOLDOWN_FRAMES;
+        }
+    }
+
+    void _reset_pogo() {
+        _pogo_frames = 0;
+        _pogo_cooldown = 0;
+        _pogo_rise = false;
     }
 
     // -1 = a wall touches the duck's left side, 1 = its right side, 0 = none
@@ -313,6 +373,11 @@ class Core {
     int _jump_buffer_frames = Cfg::Player::JUMP_BUFFER_FRAMES;
 
     int _walk_sound_counter = 0;
+
+    bool _pogo_enabled = false;
+    int _pogo_frames = 0;     // > 0 while a strike reaches
+    int _pogo_cooldown = 0;   // frames until the next strike after a miss
+    bool _pogo_rise = false;  // a bounce's rise, not cut by letting go of A
 
     bool _wall_jump_enabled = false;
     int _wall_jump_lock = 0;  // frames the D-pad stays ignored

@@ -3,6 +3,7 @@
 #include "audio_settings.h"
 #include "bn_sound_items.h"
 #include "bn_sprite_items_ente.h"
+#include "bn_sprite_items_pogo16x16.h"
 
 #include "death_fx.h"
 
@@ -50,6 +51,7 @@ void Player::update() {
 
     _hud.tick();
     _update_dash_trail();
+    _update_pogo_slash();
     _update_respawn_blink();
 }
 
@@ -154,6 +156,7 @@ void Player::set_visible(bool visible) {
     } else {
         _player_sprite.disable();
         clear_dash_trail();
+        _pogo_slash.reset();
     }
 }
 
@@ -183,6 +186,29 @@ void Player::set_dash_enabled(bool enabled) {
 
 void Player::set_wall_jump_enabled(bool enabled) {
     _locomotion.set_wall_jump_enabled(enabled);
+}
+
+void Player::set_pogo_enabled(bool enabled) {
+    _locomotion.set_pogo_enabled(enabled);
+}
+
+void Player::_update_pogo_slash() {
+    if (!_locomotion.pogo_striking() || !_player_sprite.is_enabled()) {
+        _pogo_slash.reset();
+        return;
+    }
+    // Centered on the strike's box below the body.
+    const bn::fixed x = pos.x;
+    const bn::fixed y =
+        pos.y + pos.height / 2 + bn::fixed(Cfg::Pogo::REACH) / 2;
+    if (!_pogo_slash) {
+        bn::sprite_ptr raw_sprite =
+            bn::sprite_items::pogo16x16.create_sprite(x, y);
+        raw_sprite.set_z_order(_player_sprite.sprite().z_order());
+        raw_sprite.set_blending_enabled(true);
+        _pogo_slash.emplace(bn::move(raw_sprite), x, y);
+    }
+    _pogo_slash->pos.move(x, y);
 }
 
 void Player::begin_death_fx() {
@@ -235,6 +261,7 @@ void Player::death() {
     // A dash must not survive the respawn.
     _locomotion.reset_dash();
     clear_dash_trail();
+    _pogo_slash.reset();
 
     pos.x = _restart_x;
     pos.y = _restart_y;

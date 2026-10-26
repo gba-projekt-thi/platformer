@@ -55,6 +55,8 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
     void set_dash_enabled(bool enabled);
     // Wall slide / wall jump: enabled per level by LevelManager::load().
     void set_wall_jump_enabled(bool enabled);
+    // Pogo strike (R): enabled per level by LevelManager::load().
+    void set_pogo_enabled(bool enabled);
     // Emulator tests: see PlayerLocomotion::set_input_hook().
     void set_input_hook(PlayerLocomotion::InputHook hook) {
         _locomotion.set_input_hook(hook);
@@ -115,6 +117,10 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
     bn::optional<Sprite> _death_ghost;
     bool _death_fx_active = false;
     int _respawn_blink = 0;
+
+    // The pogo strike's slash, shown below the duck while it reaches.
+    void _update_pogo_slash();
+    bn::optional<Sprite> _pogo_slash;
 
     // PlayerDeathHandler
     void on_locomotion_death() override { death(); }

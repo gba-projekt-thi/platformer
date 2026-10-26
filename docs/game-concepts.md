@@ -39,6 +39,8 @@ The duck can:
   survivable and predictable.
 - **Dash** (B, from World 3 onward) in a short horizontal burst - see
   [Dash](#dash).
+- **Pogo** (R in the air, from World 4 onward) - strike down and bounce off
+  a trap; see [Pogo](#pogo).
 - **Wall slide and wall jump** (from World 5 onward) - see
   [Wall jump](#wall-jump).
 
@@ -49,6 +51,7 @@ The control scheme is intentionally simple:
 | D-Pad left / right | Move horizontally |
 | A button | Jump (off a wall from World 5 onward) |
 | B button | Dash (from World 3 onward) |
+| R button | Pogo strike in the air (from World 4 onward) |
 | Start button | Pause (opens the pause menu) |
 | Select button | Show / hide the run timer |
 
@@ -142,6 +145,26 @@ The duck's one learned ability, in the spirit of Hollow Knight's cloak dash:
 - **Required in World 5.** "Cloak Corridor" has three gaps (84-92px) that
   only the dash crosses, and "Lever Hall" offers a dash shortcut in two of
   its rooms - see [Dash and switch levels](level-design.md#dash-and-switch-levels).
+
+### Pogo
+
+Hollow Knight's down slash, turned to the game's rule that the environment is
+the enemy: traps cannot be destroyed, but they can be used. Tuned in
+`Cfg::Pogo` (`cfg_pogo.h`), rules in `locomotion::Core`, tests in
+`tests/host/test_locomotion.cpp`:
+
+- **Strike.** R in the air strikes down for 10 frames: a 16 px wide box
+  reaching 12 px below the duck (more than one frame of falling, so the strike
+  meets a trap before the body does). A slash is drawn there (placeholder
+  art, `pogo16x16.bmp`) and a short swish plays.
+- **Bounce.** A trap in the box bounces the duck up at jump speed (not cut by
+  letting go of A), rings (`trap_hit`), refills the air dash and allows the
+  next strike at once - spike, spike, spike. The trap is unharmed. A bounce
+  counts as a jump for jump triggers.
+- **Miss.** A strike that meets nothing is followed by 8 frames without one.
+- **Death stays instant.** Touching a trap any other way still kills.
+- **Availability.** From World 4 onward (`Cfg::Pogo::UNLOCK_WORLD`), like the
+  dash. The reachability check ignores traps, so it never counts on a bounce.
 
 ### Wall jump
 

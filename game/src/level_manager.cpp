@@ -79,7 +79,10 @@ void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.set_dash_enabled(
         _data_manager.state().level >=
         WorldIndex::WORLDS[Cfg::Dash::UNLOCK_WORLD].start_index);
-    // Wall jumps likewise from Cfg::WallJump::UNLOCK_WORLD onward.
+    // The pogo and wall jumps likewise from their own UNLOCK_WORLD onward.
+    _player.set_pogo_enabled(
+        _data_manager.state().level >=
+        WorldIndex::WORLDS[Cfg::Pogo::UNLOCK_WORLD].start_index);
     _player.set_wall_jump_enabled(
         _data_manager.state().level >=
         WorldIndex::WORLDS[Cfg::WallJump::UNLOCK_WORLD].start_index);

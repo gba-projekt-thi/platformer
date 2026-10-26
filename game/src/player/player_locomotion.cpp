@@ -26,6 +26,7 @@ void PlayerLocomotion::update() {
     input.a_pressed = bn::keypad::a_pressed();
     input.a_held = bn::keypad::a_held();
     input.b_pressed = bn::keypad::b_pressed();
+    input.r_pressed = bn::keypad::r_pressed();
     if (_input_hook != nullptr) {
         _input_hook(input);
     }
@@ -47,6 +48,14 @@ void PlayerLocomotion::update() {
     }
     if (effects.step_sound) {
         audio.play_sfx(bn::sound_items::duck_step);
+    }
+    if (effects.pogo_started) {
+        audio.play_sfx(bn::sound_items::pogo);
+    }
+    if (effects.pogo_bounced) {
+        // The strike rings off the trap, and it is a jump for triggers.
+        audio.play_sfx(bn::sound_items::trap_hit);
+        events.note_jump();
     }
     if (effects.jumped) {
         audio.play_sfx(bn::sound_items::jump);

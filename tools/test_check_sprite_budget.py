@@ -88,10 +88,14 @@ class GlyphTests(unittest.TestCase):
         b = sb.Budget()
         self.assertEqual(b.hud, 20)
         self.assertEqual(b.banner, 8 + 8 + 16)
-        # options sub-menu (all rows + info line + cursor) is the widest view
-        self.assertEqual(b.pause_menu, 10 + 8 + 13 + 15 + 10 + 1)
-        # ... plus the 'Paused' title, which the controls view does not show
-        self.assertEqual(b.pause_overlay, b.pause_menu + sb.PAUSE_TITLE_GLYPHS)
+        # the controls view ("Controls" + six lines) is the widest view ...
+        controls = 8 + sum(sb.glyphs(line) for line in sb.DEFAULT_CONTROLS_LINES)
+        self.assertEqual(controls, 67)
+        self.assertEqual(b.pause_menu, controls)
+        # ... and has no 'Paused' title; the options sub-menu (all rows, info
+        # line, cursor, title) stays below it
+        options = 10 + 8 + 13 + 15 + 10 + 1
+        self.assertEqual(b.pause_overlay, max(controls, options + sb.PAUSE_TITLE_GLYPHS))
 
 
 class DemandTests(Fixture):

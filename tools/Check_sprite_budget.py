@@ -80,7 +80,9 @@ PAUSE_OPTIONS_ROWS = (
     "Traps x1.35",  # info line, only while a mode is on
 )
 CONTROLS_TITLE = "Controls"
-DEFAULT_CONTROLS_LINES = ("D-Pad Move", "A Jump", "B Dash (W3+)", "Start Pause", "Select Timer")
+DEFAULT_CONTROLS_LINES = (
+    "D-Pad Move", "A Jump/Wall W5+", "B Dash W3+", "R Pogo W4+", "Start Pause", "Select Timer",
+)
 
 DEFAULTS = {
     "MAX_SPRITES": 72,

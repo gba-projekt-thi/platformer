@@ -28,6 +28,8 @@ struct FakeWorld {
     bool wall_left = false;
     bool wall_right = false;
     int wall_probes = 0;
+    bool pogo_target = false;  // a trap in the strike's box
+    int pogo_probes = 0;
     int deaths = 0;
     FakeBody* body = nullptr;
     Core* core = nullptr;
@@ -41,6 +43,10 @@ struct FakeWorld {
     auto probe_right() -> bool {
         ++wall_probes;
         return wall_right;
+    }
+    auto probe_pogo() -> bool {
+        ++pogo_probes;
+        return pogo_target;
     }
 
     // Like Player::death(): back to the spawn point, standing still.
@@ -115,6 +121,19 @@ auto jump_right() -> InputState {
     InputState input = jump();
     input.right_held = true;
     return input;
+}
+
+auto strike() -> InputState {
+    InputState input;
+    input.r_pressed = true;
+    return input;
+}
+
+// In the air, falling, pogo enabled.
+void fall_with_pogo(Rig& rig) {
+    rig.core.set_pogo_enabled(true);
+    rig.world.ground = false;
+    rig.steps(10);
 }
 
 // In the air, falling, at a wall on the right (wall jump enabled).
@@ -593,4 +612,155 @@ TEST_CASE(wall_jump_landing_ends_the_dpad_lock) {
     CHECK_EQ(
         rig.body.vel_x,
         -bn::fixed(Cfg::WallJump::PUSH_SPEED) + Cfg::Player::ACCELERATION);
+}
+
+// ---- pogo ------------------------------------------------------------------
+
+TEST_CASE(pogo_needs_to_be_enabled) {
+    Rig rig;
+    rig.world.ground = false;
+    rig.world.pogo_target = true;
+    rig.steps(10);
+    const Effects effects = rig.step(strike());
+    CHECK(!effects.pogo_started);
+    CHECK(!rig.core.pogo_striking());
+    CHECK_EQ(rig.world.pogo_probes, 0);
+}
+
+TEST_CASE(pogo_strike_starts_in_the_air_on_r) {
+    Rig rig;
+    fall_with_pogo(rig);
+    CHECK(rig.step(strike()).pogo_started);
+    CHECK(rig.core.pogo_striking());
+}
+
+TEST_CASE(pogo_no_strike_on_the_ground) {
+    Rig rig;
+    rig.core.set_pogo_enabled(true);
+    rig.step();
+    CHECK(!rig.step(strike()).pogo_started);
+}
+
+TEST_CASE(pogo_a_strike_on_a_trap_bounces_up) {
+    Rig rig;
+    fall_with_pogo(rig);
+    rig.world.pogo_target = true;
+    const Effects effects = rig.step(strike());
+    CHECK(effects.pogo_bounced);
+    CHECK_EQ(rig.body.vel_y, bn::fixed(Cfg::Pogo::BOUNCE_SPEED));
+    CHECK(!rig.core.pogo_striking());
+}
+
+TEST_CASE(pogo_strike_keeps_reaching_for_its_frames) {
+    Rig rig;
+    fall_with_pogo(rig);
+    rig.step(strike());
+    rig.steps(Cfg::Pogo::STRIKE_FRAMES - 2);
+    rig.world.pogo_target = true;
+    CHECK(rig.step().pogo_bounced);
+}
+
+TEST_CASE(pogo_strike_ends_after_its_frames) {
+    Rig rig;
+    fall_with_pogo(rig);
+    rig.step(strike());
+    rig.steps(Cfg::Pogo::STRIKE_FRAMES);
+    CHECK(!rig.core.pogo_striking());
+    rig.world.pogo_target = true;
+    CHECK(!rig.step().pogo_bounced);
+    CHECK(rig.body.vel_y > 0);
+}
+
+TEST_CASE(pogo_without_a_trap_the_duck_just_falls) {
+    Rig rig;
+    fall_with_pogo(rig);
+    const bn::fixed before = rig.body.vel_y;
+    rig.step(strike());
+    CHECK_EQ(rig.body.vel_y, before + Cfg::Player::GRAVITY);
+}
+
+TEST_CASE(pogo_bounce_is_not_cut_by_letting_go_of_a) {
+    Rig rig;
+    fall_with_pogo(rig);
+    rig.world.pogo_target = true;
+    rig.step(strike());
+    rig.world.pogo_target = false;
+    rig.step();  // A not held
+    CHECK_EQ(
+        rig.body.vel_y,
+        bn::fixed(Cfg::Pogo::BOUNCE_SPEED) + Cfg::Player::GRAVITY);
+}
+
+TEST_CASE(pogo_a_jump_after_a_bounce_is_cut_again) {
+    // The protected rise ends at its top; the next rise follows A again.
+    Rig rig;
+    fall_with_pogo(rig);
+    rig.world.pogo_target = true;
+    rig.step(strike());
+    rig.world.pogo_target = false;
+    rig.steps(30);  // up, over the top, falling
+    rig.world.ground = true;
+    rig.step();
+    rig.step(jump());
+    rig.world.ground = false;
+    const bn::fixed rising = rig.body.vel_y;
+    rig.step();
+    bn::fixed expected = rising + Cfg::Player::GRAVITY;
+    expected *= 0.5;
+    CHECK_EQ(rig.body.vel_y, expected);
+}
+
+TEST_CASE(pogo_cooldown_between_strikes) {
+    Rig rig;
+    fall_with_pogo(rig);
+    rig.step(strike());
+    rig.steps(Cfg::Pogo::STRIKE_FRAMES - 1);  // the strike's frames
+    rig.steps(Cfg::Pogo::COOLDOWN_FRAMES - 1);
+    CHECK(!rig.step(strike()).pogo_started);
+    CHECK(rig.step(strike()).pogo_started);
+}
+
+TEST_CASE(pogo_a_bounce_allows_the_next_strike_at_once) {
+    // Chains of bounces (spike, spike, spike) need no waiting.
+    Rig rig;
+    fall_with_pogo(rig);
+    rig.world.pogo_target = true;
+    rig.step(strike());
+    CHECK(rig.step(strike()).pogo_started);
+}
+
+TEST_CASE(pogo_a_bounce_refills_the_air_dash) {
+    Rig rig;
+    rig.core.set_dash_enabled(true);
+    fall_with_pogo(rig);
+    CHECK(rig.step(dash_right()).dash_started);
+    rig.steps(Cfg::Dash::DURATION_FRAMES + Cfg::Dash::COOLDOWN_FRAMES + 5);
+    rig.world.pogo_target = true;
+    rig.step(strike());
+    rig.world.pogo_target = false;
+    CHECK(rig.step(dash_right()).dash_started);
+}
+
+TEST_CASE(pogo_no_strike_while_dashing) {
+    Rig rig;
+    rig.core.set_dash_enabled(true);
+    fall_with_pogo(rig);
+    rig.step(dash_right());
+    CHECK(!rig.step(strike()).pogo_started);
+}
+
+TEST_CASE(pogo_dying_ends_the_strike) {
+    Rig rig;
+    fall_with_pogo(rig);
+    rig.step(strike());
+    rig.core.reset_dash();
+    CHECK(!rig.core.pogo_striking());
+}
+
+TEST_CASE(pogo_reach_outruns_the_fall) {
+    CHECK(Cfg::Pogo::REACH > Cfg::Player::MAX_FALL_SPEED);
+    CHECK(Cfg::Pogo::WIDTH >= Cfg::Player::BODY_WIDTH);
+    CHECK(Cfg::Pogo::BOUNCE_SPEED < 0);
+    CHECK(Cfg::Pogo::UNLOCK_WORLD >= 0);
+    CHECK(Cfg::Pogo::UNLOCK_WORLD < WorldIndex::WORLD_COUNT);
 }

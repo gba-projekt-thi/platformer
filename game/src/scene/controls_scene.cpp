@@ -32,7 +32,8 @@ void ControlsScene::init() {
     _text_gen->set_blending_enabled(true);
 
     // Same anchor and line spacing as SummaryScene: a title, a list of short
-    // lines, and a prompt, laid out to fit the screen without a background.
+    // lines, and a prompt right below them, laid out to fit the screen
+    // without a background (tests/host/test_controls_text.cpp).
     int y = Cfg::Summary::Y;
     _text_gen->generate(Cfg::Summary::X, y, "Controls", _sprites);
     y += Cfg::Summary::LINE_SPACING;
@@ -42,9 +43,7 @@ void ControlsScene::init() {
         y += Cfg::Summary::LINE_SPACING;
     }
 
-    _text_gen->generate(
-        Cfg::Summary::X, y + Cfg::Summary::LINE_SPACING, "Press B to go back",
-        _sprites);
+    _text_gen->generate(Cfg::Summary::X, y, "Press B to go back", _sprites);
 
     for (bn::sprite_ptr& sprite : _sprites) {
         sprite.set_blending_enabled(true);
