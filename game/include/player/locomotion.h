@@ -75,6 +75,7 @@ class Core {
         // _update_dash() returns false, so normal movement resumes at once.
         const bool dash_owns_frame = _update_dash(body, in, effects);
         const int wall = dash_owns_frame ? 0 : _probe_wall(world);
+        _wall_sliding = false;
 
         if (!dash_owns_frame) {
             _run(body, in, effects);
@@ -101,6 +102,7 @@ class Core {
                 body.vel_y > Cfg::WallJump::SLIDE_SPEED) {
                 body.vel_y = Cfg::WallJump::SLIDE_SPEED;
             }
+            _wall_sliding = toward_wall && !_on_ground && body.vel_y > 0;
 
             // Bounce back when leaving the level's play area.
             if (body.pos.x < -_horizontal_bound ||
@@ -132,6 +134,8 @@ class Core {
     [[nodiscard]] auto on_ground() const -> bool { return _on_ground; }
     [[nodiscard]] auto facing() const -> Facing { return _facing; }
     [[nodiscard]] auto dashing() const -> bool { return _dash.dashing(); }
+    // Holding toward a wall while falling along it (the slide pose).
+    [[nodiscard]] auto wall_sliding() const -> bool { return _wall_sliding; }
     [[nodiscard]] auto pogo_striking() const -> bool {
         return _pogo_frames > 0;
     }
@@ -383,6 +387,7 @@ class Core {
     bool _pogo_rise = false;  // a bounce's rise, not cut by letting go of A
 
     bool _wall_jump_enabled = false;
+    bool _wall_sliding = false;
     int _wall_jump_lock = 0;  // frames the D-pad stays ignored
 
     bn::fixed _horizontal_bound = Cfg::Screen::HORIZONTAL_EDGE;

@@ -177,7 +177,8 @@ Hollow Knight's Mantis Claw, tuned in `Cfg::WallJump` (`cfg_wall_jump.h`),
 rules in `locomotion::Core`, tests in `tests/host/test_locomotion.cpp`:
 
 - **Slide.** Falling while holding toward a wall the duck touches caps the
-  fall speed at 1 px/frame. Rising is never slowed.
+  fall speed at 1 px/frame. Rising is never slowed. The duck turns its back
+  to the wall and dust drifts up along it (`ente.bmp` frames 10-11).
 - **Jump.** A in the air at a wall jumps at full jump speed and pushes the
   duck 2 px/frame away from the wall. For 8 frames (or until it lands) the D-pad is ignored, so
   the duck really leaves the wall. The jump buffer works as on the ground; on
@@ -449,6 +450,9 @@ and a big one in World 5 (the Iron Thwomp). `TrapType::BOSS`,
   drops the world's traps through the pit - across the bounces, while the
   ledges stay safe. After a hit it blinks and takes no further hit for 45
   frames.
+- **Feel.** A hit freezes the world for 4 frames and shakes the picture for
+  10 (`Cfg::Boss::HITSTOP_FRAMES` / `SHAKE_FRAMES`, the death's freeze and
+  shake, shorter).
 - **Victory.** The last hit removes it, raises a stepping stone in the pit
   (`arena_won`) and opens the door. A death starts the fight over.
 - **Tested.** An emulator replay per boss starts on the arena ledge and wins

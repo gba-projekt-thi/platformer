@@ -63,6 +63,12 @@ class Fight {
     int _invulnerable = 0;
 };
 
+// Whether a boss lost a hit since the last frame (a reset gives hits back:
+// that is no hit).
+inline auto was_hit(int hits_left_before, int hits_left_now) -> bool {
+    return hits_left_now < hits_left_before;
+}
+
 // Frames per path segment in `phase` (1 = `base`): every phase is faster,
 // phase 5 twice as fast as phase 1.
 inline auto phase_frames(unsigned base, int phase) -> unsigned {

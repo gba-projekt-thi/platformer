@@ -47,7 +47,9 @@ void Player::update() {
 
     _state_machine.update(_locomotion.on_ground(), vel_y);
     // A dash plays the jump pose, also when started on the ground.
-    _animator.update(_locomotion.on_ground() && !_locomotion.dashing());
+    _animator.update(
+        _locomotion.on_ground() && !_locomotion.dashing(),
+        _locomotion.wall_sliding());
 
     _hud.tick();
     _update_dash_trail();

@@ -66,7 +66,11 @@ inline constexpr int JUMP_RIGHT_FRAMES[2] = {2, 3};
 inline constexpr int JUMP_LEFT_FRAMES[2] = {6, 7};
 inline constexpr int IDLE_FRAME = 8;
 inline constexpr int BACK_FRAME = 9;
-inline constexpr int PLAYER_TILE_CACHE_SIZE = 10;
+// Wall slide: back to the wall (drawn for a wall on the right; flipped like
+// every frame for one on the left), dust drifting up along it.
+inline constexpr int SLIDE_FRAMES[2] = {10, 11};
+inline constexpr int SLIDE_WAIT = 6;  // frames per dust picture
+inline constexpr int PLAYER_TILE_CACHE_SIZE = 12;
 inline constexpr int ANIMATION_FRAME_COUNT = 4;
 inline constexpr int WAIT_UPDATE = 4;
 

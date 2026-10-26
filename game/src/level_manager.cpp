@@ -384,6 +384,18 @@ void LevelManager::_load_traps(const LevelData& level) {
     }
     _door_locked = false;
     _sync_boss_door();
+    _boss_hits_seen = _boss != nullptr ? _boss->hits_left() : 0;
+}
+
+void LevelManager::_feel_boss_hits() {
+    if (_boss == nullptr) {
+        return;
+    }
+    const int left = _boss->hits_left();
+    if (boss::was_hit(_boss_hits_seen, left)) {
+        _death_fx.start(Cfg::Boss::HITSTOP_FRAMES, Cfg::Boss::SHAKE_FRAMES);
+    }
+    _boss_hits_seen = left;
 }
 
 // The door opens once the level's boss is beaten (and shuts again when a
@@ -522,6 +534,7 @@ LevelManager::UpdateResult LevelManager::update() {
     _dynamic_platforms.sync_switched(_player.pos);
     _sync_crumble_platforms();
     _sync_boss_door();
+    _feel_boss_hits();
     if (_door) {
         _door->flee_from(_player.pos.x, _player.pos.y);
     }

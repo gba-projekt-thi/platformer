@@ -2,6 +2,7 @@
 
 #include "boss_logic.h"
 #include "cfg_boss.h"
+#include "cfg_death_fx.h"
 
 // A boss fight (boss_logic.h): pogo strikes take its hits one by one, each
 // starting the next phase; a short invulnerability keeps one strike from
@@ -93,6 +94,22 @@ TEST_CASE(boss_each_phase_is_faster) {
         previous = frames;
     }
     CHECK_EQ(boss::phase_frames(1, 5), 1u);
+}
+
+TEST_CASE(boss_a_hit_is_felt_shorter_than_a_death) {
+    // The hit's freeze and shake (death_fx::Sequence) must not feel like a
+    // death, and the freeze ends long before the invulnerability does.
+    CHECK(Cfg::Boss::HITSTOP_FRAMES > 0);
+    CHECK(Cfg::Boss::HITSTOP_FRAMES <= Cfg::DeathFx::HITSTOP_FRAMES);
+    CHECK(Cfg::Boss::SHAKE_FRAMES > 0);
+    CHECK(Cfg::Boss::SHAKE_FRAMES <= Cfg::DeathFx::SHAKE_FRAMES);
+    CHECK(Cfg::Boss::HITSTOP_FRAMES < Cfg::Boss::INVULNERABLE_FRAMES);
+}
+
+TEST_CASE(boss_was_hit_compares_the_hits_left) {
+    CHECK(boss::was_hit(3, 2));
+    CHECK(!boss::was_hit(2, 2));
+    CHECK(!boss::was_hit(1, 3));  // a reset gives hits back: no hit
 }
 
 TEST_CASE(boss_constants_are_sane) {

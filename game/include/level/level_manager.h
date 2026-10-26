@@ -222,6 +222,9 @@ class LevelManager {
     BossTrap* _boss = nullptr;
     bool _door_locked = false;
     void _sync_boss_door();
+    // A boss hit freezes the world for a moment and shakes the picture.
+    int _boss_hits_seen = 0;
+    void _feel_boss_hits();
     bn::optional<bn::music_item> _music;
     PauseController _pause_controller;
     DataManager& _data_manager;

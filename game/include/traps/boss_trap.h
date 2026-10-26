@@ -36,6 +36,7 @@ class BossTrap : public BaseTrap, public Strikeable {
     void on_struck() override;
 
     [[nodiscard]] bool defeated() const { return _fight.defeated(); }
+    [[nodiscard]] int hits_left() const { return _fight.hits_left(); }
 
    private:
     void _place(bn::fixed x, bn::fixed y);

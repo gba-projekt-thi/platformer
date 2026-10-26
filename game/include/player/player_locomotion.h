@@ -46,6 +46,8 @@ class PlayerLocomotion {
 
     // True while a dash is in progress (read by Player for animation).
     bool dashing() const { return _core.dashing(); }
+    // Holding toward a wall while falling along it (Player shows the slide).
+    bool wall_sliding() const { return _core.wall_sliding(); }
     // True while a pogo strike reaches below the duck (Player shows it).
     bool pogo_striking() const { return _core.pogo_striking(); }
 

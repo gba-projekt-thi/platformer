@@ -758,3 +758,26 @@ TEST_CASE(pogo_reach_outruns_the_fall) {
     CHECK(Cfg::Pogo::UNLOCK_WORLD >= 0);
     CHECK(Cfg::Pogo::UNLOCK_WORLD < WorldIndex::WORLD_COUNT);
 }
+
+TEST_CASE(wall_slide_is_reported_while_it_holds_the_fall) {
+    Rig rig;
+    fall_at_right_wall(rig);
+    rig.step(right());
+    CHECK(rig.core.wall_sliding());
+    rig.step();  // let go of the D-pad: just falling
+    CHECK(!rig.core.wall_sliding());
+}
+
+TEST_CASE(wall_slide_is_not_reported_while_rising_or_standing) {
+    Rig rig;
+    fall_at_right_wall(rig);
+    rig.body.vel_y = -3;
+    rig.step(right());
+    CHECK(!rig.core.wall_sliding());
+
+    Rig ground;
+    ground.core.set_wall_jump_enabled(true);
+    ground.world.wall_right = true;
+    ground.steps(3, right());
+    CHECK(!ground.core.wall_sliding());
+}
