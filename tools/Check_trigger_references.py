@@ -41,7 +41,6 @@ Python 3 is available (already a build-time dependency of this project;
 see docker/Dockerfile and Tilemap.md).
 """
 
-import glob
 import re
 import sys
 from pathlib import Path
@@ -220,11 +219,34 @@ def check_file(path: Path):
     return errors, warnings
 
 
+_GAME_DIRS = ("game/include", "game/include/level", "game/src", ".")
+
+
+def find_game_file(root, name):
+    """The game file `name` under `root`: looked up in the game's own folders
+    first, searched recursively only if it is not there (a recursive search
+    walks extern/ and build/ too and takes seconds). None if missing."""
+    root = Path(root)
+    for folder in _GAME_DIRS:
+        if (root / folder / name).is_file():
+            return root / folder / name
+    matches = sorted(root.glob(f"**/{name}"))
+    return matches[0] if matches else None
+
+
+def level_files(root="."):
+    """Every levels_world*.h, from game/include/level/ when it exists."""
+    level_dir = Path(root) / "game/include/level"
+    if level_dir.is_dir():
+        return sorted(level_dir.glob("levels_world*.h"))
+    return sorted(Path(root).glob("**/levels_world*.h"))
+
+
 def main(argv):
     if argv:
         paths = [Path(p) for p in argv]
     else:
-        paths = sorted(Path(p) for p in glob.glob("**/levels_world*.h", recursive=True))
+        paths = level_files()
 
     if not paths:
         print("No levels_world*.h files found - nothing to check.", file=sys.stderr)

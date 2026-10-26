@@ -152,5 +152,58 @@ class PlatformReferenceTests(unittest.TestCase):
         self.assertIn("platform", errors[0])
 
 
+class FindFilesTests(unittest.TestCase):
+    """Shared lookup of game files by every checker: the known place first,
+    a recursive search only as a fallback (it costs seconds on a big tree)."""
+
+    def tree(self, tmp, *files):
+        for name in files:
+            path = Path(tmp) / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("")
+
+    def test_game_file_is_found_in_game_include(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.tree(tmp, "game/include/cfg.h", "extern/x/cfg.h")
+            self.assertEqual(checker.find_game_file(tmp, "cfg.h"), Path(tmp) / "game/include/cfg.h")
+
+    def test_game_file_is_found_in_game_src(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.tree(tmp, "game/src/main.cpp")
+            self.assertEqual(checker.find_game_file(tmp, "main.cpp"), Path(tmp) / "game/src/main.cpp")
+
+    def test_game_file_next_to_the_root_is_found(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.tree(tmp, "hint_logic.h")
+            self.assertEqual(checker.find_game_file(tmp, "hint_logic.h"), Path(tmp) / "hint_logic.h")
+
+    def test_game_file_elsewhere_is_found_by_the_fallback_search(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.tree(tmp, "other/deep/cfg.h")
+            self.assertEqual(checker.find_game_file(tmp, "cfg.h"), Path(tmp) / "other/deep/cfg.h")
+
+    def test_missing_game_file_is_none(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertIsNone(checker.find_game_file(tmp, "cfg.h"))
+
+    def test_level_files_come_from_game_include_level(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.tree(
+                tmp,
+                "game/include/level/levels_world2.h",
+                "game/include/level/levels_world1.h",
+                "build/copy/levels_world1.h",
+            )
+            level = Path(tmp) / "game/include/level"
+            self.assertEqual(
+                checker.level_files(tmp), [level / "levels_world1.h", level / "levels_world2.h"]
+            )
+
+    def test_level_files_fall_back_to_a_search(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.tree(tmp, "x/levels_world1.h")
+            self.assertEqual(checker.level_files(tmp), [Path(tmp) / "x/levels_world1.h"])
+
+
 if __name__ == "__main__":
     unittest.main()

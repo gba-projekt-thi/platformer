@@ -40,7 +40,6 @@ property of the configuration, not of a level).
 Pure text parsing; reuses the level loader of Preview_level.py.
 """
 
-import glob
 import importlib.util
 import re
 import sys
@@ -337,9 +336,7 @@ def check_configuration(budget):
 
 
 def main(argv, root="."):
-    paths = [Path(p) for p in argv] or sorted(
-        Path(p) for p in glob.glob("**/levels_world*.h", recursive=True)
-    )
+    paths = [Path(p) for p in argv] or pv._ctr.level_files(root)
     if not paths:
         print("No levels_world*.h files found - nothing to check.", file=sys.stderr)
         return 1

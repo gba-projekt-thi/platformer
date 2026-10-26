@@ -96,9 +96,7 @@ class HintTests(unittest.TestCase):
 class RealLevelTests(unittest.TestCase):
     def test_real_level_hints_are_valid(self):
         here = Path(__file__).resolve().parent
-        files = sorted(here.glob("levels_world*.h")) or sorted(
-            here.parent.glob("**/levels_world*.h")
-        )
+        files = sorted(here.glob("levels_world*.h")) or checker._ctr.level_files(here.parent)
         if not files:
             self.skipTest("levels_world*.h not found")
         limit = checker.max_chars(here if (here / "hint_logic.h").exists() else here.parent)

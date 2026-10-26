@@ -42,7 +42,6 @@ Traps are drawn, not simulated - this checks the picture, not fairness.
 """
 
 import argparse
-import glob
 import html
 import importlib.util
 import math
@@ -712,7 +711,7 @@ def main(argv):
     files = [Path(i) for i in args.items if i.endswith(".h")]
     wanted = [i for i in args.items if not i.endswith(".h")]
     if not files:
-        files = sorted(Path(p) for p in glob.glob("**/levels_world*.h", recursive=True))
+        files = _ctr.level_files()
     if not files:
         print("No levels_world*.h files found.", file=sys.stderr)
         return 1

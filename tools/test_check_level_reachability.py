@@ -12,6 +12,7 @@ when it cannot be found. Run from the repository root:
 
 import importlib.util
 import itertools
+import os
 import re
 import unittest
 from pathlib import Path
@@ -26,8 +27,7 @@ def _find_world5():
     here = Path(__file__).resolve().parent
     if (here / "levels_world5.h").exists():
         return here / "levels_world5.h"
-    matches = sorted(here.parent.glob("**/levels_world5.h"))
-    return matches[0] if matches else None
+    return sim._ctr.find_game_file(here.parent, "levels_world5.h")
 
 
 WORLD5 = _find_world5()
@@ -236,6 +236,9 @@ class CampaignTests(unittest.TestCase):
         self.assertTrue(dash["LEVEL_3"])
         self.assertTrue(dash["LEVEL_WORLD5_DASH"])
 
+    # ~20 s: the same check runs as `Check_level_reachability.py --all` in CI
+    # and as a pre-commit hook whenever level data changes.
+    @unittest.skipUnless(os.environ.get("SLOW_TESTS"), "set SLOW_TESTS=1 to run")
     def test_every_door_is_reachable_with_the_abilities_of_its_level(self):
         # Conservative start (no coyote time, no run-up): a normal player can
         # finish every level, so the game can be played to the end.

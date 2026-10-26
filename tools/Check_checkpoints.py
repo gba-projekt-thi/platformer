@@ -36,7 +36,6 @@ Usage (from the repository root):
 Pure text parsing + the movement model; no C++ compiler involved.
 """
 
-import glob
 import importlib.util
 import math
 import re
@@ -66,12 +65,9 @@ MOVING_FRAMES = 600  # how long a MOVING trap is followed (it stops at the world
 
 
 def max_checkpoints(search_root=None):
-    root = Path(search_root) if search_root else Path(".")
-    for path in sorted(root.glob("**/cfg.h")):
-        match = re.search(r"CHECKPOINTS\s*=\s*(\d+)", path.read_text())
-        if match:
-            return int(match.group(1))
-    return DEFAULT_MAX
+    path = pv._ctr.find_game_file(search_root or ".", "cfg.h")
+    match = path and re.search(r"CHECKPOINTS\s*=\s*(\d+)", path.read_text())
+    return int(match.group(1)) if match else DEFAULT_MAX
 
 
 def _segment_boxes(a, b, w, h):
@@ -202,9 +198,7 @@ def check_level(level, limit=DEFAULT_MAX, reach=True):
 
 
 def main(argv):
-    paths = [Path(p) for p in argv] or sorted(
-        Path(p) for p in glob.glob("**/levels_world*.h", recursive=True)
-    )
+    paths = [Path(p) for p in argv] or pv._ctr.level_files()
     if not paths:
         print("No levels_world*.h files found - nothing to check.", file=sys.stderr)
         return 1

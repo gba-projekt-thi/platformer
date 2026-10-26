@@ -18,7 +18,6 @@ Exit code 0 = all hints valid, 1 = problems found. Pure text parsing; it
 reuses the literal splitter of Check_trigger_references.py.
 """
 
-import glob
 import importlib.util
 import re
 import sys
@@ -39,12 +38,9 @@ HINT_FIELD = 13
 
 
 def max_chars(search_root=None):
-    root = Path(search_root) if search_root else Path(".")
-    for path in sorted(root.glob("**/hint_logic.h")):
-        m = re.search(r"MAX_CHARS\s*=\s*(\d+)", path.read_text())
-        if m:
-            return int(m.group(1))
-    return DEFAULT_MAX_CHARS
+    path = _ctr.find_game_file(search_root or ".", "hint_logic.h")
+    m = path and re.search(r"MAX_CHARS\s*=\s*(\d+)", path.read_text())
+    return int(m.group(1)) if m else DEFAULT_MAX_CHARS
 
 
 def hints_in(path):
@@ -84,9 +80,7 @@ def check(path, limit=DEFAULT_MAX_CHARS):
 
 
 def main(argv):
-    paths = [Path(p) for p in argv] or sorted(
-        Path(p) for p in glob.glob("**/levels_world*.h", recursive=True)
-    )
+    paths = [Path(p) for p in argv] or _ctr.level_files()
     if not paths:
         print("No levels_world*.h files found - nothing to check.", file=sys.stderr)
         return 1
