@@ -99,10 +99,7 @@ void LevelManager::_load_player_spawn(const LevelData& level) {
 }
 
 void LevelManager::_load_door(const LevelData& level) {
-    _door.emplace(
-        level.door.x, level.door.y, level.door.sprite,
-        level.door.sprite_graphics_indexes, level.door.sprite_animation_wait,
-        level.door.sprite_flip_horizontal);
+    _door.emplace(level.door);
 }
 
 void LevelManager::_load_music(const LevelData& level) {
@@ -219,6 +216,9 @@ void LevelManager::_advance_death_fx() {
 
 void LevelManager::_finish_respawn() {
     _reset_entities();
+    if (_door) {
+        _door->reset_flee();
+    }
     _dynamic_platforms.reset_crumbling();
     _checkpoint_run.restore(_triggers);
     // The duck is back at the spawn point or a checkpoint, possibly far from
@@ -476,6 +476,9 @@ LevelManager::UpdateResult LevelManager::update() {
     _sync_checkpoints();
     _dynamic_platforms.sync_switched(_player.pos);
     _sync_crumble_platforms();
+    if (_door) {
+        _door->flee_from(_player.pos.x, _player.pos.y);
+    }
     _check_player_died();
 
     // -------------------------------------------------------------------------

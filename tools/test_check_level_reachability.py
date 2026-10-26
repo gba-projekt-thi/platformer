@@ -14,6 +14,7 @@ import importlib.util
 import itertools
 import os
 import re
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -161,6 +162,38 @@ class NewLevelTests(unittest.TestCase):
         _, triggers, _, _ = self.level("LEVEL_WORLD5_LEVERS")
         for name, t in triggers.items():
             self.assertIsNotNone(t["platform"], name)
+
+
+class RunningDoorTests(unittest.TestCase):
+    """A door with DoorData::flee_path has to be reached at its last stop."""
+
+    def load(self, door):
+        spec = importlib.util.spec_from_file_location(
+            "generate_levels", Path(__file__).with_name("Generate_levels.py"))
+        gen = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gen)
+        level = {
+            "name": "LEVEL_X",
+            "platforms": {"name": "x_platforms", "items": [
+                {"x": 0, "y": 60, "width": 32, "height": 16, "offset_x": 0,
+                 "offset_y": 0, "sprite": "stone", "sprite_index": 0}]},
+            "background": "world9", "music": "world9",
+            "spawn": [0, 40], "door": door,
+        }
+        header = gen.generate({"levels": [level]}, gen.read_structs())
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "levels.h"
+            path.write_text(header)
+            return sim.load_levels(path)["LEVEL_X"]
+
+    def test_a_plain_door_is_where_it_stands(self):
+        _, _, _, door = self.load({"x": 30, "y": 4})
+        self.assertEqual(door, (30.0, 10.0))
+
+    def test_a_running_door_counts_at_its_last_stop(self):
+        _, _, _, door = self.load({"x": 30, "y": 4, "flee_path": [[40, 0], [60, -20]],
+                                   "flee_range": 24, "flee_frames": 10})
+        self.assertEqual(door, (90.0, -10.0))
 
 
 class ResolveAxisTests(unittest.TestCase):

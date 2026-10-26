@@ -23,6 +23,7 @@ JSON layout (one file per world):
           "background": "world1", "music": "world1",
           "spawn": [-96, 42],
           "door": {"x": 32, "y": 4, ...DoorData fields},
+                                                  // flee_path: [[x, y], ...]
           "world_width": 624, "world_height": 160, "ground_friction": 1,
           "intro_hint": "New: Dash with B",       // optional, like the rest
           "field_notes": {"door": "comment above the door field", ...}
@@ -190,7 +191,21 @@ def _array(struct, array, structs):
     return out + "};\n"
 
 
+def _door(level):
+    """(definitions to put before the level, DoorData fields). A running door's
+    flee_path ([[x, y], ...]) becomes its own bn::fixed_point array."""
+    door = dict(level["door"])
+    path = door.get("flee_path")
+    if not isinstance(path, list):
+        return "", door
+    name = f"{level['name']}_door_flee_path"
+    points = ", ".join(f"{{{value('DoorData', 'x', x)}, {value('DoorData', 'y', y)}}}" for x, y in path)
+    door["flee_path"] = name
+    return f"constexpr bn::fixed_point {name}[] = {{{points}}};\n\n", door
+
+
 def _level(level, structs):
+    definitions, door = _door(level)
     parts = {}
     for name, _ in ARRAYS:
         array = level.get(name)
@@ -205,7 +220,7 @@ def _level(level, structs):
         "music": "bn::music_items::" + level["music"],
         "player_data": "{" + ", ".join(value("PlayerData", f, v) for f, v in
                                        zip(("x", "y"), level["spawn"])) + "}",
-        "door": positional("DoorData", level["door"], structs),
+        "door": positional("DoorData", door, structs),
     }
     for key in ("world_width", "world_height", "ground_friction", "intro_hint"):
         if key in level:
@@ -223,7 +238,7 @@ def _level(level, structs):
             seen_keys.add(key)
         text += "    " + (values[field] if field in values else defaults[field])
         lines.append(text)
-    out = comment(level.get("data_note"))
+    out = definitions + comment(level.get("data_note"))
     out += f"const LevelData {level['name']} = {{\n" + ",\n".join(lines) + "};\n"
     return out
 

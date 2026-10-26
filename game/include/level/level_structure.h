@@ -279,6 +279,15 @@ struct DoorData {
         DOOR32X32_GRAPHICS_INDEXES;
     int sprite_animation_wait = 8;
     bool sprite_flip_horizontal = false;
+
+    // Level Devil: a door that runs away (door_flee.h). Whenever the duck
+    // comes within flee_range px of it, it slides on to the next point of
+    // flee_path (offsets from (x, y), like TrapData::path) in flee_frames
+    // frames; at the last one it stays. A death puts it back. In the JSON
+    // the path is a list of [x, y] pairs. Empty = an ordinary door.
+    bn::span<const bn::fixed_point> flee_path = {};
+    int flee_range = 0;
+    int flee_frames = 0;
 };
 
 // -----------------------------------------------------------------------------

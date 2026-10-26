@@ -141,6 +141,14 @@ class GenerateTests(unittest.TestCase):
         out = squash(self.header(level(door=door)))
         self.assertIn("{160,40,bn::sprite_items::susanne16x16,TRAP_GRAPHICS_INDEXES_8,8,true}", out)
 
+    def test_a_running_door_gets_its_path_as_an_array(self):
+        door = {"x": 30, "y": 4, "flee_path": [[60, 0], [60, -40]],
+                "flee_range": 24, "flee_frames": 12}
+        text = squash(gen.generate(world(level(door=door)), STRUCTS))
+        self.assertIn("constexprbn::fixed_pointLEVEL_X_door_flee_path[]={{60,0},{60,-40}};", text)
+        self.assertIn("LEVEL_X_door_flee_path,24,12}", text)
+        self.assertLess(text.index("LEVEL_X_door_flee_path[]"), text.index("constLevelDataLEVEL_X"))
+
     def test_includes_follow_the_assets_used(self):
         out = self.header(level())
         for include in ("bn_music_items.h", "bn_regular_bg_items_world9.h",

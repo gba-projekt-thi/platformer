@@ -411,6 +411,10 @@ def load_levels(path):
     content = _ctr.strip_comments(Path(path).read_text())
     plat_arrays = _ctr.extract_named_arrays(content, "PlatformData")
     trig_arrays = _ctr.extract_named_arrays(content, "TriggerData")
+    flee_paths = {
+        m.group(1): [(_num(x), _num(y)) for x, y in re.findall(r"\{\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\}", m.group(2))]
+        for m in re.finditer(r"constexpr bn::fixed_point (\w+)\[\]\s*=\s*\{(.*?)\};", content, re.S)
+    }
     levels = {}
     for m in re.finditer(r"(?:const|constexpr) LevelData ([A-Za-z0-9_]+)\s*=\s*", content):
         name = m.group(1)
@@ -442,6 +446,11 @@ def load_levels(path):
         spawn = tuple(_num(v) for v in _fields_of(f[8])[:2])
         door = _fields_of(f[9])
         door_pos = (_num(door[0]), _num(door[1]) + 6.0)
+        # A running door (DoorData::flee_path) has to be reached where it
+        # ends up: its last stop.
+        if len(door) > 6 and door[6].strip() in flee_paths:
+            dx, dy = flee_paths[door[6].strip()][-1]
+            door_pos = (door_pos[0] + dx, door_pos[1] + dy)
         levels[name] = (platforms, triggers, spawn, door_pos)
     return levels
 

@@ -340,6 +340,25 @@ any trap type.
   forward behind an unmarked fake. `Check_checkpoints.py` only knows real
   checkpoints, so a fake one is not subject to its placement rules.
 
+### The door that runs away
+
+The Level Devil classic: the duck reaches the door and it slides away. Give
+the level's `door` a `flee_path` (offsets from the door, like a PATH trap's
+points), a `flee_range` and a `flee_frames`:
+
+```json
+"door": {"x": 96, "y": 30, "flee_path": [[0, -64], [-80, -64]],
+         "flee_range": 24, "flee_frames": 12}
+```
+
+- Whenever the duck comes within `flee_range` px of the door (both axes), it
+  slides to the next point in `flee_frames` frames. At the last point it stays
+  and is an ordinary door. Touching it while it moves still counts.
+- A death puts it back at its origin (`door_flee.h`, `Door::reset_flee()`).
+- `Check_level_reachability.py` checks the **last** stop, so the route has to
+  lead there. Every stop should be visible or reachable on the way - the joke
+  is the door running, not a door that hides.
+
 ### Crumbling platforms
 
 A platform reacts to the duck itself, without any trigger: set
