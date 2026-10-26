@@ -221,6 +221,47 @@ class WallJumpModelTests(unittest.TestCase):
         self.assertTrue(climbed)
 
 
+class PogoModelTests(unittest.TestCase):
+    """Duck's pogo strike mirrors locomotion::Core (tests/host/test_locomotion.cpp)."""
+
+    SPIKES = [sim.Rect(0, 28, 16, 16, 0)]  # top at 20, in reach after 8 frames
+
+    def falling_above_the_spikes(self):
+        duck = sim.Duck([], 0.0, 0.0, pogo_targets=self.SPIKES)
+        duck.on_ground = False
+        for _ in range(8):
+            duck.step()
+        return duck
+
+    def test_a_strike_over_a_trap_bounces(self):
+        duck = self.falling_above_the_spikes()
+        duck.step(r_pressed=True)
+        self.assertTrue(duck.pogo_bounced)
+        self.assertEqual(duck.vy, sim.POGO_BOUNCE)
+
+    def test_the_bounce_is_not_cut_by_letting_go_of_a(self):
+        duck = self.falling_above_the_spikes()
+        duck.step(r_pressed=True)
+        duck.step(a_held=False)
+        self.assertAlmostEqual(duck.vy, sim.POGO_BOUNCE + sim.G)
+
+    def test_no_strike_without_a_trap_below(self):
+        duck = sim.Duck([], 0.0, 0.0, pogo_targets=[sim.Rect(0, 80, 16, 16, 0)])
+        duck.on_ground = False
+        duck.step()
+        duck.step(r_pressed=True)
+        self.assertFalse(duck.pogo_bounced)
+
+    def test_constants_match_cfg_pogo_h(self):
+        if REPO is None:
+            self.skipTest("levels_world5.h not found")
+        for sim_value, constant in (
+            (sim.POGO_FRAMES, "STRIKE_FRAMES"), (sim.POGO_COOLDOWN, "COOLDOWN_FRAMES"),
+            (sim.POGO_REACH, "REACH"), (sim.POGO_WIDTH, "WIDTH"), (sim.POGO_BOUNCE, "BOUNCE_SPEED"),
+        ):
+            self.assertEqual(sim_value, cfg_value("cfg_pogo.h", "Pogo", constant), constant)
+
+
 class RunningDoorTests(unittest.TestCase):
     """A door with DoorData::flee_path has to be reached at its last stop."""
 

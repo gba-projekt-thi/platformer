@@ -67,7 +67,7 @@ def read_sav(data, level_count):
         runs = []
         for k in range(count):
             packed, = struct.unpack_from("<H", data, offset + 4 + 2 * k)
-            runs.append((packed >> 11, packed & 0x7FF))
+            runs.append((packed >> 10, packed & 0x3FF))
         recordings[index] = (runs, bool(flags & FLAG_TRUNCATED))
     return recordings
 

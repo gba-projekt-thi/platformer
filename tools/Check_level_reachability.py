@@ -80,6 +80,12 @@ SLIDE = 1.0
 PUSH = 2.0
 LOCK = 8
 WALL_FRAMES = 400  # a climb up a shaft takes longer than one jump
+# Cfg::Pogo
+POGO_FRAMES = 10
+POGO_COOLDOWN = 8
+POGO_REACH = 12
+POGO_WIDTH = 16
+POGO_BOUNCE = -3.0
 
 
 class Rect:
@@ -250,10 +256,11 @@ def _probe(plats, x, y, w, h):
 
 class Duck:
     """One frame of locomotion::Core::step() and PhysicsBody::move(), button by
-    button, with the jump buffer and the wall slide / wall jump (no dash and
-    no world-edge bounce). Drives the wall-climb policies below."""
+    button, with the jump buffer, the wall slide / wall jump and the pogo
+    strike off `pogo_targets` (trap boxes; no dash and no world-edge bounce).
+    Drives the wall-climb policies below and scripted replays."""
 
-    def __init__(self, plats, x, y, vx=0.0, wall_jump=True):
+    def __init__(self, plats, x, y, vx=0.0, wall_jump=True, pogo_targets=()):
         self.plats = plats
         self.x, self.y, self.vx, self.vy = x, y, vx, 0.0
         self.wall_jump = wall_jump
@@ -262,6 +269,11 @@ class Duck:
         self.buffer = 0
         self.lock = 0
         self.wall_jumped = False
+        self.pogo_targets = list(pogo_targets)
+        self.pogo_frames = 0
+        self.pogo_cooldown = 0
+        self.pogo_rise = False
+        self.pogo_bounced = False
 
     def wall(self):
         """-1 / 1 = a wall touches the left / right side, 0 = none."""
@@ -271,7 +283,25 @@ class Duck:
             return -1
         return 1 if _probe(self.plats, self.x + BW / 2 + 1, self.y, 1, BH - 2) else 0
 
-    def step(self, left=False, right=False, a_pressed=False, a_held=True):
+    def _pogo(self, r_pressed):
+        self.pogo_bounced = False
+        if r_pressed and self.pogo_targets and not self.on_ground \
+                and self.pogo_frames == 0 and self.pogo_cooldown == 0:
+            self.pogo_frames = POGO_FRAMES
+        elif self.pogo_cooldown > 0:
+            self.pogo_cooldown -= 1
+        if self.pogo_frames == 0:
+            return
+        below = self.y + BH / 2 + POGO_REACH / 2
+        if _probe(self.pogo_targets, self.x, below, POGO_WIDTH, POGO_REACH):
+            self.vy, self.pogo_rise, self.pogo_frames = POGO_BOUNCE, True, 0
+            self.pogo_bounced = True
+        else:
+            self.pogo_frames -= 1
+            if self.pogo_frames == 0:
+                self.pogo_cooldown = POGO_COOLDOWN
+
+    def step(self, left=False, right=False, a_pressed=False, a_held=True, r_pressed=False):
         if a_pressed:
             self.buffer = JUMP_BUFFER
         wall = self.wall()
@@ -285,12 +315,15 @@ class Duck:
         elif self.vx < 0:
             self.vx = min(0.0, self.vx + DECEL)
         self.vy += G
-        if not a_held and self.vy < 0:
+        if self.vy >= 0:
+            self.pogo_rise = False
+        if not a_held and self.vy < 0 and not self.pogo_rise:
             self.vy *= 0.5
         self.vy = min(self.vy, MAXFALL)
         toward = (wall < 0 and left) or (wall > 0 and right)
         if toward and not self.on_ground and self.vy > SLIDE:
             self.vy = SLIDE
+        self._pogo(r_pressed)
         if _probe(self.plats, self.x, self.y + BH / 2 + 1, BW - 2, 1):
             self.on_ground, self.coyote, self.lock = True, COYOTE, 0
         elif self.coyote > 0:

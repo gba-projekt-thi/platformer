@@ -25,7 +25,7 @@ def sav_with(blocks):
     data = bytearray(b"\xff" * 0x8000)
     for index, (runs, flags) in blocks.items():
         offset = replays.SRAM_OFFSET + index * replays.BLOCK_SIZE
-        packed = b"".join(struct.pack("<H", (b << 11) | c) for b, c in runs)
+        packed = b"".join(struct.pack("<H", (b << 10) | c) for b, c in runs)
         data[offset:offset + 4 + len(packed)] = struct.pack("<BBH", replays.MAGIC, flags, len(runs)) + packed
     return bytes(data)
 
@@ -40,9 +40,10 @@ class LayoutTests(unittest.TestCase):
 
 class ImportTests(unittest.TestCase):
     def test_recorded_levels_are_read_back(self):
-        sav = sav_with({0: ([(2, 30), (10, 4)], 0), 3: ([(0, 7)], 0)})
+        sav = sav_with({0: ([(2, 30), (10, 4), (40, 1023)], 0), 3: ([(0, 7)], 0)})
         recordings = replays.read_sav(sav, 5)
-        self.assertEqual(recordings, {0: ([(2, 30), (10, 4)], False), 3: ([(0, 7)], False)})
+        self.assertEqual(
+            recordings, {0: ([(2, 30), (10, 4), (40, 1023)], False), 3: ([(0, 7)], False)})
 
     def test_truncated_recordings_are_flagged(self):
         sav = sav_with({1: ([(2, 5)], 0x01)})

@@ -14,6 +14,15 @@ struct Entry {
     int steps;
 };
 
+constexpr replay::Run LEVEL_WORLD5_SCROLL_RUNS[] = {
+    {0, 30},  {2, 8},   {14, 1},  {10, 3},  {2, 3},   {34, 1},  {2, 39},
+    {14, 1},  {10, 16}, {2, 2},   {0, 19},  {2, 4},   {14, 1},  {10, 16},
+    {2, 8},   {0, 15},  {2, 3},   {14, 1},  {10, 16}, {2, 2},   {0, 20},
+    {2, 4},   {14, 1},  {10, 16}, {2, 2},   {0, 19},  {2, 4},   {14, 1},
+    {10, 16}, {2, 8},   {0, 15},  {2, 2},   {14, 1},  {10, 16}, {2, 2},
+    {0, 19},  {2, 5},   {14, 1},  {10, 16}, {2, 2},   {0, 21},  {2, 4},
+    {14, 1},  {10, 16}, {2, 2},   {0, 19},  {2, 5},   {14, 1},  {10, 16},
+    {2, 12},  {0, 10}};
 constexpr replay::Run LEVEL_WORLD5_CLIMB_RUNS[] = {
     {0, 30}, {2, 20},  {14, 1},  {10, 14}, {2, 55}, {14, 1}, {10, 14},
     {2, 1},  {14, 1},  {10, 14}, {2, 1},   {14, 1}, {9, 14}, {1, 1},
@@ -36,7 +45,7 @@ inline constexpr Entry ENTRIES[] = {
     {"LEVEL_WORLD4_SCROLL", nullptr, 0, 0},
     {"LEVEL_WORLD4_SCROLL_2", nullptr, 0, 0},
     {"LEVEL_WORLD4_BOSS", nullptr, 0, 0},
-    {"LEVEL_WORLD5_SCROLL", nullptr, 0, 0},
+    {"LEVEL_WORLD5_SCROLL", LEVEL_WORLD5_SCROLL_RUNS, 51, 466},
     {"LEVEL_WORLD5_SCROLL_2", nullptr, 0, 0},
     {"LEVEL_WORLD5_DASH", nullptr, 0, 0},
     {"LEVEL_WORLD5_LEVERS", nullptr, 0, 0},

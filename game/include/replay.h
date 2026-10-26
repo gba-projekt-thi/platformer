@@ -16,8 +16,8 @@
 namespace replay {
 
 // The longest run; a longer stretch of equal buttons becomes several runs.
-// 11 bits, so a run packs into 16 bits with its 5 button bits (pack()).
-inline constexpr int MAX_RUN = 0x7FF;
+// 10 bits, so a run packs into 16 bits with its 6 button bits (pack()).
+inline constexpr int MAX_RUN = 0x3FF;
 
 struct Run {
     uint8_t buttons;  // encode()
@@ -25,11 +25,11 @@ struct Run {
 };
 
 inline auto pack(const Run& run) -> uint16_t {
-    return uint16_t((run.buttons << 11) | run.count);
+    return uint16_t((run.buttons << 10) | run.count);
 }
 
 inline auto unpack(uint16_t packed) -> Run {
-    return Run{uint8_t(packed >> 11), uint16_t(packed & MAX_RUN)};
+    return Run{uint8_t(packed >> 10), uint16_t(packed & MAX_RUN)};
 }
 
 // `make record` stores each level's last recording in SRAM behind the save
@@ -51,7 +51,7 @@ inline auto encode(const InputState& input) -> uint8_t {
     return uint8_t(
         (input.left_held ? 1 : 0) | (input.right_held ? 2 : 0) |
         (input.a_pressed ? 4 : 0) | (input.a_held ? 8 : 0) |
-        (input.b_pressed ? 16 : 0));
+        (input.b_pressed ? 16 : 0) | (input.r_pressed ? 32 : 0));
 }
 
 inline auto decode(uint8_t buttons) -> InputState {
@@ -61,6 +61,7 @@ inline auto decode(uint8_t buttons) -> InputState {
     input.a_pressed = (buttons & 4) != 0;
     input.a_held = (buttons & 8) != 0;
     input.b_pressed = (buttons & 16) != 0;
+    input.r_pressed = (buttons & 32) != 0;
     return input;
 }
 
