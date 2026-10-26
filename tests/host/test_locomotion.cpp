@@ -277,16 +277,13 @@ TEST_CASE(locomotion_no_jump_in_the_air) {
     CHECK(!rig.step(jump()).jumped);
 }
 
-TEST_CASE(locomotion_releasing_a_cuts_the_jump) {
+TEST_CASE(locomotion_releasing_a_stops_the_rise) {
     Rig rig;
     rig.step();
     rig.step(jump());
     rig.world.ground = false;
-    const bn::fixed rising = rig.body.vel_y;
     rig.step();  // A released
-    bn::fixed expected = rising + Cfg::Player::GRAVITY;
-    expected *= 0.5;
-    CHECK_EQ(rig.body.vel_y, expected);
+    CHECK_EQ(rig.body.vel_y, bn::fixed(0));
 }
 
 TEST_CASE(locomotion_holding_a_keeps_the_full_jump) {
@@ -703,11 +700,8 @@ TEST_CASE(pogo_a_jump_after_a_bounce_is_cut_again) {
     rig.step();
     rig.step(jump());
     rig.world.ground = false;
-    const bn::fixed rising = rig.body.vel_y;
     rig.step();
-    bn::fixed expected = rising + Cfg::Player::GRAVITY;
-    expected *= 0.5;
-    CHECK_EQ(rig.body.vel_y, expected);
+    CHECK_EQ(rig.body.vel_y, bn::fixed(0));
 }
 
 TEST_CASE(pogo_cooldown_between_strikes) {

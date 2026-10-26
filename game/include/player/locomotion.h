@@ -80,13 +80,16 @@ class Core {
             _run(body, in, effects);
 
             body.vel_y += _gravity;
-            // Variable jump height: releasing A cuts the rise (not a pogo
-            // bounce's, which ends at its top).
+            // Variable jump height: releasing A ends the rise at once (not a
+            // pogo bounce's, which ends at its top). This was written
+            // `vel_y *= 0.5`, which bn::fixed resolves to operator*=(int) -
+            // a multiplication by 0 - ever since the jump was made variable,
+            // so this is how the game plays.
             if (body.vel_y >= 0) {
                 _pogo_rise = false;
             }
             if (!in.a_held && body.vel_y < 0 && !_pogo_rise) {
-                body.vel_y *= 0.5;
+                body.vel_y = 0;
             }
             if (body.vel_y > _max_fall_speed) {
                 body.vel_y = _max_fall_speed;
