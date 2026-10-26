@@ -132,14 +132,17 @@ def _squash(text):
 
 def write_header(check):
     text = generate(_campaign_levels(), load_replays())
+    # Whitespace does not count: the committed header is clang-formatted.
+    up_to_date = HEADER.exists() and _squash(HEADER.read_text()) == _squash(text)
     if check:
-        if not HEADER.exists() or _squash(HEADER.read_text()) != _squash(text):
+        if not up_to_date:
             print("ERROR game/include/replay_data.h does not match game/replays/: "
                   "run python3 tools/replays.py generate", file=sys.stderr)
             return 1
         return 0
-    HEADER.write_text(text)
-    print(f"wrote {HEADER.relative_to(ROOT)}")
+    if not up_to_date:
+        HEADER.write_text(text)
+        print(f"wrote {HEADER.name}")
     return 0
 
 

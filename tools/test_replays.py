@@ -8,6 +8,7 @@ Run from the repository root:
 import importlib.util
 import re
 import struct
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -63,6 +64,31 @@ class GenerateTests(unittest.TestCase):
     def test_header_without_any_replay_still_compiles_to_a_table(self):
         text = replays.generate(["LEVEL_0"], {})
         self.assertIn('{"LEVEL_0", nullptr, 0, 0}', text)
+
+
+class WriteHeaderTests(unittest.TestCase):
+    def setUp(self):
+        self.saved = replays.HEADER
+        self.dir = tempfile.TemporaryDirectory()
+        replays.HEADER = Path(self.dir.name) / "replay_data.h"
+
+    def tearDown(self):
+        replays.HEADER = self.saved
+        self.dir.cleanup()
+
+    def test_a_header_that_only_differs_in_whitespace_is_kept(self):
+        # clang-format reflows the committed header; `make replay` must not
+        # undo that and leave the working tree dirty.
+        text = replays.generate(replays._campaign_levels(), replays.load_replays())
+        reflowed = text.replace("};", "\n};")
+        replays.HEADER.write_text(reflowed)
+        self.assertEqual(replays.write_header(check=False), 0)
+        self.assertEqual(replays.HEADER.read_text(), reflowed)
+
+    def test_a_changed_header_is_rewritten(self):
+        replays.HEADER.write_text("// stale\n")
+        self.assertEqual(replays.write_header(check=False), 0)
+        self.assertIn("ENTRY_COUNT", replays.HEADER.read_text())
 
 
 class LogTests(unittest.TestCase):
