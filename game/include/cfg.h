@@ -67,6 +67,14 @@ inline constexpr int PLAYER_TILE_CACHE_SIZE = 10;
 inline constexpr int ANIMATION_FRAME_COUNT = 4;
 inline constexpr int WAIT_UPDATE = 4;
 
+// Collision body (centered on the duck's position). The 16x16 picture is
+// larger, so it is drawn SPRITE_OFFSET_Y higher: its feet (the lowest opaque
+// row of ente.bmp) then rest on the body's bottom, i.e. on the platform.
+// Visual only; tools/Check_hitboxes.py checks the feet.
+inline constexpr int BODY_WIDTH = 8;
+inline constexpr int BODY_HEIGHT = 8;
+inline constexpr int SPRITE_OFFSET_Y = -4;
+
 // Misc.
 inline constexpr int DEATH_HEIGHT = 100;
 inline constexpr int COYOTE_FRAMES = 4;

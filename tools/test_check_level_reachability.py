@@ -209,10 +209,11 @@ class ConstantsMatchTheGameTests(unittest.TestCase):
         self.assertEqual(sim.DASH_SPEED, cfg_value("cfg_dash.h", "Dash", "SPEED"))
         self.assertEqual(sim.DASH_FRAMES, cfg_value("cfg_dash.h", "Dash", "DURATION_FRAMES"))
 
-    def test_duck_body_matches_main_cpp(self):
-        text = (REPO / "game/src/main.cpp").read_text()
-        w, h = re.search(r"Player player\(\s*\S+,\s*\S+,\s*(\d+),\s*(\d+)\)", text).groups()
-        self.assertEqual((sim.BW, sim.BH), (float(w), float(h)))
+    def test_duck_body_matches_cfg_h(self):
+        self.assertEqual(
+            (sim.BW, sim.BH),
+            (cfg_value("cfg.h", "Player", "BODY_WIDTH"), cfg_value("cfg.h", "Player", "BODY_HEIGHT")),
+        )
 
 
 @unittest.skipIf(REPO is None, "levels_world5.h not found")

@@ -37,6 +37,7 @@ Player::Player(
       _restart_y(in_start_y) {
     // Link the physics body with the player sprite for rendering.
     sprite = &_player_sprite;
+    _player_sprite.pos.offset_y = Cfg::Player::SPRITE_OFFSET_Y;
     _player_sprite.sprite().set_blending_enabled(true);
 }
 
@@ -194,6 +195,7 @@ void Player::begin_death_fx() {
     raw_sprite.set_z_order(_player_sprite.sprite().z_order());
     raw_sprite.set_blending_enabled(true);
     _death_ghost.emplace(bn::move(raw_sprite), _death_x, _death_y);
+    _death_ghost->pos.offset_y = Cfg::Player::SPRITE_OFFSET_Y;
 
     _player_sprite.disable();
     _respawn_blink = 0;

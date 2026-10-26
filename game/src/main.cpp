@@ -125,7 +125,7 @@ int main() {
     // Create the player entity and apply an offset for the sprite anchor point.
     // -------------------------------------------------------------------------
 
-    Player player(0, 0, 8, 8);
+    Player player(0, 0, Cfg::Player::BODY_WIDTH, Cfg::Player::BODY_HEIGHT);
 
     // Initialize the level manager and begin the game loop.
     // Static lifetime prevents accidental destruction
