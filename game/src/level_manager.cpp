@@ -1,5 +1,6 @@
 #include "level_manager.h"
 #include "audio_settings.h"
+#include "background.h"
 #include "bn_keypad.h"
 #include "level_limits.h"
 #include "player_events.h"
@@ -134,10 +135,12 @@ void LevelManager::_load_background(const LevelData& level) {
     // observed as a level's background using stale palette colors from a
     // previously loaded level's background (but only when reached via normal
     // progression, not when loaded fresh from a save, where no prior
-    // background was ever allocated).
+    // background was ever allocated). The backdrop color (palette index 0,
+    // the dark parts of every background) had the same cause and is now set
+    // explicitly by create_background().
     bn::core::update();
 
-    _background.emplace(level.back_ground.create_bg(0, 0));
+    _background.emplace(create_background(level.back_ground));
     _background->set_priority(3);
     _background->set_blending_enabled(true);
 }

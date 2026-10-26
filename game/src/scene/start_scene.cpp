@@ -12,6 +12,7 @@
 #include "bn_sprite_items_tail64x64.h"
 #include "bn_sprite_items_titel64x128.h"
 
+#include "background.h"
 #include "cfg.h"
 #include "common_variable_8x16_sprite_font.h"
 #include "controls_scene.h"
@@ -109,7 +110,7 @@ void StartScene::init() {
     _title_sprites.push_back(bn::move(title1));
 
     // Background
-    _bg.emplace(bn::regular_bg_items::startscreen.create_bg(0, 0));
+    _bg.emplace(create_background(bn::regular_bg_items::startscreen));
     _bg->set_priority(3);
     _bg->set_blending_enabled(true);
 
