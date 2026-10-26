@@ -87,3 +87,13 @@ repos:
         language: system
         files: ^(game/include/.*\.h|tests/host/.*|extern/engine/src/save_system/.*)$
         pass_filenames: false
+      - id: generated-levels
+        name: Level headers match game/levels/*.json
+        description: >-
+          game/include/level/levels_world*.h are generated from
+          game/levels/world*.json - edit the JSON and run
+          python3 tools/Generate_levels.py.
+        entry: python3 tools/Generate_levels.py --check
+        language: system
+        files: ^(game/levels/.*\.json|game/include/level/levels_world.*\.h|game/include/level/level_structure\.h|tools/Generate_levels\.py)$
+        pass_filenames: false

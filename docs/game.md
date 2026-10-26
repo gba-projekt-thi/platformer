@@ -146,7 +146,7 @@ For headless or CI testing, use:
     migrated to named binding and the field was never read
   - Because binding is by name rather than position, one trigger can drive
     several traps at once (a **trigger chain**) - see `level0_traps` in
-    `levels_world1.h` for an existing example
+    `game/levels/world1.json` for an existing example
 
 - `checkpoint.h` / `checkpoint.cpp` (next to the trigger) and `checkpoint_logic.h`
   - `Checkpoint` is the flag a level's `checkpoints` data creates; `LevelManager` makes the furthest touched flag the respawn point and re-arms the triggers that were on (see [`docs/level-design.md`](level-design.md#checkpoints)). `checkpoint_logic.h` holds the Butano-free rules (`CheckpointTracker`, trigger snapshot masks)

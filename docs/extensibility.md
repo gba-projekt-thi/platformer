@@ -29,10 +29,16 @@ than fighting it.
    silently rebinds a trap. A single named trigger can activate more than
    one trap at once - just point several traps' `trigger_name` at the same
    trigger to build a trigger chain (see `level0_traps` in
-   `levels_world1.h` for a worked example: one trigger releases both a
+   `game/levels/world1.json` for a worked example: one trigger releases both a
    falling hazard and a patrol).
 
 ### Conceptual steps
+
+Stage data is written in `game/levels/worldN.json` (see
+[Level Design](level-design.md#where-the-level-data-lives));
+`python3 tools/Generate_levels.py` writes the matching
+`game/include/level/levels_worldN.h`. A new world gets a new `worldN.json`
+plus an include in `levels.h`.
 
 1. **Gather the theme assets** (background tilemap, platform tileset, hazard
    sprites, music track). If reusing existing themes, this step is free — see

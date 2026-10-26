@@ -382,7 +382,7 @@ migrated to named binding) and has since been removed from the struct - see
 Because binding is by identity rather than position, one trigger can freely
 activate several traps at once (a **trigger chain**): give each trap the
 same `trigger_name` and they all fire together, as `level0_traps` in
-`levels_world1.h` and several other levels already do.
+`game/levels/world1.json` and several other levels already do.
 
 ### Interactions with the player
 

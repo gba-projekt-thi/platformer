@@ -26,6 +26,22 @@ Every stage is described by a single declarative definition that contains:
 
 The same skeleton powers every world; only the contents and theme change.
 
+### Where the level data lives
+
+Each world's stages are a JSON file: `game/levels/world1.json` ...
+`world5.json`. Every platform, trigger, trap and checkpoint is one line with
+its fields by name (those of `PlatformData`, `TriggerData`, `TrapData`,
+`CheckpointData` in `level_structure.h`); a field left out keeps its default,
+and a `"note"` is the comment shown above the entry. Sprites are named by
+their item (`"bubbles"`), trap types and trigger modes by their name
+(`"MOVING"`, `"Toggle"`), shared paths and animation sequences by their
+constant in `levels_common.h` (`"FIGURE_8_PATH"`).
+
+`python3 tools/Generate_levels.py` turns the JSON into
+`game/include/level/levels_worldN.h`, which the game compiles - never edit
+those headers by hand. `make checks`, CI and a pre-commit hook fail when a
+header does not match its JSON. The examples below are JSON entries.
+
 ## Coordinate system & orientation
 
 Understanding the coordinate orientation is the key to placing anything:
@@ -218,15 +234,15 @@ where it is otherwise: a Timer trigger makes the cycle start a few seconds in,
 a lever switches the spikes off (or on). Without one it cycles from the first
 frame of the level. A death restarts every cycle from its phase.
 
-```cpp
+```json
 // spikes rise 12px out of the floor: 6 frames up, 30 up, 6 down, 60 resting;
 // the second one starts half a round (51 frames) later
-{TrapType::CYCLE, 40, 66, 16, 12, 0, 0, bn::sprite_items::rostybar32x32, 1,
- TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0,
- 0, -12, 6, 30, 6, 60, 0},
-{TrapType::CYCLE, 72, 66, 16, 12, 0, 0, bn::sprite_items::rostybar32x32, 1,
- TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0,
- 0, -12, 6, 30, 6, 60, 51},
+{"type": "CYCLE", "x": 40, "y": 66, "width": 16, "height": 12, "offset_x": 0, "offset_y": 0,
+ "sprite": "rostybar32x32", "cycle_dy": -12, "cycle_extend_frames": 6, "cycle_hold_frames": 30,
+ "cycle_retract_frames": 6, "cycle_wait_frames": 60},
+{"type": "CYCLE", "x": 72, "y": 66, "width": 16, "height": 12, "offset_x": 0, "offset_y": 0,
+ "sprite": "rostybar32x32", "cycle_dy": -12, "cycle_extend_frames": 6, "cycle_hold_frames": 30,
+ "cycle_retract_frames": 6, "cycle_wait_frames": 60, "cycle_phase_frames": 51}
 ```
 
 Keep the **rest** long enough to cross: the duck needs roughly `wait +
@@ -297,22 +313,19 @@ A hazard that looks like the real thing needs no new trap type: a static BASE
 trap that wears the sprite of a door or a checkpoint kills on touch like any
 other. The one missing piece was the draw order - the real door and checkpoint
 stand behind the duck (`Cfg::ZOrder::DOOR` / `CHECKPOINT`, 1), a trap defaults
-to the duck's own layer - so `TrapData::sprite_z_order` (the last field, 0 =
-unchanged) sets it, for any trap type.
+to the duck's own layer - so `sprite_z_order` (0 = unchanged) sets it, for
+any trap type.
 
-```cpp
-#include "bn_sprite_items_checkpoint16x16.h"   // at the top of the world header
-
+```json
 // Fake door: the animation, the speed and the layer of the real one; the box
 // covers the doorway, not the whole 32x32 sprite.
-{TrapType::BASE, 140, 40, 10, 20, 0, 0, bn::sprite_items::door32x32, 8,
- DOOR32X32_GRAPHICS_INDEXES, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0,
- 0, 0, 0, 0, 0, 0, 0, Cfg::ZOrder::DOOR},
+{"type": "BASE", "x": 140, "y": 40, "width": 10, "height": 20, "offset_x": 0, "offset_y": 0,
+ "sprite": "door32x32", "sprite_waits": 8, "graphic_indexes": "DOOR32X32_GRAPHICS_INDEXES",
+ "sprite_z_order": "Cfg::ZOrder::DOOR"},
 
 // Fake checkpoint: the grey (not reached) flag, standing on a platform.
-{TrapType::BASE, -60, 44, 10, 16, 0, 0, bn::sprite_items::checkpoint16x16, 1,
- TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0,
- 0, 0, 0, 0, 0, 0, 0, Cfg::ZOrder::CHECKPOINT},
+{"type": "BASE", "x": -60, "y": 44, "width": 10, "height": 16, "offset_x": 0, "offset_y": 0,
+ "sprite": "checkpoint16x16", "sprite_z_order": "Cfg::ZOrder::CHECKPOINT"}
 ```
 
 - Leave `offset_x` / `offset_y` at 0: a trap's sprite follows its collision box.
@@ -354,11 +367,13 @@ way that many frames after the duck first stands on it.
   forth) is gone the second time - check that by hand or give it a respawn.
 - `Preview_level.py` draws them dotted with a "crumbles Nf" label.
 
-```cpp
+```json
 // gives way 30 frames after the first step, is back after 2 seconds
-{-48, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0, nullptr, true, 30, 120}
+{"x": -48, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel",
+ "sprite_index": 0, "crumble_frames": 30, "crumble_respawn_frames": 120}
 // a single-use stepping stone (never comes back)
-{16, 52, 32, 8, 0, 0, bn::sprite_items::nebel, 0, nullptr, true, 20, 0}
+{"x": 16, "y": 52, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel",
+ "sprite_index": 0, "crumble_frames": 20}
 ```
 
 ### Checkpoints
@@ -366,10 +381,8 @@ way that many frames after the duck first stands on it.
 A long level or a boss can carry **one checkpoint**: a flag the duck touches
 to respawn there instead of at the spawn point. It is plain level data:
 
-```cpp
-constexpr CheckpointData world3_boss_checkpoints[] = {{-80, 48}};
-// ... at the end of the LevelData literal, after ground_friction and intro_hint:
-//     world3_boss_checkpoints, sizeof(world3_boss_checkpoints) / sizeof(...[0])
+```json
+"checkpoints": {"name": "world3_boss_checkpoints", "items": [{"x": -80, "y": 48}]}
 ```
 
 `(x, y)` is the center of the 16x16 flag AND the respawn position. Put the
@@ -518,10 +531,9 @@ Place the zone so that the duck can only be inside it while it makes the
 intended move, and give it a visible sprite or a hint when the level is meant to
 be fair rather than cruel.
 
-```cpp
+```json
 // the brick above only falls when the duck jumps on this spot
-{40, 44, 24, 16, false, "hop", TriggerMode::Latch, nullptr, 0, 1, 0,
- TriggerAction::Jump}
+{"x": 40, "y": 44, "width": 24, "height": 16, "name": "hop", "action": "Jump"}
 ```
 
 ### Delayed triggers
@@ -544,12 +556,12 @@ the duck does and what the traps and platforms bound to the trigger do:
   trigger that was on when the flag was reached is on again at once (no
   delay), and a Timer that had not fired yet starts counting again.
 
-```cpp
+```json
 // a patrol that wakes up 3 seconds after the level starts
-{600, 0, 8, 8, false, "wake", TriggerMode::Timer, nullptr, 0, 1, 180}
+{"x": 600, "y": 0, "width": 8, "height": 8, "name": "wake", "mode": "Timer", "delay_frames": 180}
 // a lever whose falling brick only drops half a second after the flip
-{-196, 44, 16, 16, false, "late", TriggerMode::Toggle,
- &bn::sprite_items::lever16x16, 0, 1, 30}
+{"x": -196, "y": 44, "width": 16, "height": 16, "name": "late", "mode": "Toggle",
+ "sprite": "lever16x16", "delay_frames": 30}
 ```
 
 A trigger can also have an optional **visible sprite** with an "off" and an

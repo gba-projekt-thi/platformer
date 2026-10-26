@@ -1,0 +1,321 @@
+{
+  "levels": [
+    {
+      "name": "LEVEL_WORLD5_SCROLL",
+      "note": "=============================================================================\nWORLD 5 SCROLL - dungeon theme, hardest/final level (world_width=624)\nAll platforms kept at y=60 (flat run) per request; gaps stay <=32px,\nwell inside the safe horizontal envelope even without any climb.\n=============================================================================",
+      "platforms": {
+        "name": "world5_scroll_platforms",
+        "items": [
+          {"blank_before": true, "x": -272, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -216, "y": 71, "width": 28, "height": 10, "offset_x": 0, "offset_y": -11, "sprite": "bars32x32", "sprite_index": 0},
+          {"x": -176, "y": 60, "width": 26, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0},
+          {"x": -128, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -72, "y": 71, "width": 28, "height": 10, "offset_x": 0, "offset_y": -11, "sprite": "bars32x32", "sprite_index": 0},
+          {"x": -24, "y": 60, "width": 26, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0},
+          {"x": 24, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 80, "y": 71, "width": 28, "height": 10, "offset_x": 0, "offset_y": -11, "sprite": "bars32x32", "sprite_index": 0},
+          {"x": 128, "y": 60, "width": 26, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0},
+          {"x": 176, "y": 70, "width": 26, "height": 10, "offset_x": 0, "offset_y": -10, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 224, "y": 68, "width": 28, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "bars32x32", "sprite_index": 0},
+          {"x": 272, "y": 60, "width": 26, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0},
+          {"x": 296, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0}
+        ]
+      },
+      "triggers": {
+        "name": "world5_scroll_triggers",
+        "items": [
+          {"note": "Fires just before the thwomp's drop zone near x=156.", "x": 140, "y": 48, "width": 32, "height": 24, "name": "thwomp_gate"}
+        ]
+      },
+      "traps": {
+        "name": "world5_scroll_traps",
+        "items": [
+          {"blank_before": true, "note": "Axe chases the player from behind - starts just left of the spawn\npoint and only ever flies right, easing toward a position roughly\n40px behind the player at up to 2.5px/frame. Standing still or\nmoving left just widens the gap; running right is what closes it.", "type": "CHASE", "x": -300, "y": 20, "width": 32, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "axe64x32", "chase_follow_distance": 40, "chase_speed": 2.5},
+          {"blank_before": true, "note": "Static rusty bar hazard sitting in the first gap.", "type": "BASE", "x": -240, "y": 60, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32"},
+          {"blank_before": true, "note": "Disguised, animated mimic sitting in a mid gap (mimic32x32 has 8\nanimation frames).", "type": "BASE", "x": 56, "y": 60, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "mimic32x32", "sprite_waits": 16, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8"},
+          {"blank_before": true, "note": "Falling thwomp guarding the approach to the final platforms,\ntriggered by \"thwomp_gate\" above.", "type": "MOVING", "x": 200, "y": -20, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "thwomp32x32", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4, "trigger_name": "thwomp_gate"}
+        ]
+      },
+      "checkpoints": {
+        "name": "world5_scroll_checkpoints",
+        "note": "Checkpoint on the middle barrel of the longest level.",
+        "items": [
+          {"x": 24, "y": 44}
+        ]
+      },
+      "background": "world5",
+      "music": "world5",
+      "spawn": [-272, 42],
+      "door": {
+        "x": 296,
+        "y": 42
+      },
+      "world_width": 624,
+      "world_height": 160,
+      "ground_friction": 1,
+      "intro_hint": null,
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "Door position",
+        "world_width": "World size (enables scrolling)",
+        "ground_friction": "Ground friction: default",
+        "intro_hint": "No intro hint",
+        "checkpoints": "Checkpoints, in play order"
+      }
+    },
+    {
+      "name": "LEVEL_WORLD5_SCROLL_2",
+      "note": "=============================================================================\nWORLD 5 SCROLL 2 - dungeon theme, second level (world_width=380)\nIntroduces the AmbushTrap variant of the mimic: previously purely\ndecorative animation, it now actually lunges once the duck gets close.\nThe axe from the first World 5 level also returns here, tuned a notch\ntighter than there and a notch gentler than the boss - filling in the\nmissing middle rung of its own escalation (scroll1 -> scroll2 -> boss)\nand giving CHASE+AMBUSH their first pairing in World 5 outside the\nboss fight.\n=============================================================================",
+      "platforms": {
+        "name": "world5b_scroll_platforms",
+        "items": [
+          {"blank_before": true, "x": -168, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -112, "y": 71, "width": 28, "height": 10, "offset_x": 0, "offset_y": -11, "sprite": "bars32x32", "sprite_index": 0},
+          {"x": -72, "y": 60, "width": 26, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0},
+          {"x": -24, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 32, "y": 71, "width": 28, "height": 10, "offset_x": 0, "offset_y": -11, "sprite": "bars32x32", "sprite_index": 0},
+          {"x": 72, "y": 60, "width": 26, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0},
+          {"x": 128, "y": 70, "width": 26, "height": 10, "offset_x": 0, "offset_y": -10, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 176, "y": 68, "width": 28, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "bars32x32", "sprite_index": 0}
+        ]
+      },
+      "traps": {
+        "name": "world5b_scroll_traps",
+        "items": [
+          {"blank_before": true, "note": "The axe, back for a second round: 34px follow distance / 2.75px per\nframe, between LEVEL_WORLD5_SCROLL's introductory 40/2.5 and\nLEVEL_WORLD5_BOSS's tighter 28/3.0. Same sprite, no new graphics -\njust closes the gap a little faster and sits a little closer than\nthe first time the duck met it.", "type": "CHASE", "x": -196, "y": 20, "width": 32, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "axe64x32", "chase_follow_distance": 34, "chase_speed": 2.75},
+          {"blank_before": true, "note": "Static rusty bar hazard in the first gap.", "type": "BASE", "x": -140, "y": 60, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32"},
+          {"blank_before": true, "note": "Ambush mimic disguised among the real chests - lunges left/right\n(negative speed = leftward) once the duck is within 36px, for 15\nframes, then retreats. Placed just before the last chest so it\nreads as \"which chest is the fake one?\".", "type": "AMBUSH", "x": 48, "y": 60, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "mimic32x32", "sprite_waits": 16, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "ambush_range": 36, "ambush_speed": -2.0, "ambush_duration": 15}
+        ]
+      },
+      "background": "world5",
+      "music": "world5",
+      "spawn": [-168, 42],
+      "door": {
+        "x": 176,
+        "y": 42
+      },
+      "world_width": 380,
+      "world_height": 160,
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "Door position",
+        "world_width": "World size (enables scrolling)"
+      }
+    },
+    {
+      "name": "LEVEL_WORLD5_DASH",
+      "note": "=============================================================================\nWORLD 5 DASH - \"Cloak Corridor\" (world_width=700)\nThe first level that REQUIRES the dash (enabled from World 3 onward, see\nCfg::Dash::UNLOCK_WORLD). Physics, measured with tools/\nCheck_level_reachability.py (same movement model as PlayerLocomotion):\n  - same-height edge-to-edge gaps up to ~61px (72px with a run-up and\n    coyote time) are reachable with a plain jump;\n  - with a jump + air dash up to ~103px, and the dash may start anywhere in\n    a ~12-18 frame window after takeoff.\nThe two dash gaps below are 84px and 92px wide: unreachable without the\ndash even under the most generous assumptions, comfortably inside the dash\nenvelope with a wide timing window. Every other gap is a plain jump (<=40px).\nThe axe chases from behind (it only punishes standing still), and an\nambush mimic sits in the gap before the last dash.\n=============================================================================",
+      "platforms": {
+        "name": "world5_dash_platforms",
+        "items": [
+          {"blank_before": true, "note": "Spawn platform; first dash gap (84px) follows.", "x": -296, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -180, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"note": "Ordinary hops: 32px and 40px gaps.", "x": -124, "y": 60, "width": 26, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0},
+          {"x": -68, "y": 71, "width": 28, "height": 10, "offset_x": 0, "offset_y": -11, "sprite": "bars32x32", "sprite_index": 0},
+          {"note": "Second dash gap (88px), then a landing barrel.", "x": 44, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"note": "Short hops across the mimic's gap (32px / 30px).", "x": 100, "y": 60, "width": 26, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0},
+          {"x": 146, "y": 71, "width": 28, "height": 10, "offset_x": 0, "offset_y": -11, "sprite": "bars32x32", "sprite_index": 0},
+          {"note": "Last dash gap (92px), then the exit stretch.", "x": 262, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 314, "y": 60, "width": 26, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0}
+        ]
+      },
+      "traps": {
+        "name": "world5_dash_traps",
+        "items": [
+          {"blank_before": true, "note": "The axe: starts well behind the spawn and trails 48px behind the duck\nat 2.0px/frame - exactly walking speed, so it never catches a duck that\nkeeps moving, but punishes stopping to think.", "type": "CHASE", "x": -350, "y": 20, "width": 32, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "axe64x32", "chase_follow_distance": 48, "chase_speed": 2.0},
+          {"blank_before": true, "note": "Rusty bars in the pits under the first two dash gaps: the gap reads as\nlethal at a glance.", "type": "BASE", "x": -238, "y": 68, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32"},
+          {"type": "BASE", "x": -8, "y": 68, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32"},
+          {"blank_before": true, "note": "Mimic lurking in the gap between the two short hops: lunges left\n(negative speed) once the duck is within 36px, for 15 frames, then\nretreats.", "type": "AMBUSH", "x": 123, "y": 60, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "mimic32x32", "sprite_waits": 16, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "ambush_range": 36, "ambush_speed": -2.0, "ambush_duration": 15}
+        ]
+      },
+      "checkpoints": {
+        "name": "world5_dash_checkpoints",
+        "note": "Checkpoint after the second 88px dash gap, so the third gap is retried\nwithout redoing the first two.",
+        "items": [
+          {"x": 44, "y": 44}
+        ]
+      },
+      "background": "world5",
+      "music": "world5",
+      "spawn": [-296, 42],
+      "door": {
+        "x": 320,
+        "y": 42
+      },
+      "world_width": 700,
+      "world_height": 160,
+      "ground_friction": 1,
+      "intro_hint": "Too far? Jump + B to dash",
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "Door position",
+        "world_width": "World size (enables scrolling)",
+        "ground_friction": "Ground friction: default",
+        "intro_hint": "First level that cannot be finished without the dash.",
+        "checkpoints": "Checkpoints, in play order"
+      }
+    },
+    {
+      "name": "LEVEL_WORLD5_LEVERS",
+      "note": "=============================================================================\nWORLD 5 LEVERS - \"Lever Hall\" (world_width=700)\nThe first switch level: Toggle triggers drawn as levers (lever16x16) open\nand close platforms (PlatformData::trigger_name).\n  Room 1: lever1 raises a bridge stone over a 96px chasm. Step on the lever\n          once (each ENTRY flips it).\n  Room 2: the stone in the middle of the 84px chasm is there by default\n          (active_when_off) - but lever2 stands on the path and removes it.\n          Hop over the lever to keep the stone, or step on it and DASH the\n          gap instead; stepping on it a second time brings the stone back,\n          so there is no dead end.\n  Room 3: two levers, two stones. Both on = an easy walk; one lever + the\n          dash (96px) also works.\nEverything resets on death. Checked with tools/Check_level_reachability.py,\nwhich also explores every lever configuration the duck can set.\n=============================================================================",
+      "platforms": {
+        "name": "world5_levers_platforms",
+        "items": [
+          {"blank_before": true, "note": "Room 1: two adjacent barrels, lever1 on the right one.", "x": -232, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -200, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"note": "Gate stone over the first chasm (appears when lever1 is on). The\nchasm is 120px wide - beyond even a dash - so lever1 is mandatory;\nwith the stone every jump is 44px.", "x": -124, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0, "trigger_name": "lever1"},
+          {"note": "Room 2: landing barrels, lever2 on the right one.", "x": -48, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -16, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"note": "The stone that lever2 takes away (present while lever2 is off):\ntwo 26px hops. Without it the chasm is 84px - dash territory.", "x": 42, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0, "trigger_name": "lever2", "active_when_on": false},
+          {"note": "Room 3: two adjacent barrels with lever3 / lever4.", "x": 100, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 132, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"note": "Two stones over the last 160px chasm, one per lever: both on = four\n32px hops; one lever + the dash (96px) also works; none is impossible.", "x": 196, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0, "trigger_name": "lever3"},
+          {"x": 260, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0, "trigger_name": "lever4"},
+          {"note": "Exit platform.", "x": 324, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0}
+        ]
+      },
+      "triggers": {
+        "name": "world5_levers_triggers",
+        "items": [
+          {"x": -196, "y": 44, "width": 16, "height": 16, "name": "lever1", "mode": "Toggle", "sprite": "lever16x16"},
+          {"x": -12, "y": 44, "width": 16, "height": 16, "name": "lever2", "mode": "Toggle", "sprite": "lever16x16"},
+          {"x": 104, "y": 44, "width": 16, "height": 16, "name": "lever3", "mode": "Toggle", "sprite": "lever16x16"},
+          {"x": 140, "y": 44, "width": 16, "height": 16, "name": "lever4", "mode": "Toggle", "sprite": "lever16x16"}
+        ]
+      },
+      "traps": {
+        "name": "world5_levers_traps",
+        "items": [
+          {"blank_before": true, "note": "Rusty bars in the pits: the chasms read as lethal.", "type": "BASE", "x": -124, "y": 68, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32"},
+          {"type": "BASE", "x": 42, "y": 68, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32"},
+          {"type": "BASE", "x": 228, "y": 68, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32"}
+        ]
+      },
+      "background": "world5",
+      "music": "world5",
+      "spawn": [-232, 42],
+      "door": {
+        "x": 324,
+        "y": 42
+      },
+      "world_width": 700,
+      "world_height": 160,
+      "ground_friction": 1,
+      "intro_hint": "Step on a lever to flip it",
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "Door position",
+        "world_width": "World size (enables scrolling)",
+        "ground_friction": "Ground friction: default",
+        "intro_hint": "The levers flip on entry; say so once."
+      }
+    },
+    {
+      "name": "LEVEL_WORLD5_BOSS",
+      "note": "=============================================================================\nWORLD 5 BOSS - \"The Mimic Lord\" (world_width=650)\nThe final gauntlet: the axe from World 5's first level returns, closer\nand hungrier, while a trio of thwomps slam down in sequence and two\nmimics lie in wait among the real chests.\n=============================================================================",
+      "platforms": {
+        "name": "world5_boss_platforms",
+        "items": [
+          {"blank_before": true, "x": -296, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -240, "y": 71, "width": 28, "height": 10, "offset_x": 0, "offset_y": -11, "sprite": "bars32x32", "sprite_index": 0},
+          {"x": -200, "y": 60, "width": 26, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0},
+          {"x": -152, "y": 58, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -96, "y": 71, "width": 28, "height": 10, "offset_x": 0, "offset_y": -11, "sprite": "bars32x32", "sprite_index": 0},
+          {"x": -48, "y": 60, "width": 26, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0},
+          {"x": 0, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 56, "y": 71, "width": 28, "height": 10, "offset_x": 0, "offset_y": -11, "sprite": "bars32x32", "sprite_index": 0},
+          {"x": 104, "y": 60, "width": 26, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0},
+          {"x": 152, "y": 70, "width": 26, "height": 10, "offset_x": 0, "offset_y": -10, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 200, "y": 68, "width": 28, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "bars32x32", "sprite_index": 0},
+          {"x": 240, "y": 60, "width": 26, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0},
+          {"x": 272, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0}
+        ]
+      },
+      "triggers": {
+        "name": "world5_boss_triggers",
+        "items": [
+          {"x": -180, "y": 48, "width": 32, "height": 24, "name": "wave1"},
+          {"x": -80, "y": 48, "width": 32, "height": 24, "name": "wave2"},
+          {"x": 70, "y": 48, "width": 32, "height": 24, "name": "wave3"}
+        ]
+      },
+      "traps": {
+        "name": "world5_boss_traps",
+        "items": [
+          {"blank_before": true, "note": "The Mimic Lord's axe - relentless, closer and faster than the one\nin the first World 5 level. Standing still is not an option.", "type": "CHASE", "x": -324, "y": 20, "width": 32, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "axe64x32", "chase_follow_distance": 28, "chase_speed": 3.0},
+          {"blank_before": true, "note": "Static rusty bar in the first gap - always dangerous.", "type": "BASE", "x": -264, "y": 60, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32"},
+          {"blank_before": true, "note": "Attack 1: first thwomp slam, triggered by wave1.", "type": "MOVING", "x": -175, "y": -20, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "thwomp32x32", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 5, "trigger_name": "wave1"},
+          {"blank_before": true, "note": "First mimic, disguised among the real chests.", "type": "AMBUSH", "x": 24, "y": 60, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "mimic32x32", "sprite_waits": 16, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "ambush_range": 40, "ambush_speed": -2.2, "ambush_duration": 16},
+          {"blank_before": true, "note": "Attack 2: second thwomp slam, triggered by wave2.", "type": "MOVING", "x": -75, "y": -20, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "thwomp32x32", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 5, "trigger_name": "wave2"},
+          {"blank_before": true, "note": "Second mimic, closer to the door.", "type": "AMBUSH", "x": 180, "y": 60, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "mimic32x32", "sprite_waits": 16, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "ambush_range": 36, "ambush_speed": 2.0, "ambush_duration": 15},
+          {"blank_before": true, "note": "Attack 3: final thwomp slam right before the door, triggered by\nwave3.", "type": "MOVING", "x": 80, "y": -20, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "thwomp32x32", "velocity_x": 0.0, "velocity_y": 4.5, "max_vel": 4.5, "trigger_name": "wave3"}
+        ]
+      },
+      "checkpoints": {
+        "name": "world5_boss_checkpoints",
+        "note": "One checkpoint, in the middle of the arena: outside both mimics' ambush\nranges (a respawn inside one would trigger it) and clear of the thwomps'\ncolumns and of the axe's row (a level has at most one).",
+        "items": [
+          {"x": -48, "y": 47}
+        ]
+      },
+      "background": "world5",
+      "music": "world5",
+      "spawn": [-296, 42],
+      "door": {
+        "x": 284,
+        "y": 42
+      },
+      "world_width": 650,
+      "world_height": 160,
+      "ground_friction": 1,
+      "intro_hint": null,
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "Door position",
+        "world_width": "World size (enables scrolling)",
+        "ground_friction": "Ground friction: default",
+        "intro_hint": "No intro hint",
+        "checkpoints": "Checkpoints, in play order"
+      }
+    },
+    {
+      "name": "LEVEL_WORLD5_FINALE",
+      "note": "=============================================================================\nWORLD 5 FINALE - \"Reunited\" (world_width=360, 1.5 screens)\nA quiet victory lap after the boss: one unbroken barrel32x32 walkway,\nno traps of any kind, ending with Susanne waiting on the platform.\nWalking up to her (the level's \"door\", rendered as a static susanne16x16\nsprite instead of the usual animated door) ends the level - and since\nthis is the last entry in main.cpp's levels[] array, the game\ntransitions straight into KissingScene.\n=============================================================================",
+      "platforms": {
+        "name": "world5_finale_platforms",
+        "items": [
+          {"blank_before": true, "x": -160, "y": 62, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -128, "y": 62, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -96, "y": 62, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -64, "y": 62, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -32, "y": 62, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 0, "y": 62, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 32, "y": 62, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 64, "y": 62, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 96, "y": 62, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 128, "y": 62, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 160, "y": 62, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0}
+        ]
+      },
+      "background": "world5",
+      "music": "world5",
+      "spawn": [-160, 36],
+      "door": {
+        "x": 160,
+        "y": 40,
+        "sprite": "susanne16x16",
+        "sprite_graphics_indexes": "TRAP_GRAPHICS_INDEXES_8",
+        "sprite_flip_horizontal": true
+      },
+      "world_width": 360,
+      "world_height": 160,
+      "field_notes": {
+        "triggers": "No triggers - nothing in this level needs one.",
+        "traps": "No traps, as requested - this is a walk, not a challenge.",
+        "spawn": "Player spawn - left end of the walkway.",
+        "door": "Door position - Susanne, standing on the rightmost platform,\nanimated through her own 8-frame loop and flipped to face left,\ntoward the player approaching from spawn. Flip the last bool if she\nends up facing the wrong way.",
+        "world_width": "World size (1.5 screen widths)"
+      }
+    }
+  ]
+}

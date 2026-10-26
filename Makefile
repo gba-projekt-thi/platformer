@@ -95,6 +95,7 @@ test:
 	$(MAKE) checks
 
 checks:
+	python3 tools/Generate_levels.py --check
 	python3 tools/Check_trigger_references.py
 	python3 tools/Check_level_hints.py
 	python3 tools/Check_world_index.py
