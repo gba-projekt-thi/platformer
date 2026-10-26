@@ -37,40 +37,8 @@ def _body(text, signature):
     return None
 
 
-LOCO = _find("player_locomotion.cpp")
 TRIGGER = _find("trigger.cpp")
 MANAGER = _find("level_manager.cpp")
-
-
-@unittest.skipIf(LOCO is None, "player_locomotion.cpp not found")
-class PlayerEventWiringTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        text = LOCO.read_text()
-        cls.update = _body(text, r"void\s+PlayerLocomotion::update\s*\(\s*\)")
-        cls.update_dash = _body(text, r"bool\s+PlayerLocomotion::update_dash\s*\(\s*\)")
-        cls.jump = _body(text, r"void\s+PlayerLocomotion::handle_jump\s*\(\s*\)")
-
-    def test_the_frame_starts_by_ending_the_previous_events(self):
-        self.assertIn("PlayerEvents::instance().begin_frame()", self.update)
-        self.assertLess(
-            self.update.index("begin_frame()"), self.update.index("update_dash()")
-        )
-
-    def test_a_started_dash_is_noted(self):
-        self.assertIn("PlayerEvents::instance().note_dash()", self.update_dash)
-        self.assertLess(
-            self.update_dash.index("step.started"),
-            self.update_dash.index("note_dash()"),
-        )
-
-    def test_a_performed_jump_is_noted(self):
-        self.assertIn("PlayerEvents::instance().note_jump()", self.jump)
-        # only inside the branch that really starts the jump
-        self.assertLess(
-            self.jump.index("_jump_buffer_timer > 0 && _on_ground"),
-            self.jump.index("note_jump()"),
-        )
 
 
 @unittest.skipIf(TRIGGER is None, "trigger.cpp not found")

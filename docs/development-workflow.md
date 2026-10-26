@@ -77,7 +77,9 @@ bit-flag helpers), and `frame_time.h` (`frames_to_time()`, including the
 >99-minute case `SummaryScene`'s total-time readout can hit).
 
 These build with the **host's own g++/clang++**, not the ARM cross-compiler
-- no devkitARM, no Butano, no container needed:
+- no devkitARM, no container needed. They may use Butano's header-only types
+(`bn::fixed`), so movement rules are tested with the game's own fixed-point
+arithmetic (it rounds: `0.3 * 1` is 0.297), but nothing that needs the GBA:
 
 ```bash
 make test                          # host tests + tools/ tests + level data checks
@@ -112,7 +114,11 @@ length, the end of the freeze reported once, shake fading out, flicker
 pattern), the trap frame scaling (`trap_timing.h`) and the one-frame player
 events with the jump / dash trigger rule (`player_events.h`,
 `trigger_logic.h`) and the crumbling-platform state machine
-(`crumble_logic.h`). `PlayerLocomotion`,
+(`crumble_logic.h`), the duck's movement (`locomotion.h`: `locomotion::Core`
+with running, braking, gravity, jump buffer, coyote time, variable jump, dash,
+world-edge bounce and fall death, driven by an `InputState` value and a fake
+world for the collision probes), menu text (`text_buffer.h`) and what a level
+clear records (`level_records.h`). `PlayerLocomotion`,
 `LevelManager`, `PauseController` and the scenes only feed these helpers
 and apply their results, so what is left in the Butano-dependent files is
 glue that still needs the manual checks below.
@@ -122,17 +128,20 @@ specifically so it has no Butano include chain to drag along - `timer.h`
 includes it, so every existing `#include "timer.h"` call site is
 unaffected.
 
-When adding a new pure-logic helper (no `bn::` types, no hardware access),
-consider whether it belongs in a similarly dependency-free header so it can
-gain the same kind of test coverage, rather than being bundled into a
-Butano-dependent file where it becomes untestable on the host.
+When adding a new rule (no hardware access, at most header-only `bn::`
+types such as `bn::fixed`), write its test in `tests/host/` first and put the
+rule in a header like the ones above, rather than into a Butano-dependent
+file where it becomes untestable on the host. Hardware input reaches a rule
+as a value (see `InputState` in `locomotion.h`), collision queries through a
+small interface the test can fake.
 
 ### Automated: CI (`.github/workflows/ci.yml`)
 
 Two independent jobs, so the fast check isn't blocked by the slow one:
 
-- **`host-tests`** - checks out just the `extern/engine` submodule (not its
-  nested Butano submodule, which host tests never touch), runs
+- **`host-tests`** - checks out the submodules recursively (the host tests
+  use Butano's header-only `bn::fixed`, so movement rules are tested with the
+  game's own arithmetic), runs
   `make -C tests/host` and prints the line coverage (`make coverage`). No
   Docker, no ARM toolchain - this is the fast, cheap check.
 - **`gba-build`** - checks out recursively, builds the dev container image
