@@ -39,13 +39,15 @@ The duck can:
   survivable and predictable.
 - **Dash** (B, from World 3 onward) in a short horizontal burst - see
   [Dash](#dash).
+- **Wall slide and wall jump** (from World 5 onward) - see
+  [Wall jump](#wall-jump).
 
 The control scheme is intentionally simple:
 
 | Input | Effect |
 |-------|--------|
 | D-Pad left / right | Move horizontally |
-| A button | Jump |
+| A button | Jump (off a wall from World 5 onward) |
 | B button | Dash (from World 3 onward) |
 | Start button | Pause (opens the pause menu) |
 | Select button | Show / hide the run timer |
@@ -140,6 +142,25 @@ The duck's one learned ability, in the spirit of Hollow Knight's cloak dash:
 - **Required in World 5.** "Cloak Corridor" has three gaps (84-92px) that
   only the dash crosses, and "Lever Hall" offers a dash shortcut in two of
   its rooms - see [Dash and switch levels](level-design.md#dash-and-switch-levels).
+
+### Wall jump
+
+Hollow Knight's Mantis Claw, tuned in `Cfg::WallJump` (`cfg_wall_jump.h`),
+rules in `locomotion::Core`, tests in `tests/host/test_locomotion.cpp`:
+
+- **Slide.** Falling while holding toward a wall the duck touches caps the
+  fall speed at 1 px/frame. Rising is never slowed.
+- **Jump.** A in the air at a wall jumps at full jump speed and pushes the
+  duck 2 px/frame away from the wall. For 8 frames (or until it lands) the D-pad is ignored, so
+  the duck really leaves the wall. The jump buffer works as on the ground; on
+  the ground a normal jump always wins.
+- **No refill.** A wall does not refill the air dash, only real ground does.
+- **Availability.** From World 5 onward (`Cfg::WallJump::UNLOCK_WORLD`),
+  like the dash. Earlier worlds play as authored. Walls are platform sides
+  only (the collision layer the duck stands on), never traps or the world
+  edge.
+- **Reachability.** `tools/Check_level_reachability.py` does not model wall
+  jumps: they only add reach, so a level it proves reachable stays so.
 
 ## Game progression
 

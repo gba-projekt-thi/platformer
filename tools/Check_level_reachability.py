@@ -25,7 +25,9 @@ Two start assumptions bracket real play:
     full speed). If a platform is NOT reachable here, no player can do it, so
     a gap that is meant to require the dash must fail this check without dash.
 
-Traps are ignored (this checks geometry, not hazard timing).
+Traps are ignored (this checks geometry, not hazard timing). Wall jumps
+(World 5 on) are not modelled either: they only add reach, so a door found
+reachable without them stays reachable.
 
 Usage (from the repository root):
     python3 tools/Check_level_reachability.py --all

@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include "cfg_dash.h"
+#include "cfg_wall_jump.h"
 #include "controls_text.h"
 
 TEST_CASE(controls_text_has_lines_within_the_pause_overlay_limit) {
@@ -57,6 +58,18 @@ TEST_CASE(controls_text_dash_line_matches_the_unlock_world) {
         if (std::strstr(line, "Dash") != nullptr) {
             found = std::strstr(line, expected) != nullptr;
         }
+    }
+    CHECK(found);
+}
+
+TEST_CASE(controls_text_wall_jump_line_matches_the_unlock_world) {
+    char expected[] = "Wall W0+";
+    expected[6] = static_cast<char>('0' + Cfg::WallJump::UNLOCK_WORLD + 1);
+
+    bool found = false;
+    for (int i = 0; i < ControlsText::LINE_COUNT; ++i) {
+        found =
+            found || std::strstr(ControlsText::LINES[i], expected) != nullptr;
     }
     CHECK(found);
 }

@@ -22,6 +22,8 @@ struct Body {
 struct Floor {
     auto probe_ground() -> bool { return true; }
     auto probe_ceiling() -> bool { return false; }
+    auto probe_left() -> bool { return false; }
+    auto probe_right() -> bool { return false; }
     void die() {}
 };
 

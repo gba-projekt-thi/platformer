@@ -181,6 +181,10 @@ void Player::set_dash_enabled(bool enabled) {
     _locomotion.set_dash_enabled(enabled);
 }
 
+void Player::set_wall_jump_enabled(bool enabled) {
+    _locomotion.set_wall_jump_enabled(enabled);
+}
+
 void Player::begin_death_fx() {
     _death_ghost.reset();
 

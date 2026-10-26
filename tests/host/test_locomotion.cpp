@@ -1,6 +1,7 @@
 #include "test_framework.h"
 
 #include "locomotion.h"
+#include "world_index.h"
 
 // The duck's per-frame movement rules (locomotion::Core), with the real
 // bn::fixed arithmetic and Cfg constants of the game. FakeBody / FakeWorld
@@ -24,12 +25,23 @@ struct FakeBody {
 struct FakeWorld {
     bool ground = true;
     bool ceiling = false;
+    bool wall_left = false;
+    bool wall_right = false;
+    int wall_probes = 0;
     int deaths = 0;
     FakeBody* body = nullptr;
     Core* core = nullptr;
 
     auto probe_ground() -> bool { return ground; }
     auto probe_ceiling() -> bool { return ceiling; }
+    auto probe_left() -> bool {
+        ++wall_probes;
+        return wall_left;
+    }
+    auto probe_right() -> bool {
+        ++wall_probes;
+        return wall_right;
+    }
 
     // Like Player::death(): back to the spawn point, standing still.
     void die() {
@@ -97,6 +109,20 @@ auto dash_right() -> InputState {
     input.right_held = true;
     input.b_pressed = true;
     return input;
+}
+
+auto jump_right() -> InputState {
+    InputState input = jump();
+    input.right_held = true;
+    return input;
+}
+
+// In the air, falling, at a wall on the right (wall jump enabled).
+void fall_at_right_wall(Rig& rig) {
+    rig.core.set_wall_jump_enabled(true);
+    rig.world.ground = false;
+    rig.world.wall_right = true;
+    rig.steps(10);
 }
 
 }  // namespace
@@ -410,4 +436,161 @@ TEST_CASE(locomotion_landing_refills_the_air_dash) {
     rig.world.ground = false;
     rig.steps(10);
     CHECK(rig.step(dash_right()).dash_started);
+}
+
+// ---- wall slide and wall jump
+// ------------------------------------------------
+
+TEST_CASE(wall_jump_needs_to_be_enabled) {
+    Rig rig;
+    rig.world.ground = false;
+    rig.world.wall_right = true;
+    rig.steps(10);
+    CHECK(!rig.step(jump_right()).jumped);
+    rig.steps(40, right());
+    CHECK_EQ(rig.body.vel_y, bn::fixed(Cfg::Player::MAX_FALL_SPEED));
+}
+
+TEST_CASE(wall_jump_disabled_never_probes_walls) {
+    // Two extra collision queries per frame on the GBA; only worth it where
+    // wall jumps exist.
+    Rig rig;
+    rig.world.ground = false;
+    rig.steps(10, right());
+    rig.step(jump_right());
+    CHECK_EQ(rig.world.wall_probes, 0);
+}
+
+TEST_CASE(wall_slide_caps_the_fall_speed) {
+    Rig rig;
+    fall_at_right_wall(rig);
+    rig.steps(40, right());
+    CHECK_EQ(rig.body.vel_y, bn::fixed(Cfg::WallJump::SLIDE_SPEED));
+}
+
+TEST_CASE(wall_slide_needs_the_duck_to_hold_toward_the_wall) {
+    Rig rig;
+    fall_at_right_wall(rig);
+    rig.steps(40);
+    CHECK_EQ(rig.body.vel_y, bn::fixed(Cfg::Player::MAX_FALL_SPEED));
+
+    Rig away;
+    fall_at_right_wall(away);
+    away.steps(40, left());
+    CHECK_EQ(away.body.vel_y, bn::fixed(Cfg::Player::MAX_FALL_SPEED));
+}
+
+TEST_CASE(wall_slide_never_slows_a_rise) {
+    Rig rig;
+    fall_at_right_wall(rig);
+    rig.body.vel_y = -3;
+    rig.step(hold_jump());
+    CHECK_EQ(rig.body.vel_y, bn::fixed(-3) + Cfg::Player::GRAVITY);
+}
+
+TEST_CASE(wall_jump_pushes_away_from_the_wall) {
+    Rig rig;
+    fall_at_right_wall(rig);
+    const Effects effects = rig.step(jump_right());
+    CHECK(effects.jumped);
+    CHECK_EQ(rig.body.vel_y, bn::fixed(Cfg::Player::JUMP_SPEED));
+    CHECK_EQ(rig.body.vel_x, -bn::fixed(Cfg::WallJump::PUSH_SPEED));
+    CHECK(rig.core.facing() == Facing::Left);
+}
+
+TEST_CASE(wall_jump_off_a_left_wall_mirrors) {
+    Rig rig;
+    rig.core.set_wall_jump_enabled(true);
+    rig.world.ground = false;
+    rig.world.wall_left = true;
+    rig.steps(10);
+    InputState input = jump();
+    input.left_held = true;
+    CHECK(rig.step(input).jumped);
+    CHECK_EQ(rig.body.vel_x, bn::fixed(Cfg::WallJump::PUSH_SPEED));
+    CHECK(rig.core.facing() == Facing::Right);
+}
+
+TEST_CASE(wall_jump_ignores_the_dpad_briefly) {
+    Rig rig;
+    fall_at_right_wall(rig);
+    rig.step(jump_right());
+    rig.world.wall_right = false;  // left the wall
+    InputState toward = right();
+    toward.a_held = true;
+    rig.steps(Cfg::WallJump::LOCK_FRAMES, toward);
+    CHECK_EQ(rig.body.vel_x, -bn::fixed(Cfg::WallJump::PUSH_SPEED));
+    rig.step(toward);
+    CHECK_EQ(
+        rig.body.vel_x,
+        -bn::fixed(Cfg::WallJump::PUSH_SPEED) + Cfg::Player::ACCELERATION);
+}
+
+TEST_CASE(wall_jump_ground_jump_wins_next_to_a_wall) {
+    Rig rig;
+    rig.core.set_wall_jump_enabled(true);
+    rig.world.wall_right = true;
+    rig.step();
+    CHECK(rig.step(jump()).jumped);
+    CHECK_EQ(rig.body.vel_x, bn::fixed(0));
+}
+
+TEST_CASE(wall_jump_uses_the_jump_buffer) {
+    // A pressed shortly before touching the wall still jumps off it.
+    Rig rig;
+    rig.core.set_wall_jump_enabled(true);
+    rig.world.ground = false;
+    rig.steps(10);
+    rig.step(jump_right());
+    InputState toward = right();
+    toward.a_held = true;
+    rig.steps(2, toward);
+    rig.world.wall_right = true;
+    CHECK(rig.step(toward).jumped);
+    CHECK_EQ(rig.body.vel_x, -bn::fixed(Cfg::WallJump::PUSH_SPEED));
+}
+
+TEST_CASE(wall_jump_once_per_press) {
+    Rig rig;
+    fall_at_right_wall(rig);
+    CHECK(rig.step(jump_right()).jumped);
+    InputState toward = right();
+    toward.a_held = true;
+    CHECK(!rig.step(toward).jumped);
+}
+
+TEST_CASE(wall_jump_keeps_the_air_dash_used) {
+    // Only real ground refills the air dash; a wall does not.
+    Rig rig;
+    rig.core.set_dash_enabled(true);
+    rig.world.ground = false;
+    rig.steps(10);
+    CHECK(rig.step(dash_right()).dash_started);
+    rig.steps(Cfg::Dash::DURATION_FRAMES + Cfg::Dash::COOLDOWN_FRAMES + 5);
+    fall_at_right_wall(rig);
+    rig.step(jump_right());
+    rig.steps(Cfg::WallJump::LOCK_FRAMES + 1);
+    CHECK(!rig.step(dash_right()).dash_started);
+}
+
+TEST_CASE(wall_jump_constants_keep_the_slide_slower_than_a_fall) {
+    CHECK(Cfg::WallJump::SLIDE_SPEED > 0);
+    CHECK(Cfg::WallJump::SLIDE_SPEED < Cfg::Player::MAX_FALL_SPEED);
+    CHECK(Cfg::WallJump::PUSH_SPEED <= Cfg::Player::MAX_SPEED);
+    CHECK(Cfg::WallJump::LOCK_FRAMES > 0);
+    CHECK(Cfg::WallJump::UNLOCK_WORLD >= 0);
+    CHECK(Cfg::WallJump::UNLOCK_WORLD < WorldIndex::WORLD_COUNT);
+}
+
+TEST_CASE(wall_jump_landing_ends_the_dpad_lock) {
+    Rig rig;
+    fall_at_right_wall(rig);
+    rig.step(jump_right());
+    rig.world.wall_right = false;
+    rig.world.ground = true;
+    rig.step();  // lands
+    rig.step(right());
+    CHECK_EQ(
+        rig.body.vel_x,
+        -bn::fixed(Cfg::WallJump::PUSH_SPEED) + Cfg::Player::ACCELERATION);
 }

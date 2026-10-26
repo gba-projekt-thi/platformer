@@ -36,12 +36,16 @@ struct Effects {
 //
 // The duck's per-frame movement rules: running and braking, gravity, jump
 // buffer and coyote time, variable jump height, the world-edge bounce, the
-// fall death and the dash. No Butano runtime and no hardware: step() works on
-// any Body with `pos.x`, `pos.y`, `vel_x`, `vel_y` (PhysicsBody in the game)
-// and asks a World for the collision probes and the death:
+// fall death, the dash and the wall slide / wall jump. No Butano runtime and no
+// hardware: step() works on any Body with `pos.x`, `pos.y`, `vel_x`, `vel_y`
+// (PhysicsBody in the game) and asks a World for the collision probes and the
+// death:
 //
 //   bool probe_ground();   // something solid 1 px below the body
 //   bool probe_ceiling();  // something solid 1 px above the body
+//   bool probe_left();     // something solid 1 px left of the body
+//   bool probe_right();    // something solid 1 px right of the body
+//                          // (both only asked with wall jumps enabled)
 //   void die();            // respawn (may move the body, calls reset_dash())
 //
 // Host-tested in tests/host/test_locomotion.cpp with the game's bn::fixed.
@@ -64,6 +68,7 @@ class Core {
         // check and the ground state still run). On the frame a dash ends
         // _update_dash() returns false, so normal movement resumes at once.
         const bool dash_owns_frame = _update_dash(body, in, effects);
+        const int wall = dash_owns_frame ? 0 : _probe_wall(world);
 
         if (!dash_owns_frame) {
             _run(body, in, effects);
@@ -75,6 +80,13 @@ class Core {
             }
             if (body.vel_y > _max_fall_speed) {
                 body.vel_y = _max_fall_speed;
+            }
+            // Wall slide: falling while holding toward a wall.
+            const bool toward_wall =
+                (wall < 0 && in.left_held) || (wall > 0 && in.right_held);
+            if (toward_wall && !_on_ground &&
+                body.vel_y > Cfg::WallJump::SLIDE_SPEED) {
+                body.vel_y = Cfg::WallJump::SLIDE_SPEED;
             }
 
             // Bounce back when leaving the level's play area.
@@ -91,7 +103,7 @@ class Core {
         _update_ground(world);
 
         if (!dash_owns_frame) {
-            _jump(body, world, effects);
+            _jump(body, wall, world, effects);
         }
 
         if (_jump_buffer_timer > 0) {
@@ -125,9 +137,17 @@ class Core {
     // Changing the flag also cancels a running dash and refills the air dash.
     void set_dash_enabled(bool enabled) { _dash.set_enabled(enabled); }
 
-    // Cancels a running dash and clears its cooldown / air use (death, level
-    // load).
-    void reset_dash() { _dash.reset(); }
+    void set_wall_jump_enabled(bool enabled) {
+        _wall_jump_enabled = enabled;
+        _wall_jump_lock = 0;
+    }
+
+    // Cancels a running dash and clears its cooldown / air use, and ends the
+    // D-pad lock of a wall jump (death, level load).
+    void reset_dash() {
+        _dash.reset();
+        _wall_jump_lock = 0;
+    }
 
    private:
     // Feeds DashController and applies what it decides. Returns true while
@@ -169,8 +189,27 @@ class Core {
         return step.moving;
     }
 
+    // -1 = a wall touches the duck's left side, 1 = its right side, 0 = none
+    // (or wall jumps disabled: no probe at all).
+    template <typename World>
+    auto _probe_wall(World& world) -> int {
+        if (!_wall_jump_enabled) {
+            return 0;
+        }
+        if (world.probe_left()) {
+            return -1;
+        }
+        return world.probe_right() ? 1 : 0;
+    }
+
     template <typename Body>
     void _run(Body& body, const InputState& in, Effects& effects) {
+        // Right after a wall jump the D-pad is ignored (Cfg::WallJump).
+        if (_wall_jump_lock > 0) {
+            --_wall_jump_lock;
+            _walk_sound_counter = 0;
+            return;
+        }
         if (in.left_held) {
             body.vel_x -= _acceleration;
             if (body.vel_x < -_max_speed) {
@@ -220,6 +259,8 @@ class Core {
             _coyote_timer = _coyote_frames;
             // Real ground contact (never coyote time) refills the air dash.
             _dash.land();
+            // ... and gives the D-pad back after a wall jump.
+            _wall_jump_lock = 0;
         } else if (_coyote_timer > 0) {
             --_coyote_timer;
             _on_ground = true;
@@ -228,14 +269,22 @@ class Core {
         }
     }
 
-    // A buffered jump while grounded; a ceiling stops any upward motion.
+    // A buffered jump while grounded, else off a touched wall (pushing
+    // away from it); a ceiling stops any upward motion.
     template <typename Body, typename World>
-    void _jump(Body& body, World& world, Effects& effects) {
+    void _jump(Body& body, int wall, World& world, Effects& effects) {
         if (_jump_buffer_timer > 0 && _on_ground) {
             body.vel_y = _jump_speed;
             _on_ground = false;
             _jump_buffer_timer = 0;
             _coyote_timer = 0;
+            effects.jumped = true;
+        } else if (_jump_buffer_timer > 0 && wall != 0) {
+            body.vel_y = _jump_speed;
+            body.vel_x = bn::fixed(-wall * Cfg::WallJump::PUSH_SPEED);
+            _facing = wall > 0 ? Facing::Left : Facing::Right;
+            _wall_jump_lock = Cfg::WallJump::LOCK_FRAMES;
+            _jump_buffer_timer = 0;
             effects.jumped = true;
         }
         if (body.vel_y < 0 && world.probe_ceiling()) {
@@ -264,6 +313,9 @@ class Core {
     int _jump_buffer_frames = Cfg::Player::JUMP_BUFFER_FRAMES;
 
     int _walk_sound_counter = 0;
+
+    bool _wall_jump_enabled = false;
+    int _wall_jump_lock = 0;  // frames the D-pad stays ignored
 
     bn::fixed _horizontal_bound = Cfg::Screen::HORIZONTAL_EDGE;
     bn::fixed _ground_friction_scale = 1;

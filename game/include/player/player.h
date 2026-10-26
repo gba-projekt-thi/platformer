@@ -53,6 +53,8 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
     void set_assist_mode(bool enabled);
     // Dash (B): enabled per level by LevelManager::load().
     void set_dash_enabled(bool enabled);
+    // Wall slide / wall jump: enabled per level by LevelManager::load().
+    void set_wall_jump_enabled(bool enabled);
     // Emulator tests: see PlayerLocomotion::set_input_hook().
     void set_input_hook(PlayerLocomotion::InputHook hook) {
         _locomotion.set_input_hook(hook);

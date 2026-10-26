@@ -54,6 +54,9 @@ class PlayerLocomotion {
     }
     void set_assist_mode(bool enabled) { _core.set_assist_mode(enabled); }
     void set_dash_enabled(bool enabled) { _core.set_dash_enabled(enabled); }
+    void set_wall_jump_enabled(bool enabled) {
+        _core.set_wall_jump_enabled(enabled);
+    }
 
     // Cancels a running dash (death, level load).
     void reset_dash() { _core.reset_dash(); }
@@ -73,6 +76,8 @@ class PlayerLocomotion {
 
         bool probe_ground() { return body.probe_bottom(block_mask).any(); }
         bool probe_ceiling() { return body.probe_top(block_mask).any(); }
+        bool probe_left() { return body.probe_left(block_mask).any(); }
+        bool probe_right() { return body.probe_right(block_mask).any(); }
         void die() { death_handler.on_locomotion_death(); }
     };
 
