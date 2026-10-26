@@ -22,22 +22,13 @@
 class CycleTrap : public BaseTrap {
    public:
     // `t_trigger` may be nullptr (always running).
+    // timing / phase_frames already scaled for Hard / Assist Mode; trigger
+    // may be nullptr (cycles from the level start).
     CycleTrap(
-        bn::fixed t_start_x,
-        bn::fixed t_start_y,
-        bn::fixed t_width,
-        bn::fixed t_height,
-        bn::fixed t_offset_x,
-        bn::fixed t_offset_y,
-        const bn::sprite_item& t_sprite_item,
-        int t_sprite_waits,
-        bn::span<const uint16_t> t_graphics_indexes,
-        uint16_t t_blocking_layers,
-        bn::fixed t_dx,
-        bn::fixed t_dy,
-        trap_timing::CycleTiming t_timing,
-        unsigned t_phase_frames,
-        Trigger* t_trigger);
+        const TrapData& data,
+        trap_timing::CycleTiming timing,
+        unsigned phase_frames,
+        Trigger* trigger);
 
     void update() override;
 

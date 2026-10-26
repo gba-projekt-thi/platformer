@@ -1,36 +1,16 @@
 #include "path_trap.h"
 
-PathTrap::PathTrap(
-    bn::fixed t_start_x,
-    bn::fixed t_start_y,
-    bn::fixed t_width,
-    bn::fixed t_height,
-    bn::fixed t_offset_x,
-    bn::fixed t_offset_y,
-    const bn::sprite_item& t_sprite_item,
-    int t_sprite_waits,
-    bn::span<const uint16_t> t_graphics_indexes,
-    uint16_t t_blocking_layers,
-    bn::span<const bn::fixed_point> t_path,
-    unsigned t_path_waits,
-    Trigger& t_trigger)
+PathTrap::PathTrap(const TrapData& data, unsigned path_waits, Trigger& trigger)
     : BaseTrap(
-          t_path.empty() ? t_start_x : t_start_x + t_path[0].x(),
-          t_path.empty() ? t_start_y : t_start_y + t_path[0].y(),
-          t_width,
-          t_height,
-          t_offset_x,
-          t_offset_y,
-          t_sprite_item,
-          t_sprite_waits,
-          t_graphics_indexes,
-          t_blocking_layers,
+          data,
+          data.path.empty() ? data.x : data.x + data.path[0].x(),
+          data.path.empty() ? data.y : data.y + data.path[0].y(),
           Cfg::Physics::NO_MAX_VELOCITY),
-      _start_x(t_start_x),
-      _start_y(t_start_y),
-      _trigger(t_trigger),
-      _path(t_path),
-      _path_waits(t_path_waits) {}
+      _start_x(data.x),
+      _start_y(data.y),
+      _trigger(trigger),
+      _path(data.path),
+      _path_waits(path_waits) {}
 
 void PathTrap::update() {
     BaseTrap::update();

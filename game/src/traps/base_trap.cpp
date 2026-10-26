@@ -1,40 +1,36 @@
 #include "base_trap.h"
 #include "player.h"
 
+BaseTrap::BaseTrap(const TrapData& data, bn::fixed max_vel)
+    : BaseTrap(data, data.x, data.y, max_vel) {}
+
 BaseTrap::BaseTrap(
-    bn::fixed t_x,
-    bn::fixed t_y,
-    bn::fixed t_width,
-    bn::fixed t_height,
-    bn::fixed t_offset_x,
-    bn::fixed t_offset_y,
-    const bn::sprite_item& t_sprite_item,
-    int t_animation_wait,
-    bn::span<const uint16_t> t_graphics_indexes,
-    uint16_t t_blocking_layers,
-    bn::fixed t_max_vel)
+    const TrapData& data,
+    bn::fixed x,
+    bn::fixed y,
+    bn::fixed max_vel)
     : PhysicsBody(
-          t_x + t_offset_x,
-          t_y + t_offset_y,
-          t_width,
-          t_height,
+          x + data.offset_x,
+          y + data.offset_y,
+          data.width,
+          data.height,
           Cfg::Layer::TRAP,
           Cfg::Layer::PLAYER,
-          t_blocking_layers,
-          t_max_vel),
-      _trap_sprite(t_sprite_item.create_sprite(t_x, t_y), t_x, t_y) {
+          0,  // nothing blocks a trap
+          max_vel),
+      _trap_sprite(data.sprite.create_sprite(x, y), x, y) {
     sprite = &_trap_sprite;
 
     // Empty graphics span means:
     // this trap is static/non-animated.
-    if (!t_graphics_indexes.empty()) {
+    if (!data.graphic_indexes.empty()) {
         BN_ASSERT(
-            t_animation_wait >= 1,
+            data.sprite_waits >= 1,
             "Animated trap requires animation_wait >= 1");
         _animation_action =
             bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES>::forever(
-                _trap_sprite.sprite(), t_animation_wait,
-                t_sprite_item.tiles_item(), t_graphics_indexes);
+                _trap_sprite.sprite(), data.sprite_waits,
+                data.sprite.tiles_item(), data.graphic_indexes);
     }
 }
 

@@ -20,57 +20,39 @@ inline auto create_trap(const TrapData& trap_data, LevelManager& level_manager)
     -> bn::unique_ptr<BaseTrap> {
     switch (trap_data.type) {
         case TrapType::BASE:
-            return bn::make_unique<BaseTrap>(
-                trap_data.x, trap_data.y, trap_data.width, trap_data.height,
-                trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
-                trap_data.sprite_waits, trap_data.graphic_indexes, 0);
+            return bn::make_unique<BaseTrap>(trap_data);
 
         case TrapType::MOVING: {
-            Trigger& trigger =
-                level_manager.get_trigger_by_name(trap_data.trigger_name);
             const bn::fixed mult = level_manager.trap_speed_multiplier();
             return bn::make_unique<MovingTrap>(
-                trap_data.x, trap_data.y, trap_data.width, trap_data.height,
-                trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
-                trap_data.sprite_waits, trap_data.graphic_indexes, 0,
-                trap_data.velocity_x * mult, trap_data.velocity_y * mult,
-                trap_data.max_vel * mult, trigger);
+                trap_data, trap_data.velocity_x * mult,
+                trap_data.velocity_y * mult, trap_data.max_vel * mult,
+                level_manager.get_trigger_by_name(trap_data.trigger_name));
         }
 
         case TrapType::PATH: {
             // A path trap's speed is a frame count per node (path_waits), not
             // a velocity: Hard / Assist Mode divide it by the multiplier
             // instead of multiplying it - see trap_timing::scaled_frames().
-            Trigger& trigger =
-                level_manager.get_trigger_by_name(trap_data.trigger_name);
             const int speed_percent =
                 (level_manager.trap_speed_multiplier() * 100).round_integer();
             return bn::make_unique<PathTrap>(
-                trap_data.x, trap_data.y, trap_data.width, trap_data.height,
-                trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
-                trap_data.sprite_waits, trap_data.graphic_indexes, 0,
-                trap_data.path,
+                trap_data,
                 trap_timing::scaled_frames(trap_data.path_waits, speed_percent),
-                trigger);
+                level_manager.get_trigger_by_name(trap_data.trigger_name));
         }
 
         case TrapType::CHASE:
             return bn::make_unique<ChaserTrap>(
-                trap_data.x, trap_data.y, trap_data.width, trap_data.height,
-                trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
-                trap_data.sprite_waits, trap_data.graphic_indexes, 0,
-                trap_data.chase_follow_distance,
+                trap_data,
                 trap_data.chase_speed * level_manager.trap_speed_multiplier(),
                 level_manager.player());
 
         case TrapType::AMBUSH:
             return bn::make_unique<AmbushTrap>(
-                trap_data.x, trap_data.y, trap_data.width, trap_data.height,
-                trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
-                trap_data.sprite_waits, trap_data.graphic_indexes, 0,
-                trap_data.ambush_range,
+                trap_data,
                 trap_data.ambush_speed * level_manager.trap_speed_multiplier(),
-                trap_data.ambush_duration, level_manager.player());
+                level_manager.player());
 
         case TrapType::CYCLE: {
             // Optional trigger: without one the trap cycles from level start.
@@ -90,10 +72,7 @@ inline auto create_trap(const TrapData& trap_data, LevelManager& level_manager)
                 trap_timing::cycle_length(timing) > 0,
                 "CYCLE trap needs a round of at least one frame");
             return bn::make_unique<CycleTrap>(
-                trap_data.x, trap_data.y, trap_data.width, trap_data.height,
-                trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
-                trap_data.sprite_waits, trap_data.graphic_indexes, 0,
-                trap_data.cycle_dx, trap_data.cycle_dy, timing,
+                trap_data, timing,
                 trap_timing::scaled_frames(
                     trap_data.cycle_phase_frames, speed_percent),
                 trigger);
@@ -102,9 +81,7 @@ inline auto create_trap(const TrapData& trap_data, LevelManager& level_manager)
         default:
             BN_ERROR(
                 "Unimplemented or invalid trap type passed to TrapFactory");
-            return bn::make_unique<BaseTrap>(
-                0, 0, 0, 0, 0, 0, trap_data.sprite, trap_data.sprite_waits,
-                trap_data.graphic_indexes, 0);
+            return bn::make_unique<BaseTrap>(trap_data);
     }
 }
 

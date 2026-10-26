@@ -22,21 +22,8 @@
 // ----------------------------------------------------------------------------
 class AmbushTrap : public BaseTrap {
    public:
-    AmbushTrap(
-        bn::fixed t_start_x,
-        bn::fixed t_start_y,
-        bn::fixed t_width,
-        bn::fixed t_height,
-        bn::fixed t_offset_x,
-        bn::fixed t_offset_y,
-        const bn::sprite_item& t_sprite_item,
-        int t_sprite_waits,
-        bn::span<const uint16_t> t_graphics_indexes,
-        uint16_t t_blocking_layers,
-        bn::fixed t_range,
-        bn::fixed t_speed,
-        unsigned t_duration,
-        Player& t_player);
+    // speed already scaled for Hard / Assist Mode.
+    AmbushTrap(const TrapData& data, bn::fixed speed, Player& player);
 
     void update() override;
 

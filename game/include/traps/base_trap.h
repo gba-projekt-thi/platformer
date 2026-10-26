@@ -8,6 +8,7 @@
 
 #include "cfg.h"
 #include "i_resettable.h"
+#include "level_structure.h"
 #include "physics_body.h"
 #include "sprite.h"
 
@@ -27,18 +28,11 @@
 // ----------------------------------------------------------------------------
 class BaseTrap : public PhysicsBody, public IResettable {
    public:
-    BaseTrap(
-        bn::fixed t_x,
-        bn::fixed t_y,
-        bn::fixed t_width,
-        bn::fixed t_height,
-        bn::fixed t_offset_x,
-        bn::fixed t_offset_y,
-        const bn::sprite_item& t_sprite_item,
-        int t_sprite_waits,
-        bn::span<const uint16_t> t_graphics_indexes,
-        uint16_t t_blocking_layers,
-        bn::fixed t_max_vel = 0);
+    // A trap at the position, size and look of `data` (the fields every
+    // TrapType shares). max_vel caps a trap moved by velocity (MovingTrap);
+    // traps that set their position directly pass
+    // Cfg::Physics::NO_MAX_VELOCITY.
+    explicit BaseTrap(const TrapData& data, bn::fixed max_vel = 0);
 
     virtual void update() override;
 
@@ -56,6 +50,9 @@ class BaseTrap : public PhysicsBody, public IResettable {
     }
 
    protected:
+    // Same, but starting at (x, y) instead of (data.x, data.y).
+    BaseTrap(const TrapData& data, bn::fixed x, bn::fixed y, bn::fixed max_vel);
+
     // Sprite wrapper synchronized through SpriteRegistry.
     Sprite _trap_sprite;
 

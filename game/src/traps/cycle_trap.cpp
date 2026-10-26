@@ -1,42 +1,20 @@
 #include "cycle_trap.h"
 
 CycleTrap::CycleTrap(
-    bn::fixed t_start_x,
-    bn::fixed t_start_y,
-    bn::fixed t_width,
-    bn::fixed t_height,
-    bn::fixed t_offset_x,
-    bn::fixed t_offset_y,
-    const bn::sprite_item& t_sprite_item,
-    int t_sprite_waits,
-    bn::span<const uint16_t> t_graphics_indexes,
-    uint16_t t_blocking_layers,
-    bn::fixed t_dx,
-    bn::fixed t_dy,
-    trap_timing::CycleTiming t_timing,
-    unsigned t_phase_frames,
-    Trigger* t_trigger)
-    : BaseTrap(
-          t_start_x,
-          t_start_y,
-          t_width,
-          t_height,
-          t_offset_x,
-          t_offset_y,
-          t_sprite_item,
-          t_sprite_waits,
-          t_graphics_indexes,
-          t_blocking_layers,
-          // CycleTrap uses direct positional movement, not velocity.
-          Cfg::Physics::NO_MAX_VELOCITY),
-      _origin_x(t_start_x + t_offset_x),
-      _origin_y(t_start_y + t_offset_y),
-      _dx(t_dx),
-      _dy(t_dy),
-      _timing(t_timing),
-      _start_frame(trap_timing::cycle_start_frame(t_timing, t_phase_frames)),
+    const TrapData& data,
+    trap_timing::CycleTiming timing,
+    unsigned phase_frames,
+    Trigger* trigger)
+    // CycleTrap uses direct positional movement, not velocity.
+    : BaseTrap(data, Cfg::Physics::NO_MAX_VELOCITY),
+      _origin_x(data.x + data.offset_x),
+      _origin_y(data.y + data.offset_y),
+      _dx(data.cycle_dx),
+      _dy(data.cycle_dy),
+      _timing(timing),
+      _start_frame(trap_timing::cycle_start_frame(timing, phase_frames)),
       _frame(_start_frame),
-      _trigger(t_trigger) {
+      _trigger(trigger) {
     // Already in the right place for the first frame of its round.
     _apply(trap_timing::cycle_progress(_timing, _frame));
 }
