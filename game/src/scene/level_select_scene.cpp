@@ -11,6 +11,7 @@
 #include "level_manager.h"
 #include "level_scene.h"
 #include "player.h"
+#include "text_buffer.h"
 #include "timer.h"
 #include "world_index.h"
 #include "world_select_scene.h"
@@ -57,46 +58,27 @@ void LevelSelectScene::_rebuild_menu() {
     for (int i = 0; i < world.level_count; ++i) {
         const int absolute_index = world.start_index + i;
 
-        char buf[40];
-        int pos = 0;
-        buf[pos++] = (i == _selected_index) ? '>' : ' ';
-        buf[pos++] = ' ';
-        const char* label = "Level ";
-        for (const char* p = label; *p; ++p) {
-            buf[pos++] = *p;
-        }
-        buf[pos++] = char('1' + i);
+        TextBuffer<40> line;
+        line.append(i == _selected_index ? "> " : "  ")
+            .append("Level ")
+            .append_uint(unsigned(i + 1));
 
         if (!_is_unlocked(absolute_index)) {
-            const char* locked = " (Locked)";
-            for (const char* p = locked; *p; ++p) {
-                buf[pos++] = *p;
-            }
+            line.append(" (Locked)");
         } else if (
             absolute_index < GameState::MAX_LEVELS &&
             game_state.best_time_frames[absolute_index] > 0) {
-            // Append the personal-best clear time, e.g. " 01:23.45",
-            // plus a "*" if that level has ever been cleared without
-            // dying.
-            const FrameTime t =
-                frames_to_time(game_state.best_time_frames[absolute_index]);
-            buf[pos++] = ' ';
-            buf[pos++] = char('0' + (t.minutes / 10) % 10);
-            buf[pos++] = char('0' + t.minutes % 10);
-            buf[pos++] = ':';
-            buf[pos++] = char('0' + (t.seconds / 10) % 10);
-            buf[pos++] = char('0' + t.seconds % 10);
-            buf[pos++] = '.';
-            buf[pos++] = char('0' + (t.centis / 10) % 10);
-            buf[pos++] = char('0' + t.centis % 10);
+            // The personal-best clear time, e.g. " 01:23.45", plus a "*"
+            // if that level has ever been cleared without dying.
+            line.append(' ').append_time(
+                frames_to_time(game_state.best_time_frames[absolute_index]));
             if (has_no_death_clear(game_state, absolute_index)) {
-                buf[pos++] = '*';
+                line.append('*');
             }
         }
-        buf[pos] = '\0';
 
         _text_gen->generate(
-            Cfg::StartScreen::X, Cfg::StartScreen::Y + i * 16, buf,
+            Cfg::StartScreen::X, Cfg::StartScreen::Y + i * 16, line.c_str(),
             _menu_sprites);
     }
 

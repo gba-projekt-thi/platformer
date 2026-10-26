@@ -10,6 +10,7 @@
 #include "level_manager.h"
 #include "player.h"
 #include "start_scene.h"
+#include "text_buffer.h"
 #include "timer.h"
 
 LevelScene::LevelScene(
@@ -250,26 +251,14 @@ void LevelScene::_show_new_best_banner() {
         Cfg::NewBestBanner::X, Cfg::NewBestBanner::Y, "New Best!",
         _banner_sprites);
 
-    // Level-specific best time, e.g. "01:23.45" - same digit-formatting
-    // pattern as LevelSelectScene::_rebuild_menu().
+    // Level-specific best time, e.g. "01:23.45" (same format as
+    // LevelSelectScene).
     if (_level_index < unsigned(GameState::MAX_LEVELS)) {
-        const FrameTime t = frames_to_time(
-            _data_manager.state().best_time_frames[_level_index]);
-
-        char time_buf[9];
-        int pos = 0;
-        time_buf[pos++] = char('0' + (t.minutes / 10) % 10);
-        time_buf[pos++] = char('0' + t.minutes % 10);
-        time_buf[pos++] = ':';
-        time_buf[pos++] = char('0' + (t.seconds / 10) % 10);
-        time_buf[pos++] = char('0' + t.seconds % 10);
-        time_buf[pos++] = '.';
-        time_buf[pos++] = char('0' + (t.centis / 10) % 10);
-        time_buf[pos++] = char('0' + t.centis % 10);
-        time_buf[pos] = '\0';
-
+        TextBuffer<9> time;
+        time.append_time(frames_to_time(
+            _data_manager.state().best_time_frames[_level_index]));
         _banner_text_gen->generate(
-            Cfg::NewBestBanner::X, Cfg::NewBestBanner::Y + 16, time_buf,
+            Cfg::NewBestBanner::X, Cfg::NewBestBanner::Y + 16, time.c_str(),
             _banner_sprites);
     }
 

@@ -13,6 +13,7 @@
 #include "game_modes.h"
 #include "level_manager.h"
 #include "menu_nav.h"
+#include "text_buffer.h"
 
 namespace {
 constexpr const char* MENU_LABELS[5] = {
@@ -63,19 +64,13 @@ void PauseController::_rebuild_menu() {
     _menu_sprites.clear();
 
     for (int i = 0; i < int(MenuOption::Count); ++i) {
-        char buf[24];
-        int pos = 0;
-        buf[pos++] = (i == _selected_index) ? '>' : ' ';
-        buf[pos++] = ' ';
-        for (const char* p = MENU_LABELS[i]; *p; ++p) {
-            buf[pos++] = *p;
-        }
-        buf[pos] = '\0';
+        TextBuffer<24> line;
+        line.append(i == _selected_index ? "> " : "  ").append(MENU_LABELS[i]);
 
         _text_gen->generate(
             Cfg::PauseMenu::X,
             Cfg::PauseMenu::Y_OPTION_0 + i * Cfg::PauseMenu::OPTION_SPACING,
-            buf, _menu_sprites);
+            line.c_str(), _menu_sprites);
     }
 
     for (bn::sprite_ptr& sprite : _menu_sprites) {
@@ -89,23 +84,15 @@ int PauseController::_assist_row() const {
 }
 
 void PauseController::_append_toggle_row(int row, const char* label, bool on) {
-    char buf[24];
-    int pos = 0;
-    buf[pos++] = (_option_row == row) ? '>' : ' ';
-    buf[pos++] = ' ';
-    for (const char* p = label; *p; ++p) {
-        buf[pos++] = *p;
-    }
-    const char* value = on ? "On >" : "Off >";
-    for (const char* p = value; *p; ++p) {
-        buf[pos++] = *p;
-    }
-    buf[pos] = '\0';
+    TextBuffer<24> line;
+    line.append(_option_row == row ? "> " : "  ")
+        .append(label)
+        .append(on ? "On >" : "Off >");
 
     _text_gen->generate(
         Cfg::PauseMenu::X,
-        Cfg::PauseMenu::Y_OPTION_0 + row * Cfg::PauseMenu::OPTION_SPACING, buf,
-        _menu_sprites);
+        Cfg::PauseMenu::Y_OPTION_0 + row * Cfg::PauseMenu::OPTION_SPACING,
+        line.c_str(), _menu_sprites);
 }
 
 void PauseController::_rebuild_options_menu() {
@@ -119,27 +106,19 @@ void PauseController::_rebuild_options_menu() {
     const char* labels[2] = {"Music", "SFX"};
 
     for (int i = 0; i < 2; ++i) {
-        char buf[24];
-        int pos = 0;
-        buf[pos++] = (i == _option_row) ? '>' : ' ';
-        buf[pos++] = ' ';
-        for (const char* p = labels[i]; *p; ++p) {
-            buf[pos++] = *p;
-        }
-        buf[pos++] = ' ';
-        buf[pos++] = '<';
-        buf[pos++] = ' ';
-        buf[pos++] = char('0' + levels[i]);
-        buf[pos++] = '/';
-        buf[pos++] = char('0' + AudioSettings::MAX_LEVEL);
-        buf[pos++] = ' ';
-        buf[pos++] = '>';
-        buf[pos] = '\0';
+        TextBuffer<24> line;
+        line.append(i == _option_row ? "> " : "  ")
+            .append(labels[i])
+            .append(" < ")
+            .append_uint(levels[i])
+            .append('/')
+            .append_uint(AudioSettings::MAX_LEVEL)
+            .append(" >");
 
         _text_gen->generate(
             Cfg::PauseMenu::X,
             Cfg::PauseMenu::Y_OPTION_0 + i * Cfg::PauseMenu::OPTION_SPACING,
-            buf, _menu_sprites);
+            line.c_str(), _menu_sprites);
     }
 
     // Toggle rows (not 0-4 levels): Hard Mode - only shown once unlocked

@@ -20,6 +20,7 @@
 #include "level_scene.h"
 #include "menu_nav.h"
 #include "player.h"
+#include "text_buffer.h"
 #include "world_index.h"
 #include "world_select_scene.h"
 
@@ -53,32 +54,22 @@ void StartScene::_rebuild_slot_list() {
     _slot_sprites.clear();
 
     for (int i = 0; i < Cfg::StartScreen::SAVE_SLOT_COUNT; ++i) {
-        char buf[32];
-        int pos = 0;
-        buf[pos++] = (i == _selected_slot) ? '>' : ' ';
-        buf[pos++] = ' ';
-        const char* label = "Slot ";
-        for (const char* p = label; *p; ++p)
-            buf[pos++] = *p;
-        int num = i + 1;
-        buf[pos++] = char('0' + (num % 10));
+        TextBuffer<32> line;
+        line.append(i == _selected_slot ? "> " : "  ")
+            .append("Slot ")
+            .append_uint(unsigned(i + 1));
 
         if (_slot_used[i]) {
             // 1-indexed for display, matching the "Slot N" convention
             // above and WorldIndex::WORLDS' "World N" naming.
-            const char* world_label = "  World ";
-            for (const char* p = world_label; *p; ++p)
-                buf[pos++] = *p;
-            buf[pos++] = char('1' + _slot_furthest_world[i]);
+            line.append("  World ")
+                .append_uint(unsigned(_slot_furthest_world[i] + 1));
         } else {
-            const char* new_label = "  New";
-            for (const char* p = new_label; *p; ++p)
-                buf[pos++] = *p;
+            line.append("  New");
         }
-        buf[pos] = '\0';
 
         _text_gen->generate(
-            Cfg::StartScreen::X, Cfg::StartScreen::Y + i * 16, buf,
+            Cfg::StartScreen::X, Cfg::StartScreen::Y + i * 16, line.c_str(),
             _slot_sprites);
     }
 
