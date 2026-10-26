@@ -127,7 +127,7 @@ For headless or CI testing, use:
   - Both draw `controls_text.h`'s `ControlsText::LINES`, so they always agree
 
 - `game/include/game_modes.h`, `dash_controller.h`, `menu_nav.h`, `controls_text.h`, `cfg_dash.h`, `camera_rig.h`, `cfg_camera.h`, `death_fx.h`, `cfg_death_fx.h`, `trigger_logic.h`, `switch_logic.h`, `hint_logic.h`, `dash_trail.h`, `game_state_migration.h`, `checkpoint_logic.h`
-  - Butano-free helpers holding the testable decision logic: Hard/Assist Mode toggles and Options row indices, the dash rules (`DashController`) and constants, wrap-around list-menu cursors, the trigger mode state logic (delay, timer, jump / dash actions) and switched-platform rules, the one-frame player events, the trap frame scaling and cycle timeline, and the controls text. `LevelManager`, `PlayerLocomotion`, `PauseController` and `StartScene` call them and apply the results; covered by `tests/host/`
+  - Butano-free helpers holding the testable decision logic: Hard/Assist Mode toggles and Options row indices, the dash rules (`DashController`) and constants, wrap-around list-menu cursors, the trigger mode state logic (delay, timer, jump / dash actions) and switched-platform rules, the one-frame player events, the trap frame scaling and cycle timeline, the crumbling-platform state machine, and the controls text. `LevelManager`, `PlayerLocomotion`, `PauseController` and `StartScene` call them and apply the results; covered by `tests/host/`
 
 - `game/include/player.h` / `game/src/player.cpp`
   - Implements player movement, jump behavior, gravity, and input handling

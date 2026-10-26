@@ -530,6 +530,27 @@ next scene. The scene manager guarantees the previous stage is torn down before
 the next one initializes, which is critical on a device with limited shared
 resources (palettes, sprite slots, VRAM).
 
+### Crumbling platforms
+
+`PlatformData::crumble_frames` makes a platform give way under the duck. The
+state machine is `crumble::State` (`crumble_logic.h`, Butano-free and
+unit-tested): Solid -> Shaking (solid, `crumble_frames` long, not stopped by
+stepping off) -> Falling (not solid, 20 frames of drop animation) -> Gone (not
+solid, hidden; back after `crumble_respawn_frames`, or never). `update(standing,
+blocked)` returns an event; `LevelManager` applies it.
+
+`_load_crumble_platforms()` runs after the platforms are created and keeps a
+non-owning entry per crumbling platform (body, sprite, state), like the
+switched ones. Every frame after the collision update `_sync_crumble_platforms()`
+asks the player's bottom probe (`probe_bottom(Cfg::Layer::PLATFORM)`) which
+platform bodies the duck stands on, steps every state and applies the events:
+`Fell` disables the body, `Vanished` hides the sprite, `Respawned` enables both
+(only once `switch_logic::boxes_overlap()` says the duck is not inside the box).
+The shake and the fall are the sprite's `pos.offset_x/offset_y`, so the
+collision box never moves. `_finish_respawn()` calls
+`_reset_crumble_platforms()`, which also covers Restart Level. No new sprites
+are created, so the sprite budget is unchanged.
+
 ### Checkpoints
 
 `LevelData::checkpoints` lists `CheckpointData {x, y}` entries (center of the

@@ -9,7 +9,8 @@ the jump arcs without building the ROM:
 
   * platforms, coloured by reachability: green = reachable with a plain jump,
     orange = only with the dash, red = not reachable at all; switched platforms
-    are dashed and labelled "+lever" (solid while it is on) / "-lever"
+    are dashed and labelled "+lever" (solid while it is on) / "-lever";
+    crumbling platforms are dotted and labelled "crumbles 30f"
   * triggers (Toggle / Hold marked), linked by a dotted line to the traps they
     release
   * traps by type: BASE (static), MOVING (ghost boxes every 12 frames after its
@@ -316,6 +317,7 @@ STYLE = """
   .platform.dash-only { fill: #f6b67a; stroke: #b5651d; }
   .platform.unreachable { fill: #ef9a9a; stroke: #b71c1c; }
   .platform.switched { stroke-dasharray: 2 1; }
+  .platform.crumble { stroke-dasharray: 1 1; }
   .trigger { fill: #4aa3df; fill-opacity: 0.15; stroke: #1e78b4; stroke-width: 0.5; stroke-dasharray: 2 1; }
   .link { stroke: #1e78b4; stroke-width: 0.4; stroke-dasharray: 0.5 1.5; fill: none; }
   .trap { stroke-width: 0.6; fill-opacity: 0.35; }
@@ -444,7 +446,13 @@ def render(level, arcs="all", optimistic=False, show_traps=True, scale=2.0, reac
         if p.trigger is not None:
             cls += " switched"
             title += f" - {'solid' if p.active_when_on else 'gone'} while {p.trigger} is on"
+        if p.crumble:
+            cls += " crumble"
+            back = f"back after {p.respawn}f" if p.respawn else "never back"
+            title += f" - crumbles {p.crumble}f after the first step, {back}"
         svg.rect(p.cx, p.cy, p.w, p.h, cls, title)
+        if p.crumble:
+            svg.text(p.cx, p.cy - p.h / 2 - 2, f"crumbles {p.crumble}f", "small", "middle")
         if p.trigger is not None:
             sign = "+" if p.active_when_on else "-"
             svg.text(p.cx, p.cy - p.h / 2 - 2, f"{sign}{p.trigger}", "small", "middle")

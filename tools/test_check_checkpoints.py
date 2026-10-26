@@ -48,7 +48,14 @@ AMBUSH = ("{TrapType::AMBUSH, %d, %d, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP
           " 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, %d, 1, 5}")
 
 
-def level(name, cps, traps=()):
+CRUMBLE_PLATS = """
+constexpr PlatformData plats_crumble[] = {
+    {-40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0},
+    {40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0, nullptr, true, 30, 0}};
+"""
+
+
+def level(name, cps, traps=(), plats_ref="plats, 5"):
     traps_text = ""
     trap_ref = "nullptr, 0"
     if traps:
@@ -58,14 +65,16 @@ def level(name, cps, traps=()):
         name, ", ".join("{%d, %d}" % c for c in cps))
     return (
         traps_text + cps_text
-        + f"const LevelData {name} = {{plats, 5, trigs, 1, {trap_ref}, "
+        + f"const LevelData {name} = {{{plats_ref}, trigs, 1, {trap_ref}, "
         "bn::regular_bg_items::w, bn::music_items::m, {-40, 30}, {40, 40}, 640, 160, 1, nullptr, "
         f"{name}_cps, {len(cps)}}};\n"
     )
 
 
-LEVELS = HEAD + "".join(
+LEVELS = HEAD + CRUMBLE_PLATS + "".join(
     [
+        level("CRUMBLE", [(40, 44)], plats_ref="plats_crumble, 2"),
+        level("CRUMBLE_OK", [(-40, 44)], plats_ref="plats_crumble, 2"),
         level("OK", [(-40, 44), (40, 44)]),
         level("FLOAT", [(-40, 30)]),
         level("OUTSIDE", [(700, 44)]),
@@ -143,6 +152,13 @@ class SyntheticTests(unittest.TestCase):
 
     def test_switched_platform_is_no_support(self):
         self.assertError("SWITCHED", "switched by 'sw'")
+
+    def test_a_crumbling_platform_is_no_support(self):
+        self.assertError("CRUMBLE", "crumbles after 30 frames")
+
+    def test_the_other_platform_of_a_crumbling_level_is_fine(self):
+        errors, _ = self.run_check("CRUMBLE_OK")
+        self.assertEqual(errors, [])
 
     def test_respawn_inside_a_platform(self):
         self.assertError("INSIDE", "overlaps platform")

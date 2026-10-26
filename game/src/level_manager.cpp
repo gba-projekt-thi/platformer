@@ -211,6 +211,7 @@ void LevelManager::_advance_death_fx() {
 
 void LevelManager::_finish_respawn() {
     _reset_entities();
+    _reset_crumble_platforms();
     _restore_checkpoint_triggers();
     // The duck is back at the spawn point or a checkpoint, possibly far from
     // where it died: cut there instead of gliding across the level.
@@ -219,6 +220,7 @@ void LevelManager::_finish_respawn() {
 }
 
 void LevelManager::_clear_runtime_state() {
+    _crumble_platforms.clear();
     _switched_platforms.clear();
     _platforms.clear();
     _platform_bodies.clear();
@@ -345,6 +347,79 @@ void LevelManager::_sync_switched_platforms() {
     }
 }
 
+void LevelManager::_load_crumble_platforms(const LevelData& level) {
+    // _platforms / _platform_bodies hold one entry per platform, in the order
+    // of level.platforms (see _load_platforms()).
+    for (int i = 0; i < level.platform_count; ++i) {
+        const PlatformData& platform = level.platforms[i];
+        if (platform.crumble_frames == 0) {
+            continue;
+        }
+        BN_ASSERT(
+            platform.trigger_name == nullptr,
+            "A platform cannot be switched and crumbling");
+        _crumble_platforms.push_back(CrumblePlatform{
+            &_platform_bodies[i], _platforms[i].get(),
+            crumble::State(
+                platform.crumble_frames, platform.crumble_respawn_frames)});
+    }
+}
+
+void LevelManager::_sync_crumble_platforms() {
+    if (_crumble_platforms.empty()) {
+        return;
+    }
+
+    // What the duck stands on right now (1px probe below its feet).
+    const CollisionResult below = _player.probe_bottom(Cfg::Layer::PLATFORM);
+
+    for (CrumblePlatform& crumbling : _crumble_platforms) {
+        bool standing = false;
+        for (int hit = 0; hit < below.count; ++hit) {
+            if (below.hits[hit].body == crumbling.body) {
+                standing = true;
+            }
+        }
+        // A platform coming back on top of the duck would trap it (see
+        // _sync_switched_platforms()).
+        const bool blocked = switch_logic::boxes_overlap(
+            _player.pos.get_x(), _player.pos.get_y(), _player.pos.width,
+            _player.pos.height, crumbling.body->pos.get_x(),
+            crumbling.body->pos.get_y(), crumbling.body->pos.width,
+            crumbling.body->pos.height);
+
+        switch (crumbling.state.update(standing, blocked)) {
+            case crumble::Event::Fell:
+                crumbling.body->disable();
+                break;
+            case crumble::Event::Vanished:
+                crumbling.sprite->disable();
+                break;
+            case crumble::Event::Respawned:
+                crumbling.body->enable();
+                crumbling.sprite->enable();
+                break;
+            case crumble::Event::Started:
+            case crumble::Event::None:
+            default:
+                break;
+        }
+
+        crumbling.sprite->pos.offset_x = crumbling.state.shake_offset();
+        crumbling.sprite->pos.offset_y = crumbling.state.fall_offset();
+    }
+}
+
+void LevelManager::_reset_crumble_platforms() {
+    for (CrumblePlatform& crumbling : _crumble_platforms) {
+        crumbling.state.reset();
+        crumbling.body->enable();
+        crumbling.sprite->enable();
+        crumbling.sprite->pos.offset_x = 0;
+        crumbling.sprite->pos.offset_y = 0;
+    }
+}
+
 void LevelManager::_load_traps(const LevelData& level) {
     for (int i = 0; i < level.trap_count; ++i) {
         _traps.push_back(TrapFactory::create(level.traps[i], *this));
@@ -420,6 +495,7 @@ void LevelManager::load(const LevelData& level) {
     _load_platforms(level);
     _load_triggers(level);
     _bind_switched_platforms(level);
+    _load_crumble_platforms(level);
     _load_traps(level);
     _load_checkpoints(level);
     _sync_switched_platforms();
@@ -433,6 +509,7 @@ void LevelManager::unload() {
     _background.reset();
     _door.reset();
     _music.reset();
+    _crumble_platforms.clear();
     _switched_platforms.clear();
     _platforms.clear();
     _platform_bodies.clear();
@@ -505,6 +582,7 @@ LevelManager::UpdateResult LevelManager::update() {
     CollisionRegistry::instance().update_all();
     _sync_checkpoints();
     _sync_switched_platforms();
+    _sync_crumble_platforms();
     _check_player_died();
 
     // -------------------------------------------------------------------------

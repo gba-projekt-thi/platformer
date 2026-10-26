@@ -64,13 +64,24 @@ MAX_FRAMES = 160
 
 
 class Rect:
-    __slots__ = ("cx", "cy", "w", "h", "index", "trigger", "active_when_on")
+    __slots__ = (
+        "cx", "cy", "w", "h", "index", "trigger", "active_when_on",
+        "crumble", "respawn",
+    )
 
-    def __init__(self, cx, cy, w, h, index=-1, trigger=None, active_when_on=True):
+    def __init__(
+        self, cx, cy, w, h, index=-1, trigger=None, active_when_on=True,
+        crumble=0, respawn=0,
+    ):
         self.cx, self.cy, self.w, self.h = cx, cy, w, h
         self.index = index
         self.trigger = trigger
         self.active_when_on = active_when_on
+        # PlatformData::crumble_frames / crumble_respawn_frames. The check
+        # treats a crumbling platform as solid: it holds the duck long enough
+        # to jump off, so reachability is the same as for a plain one.
+        self.crumble = crumble
+        self.respawn = respawn
 
     @property
     def left(self):
@@ -389,7 +400,9 @@ def load_levels(path):
                 x, y, w, h, ox, oy = (_num(v) for v in pf[:6])
                 trig = pf[8].strip('"') if len(pf) > 8 and pf[8].startswith('"') else None
                 awo = (pf[9].strip() == "true") if len(pf) > 9 else True
-                platforms.append(Rect(x + ox, y + oy, w, h, i, trig, awo))
+                crumble = int(_num(pf[10])) if len(pf) > 10 else 0
+                respawn = int(_num(pf[11])) if len(pf) > 11 else 0
+                platforms.append(Rect(x + ox, y + oy, w, h, i, trig, awo, crumble, respawn))
         triggers = {}
         if f[2] != "nullptr":
             for lit in _ctr.extract_top_level_literals(trig_arrays[f[2]]):

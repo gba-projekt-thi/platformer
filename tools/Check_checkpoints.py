@@ -13,7 +13,7 @@ Errors (exit code 1):
   - outside the world bounds
   - the flag does not stand on a platform: its bottom (y + 8) must be at most
     4px above or 0px into the top of a platform that spans its x, and that
-    platform must not be a switched one (it can vanish)
+    platform must be neither a switched one nor a crumbling one (it can vanish)
   - the 8x8 respawn box overlaps a platform, a trap's start box or anywhere on
     a trap's path: the whole route of a PATH trap (the segments between its
     nodes, closing back to the first), the track a MOVING trap takes once its
@@ -165,6 +165,8 @@ def check_level(level, limit=DEFAULT_MAX, reach=True):
             )
         elif support.trigger is not None:
             err(f"{where}: stands on platform {support.index}, which is switched by '{support.trigger}'")
+        elif support.crumble:
+            err(f"{where}: stands on platform {support.index}, which crumbles after {support.crumble} frames")
         elif reach:
             if support.index not in reached_dash:
                 err(f"{where}: platform {support.index} cannot be reached from the spawn")

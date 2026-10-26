@@ -303,6 +303,14 @@ mid-jump, a hazard that rises as the duck climbs, a flying pest released later
 in the run. Without triggers, every moving hazard would be permanently active,
 which would be hard to design around and visually chaotic.
 
+### Crumbling platforms
+
+Some platforms do not wait for a trigger: they react to the duck itself. A
+crumbling platform shakes when the duck lands on it and gives way a moment
+later - the duck must keep moving, and stepping off does not save it. Some come
+back after a while, some are single-use stepping stones. Death puts them all
+back.
+
 ### Switches
 
 Beyond the invisible latching zones, a trigger can behave as a **switch**

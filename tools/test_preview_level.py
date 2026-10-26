@@ -31,7 +31,7 @@ constexpr bn::fixed_point MY_PATH[] = {
 LEVELS = """
 constexpr PlatformData plats[] = {
     {-40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0},
-    {40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0},
+    {40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0, nullptr, true, 30, 120},
     {160, 60, 32, 16, 0, 0, bn::sprite_items::p, 0},
     {400, 60, 32, 16, 0, 0, bn::sprite_items::p, 0}};
 
@@ -140,6 +140,11 @@ class ParsingTests(Fixture):
     def test_default_world_size_is_one_screen(self):
         other = self.levels["LEVEL_T2"]
         self.assertEqual((other.world_w, other.world_h), (240.0, 160.0))
+
+    def test_crumbling_platforms_are_parsed(self):
+        crumble = [(p.crumble, p.respawn) for p in self.level.platforms]
+        self.assertEqual(crumble, [(0, 0), (30, 120), (0, 0), (0, 0)])
+        self.assertIsNone(self.level.platforms[1].trigger)
 
     def test_trap_fields(self):
         kinds = [t["type"] for t in self.level.traps]
@@ -250,6 +255,19 @@ class DrawingTests(Fixture):
             self.assertNotIn("unreachable", classes[index])
         self.assertIn("dash-only", classes[2])  # 88px gap: dash only
         self.assertIn("unreachable", classes[3])  # far beyond even the dash
+
+    def test_a_crumbling_platform_is_drawn_dotted_and_labelled_but_still_reachable(self):
+        root = self.svg(arcs="none")
+        crumbling = [
+            r for r in root.iter(SVG + "rect") if "crumble" in r.get("class", "").split()
+        ]
+        self.assertEqual(len(crumbling), 1)
+        self.assertIn("platform 1", title_of(crumbling[0]))
+        self.assertIn("crumbles 30f", title_of(crumbling[0]))
+        self.assertIn("back after 120f", title_of(crumbling[0]))
+        self.assertNotIn("unreachable", crumbling[0].get("class").split())
+        text = " ".join(t.text or "" for t in root.iter(SVG + "text"))
+        self.assertIn("crumbles 30f", text)
 
     def test_without_reachability_nothing_is_flagged(self):
         root = ET.fromstring(pv.render(self.level, arcs="none", reach=False))

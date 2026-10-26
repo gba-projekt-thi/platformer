@@ -89,6 +89,11 @@ but never retreats; punishes standing still. Speeds up under Hard Mode. See
 a body belongs to and reacts to, letting the collision system route interactions
 without testing every pair. See [Project Architecture](architecture.md).
 
+**Crumbling platform** — A platform with `PlatformData::crumble_frames` > 0: it
+shakes and then gives way that many frames after the duck first stands on it,
+and optionally comes back after `crumble_respawn_frames`. Needs no trigger. See
+[Level Design — Crumbling platforms](level-design.md#crumbling-platforms).
+
 **Controls overview** — A short list of every button, shown by the start
 screen's "Controls" entry (`ControlsScene`) and by the pause menu's Controls
 view. Both read the same `ControlsText`. See

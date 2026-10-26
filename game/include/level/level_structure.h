@@ -55,6 +55,15 @@ struct PlatformData {
     // visible while the trigger is off (vanishes when switched on). See
     // switch_logic::platform_active().
     bool active_when_on = true;
+
+    // Crumbling platform: > 0 makes it give way that many frames after the
+    // duck first stands on it (it shakes meanwhile and stays solid), see
+    // crumble_logic.h. 0 = an ordinary platform. Cannot be combined with
+    // trigger_name. Appended last so existing literals compile unchanged.
+    unsigned crumble_frames = 0;
+    // Frames after which a crumbled platform comes back (once the duck is not
+    // in its box); 0 = it stays gone until a death or restart.
+    unsigned crumble_respawn_frames = 0;
 };
 
 // -----------------------------------------------------------------------------

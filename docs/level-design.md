@@ -291,6 +291,40 @@ conservative dash run. The check ignores hazards, so traps still need a manual
 look. All 19 current levels pass it conservatively, and 18 of them without the
 dash.
 
+### Crumbling platforms
+
+A platform reacts to the duck itself, without any trigger: set
+`PlatformData::crumble_frames` (after `active_when_on`) and the platform gives
+way that many frames after the duck first stands on it.
+
+| Field | Meaning |
+|-------|---------|
+| `crumble_frames` | Frames from the first step until the platform gives way (1 or more; 0 = an ordinary platform). It shakes meanwhile and stays solid. |
+| `crumble_respawn_frames` | Frames until it is back (0 = it stays gone until a death or Restart Level). |
+
+- Stepping off or jumping away does not save it: once it has been touched, it
+  falls. The crumble time is the margin the duck has to cross it.
+- It falls out of the picture for about a third of a second (a visual only: it
+  stops being solid the moment it starts to fall).
+- A platform that comes back waits until the duck is not inside its box, as
+  switched platforms do.
+- Death and Restart Level put every crumbling platform back.
+- A crumbling platform cannot also be switched by a trigger, and a checkpoint
+  must not stand on one (`Check_checkpoints.py` reports both; the level load
+  asserts the first).
+- `Check_level_reachability.py` treats a crumbling platform as a solid one:
+  the duck can always jump off before it falls, so reachability is unchanged.
+  With `crumble_respawn_frames` 0 a way that has to be taken twice (back and
+  forth) is gone the second time - check that by hand or give it a respawn.
+- `Preview_level.py` draws them dotted with a "crumbles Nf" label.
+
+```cpp
+// gives way 30 frames after the first step, is back after 2 seconds
+{-48, 60, 32, 8, 0, 0, bn::sprite_items::nebel, 0, nullptr, true, 30, 120}
+// a single-use stepping stone (never comes back)
+{16, 52, 32, 8, 0, 0, bn::sprite_items::nebel, 0, nullptr, true, 20, 0}
+```
+
 ### Checkpoints
 
 A long level or a boss can carry **one checkpoint**: a flag the duck touches

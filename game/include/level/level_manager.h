@@ -16,6 +16,7 @@
 #include "cfg.h"
 #include "checkpoint.h"
 #include "checkpoint_logic.h"
+#include "crumble_logic.h"
 #include "data_manager.h"
 #include "death_fx.h"
 #include "door.h"
@@ -163,6 +164,12 @@ class LevelManager {
     // Enables/disables switched platforms to match their triggers. Called
     // once at load and every frame after the collision update.
     void _sync_switched_platforms();
+    // Crumbling platforms (PlatformData::crumble_frames): created after the
+    // platforms, stepped every frame after the collision update, put back by
+    // _finish_respawn().
+    void _load_crumble_platforms(const LevelData& level);
+    void _sync_crumble_platforms();
+    void _reset_crumble_platforms();
 
     // Resets all resettable entities (currently: traps) after player
     // death or a manual level restart. Iterates a generic list rather
@@ -199,6 +206,16 @@ class LevelManager {
     };
     bn::vector<SwitchedPlatform, Cfg::Level::Limits::PLATFORMS>
         _switched_platforms;
+
+    // Platforms that give way under the duck. Non-owning like the switched
+    // ones; the state machine decides, LevelManager applies it.
+    struct CrumblePlatform {
+        StaticBody* body;
+        Sprite* sprite;
+        crumble::State state;
+    };
+    bn::vector<CrumblePlatform, Cfg::Level::Limits::PLATFORMS>
+        _crumble_platforms;
 
     // Non-owning view over every currently-loaded IResettable entity:
     // the triggers (registered in _load_triggers()) and the traps

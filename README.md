@@ -118,7 +118,7 @@ This repository includes a small GBA platformer built with the Butano engine. Yo
 - A run-complete summary screen shown once after the kiss scene (total time across every level's best, total deaths, and how many levels were cleared without dying), before the save slot resets for a fresh playthrough
 A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each culminating in a Hollow-Knight-style boss gauntlet level, defined across `game/include/level/levels_world1.h`-`levels_world5.h` (19 levels total). World 5 adds a dash level and a lever-puzzle level before its boss, and one more after it: a quiet, trap-free finale ending in a reunion with Susanne.
 - Level progression through a door at the end of each stage (occasionally a narrative stand-in for the door, like Susanne in World 5's finale), ending in a celebratory kiss scene
-- Platform placement and collision defined by level data
+- Platform placement and collision defined by level data, including crumbling platforms that give way under the duck (and optionally come back)
 - Trigger zones that activate hazards when the player enters them
 - Six trap categories: static (base), trigger-activated moving, path-following patrol, player-chasing, proximity-triggered ambush, and self-timed cycling hazards (spikes out of the floor)
 - Animated sprites (duck, door, mimics) and decorative tiles using Butano sprite items
