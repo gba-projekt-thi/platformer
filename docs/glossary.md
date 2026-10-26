@@ -336,6 +336,10 @@ by the handheld audio hardware. See [Asset Management](asset-management.md).
 the duck enters it; may start active or inactive. See
 [Level Design](level-design.md).
 
+**Trigger action** — `TriggerData::action`: what counts as entering a trigger's
+zone - the duck stepping in (Enter, default) or jumping / dashing while inside
+(Jump, Dash). See [Level Design — Jump and dash triggers](level-design.md#jump-and-dash-triggers).
+
 **Trigger delay** — `TriggerData::delay_frames`: the frames between the duck's
 action and the effect on the traps and platforms bound to the trigger, in both
 directions; a visible switch flips at once. For a Timer trigger it is the timer

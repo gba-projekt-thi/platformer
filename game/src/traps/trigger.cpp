@@ -1,6 +1,7 @@
 #include "trigger.h"
 
 #include "cfg.h"
+#include "player_events.h"
 
 Trigger::Trigger(
     bn::fixed t_x,
@@ -13,7 +14,8 @@ Trigger::Trigger(
     const bn::sprite_item* t_sprite,
     int t_sprite_index_off,
     int t_sprite_index_on,
-    unsigned t_delay_frames)
+    unsigned t_delay_frames,
+    TriggerAction t_action)
     : PhysicsBody(
           t_x,
           t_y,
@@ -23,7 +25,8 @@ Trigger::Trigger(
           Cfg::Layer::PLAYER,
           0),
       _state(t_default_on, t_mode, t_delay_frames),
-      _name(t_name) {
+      _name(t_name),
+      _action(t_action) {
     if (t_sprite != nullptr) {
         const int graphics_count = t_sprite->tiles_item().graphics_count();
         _tiles_off = t_sprite->tiles_item().create_tiles(
@@ -48,6 +51,11 @@ bool Trigger::is_triggered() const {
 
 void Trigger::update() {
     _state.tick();
+    // Jump / Dash triggers fire on the duck's action inside the zone.
+    const PlayerEvents& events = PlayerEvents::instance();
+    if (action_fires(_action, _inside, events.jumped(), events.dashed())) {
+        _state.on_enter();
+    }
     // A Timer trigger changes its pressed state on its own.
     _refresh_visual();
 }
@@ -55,13 +63,17 @@ void Trigger::update() {
 void Trigger::on_enter(
     [[maybe_unused]] uint16_t hit_layers,
     [[maybe_unused]] StaticBody* body) {
-    _state.on_enter();
+    _inside = true;
+    if (_action == TriggerAction::Enter) {
+        _state.on_enter();
+    }
     _refresh_visual();
 }
 
 void Trigger::on_exit(
     [[maybe_unused]] uint16_t hit_layers,
     [[maybe_unused]] StaticBody* body) {
+    _inside = false;
     _state.on_exit();
     _refresh_visual();
 }

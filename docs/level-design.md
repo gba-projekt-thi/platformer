@@ -392,6 +392,33 @@ changes its state:
 
 Existing levels do not set a mode and keep Latch, so none of them changes.
 
+### Jump and dash triggers
+
+`TriggerData::action` (after `delay_frames`) decides what counts as "entering"
+the zone:
+
+| Action | The trigger fires when ... |
+|--------|----------------------------|
+| **Enter** (default) | the duck steps into the zone, as before. |
+| **Jump** | the duck starts a jump while it is inside the zone. |
+| **Dash** | the duck starts a dash while it is inside the zone. |
+
+Everything else - the mode, the delay, the visible switch - works the same on
+top of it: a Toggle with `Jump` flips on every jump inside it, a Hold plate with
+`Jump` is pressed by a jump and released when the duck leaves. Walking through
+such a zone does nothing, so it is invisible to a careful player and punishes a
+reflexive one ("jumping here wakes the thwomp"). The Dash action only exists
+from World 3 onward, where the dash is enabled; in Worlds 1-2 it never fires.
+Place the zone so that the duck can only be inside it while it makes the
+intended move, and give it a visible sprite or a hint when the level is meant to
+be fair rather than cruel.
+
+```cpp
+// the brick above only falls when the duck jumps on this spot
+{40, 44, 24, 16, false, "hop", TriggerMode::Latch, nullptr, 0, 1, 0,
+ TriggerAction::Jump}
+```
+
 ### Delayed triggers
 
 `TriggerData::delay_frames` (the last field, default 0) puts a lag between what

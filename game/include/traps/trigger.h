@@ -19,6 +19,8 @@
 // - Latch (default): stays on after the player enters, until reset
 // - Toggle: every entry flips it (a switch)
 // - Hold: on only while the player is inside (a pressure plate)
+// - Jump / Dash action: the duck must jump / dash inside the zone instead of
+//   merely entering it (see TriggerAction)
 // - Timer: switches on by itself delay_frames after the level (re)starts
 // - delay_frames > 0: traps and platforms follow the player's action only
 //   after that many frames; a visible switch still flips at once
@@ -40,7 +42,8 @@ class Trigger : public PhysicsBody, public IResettable {
         const bn::sprite_item* t_sprite = nullptr,
         int t_sprite_index_off = 0,
         int t_sprite_index_on = 1,
-        unsigned t_delay_frames = 0);
+        unsigned t_delay_frames = 0,
+        TriggerAction t_action = TriggerAction::Enter);
     bool is_triggered() const;
     // Runs the delay / timer of the trigger state (see trigger_logic.h).
     void update() override;
@@ -58,6 +61,9 @@ class Trigger : public PhysicsBody, public IResettable {
 
     TriggerState _state;
     const char* _name;
+    TriggerAction _action;
+    // The duck overlaps the zone (set by the overlap callbacks).
+    bool _inside = false;
 
     // Optional switch visual; both tile sets are created up front so a state
     // change is just a tile swap (same idea as PlayerAnimator's tile cache).

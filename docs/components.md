@@ -324,6 +324,18 @@ last `reset()`. `Trigger::update()` - called every frame through
 still while the game is paused or frozen by the death feedback. A checkpoint
 respawn restores a snapshot immediately (`TriggerState::restore()`).
 
+A trigger with `TriggerData::action` Jump or Dash fires from `update()`
+instead of the overlap callback: `on_enter()` / `on_exit()` only track whether
+the duck is inside, and `action_fires(action, inside, jumped, dashed)`
+(`trigger_logic.h`) decides each frame whether the duck's jump or dash counts as
+an entry. The events come from `PlayerEvents` (`player_events.h`, a Butano-free
+header singleton): `PlayerLocomotion::update()` ends the previous frame's events
+with `begin_frame()` and notes a jump when `handle_jump()` really starts one and
+a dash when `update_dash()` starts one; `LevelManager::_load_player_spawn()`
+clears them on level load. An event stays readable until the player's next
+update, so every trigger sees it exactly once, whatever the order of the
+collision shapes in `CollisionRegistry`.
+
 Platforms bind to a trigger through `PlatformData::trigger_name`. After the
 triggers load, `LevelManager::_bind_switched_platforms()` resolves each name
 once with `get_trigger_by_name()`. Every frame, right after the collision

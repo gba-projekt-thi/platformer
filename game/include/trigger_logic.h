@@ -28,10 +28,36 @@
 // and only feels the trap later. delay_frames has no extra effect on Timer
 // triggers - it is their timer length.
 //
+// Action: what makes the duck's presence count as an "entry". Enter (default)
+// is the original behavior; Jump and Dash fire while the duck is inside the
+// zone and jumps or dashes (see action_fires()). Everything above (modes,
+// delay) works the same on top of it; a Hold plate with Jump is pressed by a
+// jump inside it and released when the duck leaves.
+//
 // In every mode reset() restores default_on.
 // -----------------------------------------------------------------------------
 
 enum class TriggerMode : uint8_t { Latch, Toggle, Hold, Timer };
+
+enum class TriggerAction : uint8_t { Enter, Jump, Dash };
+
+// Whether an action trigger fires this frame. `inside`: the duck overlaps the
+// zone. `jumped` / `dashed`: it started a jump / a dash this frame (see
+// PlayerEvents). Enter triggers fire from the overlap callback instead, never
+// from here.
+inline auto
+action_fires(TriggerAction action, bool inside, bool jumped, bool dashed)
+    -> bool {
+    switch (action) {
+        case TriggerAction::Jump:
+            return inside && jumped;
+        case TriggerAction::Dash:
+            return inside && dashed;
+        case TriggerAction::Enter:
+        default:
+            return false;
+    }
+}
 
 class TriggerState {
    public:

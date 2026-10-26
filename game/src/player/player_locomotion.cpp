@@ -3,6 +3,7 @@
 #include "audio_settings.h"
 #include "bn_keypad.h"
 #include "bn_sound_items.h"
+#include "player_events.h"
 
 PlayerLocomotion::PlayerLocomotion(
     PhysicsBody& body,
@@ -15,6 +16,9 @@ PlayerLocomotion::PlayerLocomotion(
       _death_handler(death_handler) {}
 
 void PlayerLocomotion::update() {
+    // Events of the previous frame are over (see PlayerEvents).
+    PlayerEvents::instance().begin_frame();
+
     // Store jump input in a buffer to allow forgiving timing. Done before the
     // dash step: a buffered jump on the ground also cancels a running dash
     // into a jump (see DashController).
@@ -82,6 +86,7 @@ bool PlayerLocomotion::update_dash() {
         _walk_sound_counter = 0;
 
         AudioSettings::instance().play_sfx(bn::sound_items::dash);
+        PlayerEvents::instance().note_dash();
     }
 
     if (step.ended) {
@@ -151,6 +156,7 @@ void PlayerLocomotion::handle_jump() {
         _coyote_timer = 0;
 
         AudioSettings::instance().play_sfx(bn::sound_items::jump);
+        PlayerEvents::instance().note_jump();
     }
 
     // Cancel upward motion when hitting a ceiling.

@@ -2,6 +2,7 @@
 #include "audio_settings.h"
 #include "bn_keypad.h"
 #include "level_limits.h"
+#include "player_events.h"
 #include "switch_logic.h"
 #include "trap_factory.h"
 #include "world_index.h"
@@ -78,6 +79,9 @@ void LevelManager::_load_player_spawn(const LevelData& level) {
         WorldIndex::WORLDS[Cfg::Dash::UNLOCK_WORLD].start_index);
     _save_sync.reset_baseline();
     _level_frame_count = 0;
+
+    // A jump or dash of the previous level must not fire a trigger here.
+    PlayerEvents::instance().clear();
 
     // Nothing of an earlier level's death feedback carries over.
     _death_fx.clear();
@@ -284,7 +288,7 @@ void LevelManager::_load_triggers(const LevelData& level) {
             trigger.x, trigger.y, trigger.width, trigger.height,
             trigger.default_on, trigger.name, trigger.mode, trigger.sprite,
             trigger.sprite_index_off, trigger.sprite_index_on,
-            trigger.delay_frames);
+            trigger.delay_frames, trigger.action);
     }
 
     // Fallback trigger prevents invalid references.

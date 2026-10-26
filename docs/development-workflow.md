@@ -102,7 +102,9 @@ more does not) and the camera rig (`camera_rig.h`: smoothing never overshoots,
 look-ahead direction, look up / down hold, world-edge bounds, also with
 truncating fixed-point numbers) and the death feedback (`death_fx.h`: freeze
 length, the end of the freeze reported once, shake fading out, flicker
-pattern). `PlayerLocomotion`,
+pattern), the trap frame scaling (`trap_timing.h`) and the one-frame player
+events with the jump / dash trigger rule (`player_events.h`,
+`trigger_logic.h`). `PlayerLocomotion`,
 `LevelManager`, `PauseController` and the scenes only feed these helpers
 and apply their results, so what is left in the Butano-dependent files is
 glue that still needs the manual checks below.

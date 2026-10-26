@@ -39,7 +39,11 @@ constexpr TriggerData trigs[] = {
     {0, 30, 20, 20, false, "go"},
     {100, 30, 10, 10, false, "lev", TriggerMode::Toggle},
     {200, 30, 10, 10, false, "slow", TriggerMode::Latch, nullptr, 0, 1, 45},
-    {220, 30, 10, 10, false, "clock", TriggerMode::Timer, nullptr, 0, 1, 120}};
+    {220, 30, 10, 10, false, "clock", TriggerMode::Timer, nullptr, 0, 1, 120},
+    {240, 30, 10, 10, false, "hop", TriggerMode::Toggle, nullptr, 0, 1, 0,
+     TriggerAction::Jump},
+    {260, 30, 10, 10, false, "zip", TriggerMode::Latch, nullptr, 0, 1, 15,
+     TriggerAction::Dash}};
 
 constexpr TrapData traps[] = {
     {TrapType::BASE, 0, 40, 12, 12, 0, 0, bn::sprite_items::t, 1,
@@ -156,19 +160,29 @@ class ParsingTests(Fixture):
 
     def test_trigger_modes_and_names(self):
         self.assertEqual(
-            [t["name"] for t in self.level.triggers], ["go", "lev", "slow", "clock"]
+            [t["name"] for t in self.level.triggers],
+            ["go", "lev", "slow", "clock", "hop", "zip"],
         )
         self.assertEqual(
             [t["mode"] for t in self.level.triggers],
-            ["Latch", "Toggle", "Latch", "Timer"],
+            ["Latch", "Toggle", "Latch", "Timer", "Toggle", "Latch"],
         )
 
     def test_trigger_delay_is_parsed_and_defaults_to_zero(self):
-        self.assertEqual([t["delay"] for t in self.level.triggers], [0, 0, 45, 120])
+        self.assertEqual([t["delay"] for t in self.level.triggers], [0, 0, 45, 120, 0, 15])
+
+    def test_trigger_action_is_parsed_and_defaults_to_enter(self):
+        self.assertEqual(
+            [t["action"] for t in self.level.triggers],
+            ["Enter", "Enter", "Enter", "Enter", "Jump", "Dash"],
+        )
 
     def test_trigger_note_names_delay_and_timer(self):
         notes = [pv.trigger_note(t) for t in self.level.triggers]
-        self.assertEqual(notes, ["", " [Toggle]", " +45f", " [Timer 120f]"])
+        self.assertEqual(
+            notes,
+            ["", " [Toggle]", " +45f", " [Timer 120f]", " [Toggle] on jump", " on dash +15f"],
+        )
 
 
 class GeometryTests(Fixture):
@@ -247,6 +261,8 @@ class DrawingTests(Fixture):
         text = " ".join(t.text or "" for t in self.svg(arcs="none").iter(SVG + "text"))
         self.assertIn("slow +45f", text)
         self.assertIn("clock [Timer 120f]", text)
+        self.assertIn("hop [Toggle] on jump", text)
+        self.assertIn("zip on dash +15f", text)
 
     def test_triggers_are_linked_to_their_traps_and_labelled(self):
         root = self.svg(arcs="none")

@@ -139,6 +139,8 @@ def parse_triggers(array_body):
                 "mode": mode,
                 # TriggerData::delay_frames (field 10): lag, or timer length
                 "delay": int(_num(f[10])) if len(f) > 10 else 0,
+                # TriggerData::action (field 11): Enter / Jump / Dash
+                "action": f[11].split("::")[-1].strip() if len(f) > 11 else "Enter",
                 # TriggerData::sprite (field 7): a visible switch uses a sprite slot.
                 "has_sprite": len(f) > 7 and f[7].strip() not in ("", "nullptr"),
             }
@@ -554,6 +556,9 @@ def trigger_note(t):
     if t["mode"] == "Timer":
         return f" [Timer {delay}f]"
     note = "" if t["mode"] == "Latch" else f" [{t['mode']}]"
+    action = t.get("action", "Enter")
+    if action != "Enter":
+        note += f" on {action.lower()}"
     return note + (f" +{delay}f" if delay else "")
 
 

@@ -100,6 +100,11 @@ struct TriggerData {
     // immediate, as every trigger so far. Appended last so positional
     // literals that stop earlier keep compiling unchanged.
     unsigned delay_frames = 0;
+
+    // What counts as "entering" the zone: the duck stepping in (Enter, the
+    // default) or jumping / dashing while inside it (Jump, Dash). Appended
+    // after delay_frames.
+    TriggerAction action = TriggerAction::Enter;
 };
 
 // -----------------------------------------------------------------------------
