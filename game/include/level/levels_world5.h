@@ -354,6 +354,66 @@ const LevelData LEVEL_WORLD5_LEVERS = {
     "Step on a lever to flip it"};
 
 // =============================================================================
+// WORLD 5 CLIMB - "Barrel Tower", the wall-jump level (one screen)
+// The door waits on the floor and runs away to the top of the tower when the
+// duck comes close; only wall jumps climb the shaft between the columns. A
+// trapdoor in the floor drops the first runner.
+// =============================================================================
+constexpr PlatformData world5_climb_platforms[] = {
+
+    // Floor: a row of barrels with their whole 26x32 picture solid, top at
+    // y=60.
+    {-104, 76, 26, 32, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {-78, 76, 26, 32, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {-52, 76, 26, 32, 0, 0, bn::sprite_items::barrel32x32, 0},
+    // The trapdoor: this barrel drops away when the duck runs into
+    // "trapdoor" - a jump from further back clears both.
+    {-26, 76, 26, 32, 0, 0, bn::sprite_items::barrel32x32, 0, "trapdoor",
+     false},
+    {0, 76, 26, 32, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {26, 76, 26, 32, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {52, 76, 26, 32, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {78, 76, 26, 32, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {104, 76, 26, 32, 0, 0, bn::sprite_items::barrel32x32, 0},
+
+    // The tower: two barrel columns 14px apart (a shaft only wall jumps
+    // climb). The right one stands on the floor, the left one leaves a 32px
+    // doorway at the bottom to walk into the shaft.
+    {88, 44, 26, 32, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {88, 12, 26, 32, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {88, -20, 26, 32, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {48, 12, 26, 32, 0, 0, bn::sprite_items::barrel32x32, 0},
+    {48, -20, 26, 32, 0, 0, bn::sprite_items::barrel32x32, 0}};
+
+constexpr TriggerData world5_climb_triggers[] = {
+
+    // Opens the trapdoor (the barrel right of it) when the duck runs in.
+    {-44, 52, 16, 16, false, "trapdoor"}};
+
+constexpr bn::fixed_point LEVEL_WORLD5_CLIMB_door_flee_path[] = {{58, -96}};
+
+const LevelData LEVEL_WORLD5_CLIMB = {
+    world5_climb_platforms,
+    sizeof(world5_climb_platforms) / sizeof(world5_climb_platforms[0]),
+    world5_climb_triggers,
+    sizeof(world5_climb_triggers) / sizeof(world5_climb_triggers[0]),
+    nullptr,
+    0,
+    bn::regular_bg_items::world5,
+    bn::music_items::world5,
+    // Player spawn
+    {-100, 48},
+    // The door runs from the floor to the top of the right column.
+    {30, 50, bn::sprite_items::door32x32, DOOR32X32_GRAPHICS_INDEXES, 8, false,
+     LEVEL_WORLD5_CLIMB_door_flee_path, 24, 20},
+    240,
+    160,
+    1,
+    // First level built on the wall jump (Cfg::WallJump::UNLOCK_WORLD = World
+    // 5).
+    "New: wall jump with A"};
+
+// =============================================================================
 // WORLD 5 BOSS - "The Mimic Lord" (world_width=650)
 // The final gauntlet: the axe from World 5's first level returns, closer
 // and hungrier, while a trio of thwomps slam down in sequence and two

@@ -43,18 +43,18 @@ TEST_CASE(world_index_worlds_are_contiguous_and_cover_the_roster) {
         CHECK(entry.level_count > 0);
         expected_start += entry.level_count;
     }
-    CHECK_EQ(expected_start, 19);
+    CHECK_EQ(expected_start, 20);
 }
 
 TEST_CASE(world_index_contiguity_rule_and_level_count) {
     // The same rule as a constant expression: world_index.h static_asserts
     // it, and main.cpp static_asserts levels[] against LEVEL_COUNT.
     CHECK(WorldIndex::contiguous());
-    CHECK_EQ(WorldIndex::LEVEL_COUNT, 19);
+    CHECK_EQ(WorldIndex::LEVEL_COUNT, 20);
 }
 
 TEST_CASE(world_for_level_exhaustive_sweep_over_every_real_level) {
-    // Every one of the 19 levels currently in the roster (see
+    // Every one of the 20 levels currently in the roster (see
     // levels_common.h / main.cpp's levels[]), checked against the exact
     // world boundaries WORLDS itself declares - not hardcoded numbers
     // that could silently drift from WORLDS.
@@ -74,11 +74,11 @@ TEST_CASE(world_for_level_clamps_to_world_zero_before_the_first_world) {
 }
 
 TEST_CASE(world_for_level_beyond_the_last_world_stays_on_the_last_world) {
-    // GameState::MAX_LEVELS (24) has headroom above the current 19-level
+    // GameState::MAX_LEVELS (24) has headroom above the current 20-level
     // roster for future levels - furthest_level could plausibly exceed
     // the last currently-defined world's range without WORLDS itself
     // having grown yet. Should saturate at the last world, not go out
     // of bounds or wrap.
-    CHECK_EQ(WorldIndex::world_for_level(20), 4);
+    CHECK_EQ(WorldIndex::world_for_level(21), 4);
     CHECK_EQ(WorldIndex::world_for_level(100), 4);
 }

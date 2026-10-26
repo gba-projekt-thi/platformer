@@ -14,6 +14,11 @@ struct Entry {
     int steps;
 };
 
+constexpr replay::Run LEVEL_WORLD5_CLIMB_RUNS[] = {
+    {0, 30}, {2, 20},  {14, 1},  {10, 14}, {2, 55}, {14, 1}, {10, 14},
+    {2, 1},  {14, 1},  {10, 14}, {2, 1},   {14, 1}, {9, 14}, {1, 1},
+    {13, 1}, {10, 14}, {2, 1},   {14, 1},  {9, 24}, {14, 1}, {2, 10},
+    {14, 1}, {2, 10},  {14, 1},  {2, 9},   {0, 10}};
 constexpr replay::Run LEVEL_WORLD5_FINALE_RUNS[] = {{2, 400}};
 
 // One entry per level, in play order (main.cpp's levels[]).
@@ -35,6 +40,7 @@ inline constexpr Entry ENTRIES[] = {
     {"LEVEL_WORLD5_SCROLL_2", nullptr, 0, 0},
     {"LEVEL_WORLD5_DASH", nullptr, 0, 0},
     {"LEVEL_WORLD5_LEVERS", nullptr, 0, 0},
+    {"LEVEL_WORLD5_CLIMB", LEVEL_WORLD5_CLIMB_RUNS, 26, 251},
     {"LEVEL_WORLD5_BOSS", nullptr, 0, 0},
     {"LEVEL_WORLD5_FINALE", LEVEL_WORLD5_FINALE_RUNS, 1, 400}};
 

@@ -211,6 +211,56 @@
       }
     },
     {
+      "name": "LEVEL_WORLD5_CLIMB",
+      "note": "=============================================================================\nWORLD 5 CLIMB - \"Barrel Tower\", the wall-jump level (one screen)\nThe door waits on the floor and runs away to the top of the tower when the\nduck comes close; only wall jumps climb the shaft between the columns. A\ntrapdoor in the floor drops the first runner.\n=============================================================================",
+      "platforms": {
+        "name": "world5_climb_platforms",
+        "items": [
+          {"blank_before": true, "note": "Floor: a row of barrels with their whole 26x32 picture solid, top at y=60.", "x": -104, "y": 76, "width": 26, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -78, "y": 76, "width": 26, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -52, "y": 76, "width": 26, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "barrel32x32", "sprite_index": 0},
+          {"note": "The trapdoor: this barrel drops away when the duck runs into\n\"trapdoor\" - a jump from further back clears both.", "x": -26, "y": 76, "width": 26, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "barrel32x32", "sprite_index": 0, "trigger_name": "trapdoor", "active_when_on": false},
+          {"x": 0, "y": 76, "width": 26, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 26, "y": 76, "width": 26, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 52, "y": 76, "width": 26, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 78, "y": 76, "width": 26, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 104, "y": 76, "width": 26, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "barrel32x32", "sprite_index": 0},
+          {"blank_before": true, "note": "The tower: two barrel columns 14px apart (a shaft only wall jumps\nclimb). The right one stands on the floor, the left one leaves a 32px\ndoorway at the bottom to walk into the shaft.", "x": 88, "y": 44, "width": 26, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 88, "y": 12, "width": 26, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 88, "y": -20, "width": 26, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 48, "y": 12, "width": 26, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 48, "y": -20, "width": 26, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "barrel32x32", "sprite_index": 0}
+        ]
+      },
+      "triggers": {
+        "name": "world5_climb_triggers",
+        "items": [
+          {"blank_before": true, "note": "Opens the trapdoor (the barrel right of it) when the duck runs in.", "x": -44, "y": 52, "width": 16, "height": 16, "name": "trapdoor"}
+        ]
+      },
+      "background": "world5",
+      "music": "world5",
+      "spawn": [-100, 48],
+      "door": {
+        "x": 30,
+        "y": 50,
+        "flee_path": [
+          [58, -96]
+        ],
+        "flee_range": 24,
+        "flee_frames": 20
+      },
+      "world_width": 240,
+      "world_height": 160,
+      "ground_friction": 1,
+      "intro_hint": "New: wall jump with A",
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "The door runs from the floor to the top of the right column.",
+        "intro_hint": "First level built on the wall jump (Cfg::WallJump::UNLOCK_WORLD = World 5)."
+      }
+    },
+    {
       "name": "LEVEL_WORLD5_BOSS",
       "note": "=============================================================================\nWORLD 5 BOSS - \"The Mimic Lord\" (world_width=650)\nThe final gauntlet: the axe from World 5's first level returns, closer\nand hungrier, while a trio of thwomps slam down in sequence and two\nmimics lie in wait among the real chests.\n=============================================================================",
       "platforms": {

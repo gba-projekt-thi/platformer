@@ -304,8 +304,10 @@ past the edge with coyote time). For switch levels it explores every lever
 configuration the duck can set from the platforms it has reached. A gap meant
 to require the dash must fail the optimistic no-dash run and pass the
 conservative dash run. The check ignores hazards, so traps still need a manual
-look. All 19 current levels pass it conservatively, and 18 of them without the
-dash.
+look. All 20 current levels pass it conservatively with the abilities of
+their world; "Cloak Corridor" needs the dash and "Barrel Tower" the wall jump
+(both checked to fail without them). Wall jumps are simulated frame by frame
+with a few climb policies: up a shaft between two walls, up a single wall.
 
 ### Fake doors and fake checkpoints
 

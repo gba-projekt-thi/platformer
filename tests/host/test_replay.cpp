@@ -129,7 +129,7 @@ TEST_CASE(replay_level_blocks_fill_the_sram_behind_the_saves) {
     CHECK_EQ(
         replay::SRAM_OFFSET + replay::LEVEL_BLOCKS * replay::BLOCK_SIZE,
         0x8000);
-    CHECK(replay::LEVEL_BLOCKS >= 19);
+    CHECK(replay::LEVEL_BLOCKS >= 20);
     CHECK_EQ(replay::block_offset(0), replay::SRAM_OFFSET);
     CHECK_EQ(
         replay::block_offset(2), replay::SRAM_OFFSET + 2 * replay::BLOCK_SIZE);

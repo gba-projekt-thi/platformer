@@ -10,6 +10,7 @@
 #include "data_manager.h"
 #include "level_manager.h"
 #include "level_scene.h"
+#include "menu_nav.h"
 #include "player.h"
 #include "text_buffer.h"
 #include "timer.h"
@@ -55,6 +56,9 @@ void LevelSelectScene::_rebuild_menu() {
     const WorldEntry& world = WorldIndex::WORLDS[_world_index];
     const GameState& game_state = _data_manager.state();
 
+    const int first_y = menu_nav::first_row_y(
+        world.level_count, Cfg::StartScreen::Y, Cfg::LevelSelect::ROW_SPACING,
+        Cfg::LevelSelect::LAST_ROW_Y);
     for (int i = 0; i < world.level_count; ++i) {
         const int absolute_index = world.start_index + i;
 
@@ -78,8 +82,8 @@ void LevelSelectScene::_rebuild_menu() {
         }
 
         _text_gen->generate(
-            Cfg::StartScreen::X, Cfg::StartScreen::Y + i * 16, line.c_str(),
-            _menu_sprites);
+            Cfg::StartScreen::X, first_y + i * Cfg::LevelSelect::ROW_SPACING,
+            line.c_str(), _menu_sprites);
     }
 
     for (bn::sprite_ptr& sprite : _menu_sprites) {

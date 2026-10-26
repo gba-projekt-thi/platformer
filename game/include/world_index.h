@@ -30,9 +30,10 @@ inline constexpr WorldEntry WORLDS[] = {
     {"World 3", 7, 3},  // LEVEL_3, LEVEL_WORLD3_SCROLL, LEVEL_WORLD3_BOSS
     {"World 4", 10,
      3},  // LEVEL_WORLD4_SCROLL, LEVEL_WORLD4_SCROLL_2, LEVEL_WORLD4_BOSS
-    {"World 5", 13, 6},  // LEVEL_WORLD5_SCROLL, LEVEL_WORLD5_SCROLL_2,
+    {"World 5", 13, 7},  // LEVEL_WORLD5_SCROLL, LEVEL_WORLD5_SCROLL_2,
                          // LEVEL_WORLD5_DASH, LEVEL_WORLD5_LEVERS,
-                         // LEVEL_WORLD5_BOSS, LEVEL_WORLD5_FINALE
+                         // LEVEL_WORLD5_CLIMB, LEVEL_WORLD5_BOSS,
+                         // LEVEL_WORLD5_FINALE
 };
 
 inline constexpr int WORLD_COUNT = sizeof(WORLDS) / sizeof(WORLDS[0]);

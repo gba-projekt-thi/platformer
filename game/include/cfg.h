@@ -173,6 +173,14 @@ inline constexpr int SAVE_SLOT_COUNT = 3;
 inline constexpr int ENTRY_COUNT = SAVE_SLOT_COUNT + 1;
 }  // namespace StartScreen
 
+namespace LevelSelect {
+// One row per level of the chosen world, from StartScreen::Y down; a world
+// with more levels starts higher (menu_nav::first_row_y()) so its last row
+// still sits at LAST_ROW_Y at most.
+inline constexpr int ROW_SPACING = 16;
+inline constexpr int LAST_ROW_Y = 70;
+}  // namespace LevelSelect
+
 namespace Physics {
 inline constexpr bn::fixed NO_MAX_VELOCITY = 0;
 }

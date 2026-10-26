@@ -57,6 +57,7 @@ int main() {
         LEVEL_WORLD5_SCROLL_2,
         LEVEL_WORLD5_DASH,
         LEVEL_WORLD5_LEVERS,
+        LEVEL_WORLD5_CLIMB,
         LEVEL_WORLD5_BOSS,
         LEVEL_WORLD5_FINALE};
     static_assert(
