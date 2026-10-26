@@ -11,6 +11,8 @@
 //
 //   * scaled_frames(): Hard Mode / Assist Mode scaling of a frame count
 //     (PathTrap::path_waits and the phases of a CycleTrap).
+//   * CycleTiming and cycle_progress(): the timeline of a CycleTrap, e.g.
+//     spikes that rise out of the floor, stay up, sink and wait.
 // -----------------------------------------------------------------------------
 
 namespace trap_timing {
@@ -28,6 +30,69 @@ inline auto scaled_frames(unsigned frames, int speed_percent) -> unsigned {
     const unsigned percent = static_cast<unsigned>(speed_percent);
     const unsigned scaled = (frames * 100u + percent / 2u) / percent;
     return scaled < 1u ? 1u : scaled;
+}
+
+// One round of a CycleTrap, in frames: it moves out over `extend` frames, stays
+// out for `hold` frames, moves back over `retract` frames and rests for `wait`
+// frames before the next round. An extend or retract of 0 is a jump, not a
+// movement (spikes that pop up at once).
+struct CycleTiming {
+    unsigned extend = 0;
+    unsigned hold = 0;
+    unsigned retract = 0;
+    unsigned wait = 0;
+};
+
+inline auto cycle_length(const CycleTiming& t) -> unsigned {
+    return t.extend + t.hold + t.retract + t.wait;
+}
+
+// How far out the trap is at `frame` (0 = start of a round), in permille:
+// 0 = at its start position, 1000 = fully out. Continuous from frame to frame
+// except for a 0-frame extend / retract. A round of 0 frames never moves.
+inline auto cycle_progress(const CycleTiming& t, unsigned frame) -> int {
+    if (cycle_length(t) == 0) {
+        return 0;
+    }
+    if (frame < t.extend) {
+        return static_cast<int>(frame * 1000u / t.extend);
+    }
+    frame -= t.extend;
+    if (frame < t.hold) {
+        return 1000;
+    }
+    frame -= t.hold;
+    if (frame < t.retract) {
+        return 1000 - static_cast<int>(frame * 1000u / t.retract);
+    }
+    return 0;
+}
+
+// The frame after `frame`: wraps to 0 at the end of a round (no division, this
+// runs every frame).
+inline auto next_cycle_frame(const CycleTiming& t, unsigned frame) -> unsigned {
+    ++frame;
+    return frame >= cycle_length(t) ? 0u : frame;
+}
+
+// Where in the round the trap starts: the phase offset, wrapped into the
+// round. Two traps with the same timing and different phases never move in
+// lockstep.
+inline auto cycle_start_frame(const CycleTiming& t, unsigned phase_frames)
+    -> unsigned {
+    const unsigned length = cycle_length(t);
+    return length == 0 ? 0u : phase_frames % length;
+}
+
+// Hard / Assist Mode: every phase scaled with scaled_frames(), so the whole
+// round runs faster (or slower) and the proportions stay.
+inline auto scaled_cycle(const CycleTiming& t, int speed_percent)
+    -> CycleTiming {
+    return {
+        scaled_frames(t.extend, speed_percent),
+        scaled_frames(t.hold, speed_percent),
+        scaled_frames(t.retract, speed_percent),
+        scaled_frames(t.wait, speed_percent)};
 }
 
 }  // namespace trap_timing

@@ -24,8 +24,10 @@
 // CHASE  -> Trails behind the player, closing in as they move right
 // AMBUSH -> Dormant until the player is horizontally close, then lunges
 //           once in one direction and returns to its start position
+// CYCLE  -> Moves out by (cycle_dx, cycle_dy), stays, moves back and waits,
+//           again and again on its own clock (spikes out of the floor)
 // -----------------------------------------------------------------------------
-enum class TrapType : uint8_t { BASE, MOVING, PATH, CHASE, AMBUSH };
+enum class TrapType : uint8_t { BASE, MOVING, PATH, CHASE, AMBUSH, CYCLE };
 
 // -----------------------------------------------------------------------------
 // PlatformData
@@ -197,6 +199,28 @@ struct TrapData {
 
     // Frames spent lunging before switching to the return phase.
     unsigned ambush_duration = 0;
+
+    // -------------------------------------------------------------------------
+    // CycleTrap
+    // -------------------------------------------------------------------------
+
+    // How far the trap moves out from its start position (px). Spikes that
+    // rise out of the floor: cycle_dx 0, cycle_dy negative.
+    bn::fixed cycle_dx = 0;
+    bn::fixed cycle_dy = 0;
+
+    // One round in frames: out, stay out, back, rest (see
+    // trap_timing::CycleTiming). The four must not all be 0.
+    unsigned cycle_extend_frames = 0;
+    unsigned cycle_hold_frames = 0;
+    unsigned cycle_retract_frames = 0;
+    unsigned cycle_wait_frames = 0;
+
+    // Where in the round the trap starts (frames), so two traps with the same
+    // timing can alternate. trigger_name (above) is optional for a CYCLE
+    // trap: with one it only cycles while that trigger is on, without it it
+    // cycles from the start of the level.
+    unsigned cycle_phase_frames = 0;
 };
 
 // -----------------------------------------------------------------------------

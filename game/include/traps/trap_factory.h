@@ -4,6 +4,7 @@
 #include "base_trap.h"
 #include "bn_unique_ptr.h"
 #include "chaser_trap.h"
+#include "cycle_trap.h"
 #include "level_manager.h"
 #include "level_structure.h"
 #include "moving_trap.h"
@@ -69,6 +70,33 @@ inline auto create(const TrapData& trap_data, LevelManager& level_manager)
                 trap_data.ambush_range,
                 trap_data.ambush_speed * level_manager.trap_speed_multiplier(),
                 trap_data.ambush_duration, level_manager.player());
+
+        case TrapType::CYCLE: {
+            // Optional trigger: without one the trap cycles from level start.
+            Trigger* trigger = trap_data.trigger_name == nullptr
+                                   ? nullptr
+                                   : &level_manager.get_trigger_by_name(
+                                         trap_data.trigger_name);
+            // Every phase of the round (and the start offset) is a frame
+            // count, so Hard / Assist Mode scale them like path_waits.
+            const int speed_percent =
+                (level_manager.trap_speed_multiplier() * 100).round_integer();
+            const trap_timing::CycleTiming timing = trap_timing::scaled_cycle(
+                {trap_data.cycle_extend_frames, trap_data.cycle_hold_frames,
+                 trap_data.cycle_retract_frames, trap_data.cycle_wait_frames},
+                speed_percent);
+            BN_ASSERT(
+                trap_timing::cycle_length(timing) > 0,
+                "CYCLE trap needs a round of at least one frame");
+            return bn::make_unique<CycleTrap>(
+                trap_data.x, trap_data.y, trap_data.width, trap_data.height,
+                trap_data.offset_x, trap_data.offset_y, trap_data.sprite,
+                trap_data.sprite_waits, trap_data.graphic_indexes, 0,
+                trap_data.cycle_dx, trap_data.cycle_dy, timing,
+                trap_timing::scaled_frames(
+                    trap_data.cycle_phase_frames, speed_percent),
+                trigger);
+        }
 
         default:
             BN_ERROR(

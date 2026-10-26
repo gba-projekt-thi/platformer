@@ -42,6 +42,8 @@ MOVING = ("{TrapType::MOVING, %d, %d, 16, 16, 0, 0, bn::sprite_items::t, 1, TRAP
           " 0.0, %s, %s, NO_PATH_TRAP, 0, 0, 0, \"sw\"}")
 CHASE = ("{TrapType::CHASE, %d, %d, 32, 16, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
          " 0, 0, 0, NO_PATH_TRAP, 0, 40, 2.5}")
+CYCLE = ("{TrapType::CYCLE, %d, %d, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
+         " 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0, 0, %d, 8, 40, 8, 60, 0}")
 AMBUSH = ("{TrapType::AMBUSH, %d, %d, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
           " 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, %d, 1, 5}")
 
@@ -83,6 +85,10 @@ LEVELS = HEAD + "".join(
         level("CHASE_AHEAD", [(40, 44)], [CHASE % (-200, 44)]),
         level("CHASE_OTHER_ROW", [(40, 44)], [CHASE % (-200, -20)]),
         level("CHASE_BEHIND", [(40, 44)], [CHASE % (100, 44)]),
+        # spikes that rise out of the floor under the flag: the whole stroke
+        # counts, not only the resting place
+        level("CYCLE_STROKE", [(40, 44)], [CYCLE % (40, 90, -50)]),
+        level("CYCLE_CLEAR", [(40, 44)], [CYCLE % (40, 120, -20)]),
         level("AMBUSH_NEAR", [(40, 44)], [AMBUSH % (70, 56, 40)]),
         level("AMBUSH_HIT", [(40, 44)], [AMBUSH % (46, 44, 40)]),
         level("UNREACHABLE", [(300, 44)]),
@@ -173,6 +179,13 @@ class SyntheticTests(unittest.TestCase):
     def test_a_base_trap_is_called_a_trap_and_a_moving_one_its_path(self):
         base, _ = self.run_check("ONTRAP")
         self.assertTrue(any("overlaps a BASE trap at" in e for e in base), base)
+
+    def test_the_whole_stroke_of_a_cycle_trap_is_part_of_its_path(self):
+        self.assertError("CYCLE_STROKE", "overlaps a CYCLE trap's path")
+
+    def test_a_cycle_trap_that_never_reaches_the_flag_is_fine(self):
+        errors, _ = self.run_check("CYCLE_CLEAR")
+        self.assertEqual(errors, [])
 
     def test_ambush_range_is_a_warning(self):
         self.assertWarning("AMBUSH_NEAR", "inside the ambush range")

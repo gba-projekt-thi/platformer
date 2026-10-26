@@ -201,7 +201,42 @@ Best used sparingly, among genuinely similar-looking static objects (a row
 of chests, a cluster of bushes), so the player learns to treat the whole
 group with caution rather than memorizing one exact tile.
 
-### 6. The gauntlet (Boss level)
+### 6. The cycle (Cycle trap)
+
+A hazard on its own clock: it moves out from its start position by
+`(cycle_dx, cycle_dy)`, stays out, moves back and rests, again and again -
+the classic spikes that rise out of the floor. A round is four frame counts
+(`cycle_extend_frames`, `cycle_hold_frames`, `cycle_retract_frames`,
+`cycle_wait_frames`); an extend or retract of 0 makes the spikes pop in or out
+at once. `cycle_phase_frames` starts the trap that far into its round, so a
+row of spikes with phases 0, 20, 40 ... forms a wave and two traps half a
+round apart alternate. The duck learns the rhythm instead of reacting to a
+trigger, which makes it the natural counterpart of the timed release.
+
+With a `trigger_name` the trap only cycles while that trigger is on and freezes
+where it is otherwise: a Timer trigger makes the cycle start a few seconds in,
+a lever switches the spikes off (or on). Without one it cycles from the first
+frame of the level. A death restarts every cycle from its phase.
+
+```cpp
+// spikes rise 12px out of the floor: 6 frames up, 30 up, 6 down, 60 resting;
+// the second one starts half a round (51 frames) later
+{TrapType::CYCLE, 40, 66, 16, 12, 0, 0, bn::sprite_items::rostybar32x32, 1,
+ TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0,
+ 0, -12, 6, 30, 6, 60, 0},
+{TrapType::CYCLE, 72, 66, 16, 12, 0, 0, bn::sprite_items::rostybar32x32, 1,
+ TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0,
+ 0, -12, 6, 30, 6, 60, 51},
+```
+
+Keep the **rest** long enough to cross: the duck needs roughly `wait +
+extend + retract` frames of safe time, and the hitbox of a rising trap is
+dangerous from the first frame of the extend. Hard Mode and Assist Mode scale
+all five numbers (a faster round in Hard Mode, a slower one in Assist Mode).
+`Preview_level.py` draws the stroke and prints the timing; the checkpoint check
+treats the whole stroke as the trap's path.
+
+### 7. The gauntlet (Boss level)
 
 A whole-level pattern, not a single trap: a flat, readable corridor with
 several of the above patterns layered in sequence - a patrol hazard

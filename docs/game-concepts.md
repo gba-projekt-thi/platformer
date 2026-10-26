@@ -278,8 +278,13 @@ From a player's perspective, traps come in a few recognizable kinds:
   like a chest among other chests) until the duck gets close, then lunge
   once and retreat. They punish approaching without care rather than
   punishing hesitation.
+- **Cycling hazards** rise and sink on their own clock - spikes out of the
+  floor that come, stay, go and wait, again and again. The duck learns the
+  rhythm and crosses in the gap; neighbouring spikes can run a step apart so
+  they form a wave. They can start on their own after a few seconds (a timer
+  trigger) or be switched off by a lever.
 
-Moving, Chase, Ambush, and Path hazards all move faster when Hard Mode is
+Moving, Chase, Ambush, Path, and Cycle hazards all move faster when Hard Mode is
 enabled (and slower in Assist Mode) - see [Hard Mode](#hard-mode) above.
 
 For the internal behavior of each, see [Components — Trap System](components.md).

@@ -12,7 +12,7 @@ The game includes:
 - A world-select stats line ("Deaths: N  Cleared: X/Y") aggregated from the loaded save slot's existing death total and best-time records
 - Level-select also shows each unlocked level's personal-best clear time (mm:ss.cc), once one has been set, marked with a trailing `*` if that level has ever been cleared without a single death (a no-death clear)
 - A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each with at least two regular levels plus one boss level, defined in code (19 levels total). World 5 has two levels built on the dash and the switch mechanic ("Cloak Corridor", "Lever Hall") before its boss, and an extra trap-free finale level after it.
-- Five trap categories: static (base), trigger-activated moving, path-following patrol, player-chasing, and proximity-triggered ambush hazards
+- Six trap categories: static (base), trigger-activated moving, path-following patrol, player-chasing, proximity-triggered ambush, and self-timed cycling hazards (spikes out of the floor)
 - Trigger zones that activate hazards - latching by default, or as toggling switches and hold-down pressure plates (optionally with a visible sprite) that can also open and close platforms
 - A door that advances the player to the next level, ending in a celebratory kiss scene (the door itself can be reskinned as a different, non-animated sprite for narrative moments - see World 5's finale)
 - A "New Best!" banner that holds the level-complete transition until acknowledged, whenever a level is cleared faster than its previous best time
@@ -127,7 +127,7 @@ For headless or CI testing, use:
   - Both draw `controls_text.h`'s `ControlsText::LINES`, so they always agree
 
 - `game/include/game_modes.h`, `dash_controller.h`, `menu_nav.h`, `controls_text.h`, `cfg_dash.h`, `camera_rig.h`, `cfg_camera.h`, `death_fx.h`, `cfg_death_fx.h`, `trigger_logic.h`, `switch_logic.h`, `hint_logic.h`, `dash_trail.h`, `game_state_migration.h`, `checkpoint_logic.h`
-  - Butano-free helpers holding the testable decision logic: Hard/Assist Mode toggles and Options row indices, the dash rules (`DashController`) and constants, wrap-around list-menu cursors, the trigger mode state logic (delay, timer, jump / dash actions) and switched-platform rules, the one-frame player events, the trap frame scaling, and the controls text. `LevelManager`, `PlayerLocomotion`, `PauseController` and `StartScene` call them and apply the results; covered by `tests/host/`
+  - Butano-free helpers holding the testable decision logic: Hard/Assist Mode toggles and Options row indices, the dash rules (`DashController`) and constants, wrap-around list-menu cursors, the trigger mode state logic (delay, timer, jump / dash actions) and switched-platform rules, the one-frame player events, the trap frame scaling and cycle timeline, and the controls text. `LevelManager`, `PlayerLocomotion`, `PauseController` and `StartScene` call them and apply the results; covered by `tests/host/`
 
 - `game/include/player.h` / `game/src/player.cpp`
   - Implements player movement, jump behavior, gravity, and input handling

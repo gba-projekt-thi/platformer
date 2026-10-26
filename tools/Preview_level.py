@@ -71,7 +71,8 @@ TRACK_MARGIN = 24  # how far past the world a MOVING trap's track is drawn
 TRAP_FIELDS = (
     "type x y width height offset_x offset_y sprite sprite_waits graphic_indexes "
     "velocity_x velocity_y max_vel path path_waits chase_follow_distance chase_speed "
-    "trigger_name ambush_range ambush_speed ambush_duration"
+    "trigger_name ambush_range ambush_speed ambush_duration "
+    "cycle_dx cycle_dy cycle_extend cycle_hold cycle_retract cycle_wait cycle_phase"
 ).split()
 
 
@@ -112,7 +113,8 @@ def parse_traps(array_body, paths):
             trap[key] = _num(fields.get(key, 0))
         for key in (
             "velocity_x velocity_y max_vel chase_follow_distance chase_speed "
-            "ambush_range ambush_speed ambush_duration path_waits"
+            "ambush_range ambush_speed ambush_duration path_waits "
+            "cycle_dx cycle_dy cycle_extend cycle_hold cycle_retract cycle_wait cycle_phase"
         ).split():
             trap[key] = _num(fields.get(key, 0))
         trap["trigger"] = _string(fields.get("trigger_name", "nullptr"))
@@ -322,6 +324,7 @@ STYLE = """
   .trap-path { fill: #8e24aa; stroke: #4a148c; }
   .trap-chase { fill: #d81b60; stroke: #880e4f; }
   .trap-ambush { fill: #795548; stroke: #3e2723; }
+  .trap-cycle { fill: #00897b; stroke: #004d40; }
   .ghost { fill: none; stroke: #e65100; stroke-width: 0.4; stroke-dasharray: 1.5 1.5; }
   .track { fill: none; stroke: #e65100; stroke-width: 0.5; }
   .route { fill: none; stroke: #8e24aa; stroke-width: 0.5; stroke-dasharray: 3 1.5; }
@@ -507,6 +510,7 @@ def render(level, arcs="all", optimistic=False, show_traps=True, scale=2.0, reac
         ("trap trap-path", "PATH"),
         ("trap trap-chase", "CHASE"),
         ("trap trap-ambush", "AMBUSH"),
+        ("trap trap-cycle", "CYCLE"),
     ]
     legend_y = max(svg.ys) + 12
     legend = ['<g id="legend">']
@@ -636,6 +640,20 @@ def _draw_triggers_and_traps(svg, level):
                 x,
                 y - trap["height"] / 2 - 2,
                 f"AMBUSH r={reach:g} lunge {travel:g}",
+                "small",
+                "middle",
+            )
+        elif kind == "CYCLE":
+            end_x, end_y = x + trap["cycle_dx"], y + trap["cycle_dy"]
+            svg.line(x, y, end_x, end_y, "lunge")
+            svg.rect(end_x, end_y, trap["width"], trap["height"], "ghost")
+            svg.rect(x, y, trap["width"], trap["height"], cls, title)
+            svg.text(
+                x,
+                y - trap["height"] / 2 - 2,
+                f"CYCLE {trap['cycle_extend']:g}/{trap['cycle_hold']:g}/"
+                f"{trap['cycle_retract']:g}/{trap['cycle_wait']:g}f"
+                + (f" +{trap['cycle_phase']:g}" if trap["cycle_phase"] else ""),
                 "small",
                 "middle",
             )

@@ -56,7 +56,10 @@ constexpr TrapData traps[] = {
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 40, 1.5,
      20},
     {TrapType::CHASE, -100, 20, 12, 12, 0, 0, bn::sprite_items::t, 1,
-     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 40, 2.5}};
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 40, 2.5},
+    {TrapType::CYCLE, 300, 56, 12, 12, 0, 0, bn::sprite_items::t, 1,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, "go", 0, 0, 0,
+     0, -12, 8, 40, 8, 60, 5}};
 
 constexpr CheckpointData cps[] = {{-40, 44}, {40, 44}};
 
@@ -140,8 +143,14 @@ class ParsingTests(Fixture):
 
     def test_trap_fields(self):
         kinds = [t["type"] for t in self.level.traps]
-        self.assertEqual(kinds, ["BASE", "MOVING", "PATH", "AMBUSH", "CHASE"])
-        moving, path, ambush, chase = (self.level.traps[i] for i in (1, 2, 3, 4))
+        self.assertEqual(kinds, ["BASE", "MOVING", "PATH", "AMBUSH", "CHASE", "CYCLE"])
+        moving, path, ambush, chase, cycle = (self.level.traps[i] for i in (1, 2, 3, 4, 5))
+        self.assertEqual((cycle["cycle_dx"], cycle["cycle_dy"]), (0.0, -12.0))
+        self.assertEqual(
+            [cycle[k] for k in ("cycle_extend", "cycle_hold", "cycle_retract", "cycle_wait", "cycle_phase")],
+            [8.0, 40.0, 8.0, 60.0, 5.0],
+        )
+        self.assertEqual(cycle["trigger"], "go")
         self.assertEqual((moving["velocity_y"], moving["max_vel"]), (4.0, 4.0))
         self.assertEqual(moving["trigger"], "go")
         self.assertEqual(path["path"], [(0.0, 0.0), (20.0, 0.0), (20.0, 10.0)])
@@ -249,7 +258,7 @@ class DrawingTests(Fixture):
 
     def test_every_trap_type_is_drawn_once(self):
         root = self.svg(arcs="none")
-        for kind in ("base", "moving", "path", "ambush", "chase"):
+        for kind in ("base", "moving", "path", "ambush", "chase", "cycle"):
             drawn = [
                 r
                 for r in rects_with(root, "trap", f"trap-{kind}")
@@ -267,7 +276,7 @@ class DrawingTests(Fixture):
     def test_triggers_are_linked_to_their_traps_and_labelled(self):
         root = self.svg(arcs="none")
         links = [e for e in root.iter(SVG + "line") if e.get("class") == "link"]
-        self.assertEqual(len(links), 2)  # MOVING and PATH are bound to "go"
+        self.assertEqual(len(links), 3)  # MOVING, PATH and CYCLE are bound to "go"
         text = " ".join(t.text or "" for t in root.iter(SVG + "text"))
         self.assertIn("lev [Toggle]", text)
 
@@ -297,6 +306,16 @@ class DrawingTests(Fixture):
         text = " ".join(t.text or "" for t in root.iter(SVG + "text"))
         self.assertIn("checkpoint 2", text)
         self.assertIn("checkpoints 2", text)
+
+    def test_cycle_trap_shows_its_stroke_and_timing(self):
+        root = self.svg(arcs="none")
+        text = " ".join(t.text or "" for t in root.iter(SVG + "text"))
+        self.assertIn("CYCLE 8/40/8/60f +5", text)
+        # the resting box and the ghost box at full extension (12px higher)
+        cycle = [r for r in rects_with(root, "trap-cycle") if title_of(r)][0]
+        self.assertEqual((float(cycle.get("x")), float(cycle.get("y"))), (294.0, 50.0))
+        ghosts = [g for g in rects_with(root, "ghost") if float(g.get("x")) == 294.0]
+        self.assertTrue(any(float(g.get("y")) == 38.0 for g in ghosts))
 
     def test_spawn_and_door_markers(self):
         root = self.svg(arcs="none")

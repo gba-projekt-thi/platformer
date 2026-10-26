@@ -17,7 +17,8 @@ Errors (exit code 1):
   - the 8x8 respawn box overlaps a platform, a trap's start box or anywhere on
     a trap's path: the whole route of a PATH trap (the segments between its
     nodes, closing back to the first), the track a MOVING trap takes once its
-    trigger fires, the line a CHASE trap sweeps to the right, or the lunge of
+    trigger fires, the stroke of a CYCLE trap (from its resting place to full
+    extension), the line a CHASE trap sweeps to the right, or the lunge of
     an AMBUSH trap
   - the supporting platform cannot be reached from the spawn (checked with the
     jump + dash movement model of Check_level_reachability.py, over every lever
@@ -101,6 +102,9 @@ def _trap_boxes(level, trap):
     if kind == "AMBUSH":
         travel = trap["ambush_speed"] * trap["ambush_duration"]
         return _segment_boxes((x, y), (x + travel, y), w, h)
+    if kind == "CYCLE":
+        # From its resting place out to full extension and back.
+        return _segment_boxes((x, y), (x + trap["cycle_dx"], y + trap["cycle_dy"]), w, h)
     if kind == "MOVING":
         boxes = []
         for px, py in pv.moving_track(trap, MOVING_FRAMES):

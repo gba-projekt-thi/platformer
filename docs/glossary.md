@@ -76,6 +76,11 @@ left. A level has at most one; the triggers that were on when it was reached
 fire again after a respawn. It never stands in a trap or on its path. See
 [Level Design — Checkpoints](level-design.md#checkpoints).
 
+**Cycle trap** — A hazard that moves out by a fixed offset, stays, moves back
+and rests, on repeat (spikes out of the floor). Its round is four frame counts
+plus a phase offset; an optional trigger gates it. Speeds up under Hard Mode.
+See [Level Design — The cycle](level-design.md#6-the-cycle-cycle-trap).
+
 **Chase trap** — A hazard that trails the player and closes in as they advance,
 but never retreats; punishes standing still. Speeds up under Hard Mode. See
 [Components — Trap System](components.md).

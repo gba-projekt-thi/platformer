@@ -87,6 +87,38 @@ class TrapReferenceTests(unittest.TestCase):
         self.assertEqual(warnings, [])
 
 
+CYCLE_A = (
+    '    {TrapType::CYCLE, 0, 0, 8, 8, 0, 0, bn::sprite_items::t, 1,'
+    ' TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, "a", 0, 0, 0,'
+    ' 0, -12, 8, 40, 8, 60, 0},\n'
+)
+CYCLE_FREE = (
+    '    {TrapType::CYCLE, 0, 0, 8, 8, 0, 0, bn::sprite_items::t, 1,'
+    ' TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0,'
+    ' 0, -12, 8, 40, 8, 60, 0},\n'
+)
+
+
+class CycleReferenceTests(unittest.TestCase):
+    def test_resolved_cycle_reference_is_clean(self):
+        errors, warnings = run_check(
+            triggers='    {0, 0, 8, 8, false, "a", TriggerMode::Timer, nullptr, 0, 1, 90},\n',
+            traps=CYCLE_A,
+        )
+        self.assertEqual((errors, warnings), ([], []))
+
+    def test_dangling_cycle_reference_is_an_error(self):
+        errors, _ = run_check(
+            triggers='    {0, 0, 8, 8, false, "other"},\n', traps=CYCLE_A
+        )
+        self.assertEqual(len(errors), 1)
+        self.assertIn('"a"', errors[0])
+
+    def test_a_cycle_trap_without_a_trigger_needs_none(self):
+        errors, warnings = run_check(traps=CYCLE_FREE)
+        self.assertEqual((errors, warnings), ([], []))
+
+
 class PlatformReferenceTests(unittest.TestCase):
     SWITCHED = '    {16, 60, 16, 8, 0, 0, bn::sprite_items::p, 0, "sw", true},\n'
 

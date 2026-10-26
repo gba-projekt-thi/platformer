@@ -108,6 +108,9 @@ graph TD
      rather than continuous tracking, model it on the ambush trap (also
      reads the player directly, but only to test a proximity threshold
      before running a fixed, self-contained sequence).
+   - If it repeats a movement on its own clock, model it on the cycle trap
+     (its timeline lives in `trap_timing.h`, Butano-free, so the rhythm is
+     unit-tested on the host).
    - If it is purely static, the base trap alone may suffice.
 4. **Teach the factory to construct your type** from a stage-data entry, wiring
    in its parameters and, if applicable, its linked trigger.

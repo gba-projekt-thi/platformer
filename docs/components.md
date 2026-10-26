@@ -241,6 +241,7 @@ classDiagram
     PathTrap --|> BaseTrap
     ChaserTrap --|> BaseTrap
     AmbushTrap --|> BaseTrap
+    CycleTrap --|> BaseTrap
 ```
 
 ### Base responsibilities
@@ -264,6 +265,7 @@ The base trap owns:
 | **Path** | Trigger-linked | Interpolates along defined waypoints | Patrols, sweeping hazards, figure-8 enemies. |
 | **Chase** | Watches the player | Moves to close the gap when the player advances | Pressure hazard that punishes hesitation. |
 | **Ambush** | Watches the player (proximity) | Lunges once in a fixed direction, then returns | Disguised hazards that punish getting too close. |
+| **Cycle** | Own clock (optionally gated by a trigger) | Moves out, stays, moves back, rests - on repeat | Spikes out of the floor, rhythm hazards. |
 
 ### Trap behaviors & characteristics
 
@@ -286,6 +288,16 @@ The base trap owns:
   directly rather than reacting to a Trigger, but activation is
   proximity-based rather than continuous tracking, and movement is a single
   bounded lunge rather than an ongoing pursuit.
+- **Cycle traps** run a fixed timeline (`trap_timing::CycleTiming`, pure and
+  unit-tested: `cycle_progress()` returns how far out the trap is in permille
+  for a frame of the round, `next_cycle_frame()` wraps the round without a
+  division). `CycleTrap` only turns that into a position
+  (`start + (dx, dy) * permille / 1000`), writes `pos`, `shape_pos` and the
+  sprite directly like `PathTrap`, and starts `cycle_phase_frames` into its
+  round. An optional trigger gates it: while the trigger is off the trap stays
+  where it is and its clock stands still. `reset()` returns to the phase it
+  started in. The factory scales the five frame counts by the Hard/Assist
+  multiplier and refuses a round of zero frames at load time.
 
 ### Activation mechanisms
 
