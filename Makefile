@@ -67,6 +67,41 @@ ifndef LIBBUTANOABS
 endif
 
 #---------------------------------------------------------------------------------------------------------------------
+# Tests (no ARM toolchain needed, so Butano's makefile is skipped for these goals):
+#   make test       host unit tests + Python tool tests + level data checks
+#   make checks     level data checks only
+#   make coverage   host unit test line coverage of game/
+#---------------------------------------------------------------------------------------------------------------------
+TEST_GOALS	:=	test checks coverage
+
+ifneq ($(MAKECMDGOALS),)
+ifeq ($(filter-out $(TEST_GOALS),$(MAKECMDGOALS)),)
+ONLY_TESTS	:=	1
+endif
+endif
+
+#---------------------------------------------------------------------------------------------------------------------
 # Include main makefile:
 #---------------------------------------------------------------------------------------------------------------------
+ifndef ONLY_TESTS
 include $(LIBBUTANOABS)/butano.mak
+endif
+
+.PHONY: $(TEST_GOALS)
+
+test:
+	$(MAKE) -C tests/host
+	python3 -m unittest discover -s tools -p 'test_*.py'
+	$(MAKE) checks
+
+checks:
+	python3 tools/Check_trigger_references.py
+	python3 tools/Check_level_hints.py
+	python3 tools/Check_world_index.py
+	python3 tools/Check_checkpoints.py
+	python3 tools/Check_sprite_budget.py
+	python3 tools/Check_hitboxes.py
+	python3 tools/Check_level_reachability.py --all
+
+coverage:
+	$(MAKE) -C tests/host coverage

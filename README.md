@@ -235,11 +235,14 @@ This is only possible in the devcontainer or if you have [pre-commit](https://pr
 Pure-logic code (save integrity, game-state bit flags, frame-time formatting, Hard/Assist Mode toggles, dash rules, menu cursor wrapping, controls text, trigger modes, switched-platform rules, level hints, checkpoint rules, entity limits) has a small host-side unit test suite under `tests/host/` - no ARM toolchain or devcontainer needed, just your system's own `g++`/`clang++`:
 
 ```bash
-cd tests/host
-make
+make test                          # everything: host tests, tools/ tests, level data checks
+make -C tests/host                 # host tests only (incremental, ~1-2 s after a change)
+make -C tests/host FILTER=crumble  # only tests whose name contains "crumble"
+make checks                        # level data checks only
+make coverage                      # line coverage of game/ by the host tests
 ```
 
-CI (`.github/workflows/ci.yml`) runs this on every push/PR, plus a separate job that builds the actual ROM in the devcontainer image and boots it headlessly. See [`docs/development-workflow.md`](docs/development-workflow.md#testing-methodology) for what's covered and what still has to be tested manually in the emulator.
+None of these need the ARM toolchain. CI (`.github/workflows/ci.yml`) runs this on every push/PR, plus a separate job that builds the actual ROM in the devcontainer image and boots it headlessly. See [`docs/development-workflow.md`](docs/development-workflow.md#testing-methodology) for what's covered and what still has to be tested manually in the emulator.
 
 ## Links
 

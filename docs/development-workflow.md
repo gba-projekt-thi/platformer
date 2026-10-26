@@ -80,9 +80,16 @@ These build with the **host's own g++/clang++**, not the ARM cross-compiler
 - no devkitARM, no Butano, no container needed:
 
 ```bash
-cd tests/host
-make        # builds and runs; non-zero exit on any failure
+make test                          # host tests + tools/ tests + level data checks
+make -C tests/host                 # builds and runs; non-zero exit on any failure
+make -C tests/host FILTER=crumble  # only tests whose name contains "crumble"
+make coverage                      # line coverage of game/ per file
 ```
+
+Every test file compiles to its own object in `build/host-tests/` with header
+dependencies, so after a change only the affected files rebuild (about 1-2
+seconds - fast enough for a test-first red/green loop). A failing `CHECK_EQ`
+prints both values; a filter that matches no test fails, so a typo cannot pass.
 
 The same extraction pattern covers the later features: the pure decision
 logic of Assist/Hard Mode (`game_modes.h`: `modes::trap_speed_mode()`,
@@ -125,12 +132,9 @@ Butano-dependent file where it becomes untestable on the host.
 Two independent jobs, so the fast check isn't blocked by the slow one:
 
 - **`host-tests`** - checks out just the `extern/engine` submodule (not its
-  nested Butano submodule, which host tests never touch) and runs
-  `tests/host`'s `make`. No Docker, no ARM toolchain - this is the fast,
-  cheap check.
-- **`level-data-checks`** - no submodules, no Docker: runs
-  `tools/Check_trigger_references.py` (see below) against
-  `game/include/level/levels_world*.h`.
+  nested Butano submodule, which host tests never touch), runs
+  `make -C tests/host` and prints the line coverage (`make coverage`). No
+  Docker, no ARM toolchain - this is the fast, cheap check.
 - **`gba-build`** - checks out recursively, builds the dev container image
   from `docker/Dockerfile` (the same image the devcontainer uses), runs
   `make` inside it to produce the ROM, then runs `./test-rom.sh` headlessly
@@ -141,9 +145,10 @@ Two independent jobs, so the fast check isn't blocked by the slow one:
 
 A separate workflow, `.github/workflows/python-tools.yml`, runs the Python
 side on its own: every `tools/test_*.py` (the checkers, the reachability
-simulator, the sprite and sound generators) and the level-data checks
-(`Check_trigger_references.py`, `Check_level_hints.py`, `Check_world_index.py`,
-`Check_checkpoints.py`, `Check_sprite_budget.py`).
+simulator, the sprite and sound generators) and the level-data checks via
+`make checks` (`Check_trigger_references.py`, `Check_level_hints.py`,
+`Check_world_index.py`, `Check_checkpoints.py`, `Check_sprite_budget.py`,
+`Check_hitboxes.py`, `Check_level_reachability.py --all`).
 It needs no Docker or ARM toolchain and only the first-level `extern/engine`
 submodule (not its nested Butano), so it is fast and independent of the slower
 `gba-build` job.
