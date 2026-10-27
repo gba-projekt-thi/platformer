@@ -145,6 +145,15 @@ class LevelManagerWiringTests(unittest.TestCase):
         self.assertIn("door_logic::on_touch(", trap)
         self.assertIn("_player.death()", trap)
 
+    def test_a_duck_a_trap_caught_on_the_trapped_door_dies_once(self):
+        trap = _method(self.text, "_check_door_trap") or ""
+        self.assertIn("_player.get_deaths() != _deaths_seen", trap)
+
+    def test_a_checkpoint_never_keeps_the_door_trap_trigger_on(self):
+        # Restored after a death, it would make the door deadly for good.
+        found = self.load.index("_door_trap = find_trigger(level.door.trap_trigger_name)")
+        self.assertLess(found, self.load.index("_checkpoint_run.forget_trigger("))
+
 
 @unittest.skipIf(CPP is None, "level_manager.cpp not found")
 class AttemptObjectsWiringTests(unittest.TestCase):

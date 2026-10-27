@@ -77,6 +77,14 @@ inline auto flag_at(uint16_t mask, int index) -> bool {
 // -----------------------------------------------------------------------------
 class CheckpointRun {
    public:
+    static constexpr int NO_TRIGGER = -1;
+
+    // A trigger the snapshot never keeps: the one of a door that turns into a
+    // trap (DoorData::trap_trigger_name). Restored, it would make the door
+    // deadly on every attempt after the flag. Set on every level load
+    // (NO_TRIGGER = keep them all); clear() leaves it alone.
+    void forget_trigger(int index) { _forgotten = index; }
+
     // Takes this frame's touches. A flag further along than the active one
     // becomes the only active flag and the triggers that are on are
     // remembered. Returns its index (the new respawn point), or -1.
@@ -91,7 +99,7 @@ class CheckpointRun {
             _triggers_on = 0;
             for (int t = 0; t < int(triggers.size()) && t < MAX_MASK_BITS;
                  ++t) {
-                if (triggers[t].is_triggered()) {
+                if (t != _forgotten && triggers[t].is_triggered()) {
                     _triggers_on =
                         static_cast<uint16_t>(_triggers_on | (1u << t));
                 }
@@ -133,4 +141,5 @@ class CheckpointRun {
    private:
     CheckpointTracker _tracker;
     uint16_t _triggers_on = 0;
+    int _forgotten = NO_TRIGGER;
 };

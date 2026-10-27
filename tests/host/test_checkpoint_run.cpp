@@ -122,3 +122,31 @@ TEST_CASE(checkpoint_run_clear_starts_the_level_over) {
     CHECK(!level.triggers[0].on);
     CHECK_EQ(level.touch(0), 0);  // every flag counts again
 }
+
+TEST_CASE(checkpoint_run_a_forgotten_trigger_is_not_switched_back_on) {
+    // The trigger of a door that turns into a trap (DoorData::
+    // trap_trigger_name): on when the flag is reached, it must not make the
+    // door deadly on every attempt after it.
+    Level level;
+    level.run.forget_trigger(2);
+    level.triggers[1].on = true;
+    level.triggers[2].on = true;
+    level.touch(0);
+    for (auto& trigger : level.triggers) {
+        trigger.on = false;  // the death reset
+    }
+    level.run.restore(level.triggers);
+    CHECK(level.triggers[1].on);
+    CHECK(!level.triggers[2].on);
+}
+
+TEST_CASE(checkpoint_run_forget_none_keeps_every_trigger) {
+    Level level;
+    level.run.forget_trigger(2);
+    level.run.forget_trigger(CheckpointRun::NO_TRIGGER);  // the next level
+    level.triggers[2].on = true;
+    level.touch(0);
+    level.triggers[2].on = false;
+    level.run.restore(level.triggers);
+    CHECK(level.triggers[2].on);
+}

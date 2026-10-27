@@ -27,12 +27,18 @@ namespace door_logic {
 enum class Touch : uint8_t { None, Finish, Kill };
 
 // reached: the duck touched the door this frame; locked: a boss still lives
-// (the door is hidden and cannot be entered); trapped: see trapped().
-inline auto on_touch(bool reached, bool locked, bool trapped) -> Touch {
+// (the door is hidden and cannot be entered); trapped: see trapped(); died:
+// something else already killed the duck this frame - a trapped door then does
+// not kill it a second time.
+inline auto on_touch(bool reached, bool locked, bool trapped, bool died = false)
+    -> Touch {
     if (!reached || locked) {
         return Touch::None;
     }
-    return trapped ? Touch::Kill : Touch::Finish;
+    if (!trapped) {
+        return Touch::Finish;
+    }
+    return died ? Touch::None : Touch::Kill;
 }
 
 // nullptr = the door has no trap trigger and is always a door.

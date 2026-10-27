@@ -41,6 +41,13 @@ TEST_CASE(door_logic_a_trapped_door_kills_the_duck) {
     CHECK(door_logic::on_touch(true, false, true) == Touch::Kill);
 }
 
+TEST_CASE(door_logic_a_trapped_door_does_not_kill_a_duck_that_just_died) {
+    // A trap caught the duck on the frame it touched the trapped door: one
+    // death, not two (the attempt count moves the door by deaths).
+    CHECK(door_logic::on_touch(true, false, true, true) == Touch::None);
+    CHECK(door_logic::on_touch(true, false, true, false) == Touch::Kill);
+}
+
 TEST_CASE(door_logic_a_locked_door_is_never_entered) {
     // The boss lock wins over both: a hidden door neither finishes nor kills.
     CHECK(door_logic::on_touch(true, true, false) == Touch::None);

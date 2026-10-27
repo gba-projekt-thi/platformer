@@ -293,10 +293,12 @@ The base trap owns:
   after the concrete trap is built, through `BaseTrap::set_sprite_z_order()`, so
   the fake stands behind the duck like the real one.
 - **False exits** are the real door lying, decided in `door_logic.h` (pure,
-  host-tested): `on_touch(reached, locked, trapped)` turns a touch into
-  `Finish`, `Kill` or nothing (a boss-locked door does neither), `trapped()`
+  host-tested): `on_touch(reached, locked, trapped, died)` turns a touch into
+  `Finish`, `Kill` or nothing (a boss-locked door does neither; a duck a trap
+  already caught this frame is not killed twice), `trapped()`
   reads the `DoorData::trap_trigger_name` trigger that `LevelManager` looks up
-  after loading the triggers, and `attempt_offset()` picks the door's spot
+  after loading the triggers (and tells `CheckpointRun::forget_trigger()` to
+  leave out of the checkpoint snapshot), and `attempt_offset()` picks the door's spot
   from `DoorData::attempt_positions` with `attempt_variant::variant_for_attempt()`.
   `LevelManager::_check_door_trap()` runs right after the collision update,
   before `_check_player_died()`, so a door that kills starts the death

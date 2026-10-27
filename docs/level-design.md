@@ -407,7 +407,8 @@ Two more ways for the real door to lie, both on the level's `door`
   finishing the level; while it is off the door is a door. Any trigger works:
   a zone right in front of the door, a Hold plate somewhere else, a Timer
   ("the door does not wait"), a delay. A death resets the trigger and with it
-  the door. **No tell:** the door looks exactly the same either way - as in
+  the door - behind a checkpoint too: the checkpoint's snapshot of the
+  triggers that were on never keeps this one. **No tell:** the door looks exactly the same either way - as in
   Level Devil, the joke is that the safe door a moment ago is not safe now.
   The tell belongs to the trigger: give it a visible sprite (a lever drops
   the moment the duck steps on it) or make the rule learnable in one death.

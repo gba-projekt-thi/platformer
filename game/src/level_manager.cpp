@@ -151,10 +151,16 @@ void LevelManager::_check_door_trap() {
     if (!_door) {
         return;
     }
-    const door_logic::Touch touch = door_logic::on_touch(
-        _door->reached(), _door_locked, door_logic::trapped(_door_trap));
-    if (touch == door_logic::Touch::Kill) {
+    // _check_player_died() has not seen this frame's deaths yet: a trap that
+    // caught the duck on the trapped door is its only death.
+    const bool trapped = door_logic::trapped(_door_trap);
+    const bool died = _player.get_deaths() != _deaths_seen;
+    const door_logic::Touch touch =
+        door_logic::on_touch(_door->reached(), _door_locked, trapped, died);
+    if (touch == door_logic::Touch::Kill || (trapped && died)) {
         _door->clear_reached();
+    }
+    if (touch == door_logic::Touch::Kill) {
         _player.death();
     }
 }
@@ -571,6 +577,9 @@ void LevelManager::load(const LevelData& level) {
     _load_platforms(level);
     _load_triggers(level);
     _door_trap = find_trigger(level.door.trap_trigger_name);
+    _checkpoint_run.forget_trigger(
+        _door_trap != nullptr ? int(_door_trap - _triggers.data())
+                              : CheckpointRun::NO_TRIGGER);
     _load_dynamic_platforms(level);
     _load_traps(level);
     _load_checkpoints(level);
