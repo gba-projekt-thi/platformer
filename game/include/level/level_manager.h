@@ -30,6 +30,7 @@
 #include "log.h"
 #include "pause_controller.h"
 #include "player.h"
+#include "respawn_logic.h"
 #include "save_sync_controller.h"
 #include "sprite.h"
 #include "trigger.h"
@@ -153,8 +154,14 @@ class LevelManager {
     void _check_player_died();
     void _render_frame();
     void _advance_death_fx();
+    // A death or Restart Level: sets up the next attempt now or when the
+    // death freeze ends (respawn_logic.h).
+    void _respawn(respawn::Cause cause);
     // After a death: re-arms traps and triggers, cuts the camera to the duck.
     void _finish_respawn();
+    // Level Devil: the respawn brought a different layout
+    // (attempt_objects::layout_changes()) - a sound and a short shake.
+    void _cue_layout_change();
 
     void _clear_runtime_state();
     static void _validate_level(const LevelData& level);
@@ -240,10 +247,10 @@ class LevelManager {
     CameraRig<bn::fixed> _camera_rig;
 
     // Death feedback state. _deaths_seen is the death count the level manager
-    // has reacted to; _skip_death_fx suppresses the feedback for the death
-    // that Restart Level causes on purpose; _respawn_pending defers the trap
-    // reset until the freeze ends, so the trap that killed the duck stays
-    // where it is while the world is frozen.
+    // has reacted to (Restart Level takes its own death at once, so it gets
+    // no feedback); _respawn_pending defers the trap reset until the freeze
+    // ends, so the trap that killed the duck stays where it is while the
+    // world is frozen.
     death_fx::Sequence _death_fx;
     unsigned _deaths_seen = 0;
     // The run's death total when the level was loaded: what
@@ -252,7 +259,9 @@ class LevelManager {
     // The loaded level (ROM data), for the per-attempt work after a death;
     // nullptr after unload().
     const LevelData* _level = nullptr;
-    bool _skip_death_fx = false;
+    // Deaths in the level the current layout (death windows, door spot) was
+    // set up for: a respawn compares the next one with it.
+    unsigned _layout_deaths = 0;
     bool _respawn_pending = false;
     bn::optional<Door> _door;
     // The level's boss (TrapType::BOSS, owned by _traps) or nullptr. While

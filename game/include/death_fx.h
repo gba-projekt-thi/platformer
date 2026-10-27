@@ -20,6 +20,7 @@
 //
 // Per-frame protocol (LevelManager::update()):
 //   death detected:          start(hitstop, shake)
+//   layout changed:          shake(frames)
 //   every rendered frame:    shake_offset(amplitude) -> render -> advance()
 // -----------------------------------------------------------------------------
 
@@ -59,6 +60,13 @@ class Sequence {
     // for `shake_frames`. A new death restarts both.
     void start(int hitstop_frames, int shake_frames) {
         _hitstop_left = hitstop_frames < 1 ? 1 : hitstop_frames;
+        _shake_total = shake_frames < 0 ? 0 : shake_frames;
+        _shake_left = _shake_total;
+    }
+
+    // A shake on its own (the cue that the layout changed between attempts):
+    // the world keeps running, a running freeze is left as it is.
+    void shake(int shake_frames) {
         _shake_total = shake_frames < 0 ? 0 : shake_frames;
         _shake_left = _shake_total;
     }

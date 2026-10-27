@@ -87,11 +87,38 @@ class LevelManagerWiringTests(unittest.TestCase):
         reset = self.finish.index("_reset_entities()")
         self.assertLess(reset, self.finish.index("_dynamic_platforms.reset_crumbling()"))
         self.assertLess(reset, self.finish.index("_checkpoint_run.restore(_triggers)"))
-        self.assertIn("_finish_respawn()", self.update)
+        # through _respawn() (respawn_logic.h decides when)
+        self.assertIn("_respawn(respawn::Cause::Death)", self.update)
 
     def test_restart_level_clears_the_checkpoint_before_the_death(self):
         self.assertIn("RestartRequested", self.update)
         self.assertLess(self.update.index("_clear_checkpoint()"), self.update.index("_player.death()"))
+
+    @unittest.skipIf(PAUSE is None, "pause_controller.cpp not found")
+    def test_restart_level_sets_up_the_next_attempt_before_the_world_moves(self):
+        # The duck is at the spawn at once: the next attempt's layout must be
+        # there before the physics step, or an old trap kills it twice.
+        restart = self.update.index("RestartRequested")
+        death = self.update.index("_player.death()", restart)
+        respawn = self.update.index("_respawn(respawn::Cause::Restart)", restart)
+        self.assertLess(death, respawn)
+        self.assertLess(respawn, self.update.index("update_all()"))
+        respawn_body = _method(self.text, "_respawn", r"\s*respawn::Cause\s+\w+\s*") or ""
+        self.assertIn("respawn::when(", respawn_body)
+        self.assertIn("_finish_respawn()", respawn_body)
+        self.assertIn("_respawn_pending = true", respawn_body)
+
+    def test_restart_level_is_exactly_one_death(self):
+        # Its death is taken (and saved) right there, so the end of the frame
+        # does not set up another attempt for it.
+        restart = self.update[self.update.index("RestartRequested"):self.update.index("ReturnToTitleRequested")]
+        self.assertEqual(restart.count("_player.death()"), 1)
+        death = restart.index("_player.death()")
+        self.assertLess(death, restart.index("_deaths_seen = _player.get_deaths()"))
+        self.assertLess(restart.index("_deaths_seen = _player.get_deaths()"), restart.index("_save_sync.sync()"))
+        self.assertLess(restart.index("_save_sync.sync()"), restart.index("_respawn(respawn::Cause::Restart)"))
+        end = self.update[self.update.index("update_all()"):]
+        self.assertIn("_respawn(respawn::Cause::Death)", end)
 
     @unittest.skipIf(PAUSE is None, "pause_controller.cpp not found")
     def test_pause_menu_returns_the_restart_action(self):
@@ -206,6 +233,23 @@ class AttemptObjectsWiringTests(unittest.TestCase):
         self.assertIn("_fleeing_platforms.clear()", self.dynamic)
         self.assertIn("_present(", self.dynamic)
         self.assertIn("_fleeing_platforms.add(", self.dynamic)
+
+    def test_a_respawn_into_a_changed_layout_gives_the_cue(self):
+        # Compared with the layout that was there (not deaths - 1: Restart
+        # Level during a freeze skips one), once the new one is applied.
+        changed = self.finish.index("attempt_objects::layout_changes(")
+        self.assertLess(changed, self.finish.index("_apply_attempt("))
+        self.assertIn("_layout_deaths", self.finish)
+        cue = _method(self.text, "_cue_layout_change") or ""
+        self.assertIn("_death_fx.shake(Cfg::DeathFx::LAYOUT_SHAKE_FRAMES)", cue)
+        self.assertIn("bn::sound_items::layout_shift", cue)
+        self.assertLess(self.finish.index("_apply_attempt("), self.finish.index("_cue_layout_change()"))
+
+    def test_level_load_and_the_replay_setup_give_no_cue(self):
+        self.assertIn("_layout_deaths = 0", self.spawn)
+        setup = _method(self.text, "set_deaths_in_level", r"\s*unsigned\s+\w+\s*") or ""
+        self.assertLess(setup.index("_layout_deaths = deaths"), setup.index("_finish_respawn()"))
+        self.assertNotIn("_cue_layout_change()", self.load)
 
     def test_apply_uses_the_host_tested_rules(self):
         self.assertIn("attempt_objects::platform_action(", self.apply)

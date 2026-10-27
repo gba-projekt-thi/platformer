@@ -22,6 +22,10 @@ inline constexpr int SHAKE_AMPLITUDE = 3;
 // After the freeze the duck flickers for a moment at the respawn point so the
 // eye finds it again. Purely visual: it gives NO invulnerability.
 inline constexpr int RESPAWN_BLINK_FRAMES = 18;
+// Level Devil: a respawn into a layout that differs from the attempt before
+// (attempt_objects::layout_changes()) shakes the picture once more, briefly,
+// when the new layout appears - with the layout_shift sound.
+inline constexpr int LAYOUT_SHAKE_FRAMES = 10;
 }  // namespace DeathFx
 
 }  // namespace Cfg

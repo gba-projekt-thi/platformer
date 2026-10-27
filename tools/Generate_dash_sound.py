@@ -7,12 +7,15 @@ noise sweeps, 8-bit unsigned PCM, mono, 11025 Hz):
 
     dash.wav   a "whoosh" sweeping down in pitch, ~0.2 s
     pogo.wav   the pogo strike's short "swish" sweeping up, ~0.12 s
+    layout_shift.wav
+               a low rustle when the level changed between attempts
+               (Level Devil death windows / the moving door), ~0.28 s
 
 Fully deterministic (fixed noise seed), pure standard library. Usage:
 
     python3 tools/Generate_dash_sound.py game/audio
 
-The names become bn::sound_items::dash / pogo. Replace a file with a
+The names become bn::sound_items::dash / pogo / layout_shift. Replace a file with a
 hand-made sample at any time; the game only relies on the name.
 """
 
@@ -27,6 +30,7 @@ PEAK = 0.85
 SOUNDS = {
     "dash": (0.20, 3500.0, 500.0, 5.0),
     "pogo": (0.12, 1200.0, 4500.0, 4.0),
+    "layout_shift": (0.28, 500.0, 160.0, 3.5),
 }
 
 

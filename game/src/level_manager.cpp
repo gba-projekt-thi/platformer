@@ -9,6 +9,7 @@
 #include "level_limits.h"
 #include "player_events.h"
 #include "replay_capture.h"
+#include "respawn_logic.h"
 #include "switch_logic.h"
 #include "trap_factory.h"
 #include "world_index.h"
@@ -122,7 +123,7 @@ void LevelManager::_load_player_spawn(const LevelData& level) {
     Camera::instance().set_shake(0, 0);
     _deaths_seen = _player.get_deaths();
     _deaths_at_entry = _player.get_deaths();
-    _skip_death_fx = false;
+    _layout_deaths = 0;
     _respawn_pending = false;
 }
 
@@ -138,6 +139,8 @@ unsigned LevelManager::_deaths_in_level() const {
 void LevelManager::set_deaths_in_level(unsigned deaths) {
     _player.set_deaths(_deaths_at_entry + deaths);
     _deaths_seen = _player.get_deaths();
+    // The replay starts in that layout: no cue for it.
+    _layout_deaths = deaths;
     _finish_respawn();
 }
 
@@ -253,11 +256,8 @@ void LevelManager::_check_player_died() {
     }
     _deaths_seen = deaths;
 
-    // Restart Level is a death on purpose: no freeze, no shake.
-    if (_skip_death_fx) {
-        _skip_death_fx = false;
-        return;
-    }
+    // Restart Level takes its own death right away (update()), so every death
+    // seen here is one the world caused: freeze, shake, ghost.
     _death_fx.start(Cfg::DeathFx::HITSTOP_FRAMES, Cfg::DeathFx::SHAKE_FRAMES);
     _player.begin_death_fx();
 }
@@ -283,14 +283,39 @@ void LevelManager::_advance_death_fx() {
     }
 }
 
+// A death the world caused waits for the end of its freeze; Restart Level
+// sets up the next attempt at once (respawn_logic.h).
+void LevelManager::_respawn(respawn::Cause cause) {
+    switch (respawn::when(cause, _death_fx.frozen())) {
+        case respawn::When::AfterFreeze:
+            // The traps stay as they are until the freeze ends.
+            _respawn_pending = true;
+            break;
+        case respawn::When::Now:
+        default:
+            _finish_respawn();
+            break;
+    }
+}
+
 void LevelManager::_finish_respawn() {
     _reset_entities();
     _place_door();
     // Level Devil: this attempt's traps and platforms, then the dynamic
     // platforms that are there start over (the resets below put them back).
+    // Compared with the layout that was there, not with deaths - 1: Restart
+    // Level during a death freeze skips an attempt.
+    bool layout_changed = false;
     if (_level != nullptr) {
+        const unsigned deaths = _deaths_in_level();
+        layout_changed =
+            attempt_objects::layout_changes(*_level, _layout_deaths, deaths);
+        _layout_deaths = deaths;
         _apply_attempt(*_level);
         _load_dynamic_platforms(*_level);
+    }
+    if (layout_changed) {
+        _cue_layout_change();
     }
     _dynamic_platforms.reset_crumbling();
     _fleeing_platforms.reset();
@@ -302,6 +327,14 @@ void LevelManager::_finish_respawn() {
     // where it died: cut there instead of gliding across the level.
     _camera_rig.snap(_player.pos.x, _player.pos.y);
     Camera::instance().follow(_camera_rig.x(), _camera_rig.y());
+}
+
+// The level is not the one of the last attempt: a low rustle and a short
+// shake as the new layout appears (after the death freeze - _finish_respawn()
+// runs when it ends).
+void LevelManager::_cue_layout_change() {
+    _death_fx.shake(Cfg::DeathFx::LAYOUT_SHAKE_FRAMES);
+    AudioSettings::instance().play_sfx(bn::sound_items::layout_shift);
 }
 
 void LevelManager::_clear_runtime_state() {
@@ -618,13 +651,17 @@ LevelManager::UpdateResult LevelManager::update() {
         _clear_checkpoint();
         replay_capture::level_restarted();
         // Pausing during a death freeze and restarting must not leave the
-        // rest of that freeze (or its ghost) behind; the restart's own death
-        // triggers the reset below.
+        // rest of that freeze (or its ghost) behind.
         _death_fx.clear();
         _player.cancel_death_fx();
         _respawn_pending = false;
-        _skip_death_fx = true;
         _player.death();
+        // Exactly one death, without feedback: taken and saved here, and the
+        // next attempt's layout is there before the physics step below runs
+        // with the duck at the spawn (respawn_logic.h).
+        _deaths_seen = _player.get_deaths();
+        _save_sync.sync();
+        _respawn(respawn::Cause::Restart);
     } else if (
         pause_action == PauseController::Action::ReturnToTitleRequested) {
         // Persist progress before leaving to the title screen.
@@ -715,12 +752,7 @@ LevelManager::UpdateResult LevelManager::update() {
     // -------------------------------------------------------------------------
 
     if (_save_sync.sync()) {
-        if (_death_fx.frozen()) {
-            // The traps stay as they are until the freeze ends.
-            _respawn_pending = true;
-        } else {
-            _finish_respawn();
-        }
+        _respawn(respawn::Cause::Death);
     }
     return UpdateResult::None;
 }

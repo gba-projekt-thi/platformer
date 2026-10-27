@@ -488,7 +488,14 @@ them plays exactly as before.
   Level Select start again at 0. Restart Level counts as a death, as it does
   for the death counter.
 - The change happens when the duck respawns - after the death freeze, at the
-  spawn or at the checkpoint - never in the middle of an attempt.
+  spawn or at the checkpoint - never in the middle of an attempt. Restart
+  Level sets up the next attempt before the world moves again, so the old
+  layout never runs a frame around the duck at the spawn.
+- The player hears and sees it: a respawn into a layout that differs from the
+  attempt before (a window opens or closes, or the moving door has a new
+  spot) plays the low `layout_shift` rustle and shakes the picture briefly
+  (`Cfg::DeathFx::LAYOUT_SHAKE_FRAMES`). A respawn into the same layout, and
+  the level load, stay quiet.
 - It combines with the rest of the platform's behaviour: a switched platform
   that is there still follows its trigger, a crumbling or runaway one starts
   untouched. A platform that is not there stays gone whatever its trigger

@@ -128,8 +128,10 @@ class CameraWiringTests(unittest.TestCase):
     def test_a_respawn_cuts_instead_of_gliding(self):
         # The respawn (immediately, or when the death freeze ends) goes through
         # _finish_respawn(), which re-arms the level and then cuts the camera.
-        death = self.update[self.update.index("_save_sync.sync()"):]
-        self.assertIn("_finish_respawn()", death)
+        death = self.update[self.update.rindex("_save_sync.sync()"):]
+        self.assertIn("_respawn(respawn::Cause::Death)", death)
+        respawn = _body(self.text, r"void\s+LevelManager::_respawn\s*\(\s*respawn::Cause\s+\w+\s*\)")
+        self.assertIn("_finish_respawn()", respawn or "")
         finish = _body(self.text, r"void\s+LevelManager::_finish_respawn\s*\(\s*\)")
         self.assertIsNotNone(finish)
         self.assertLess(finish.index("_reset_entities()"), finish.index("_camera_rig.snap("))
@@ -166,11 +168,14 @@ class DeathFeedbackWiringTests(unittest.TestCase):
         self.assertIn("Cfg::DeathFx::HITSTOP_FRAMES", self.check)
         self.assertIn("Cfg::DeathFx::SHAKE_FRAMES", self.check)
         self.assertIn("_player.begin_death_fx()", self.check)
-        self.assertIn("_skip_death_fx", self.check)
+        self.assertNotIn("_skip_death_fx", self.check)
 
     def test_restart_level_is_a_death_on_purpose_without_feedback(self):
         restart = self.update[self.update.index("RestartRequested"):]
-        self.assertLess(restart.index("_skip_death_fx = true"), restart.index("_player.death()"))
+        # Its death is taken right away (respawn_logic.h): _check_player_died()
+        # never sees it, so it starts no freeze.
+        self.assertLess(restart.index("_player.death()"), restart.index("_deaths_seen = _player.get_deaths()"))
+        self.assertNotIn("_skip_death_fx", self.header)
         # ... and a freeze that was still running is cancelled first.
         self.assertLess(restart.index("_player.cancel_death_fx()"), restart.index("_player.death()"))
         self.assertLess(restart.index("_death_fx.clear()"), restart.index("_player.death()"))
@@ -204,10 +209,13 @@ class DeathFeedbackWiringTests(unittest.TestCase):
         self.assertIn("_finish_respawn()", self.advance)
 
     def test_the_trap_reset_waits_for_the_freeze(self):
-        death = self.update[self.update.index("_save_sync.sync()"):]
-        self.assertIn("_death_fx.frozen()", death)
-        self.assertIn("_respawn_pending = true", death)
-        self.assertIn("_finish_respawn()", death)
+        # When is host-tested (respawn_logic.h); _respawn() acts on it.
+        death = self.update[self.update.rindex("_save_sync.sync()"):]
+        self.assertIn("_respawn(respawn::Cause::Death)", death)
+        respawn = _body(self.text, r"void\s+LevelManager::_respawn\s*\(\s*respawn::Cause\s+\w+\s*\)") or ""
+        self.assertIn("respawn::when(cause, _death_fx.frozen())", respawn)
+        self.assertIn("_respawn_pending = true", respawn)
+        self.assertIn("_finish_respawn()", respawn)
 
     def test_the_respawn_cuts_the_camera(self):
         # The reset order is pinned in test_level_manager_wiring.py.

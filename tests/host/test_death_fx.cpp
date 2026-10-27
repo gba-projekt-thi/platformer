@@ -28,6 +28,12 @@ TEST_CASE(death_fx_constants_are_sane) {
     CHECK(C::HITSTOP_FRAMES <= 12);
 }
 
+TEST_CASE(death_fx_layout_shake_is_short_and_subtle) {
+    // The cue that the level changed between attempts: a bump, not a quake.
+    CHECK(C::LAYOUT_SHAKE_FRAMES >= 2);
+    CHECK(C::LAYOUT_SHAKE_FRAMES <= C::SHAKE_FRAMES);
+}
+
 TEST_CASE(death_fx_shake_is_zero_without_frames_or_amplitude) {
     CHECK_EQ(magnitude(death_fx::shake_offset(0, 14, 3)), 0);
     CHECK_EQ(magnitude(death_fx::shake_offset(-2, 14, 3)), 0);
@@ -197,4 +203,30 @@ TEST_CASE(death_fx_sequence_clear_stops_everything) {
     CHECK(!seq.shaking());
     CHECK_EQ(magnitude(seq.shake_offset(3)), 0);
     CHECK(seq.advance() == Event::None);
+}
+
+TEST_CASE(death_fx_sequence_a_shake_alone_does_not_freeze) {
+    // The layout cue after a respawn: the picture shakes, the world runs.
+    Sequence seq;
+    seq.shake(4);
+    CHECK(!seq.frozen());
+    CHECK(seq.shaking());
+    CHECK_EQ(magnitude(seq.shake_offset(3)), 3);
+    for (int i = 0; i < 4; ++i) {
+        CHECK(seq.advance() == Event::None);
+    }
+    CHECK(!seq.shaking());
+}
+
+TEST_CASE(death_fx_sequence_a_shake_keeps_a_running_freeze) {
+    Sequence seq;
+    seq.start(2, 14);
+    seq.shake(4);
+    CHECK(seq.frozen());
+    CHECK(seq.advance() == Event::None);
+    CHECK(seq.advance() == Event::FreezeEnded);
+    CHECK(seq.shaking());
+    seq.advance();
+    seq.advance();
+    CHECK(!seq.shaking());
 }
