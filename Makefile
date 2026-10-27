@@ -97,6 +97,7 @@ test:
 checks:
 	python3 tools/Generate_levels.py --check
 	python3 tools/replays.py generate --check
+	python3 tools/Make_boss_music.py --check
 	python3 tools/Check_trigger_references.py
 	python3 tools/Check_level_hints.py
 	python3 tools/Check_world_index.py
