@@ -1,4 +1,5 @@
-"""Regression guard for the game-feel wiring (hint, camera, death feedback).
+"""Regression guard for the game-feel wiring that has no host-testable seam yet
+(hint, camera, death feedback, pause overlay).
 
 The pure rules (hint_logic.h, camera_rig.h, death_fx.h) are unit-tested on the
 host, but the glue that calls them lives in Butano-dependent files. A function
@@ -119,12 +120,6 @@ class CameraWiringTests(unittest.TestCase):
         self.assertIn("down_held()", self.step)
         self.assertIn("follow(_camera_rig.x(), _camera_rig.y())", self.step)
 
-    def test_level_load_sets_the_bounds_and_cuts_to_the_duck(self):
-        self.assertIn("_camera_rig.set_bounds(", self.setup)
-        self.assertIn("camera_rig::max_offset(", self.setup)
-        self.assertLess(self.setup.index("set_bounds("), self.setup.index("snap("))
-        self.assertLess(self.setup.index("snap("), self.setup.index("follow(_camera_rig.x()"))
-
     def test_a_respawn_cuts_instead_of_gliding(self):
         # The respawn (immediately, or when the death freeze ends) goes through
         # _finish_respawn(), which re-arms the level and then cuts the camera.
@@ -202,21 +197,6 @@ class DeathFeedbackWiringTests(unittest.TestCase):
         self.assertLess(self.render.index("sync_all("), self.render.index("bn::core::update()"))
         self.assertNotIn("sync_all(", self.update)
 
-    def test_the_end_of_the_freeze_brings_the_duck_back_and_runs_the_deferred_reset(self):
-        self.assertIn("_death_fx.advance()", self.advance)
-        self.assertIn("_player.end_death_fx()", self.advance)
-        self.assertIn("_respawn_pending", self.advance)
-        self.assertIn("_finish_respawn()", self.advance)
-
-    def test_the_trap_reset_waits_for_the_freeze(self):
-        # When is host-tested (respawn_logic.h); _respawn() acts on it.
-        death = self.update[self.update.rindex("_save_sync.sync()"):]
-        self.assertIn("_respawn(respawn::Cause::Death)", death)
-        respawn = _body(self.text, r"void\s+LevelManager::_respawn\s*\(\s*respawn::Cause\s+\w+\s*\)") or ""
-        self.assertIn("respawn::when(cause, _death_fx.frozen())", respawn)
-        self.assertIn("_respawn_pending = true", respawn)
-        self.assertIn("_finish_respawn()", respawn)
-
     def test_the_respawn_cuts_the_camera(self):
         # The reset order is pinned in test_level_manager_wiring.py.
         self.assertIn("_camera_rig.snap(", self.finish)
@@ -257,16 +237,6 @@ class PlayerDeathFeedbackWiringTests(unittest.TestCase):
         self.assertIn("set_tiles(_player_sprite.sprite().tiles())", self.begin)
         self.assertIn("_player_sprite.disable()", self.begin)
 
-    def test_ending_the_freeze_shows_the_duck_and_starts_the_flicker(self):
-        self.assertIn("cancel_death_fx()", self.end)
-        self.assertIn("Cfg::DeathFx::RESPAWN_BLINK_FRAMES", self.end)
-        self.assertIn("_player_sprite.enable()", self.cancel)
-        self.assertIn("_death_ghost.reset()", self.cancel)
-
-    def test_the_flicker_runs_in_the_physics_step_and_uses_the_pure_pattern(self):
-        self.assertIn("_update_respawn_blink()", self.update)
-        self.assertIn("death_fx::blink_visible(", self.blink)
-        self.assertIn("is_enabled()", self.blink)
 
 
 @unittest.skipIf(PAUSE is None or PAUSE_H is None, "pause_controller.cpp / pause_controller.h not found")

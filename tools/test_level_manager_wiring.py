@@ -86,7 +86,8 @@ class LevelManagerWiringTests(unittest.TestCase):
     def test_a_respawn_resets_entities_then_platforms_and_checkpoint_triggers(self):
         reset = self.finish.index("_reset_entities()")
         self.assertLess(reset, self.finish.index("_dynamic_platforms.reset_crumbling()"))
-        self.assertLess(reset, self.finish.index("_checkpoint_run.restore(_triggers)"))
+        self.assertLess(reset, self.finish.index("_trigger_chains.respawn("))
+        self.assertIn("_checkpoint_run.restore(", self.finish)
         # through _respawn() (respawn_logic.h decides when)
         self.assertIn("_respawn(respawn::Cause::Death)", self.update)
 
@@ -104,9 +105,8 @@ class LevelManagerWiringTests(unittest.TestCase):
         self.assertLess(death, respawn)
         self.assertLess(respawn, self.update.index("update_all()"))
         respawn_body = _method(self.text, "_respawn", r"\s*respawn::Cause\s+\w+\s*") or ""
-        self.assertIn("respawn::when(", respawn_body)
+        self.assertIn("_pending_respawn.request(cause, _death_fx.frozen())", respawn_body)
         self.assertIn("_finish_respawn()", respawn_body)
-        self.assertIn("_respawn_pending = true", respawn_body)
 
     def test_restart_level_is_exactly_one_death(self):
         # Its death is taken (and saved) right there, so the end of the frame

@@ -37,6 +37,11 @@ auto max_offset(T world_size, int screen_size) -> T {
     return value < T(0) ? T(0) : value;
 }
 
+// The D-Pad as the rig's `look` argument: -1 up, +1 down, 0 neither (or both).
+inline auto look(bool up_held, bool down_held) -> int {
+    return (down_held ? 1 : 0) - (up_held ? 1 : 0);
+}
+
 }  // namespace camera_rig
 
 template <typename T>
@@ -48,6 +53,13 @@ class CameraRig {
         _max_x = max_x;
         _max_y = max_y;
         _bounded = true;
+    }
+
+    // Level load: the limits of the new level first, then the cut to the duck,
+    // so the cut is already inside them.
+    void place(T max_x, T max_y, T x, T y) {
+        set_bounds(max_x, max_y);
+        snap(x, y);
     }
 
     // Cuts to a position at once: level load, respawn. Forgets the direction

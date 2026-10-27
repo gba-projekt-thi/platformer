@@ -60,12 +60,17 @@ void Player::update() {
 void Player::_update_respawn_blink() {
     // Only counts while the game runs (this is called from the physics step)
     // and while the duck is shown at all (not hidden for a menu).
-    if (_respawn_blink <= 0 || !_player_sprite.is_enabled()) {
-        return;
+    switch (_duck_fx.tick(_player_sprite.is_enabled())) {
+        case death_fx::DuckFx::Blink::Show:
+            _player_sprite.sprite().set_visible(true);
+            break;
+        case death_fx::DuckFx::Blink::Hide:
+            _player_sprite.sprite().set_visible(false);
+            break;
+        case death_fx::DuckFx::Blink::Idle:
+        default:
+            break;
     }
-    --_respawn_blink;
-    _player_sprite.sprite().set_visible(
-        death_fx::blink_visible(_respawn_blink));
 }
 
 void Player::_update_dash_trail() {
@@ -152,7 +157,7 @@ Timer& Player::get_timer() {
 }
 
 void Player::set_visible(bool visible) {
-    _respawn_blink = 0;
+    _duck_fx.stop_blink();
     if (visible) {
         _player_sprite.enable();
     } else {
@@ -230,23 +235,22 @@ void Player::begin_death_fx() {
     _death_ghost->pos.offset_y = Cfg::Player::SPRITE_OFFSET_Y;
 
     _player_sprite.disable();
-    _respawn_blink = 0;
-    _death_fx_active = true;
+    _duck_fx.begin();
 }
 
 void Player::end_death_fx() {
-    if (!_death_fx_active) {
-        return;
+    if (_duck_fx.end(Cfg::DeathFx::RESPAWN_BLINK_FRAMES)) {
+        _show_after_death_fx();
     }
-    cancel_death_fx();
-    _respawn_blink = Cfg::DeathFx::RESPAWN_BLINK_FRAMES;
 }
 
 void Player::cancel_death_fx() {
-    if (!_death_fx_active) {
-        return;
+    if (_duck_fx.cancel()) {
+        _show_after_death_fx();
     }
-    _death_fx_active = false;
+}
+
+void Player::_show_after_death_fx() {
     _death_ghost.reset();
     _player_sprite.enable();
 }

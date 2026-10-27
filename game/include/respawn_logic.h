@@ -29,4 +29,30 @@ inline auto when(Cause cause, bool frozen) -> When {
     return cause == Cause::Death && frozen ? When::AfterFreeze : When::Now;
 }
 
+// The respawn of a death that waits for its freeze. request() says whether to
+// set up the next attempt now; otherwise freeze_ended() says so once, when the
+// freeze is over. cancel(): the freeze is gone (level load / unload, Restart
+// Level) and so is what it was waiting for.
+class Pending {
+   public:
+    auto request(Cause cause, bool frozen) -> bool {
+        if (when(cause, frozen) == When::Now) {
+            return true;
+        }
+        _waiting = true;
+        return false;
+    }
+
+    [[nodiscard]] auto freeze_ended() -> bool {
+        const bool run = _waiting;
+        _waiting = false;
+        return run;
+    }
+
+    void cancel() { _waiting = false; }
+
+   private:
+    bool _waiting = false;
+};
+
 }  // namespace respawn

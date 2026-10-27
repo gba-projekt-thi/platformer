@@ -132,7 +132,7 @@ void LevelManager::_load_player_spawn(const LevelData& level) {
     state.entry_level = state.level;
     state.entry_deaths = uint16_t(_deaths_at_entry);
     _layout_deaths = _deaths_in_level();
-    _respawn_pending = false;
+    _pending_respawn.cancel();
 }
 
 void LevelManager::_load_door(const LevelData& level) {
@@ -230,10 +230,10 @@ void LevelManager::_load_background(const LevelData& level) {
 void LevelManager::_setup_camera(const LevelData& level) {
     Camera::instance().init(level.world_width, level.world_height);
     // The rig keeps its aim inside the same limits Camera::follow() clamps to.
-    _camera_rig.set_bounds(
+    _camera_rig.place(
         camera_rig::max_offset(level.world_width, Cfg::Screen::WIDTH),
-        camera_rig::max_offset(level.world_height, Cfg::Screen::HEIGHT));
-    _camera_rig.snap(_player.pos.x, _player.pos.y);
+        camera_rig::max_offset(level.world_height, Cfg::Screen::HEIGHT),
+        _player.pos.x, _player.pos.y);
     Camera::instance().follow(_camera_rig.x(), _camera_rig.y());
 
     // Bounce boundary must match this level's world width, not the fixed
@@ -246,13 +246,8 @@ void LevelManager::_update_camera() {
     // D-Pad up / down looks up / down once held for a moment; it only shows
     // in levels taller than the screen (the camera cannot move vertically in
     // a 160px world).
-    int look = 0;
-    if (bn::keypad::up_held()) {
-        --look;
-    }
-    if (bn::keypad::down_held()) {
-        ++look;
-    }
+    const int look =
+        camera_rig::look(bn::keypad::up_held(), bn::keypad::down_held());
     _camera_rig.update(_player.pos.x, _player.pos.y, _player.vel_x, look);
     Camera::instance().follow(_camera_rig.x(), _camera_rig.y());
 }
@@ -285,8 +280,7 @@ void LevelManager::_advance_death_fx() {
         return;
     }
     _player.end_death_fx();
-    if (_respawn_pending) {
-        _respawn_pending = false;
+    if (_pending_respawn.freeze_ended()) {
         _finish_respawn();
     }
 }
@@ -294,15 +288,9 @@ void LevelManager::_advance_death_fx() {
 // A death the world caused waits for the end of its freeze; Restart Level
 // sets up the next attempt at once (respawn_logic.h).
 void LevelManager::_respawn(respawn::Cause cause) {
-    switch (respawn::when(cause, _death_fx.frozen())) {
-        case respawn::When::AfterFreeze:
-            // The traps stay as they are until the freeze ends.
-            _respawn_pending = true;
-            break;
-        case respawn::When::Now:
-        default:
-            _finish_respawn();
-            break;
+    // If it has to wait, the traps stay as they are until the freeze ends.
+    if (_pending_respawn.request(cause, _death_fx.frozen())) {
+        _finish_respawn();
     }
 }
 
@@ -651,7 +639,7 @@ void LevelManager::load(const LevelData& level) {
 
 void LevelManager::unload() {
     _death_fx.clear();
-    _respawn_pending = false;
+    _pending_respawn.cancel();
     _player.cancel_death_fx();
     Camera::instance().set_shake(0, 0);
     _background.reset();
@@ -676,7 +664,7 @@ LevelManager::UpdateResult LevelManager::update() {
         // rest of that freeze (or its ghost) behind.
         _death_fx.clear();
         _player.cancel_death_fx();
-        _respawn_pending = false;
+        _pending_respawn.cancel();
         _player.death();
         // Exactly one death, without feedback: taken and saved here, and the
         // next attempt's layout is there before the physics step below runs

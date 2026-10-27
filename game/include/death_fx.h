@@ -54,6 +54,57 @@ inline auto blink_visible(int frames_left) -> bool {
     return frames_left <= 0 || ((frames_left + 1) / 2) % 2 == 0;
 }
 
+// The duck's side of the feedback, without the sprites: while the world is
+// frozen it is replaced by its ghost (begin()), and when the freeze ends (or
+// is cancelled) it is shown again - after end() with a flicker of
+// `blink_frames` physics frames. Player acts on what these report.
+class DuckFx {
+   public:
+    enum class Blink : uint8_t { Idle, Show, Hide };
+
+    // The duck dies into a freeze: ghost up, duck hidden.
+    void begin() {
+        _active = true;
+        _blink = 0;
+    }
+
+    // The freeze ended: true = show the duck again and drop the ghost; the
+    // flicker follows. False when no freeze was running.
+    auto end(int blink_frames) -> bool {
+        if (!cancel()) {
+            return false;
+        }
+        _blink = blink_frames;
+        return true;
+    }
+
+    // Like end() without the flicker (level load / unload, Restart Level).
+    auto cancel() -> bool {
+        if (!_active) {
+            return false;
+        }
+        _active = false;
+        return true;
+    }
+
+    // The game shows or hides the duck itself (a menu): no flicker on top.
+    void stop_blink() { _blink = 0; }
+
+    // One physics frame. Only counts while the duck is shown at all; says
+    // what to do with its sprite this frame.
+    auto tick(bool shown) -> Blink {
+        if (_blink <= 0 || !shown) {
+            return Blink::Idle;
+        }
+        --_blink;
+        return blink_visible(_blink) ? Blink::Show : Blink::Hide;
+    }
+
+   private:
+    bool _active = false;
+    int _blink = 0;
+};
+
 class Sequence {
    public:
     // A death: freeze for `hitstop_frames` (at least 1) rendered frames, shake

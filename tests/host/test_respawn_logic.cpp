@@ -22,3 +22,45 @@ TEST_CASE(respawn_restart_level_sets_up_the_next_attempt_at_once) {
     CHECK(respawn::when(Cause::Restart, false) == When::Now);
     CHECK(respawn::when(Cause::Restart, true) == When::Now);
 }
+
+// --- Pending: a respawn that waits for the end of the freeze ----------------
+
+using respawn::Pending;
+
+TEST_CASE(respawn_pending_a_death_in_a_freeze_runs_when_the_freeze_ends) {
+    Pending pending;
+    CHECK(!pending.request(Cause::Death, true));
+    CHECK(pending.freeze_ended());
+}
+
+TEST_CASE(respawn_pending_runs_exactly_once) {
+    Pending pending;
+    pending.request(Cause::Death, true);
+    CHECK(pending.freeze_ended());
+    CHECK(!pending.freeze_ended());
+}
+
+TEST_CASE(respawn_pending_a_freeze_that_ends_alone_resets_nothing) {
+    Pending pending;
+    CHECK(!pending.freeze_ended());
+}
+
+TEST_CASE(respawn_pending_a_death_without_a_freeze_runs_at_once) {
+    Pending pending;
+    CHECK(pending.request(Cause::Death, false));
+    CHECK(!pending.freeze_ended());
+}
+
+TEST_CASE(respawn_pending_restart_runs_at_once_even_in_a_freeze) {
+    Pending pending;
+    CHECK(pending.request(Cause::Restart, true));
+    CHECK(!pending.freeze_ended());
+}
+
+TEST_CASE(respawn_pending_cancel_drops_a_waiting_respawn) {
+    // Level load / unload and Restart Level end the freeze that was running.
+    Pending pending;
+    pending.request(Cause::Death, true);
+    pending.cancel();
+    CHECK(!pending.freeze_ended());
+}

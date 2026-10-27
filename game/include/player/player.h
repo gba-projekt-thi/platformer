@@ -6,6 +6,7 @@
 
 #include "cfg.h"
 #include "dash_trail.h"
+#include "death_fx.h"
 #include "physics_body.h"
 #include "player_animator.h"
 #include "player_hud.h"
@@ -112,11 +113,11 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
     // Death feedback: where the duck died, the copy of it left there while
     // the world is frozen, and the flicker countdown after it comes back.
     void _update_respawn_blink();
+    void _show_after_death_fx();
     bn::fixed _death_x = 0;
     bn::fixed _death_y = 0;
     bn::optional<Sprite> _death_ghost;
-    bool _death_fx_active = false;
-    int _respawn_blink = 0;
+    death_fx::DuckFx _duck_fx;
 
     // The pogo strike's slash, shown below the duck while it reaches.
     void _update_pogo_slash();

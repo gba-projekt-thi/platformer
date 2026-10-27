@@ -230,3 +230,98 @@ TEST_CASE(death_fx_sequence_a_shake_keeps_a_running_freeze) {
     seq.advance();
     CHECK(!seq.shaking());
 }
+
+// --- DuckFx: the duck's side of the death feedback --------------------------
+
+using death_fx::DuckFx;
+using Blink = DuckFx::Blink;
+
+TEST_CASE(death_fx_duck_comes_back_when_the_freeze_ends_and_then_flickers) {
+    DuckFx duck;
+    duck.begin();
+    CHECK(duck.end(6));  // show the duck, drop the ghost
+    int hidden = 0;
+    for (int i = 0; i < 6; ++i) {
+        const Blink blink = duck.tick(true);
+        CHECK(blink != Blink::Idle);
+        hidden += blink == Blink::Hide ? 1 : 0;
+    }
+    CHECK(hidden > 0);
+    // the flicker is over: the last frame showed the duck, now nothing to do
+    CHECK(duck.tick(true) == Blink::Idle);
+}
+
+TEST_CASE(death_fx_duck_flicker_ends_with_the_duck_shown) {
+    DuckFx duck;
+    duck.begin();
+    duck.end(C::RESPAWN_BLINK_FRAMES);
+    Blink last = Blink::Idle;
+    for (int i = 0; i < C::RESPAWN_BLINK_FRAMES; ++i) {
+        last = duck.tick(true);
+    }
+    CHECK(last == Blink::Show);
+}
+
+TEST_CASE(death_fx_duck_flicker_matches_the_blink_pattern) {
+    DuckFx duck;
+    duck.begin();
+    duck.end(8);
+    for (int left = 7; left >= 0; --left) {
+        const Blink expected =
+            death_fx::blink_visible(left) ? Blink::Show : Blink::Hide;
+        CHECK(duck.tick(true) == expected);
+    }
+}
+
+TEST_CASE(death_fx_duck_cancel_shows_it_again_without_a_flicker) {
+    DuckFx duck;
+    duck.begin();
+    CHECK(duck.cancel());
+    CHECK(duck.tick(true) == Blink::Idle);
+}
+
+TEST_CASE(death_fx_duck_end_and_cancel_do_nothing_without_a_freeze) {
+    DuckFx duck;
+    CHECK(!duck.end(6));
+    CHECK(!duck.cancel());
+    CHECK(duck.tick(true) == Blink::Idle);
+}
+
+TEST_CASE(death_fx_duck_end_or_cancel_after_the_first_does_nothing) {
+    DuckFx duck;
+    duck.begin();
+    CHECK(duck.end(6));
+    CHECK(!duck.end(6));
+    CHECK(!duck.cancel());
+}
+
+TEST_CASE(death_fx_duck_hidden_for_a_menu_does_not_use_up_the_flicker) {
+    DuckFx duck;
+    duck.begin();
+    duck.end(4);
+    for (int i = 0; i < 10; ++i) {
+        CHECK(duck.tick(false) == Blink::Idle);
+    }
+    int ticks = 0;
+    while (duck.tick(true) != Blink::Idle) {
+        ++ticks;
+    }
+    CHECK_EQ(ticks, 4);
+}
+
+TEST_CASE(death_fx_duck_a_new_death_stops_a_running_flicker) {
+    DuckFx duck;
+    duck.begin();
+    duck.end(10);
+    duck.tick(true);
+    duck.begin();
+    CHECK(duck.tick(true) == Blink::Idle);
+}
+
+TEST_CASE(death_fx_duck_show_or_hide_by_the_game_stops_the_flicker) {
+    DuckFx duck;
+    duck.begin();
+    duck.end(10);
+    duck.stop_blink();
+    CHECK(duck.tick(true) == Blink::Idle);
+}

@@ -256,7 +256,7 @@ class LevelManager {
 
     // Death feedback state. _deaths_seen is the death count the level manager
     // has reacted to (Restart Level takes its own death at once, so it gets
-    // no feedback); _respawn_pending defers the trap reset until the freeze
+    // no feedback); _pending_respawn defers the trap reset until the freeze
     // ends, so the trap that killed the duck stays where it is while the
     // world is frozen.
     death_fx::Sequence _death_fx;
@@ -270,7 +270,7 @@ class LevelManager {
     // Deaths in the level the current layout (death windows, door spot) was
     // set up for: a respawn compares the next one with it.
     unsigned _layout_deaths = 0;
-    bool _respawn_pending = false;
+    respawn::Pending _pending_respawn;
     bn::optional<Door> _door;
     // The level's boss (TrapType::BOSS, owned by _traps) or nullptr. While
     // it lives the door stays shut (_sync_boss_door()).

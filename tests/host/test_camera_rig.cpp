@@ -271,3 +271,27 @@ TEST_CASE(camera_rig_fixed_point_look_ahead_settles_on_the_full_distance) {
     }
     CHECK(std::fabs(rig.look_x().px() - C::LOOKAHEAD_PX) < 0.5);
 }
+
+TEST_CASE(camera_rig_place_sets_the_bounds_before_it_cuts_to_the_duck) {
+    // Level load: a duck spawning beyond the limits is framed inside them
+    // right away, not first at the unlimited position.
+    Rig rig;
+    rig.place(100, 40, 500, -500);
+    CHECK_EQ(rig.x(), 100.0);
+    CHECK_EQ(rig.y(), -40.0);
+}
+
+TEST_CASE(camera_rig_place_replaces_the_bounds_of_the_old_level) {
+    Rig rig;
+    rig.place(10, 10, 0, 0);
+    rig.place(1000, 1000, 500, 500);
+    CHECK_EQ(rig.x(), 500.0);
+    CHECK_EQ(rig.y(), 500.0);
+}
+
+TEST_CASE(camera_rig_look_is_up_down_or_none) {
+    CHECK_EQ(camera_rig::look(true, false), -1);
+    CHECK_EQ(camera_rig::look(false, true), 1);
+    CHECK_EQ(camera_rig::look(false, false), 0);
+    CHECK_EQ(camera_rig::look(true, true), 0);  // both held cancel out
+}
