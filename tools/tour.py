@@ -123,12 +123,16 @@ def build_tour(levels):
         steps = replay_steps(boss)
         t.press("A").wait(fade)
         done = 0  # frames of the recording played so far
-        for k, part in enumerate((0.25, 0.55, 0.85)):
+        for k, part in enumerate((0.25, 0.4, 0.55, 0.7, 0.85)):
             target = int(steps * part)
             t.wait(max(0, target - done))
             t.shot(f"boss{world}_{k + 1}", f"Boss Welt {world}, Kampf ({int(part * 100)} %)")
             done = target + 30
-        t.wait(max(0, steps - done) + 120)
+        # The door finish holds the world still for a moment (clear_logic.h):
+        # the door blinks and "Clear!" stands on the screen.
+        t.wait(max(0, steps - done) + 20)
+        t.shot(f"boss{world}_clear", f"Boss Welt {world}: Tür erreicht, 'Clear!' und die blinkende Tür")
+        t.wait(100)
         t.shot(f"boss{world}_won", f"Boss Welt {world}: besiegt, Trittstein und Tür, Banner 'New Best!'")
         t.press("A").wait(fade)
         if world < len(bosses):
