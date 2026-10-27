@@ -219,3 +219,86 @@ TEST_CASE(chase_target_stops_at_its_limit) {
     CHECK_EQ(trap_timing::chase_target(300, 28, -400, 600), 200);
     CHECK_EQ(trap_timing::chase_target(100, 28, -400, 600), 72);
 }
+
+// --- What the factory builds from the level data ----------------------------
+
+#include "bn_fixed.h"
+
+using trap_timing::cycle_setup;
+using trap_timing::CycleClock;
+using trap_timing::speed_percent;
+
+TEST_CASE(speed_percent_is_the_trap_speed_multiplier_in_percent) {
+    CHECK_EQ(speed_percent(bn::fixed(1)), 100);
+    CHECK_EQ(speed_percent(bn::fixed(1.35)), 135);
+    CHECK_EQ(speed_percent(bn::fixed(0.5)), 50);
+}
+
+TEST_CASE(path_waits_of_a_hard_mode_trap_are_scaled_by_the_multiplier) {
+    // PathTrap / BossTrap get the scaled count, not the authored one.
+    CHECK_EQ(scaled_frames(20, speed_percent(bn::fixed(1.35))), 15u);
+    CHECK_EQ(scaled_frames(20, speed_percent(bn::fixed(1))), 20u);
+}
+
+TEST_CASE(cycle_setup_scales_every_phase_and_the_start_offset) {
+    const auto setup = cycle_setup({4, 3, 5, 2}, 10, 50);
+    CHECK_EQ(setup.timing.extend, 8u);
+    CHECK_EQ(setup.timing.hold, 6u);
+    CHECK_EQ(setup.timing.retract, 10u);
+    CHECK_EQ(setup.timing.wait, 4u);
+    CHECK_EQ(setup.phase, 20u);
+}
+
+TEST_CASE(cycle_setup_at_normal_speed_keeps_the_authored_numbers) {
+    const auto setup = cycle_setup({4, 3, 5, 2}, 7, 100);
+    CHECK_EQ(cycle_length(setup.timing), 14u);
+    CHECK_EQ(setup.phase, 7u);
+}
+
+TEST_CASE(cycle_setup_keeps_a_zero_phase_a_zero_phase) {
+    CHECK_EQ(cycle_setup({4, 3, 5, 2}, 0, 135).phase, 0u);
+}
+
+TEST_CASE(cycle_setup_of_an_empty_round_stays_empty_so_the_load_can_reject_it) {
+    CHECK_EQ(cycle_length(cycle_setup({0, 0, 0, 0}, 0, 135).timing), 0u);
+}
+
+// --- CycleClock -------------------------------------------------------------
+
+TEST_CASE(cycle_clock_starts_in_the_phase_it_was_given) {
+    const CycleClock clock(SPIKES, 2);
+    CHECK_EQ(clock.progress(), cycle_progress(SPIKES, 2));
+    CHECK_EQ(CycleClock(SPIKES, 14 + 2).progress(), clock.progress());
+}
+
+TEST_CASE(cycle_clock_follows_the_timeline_one_frame_per_tick) {
+    CycleClock clock(SPIKES, 0);
+    unsigned frame = 0;
+    for (int i = 0; i < 40; ++i) {
+        CHECK_EQ(clock.tick(true), cycle_progress(SPIKES, frame));
+        frame = next_cycle_frame(SPIKES, frame);
+    }
+}
+
+TEST_CASE(cycle_clock_stands_still_while_the_trap_is_frozen) {
+    CycleClock clock(SPIKES, 0);
+    clock.tick(true);
+    clock.tick(true);
+    const int where = clock.progress();
+    CHECK_EQ(clock.tick(false), CycleClock::FROZEN);
+    CHECK_EQ(clock.tick(false), CycleClock::FROZEN);
+    CHECK_EQ(clock.progress(), where);
+    // and picks up where it stopped
+    CHECK_EQ(clock.tick(true), where);
+}
+
+TEST_CASE(cycle_clock_reset_returns_to_the_start_frame_of_the_round) {
+    CycleClock clock(SPIKES, 3);
+    const int start = clock.progress();
+    for (int i = 0; i < 9; ++i) {
+        clock.tick(true);
+    }
+    CHECK_EQ(clock.reset(), start);
+    CHECK_EQ(clock.progress(), start);
+    CHECK_EQ(clock.tick(true), start);
+}

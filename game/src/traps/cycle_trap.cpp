@@ -11,28 +11,24 @@ CycleTrap::CycleTrap(
       _origin_y(data.y + data.offset_y),
       _dx(data.cycle_dx),
       _dy(data.cycle_dy),
-      _timing(timing),
-      _start_frame(trap_timing::cycle_start_frame(timing, phase_frames)),
-      _frame(_start_frame),
+      _clock(timing, phase_frames),
       _trigger(trigger) {
     // Already in the right place for the first frame of its round.
-    _apply(trap_timing::cycle_progress(_timing, _frame));
+    _apply(_clock.progress());
 }
 
 void CycleTrap::update() {
     BaseTrap::update();
 
-    if (_trigger != nullptr && !_trigger->is_triggered()) {
-        return;
+    const bool running = _trigger == nullptr || _trigger->is_triggered();
+    const int progress = _clock.tick(running);
+    if (progress != trap_timing::CycleClock::FROZEN) {
+        _apply(progress);
     }
-
-    _apply(trap_timing::cycle_progress(_timing, _frame));
-    _frame = trap_timing::next_cycle_frame(_timing, _frame);
 }
 
 void CycleTrap::reset() {
-    _frame = _start_frame;
-    _apply(trap_timing::cycle_progress(_timing, _frame));
+    _apply(_clock.reset());
 }
 
 void CycleTrap::_apply(int permille) {

@@ -95,6 +95,67 @@ inline auto scaled_cycle(const CycleTiming& t, int speed_percent)
         scaled_frames(t.wait, speed_percent)};
 }
 
+// The trap speed multiplier (1.35 = Hard Mode) as the percentage the helpers
+// above take. Works with bn::fixed.
+template <typename T>
+inline auto speed_percent(T multiplier) -> int {
+    return (multiplier * 100).round_integer();
+}
+
+// What TrapFactory builds a CycleTrap from: the authored phases and start
+// offset, all frame counts, scaled for Hard / Assist Mode.
+struct CycleSetup {
+    CycleTiming timing;
+    unsigned phase;
+};
+
+inline auto cycle_setup(
+    const CycleTiming& authored,
+    unsigned phase_frames,
+    int percent) -> CycleSetup {
+    return {
+        scaled_cycle(authored, percent), scaled_frames(phase_frames, percent)};
+}
+
+// Where a CycleTrap is in its round. A trap that is frozen (its trigger is
+// off) stays where it is; a reset starts the round over from the start frame.
+class CycleClock {
+   public:
+    static constexpr int FROZEN = -1;
+
+    CycleClock(const CycleTiming& timing, unsigned phase_frames)
+        : _timing(timing),
+          _start_frame(cycle_start_frame(timing, phase_frames)),
+          _frame(_start_frame) {}
+
+    // How far out the trap is now (permille, see cycle_progress()).
+    [[nodiscard]] auto progress() const -> int {
+        return cycle_progress(_timing, _frame);
+    }
+
+    // One physics frame. A running clock returns the progress to show this
+    // frame and moves on; a frozen one returns FROZEN and stays.
+    auto tick(bool running) -> int {
+        if (!running) {
+            return FROZEN;
+        }
+        const int shown = progress();
+        _frame = next_cycle_frame(_timing, _frame);
+        return shown;
+    }
+
+    // Death / restart: back to the start frame; returns its progress.
+    auto reset() -> int {
+        _frame = _start_frame;
+        return progress();
+    }
+
+   private:
+    CycleTiming _timing;
+    unsigned _start_frame;
+    unsigned _frame;
+};
+
 // Where a ChaserTrap heads: `follow` px behind the duck, but never more than
 // `limit` px right of its start (0 = no limit) - so a boss arena can be kept
 // free of it.

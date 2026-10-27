@@ -35,8 +35,8 @@ inline auto create_trap(const TrapData& trap_data, LevelManager& level_manager)
             // A path trap's speed is a frame count per node (path_waits), not
             // a velocity: Hard / Assist Mode divide it by the multiplier
             // instead of multiplying it - see trap_timing::scaled_frames().
-            const int speed_percent =
-                (level_manager.trap_speed_multiplier() * 100).round_integer();
+            const int speed_percent = trap_timing::speed_percent(
+                level_manager.trap_speed_multiplier());
             return bn::make_unique<PathTrap>(
                 trap_data,
                 trap_timing::scaled_frames(trap_data.path_waits, speed_percent),
@@ -63,26 +63,23 @@ inline auto create_trap(const TrapData& trap_data, LevelManager& level_manager)
                                          trap_data.trigger_name);
             // Every phase of the round (and the start offset) is a frame
             // count, so Hard / Assist Mode scale them like path_waits.
-            const int speed_percent =
-                (level_manager.trap_speed_multiplier() * 100).round_integer();
-            const trap_timing::CycleTiming timing = trap_timing::scaled_cycle(
+            const int speed_percent = trap_timing::speed_percent(
+                level_manager.trap_speed_multiplier());
+            const trap_timing::CycleSetup setup = trap_timing::cycle_setup(
                 {trap_data.cycle_extend_frames, trap_data.cycle_hold_frames,
                  trap_data.cycle_retract_frames, trap_data.cycle_wait_frames},
-                speed_percent);
+                trap_data.cycle_phase_frames, speed_percent);
             BN_ASSERT(
-                trap_timing::cycle_length(timing) > 0,
+                trap_timing::cycle_length(setup.timing) > 0,
                 "CYCLE trap needs a round of at least one frame");
             return bn::make_unique<CycleTrap>(
-                trap_data, timing,
-                trap_timing::scaled_frames(
-                    trap_data.cycle_phase_frames, speed_percent),
-                trigger);
+                trap_data, setup.timing, setup.phase, trigger);
         }
 
         case TrapType::BOSS: {
             // Like PATH: a frame count per segment, scaled by the modes.
-            const int speed_percent =
-                (level_manager.trap_speed_multiplier() * 100).round_integer();
+            const int speed_percent = trap_timing::speed_percent(
+                level_manager.trap_speed_multiplier());
             return bn::make_unique<BossTrap>(
                 trap_data,
                 trap_timing::scaled_frames(trap_data.path_waits, speed_percent),

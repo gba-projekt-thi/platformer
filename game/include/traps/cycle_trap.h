@@ -46,11 +46,7 @@ class CycleTrap : public BaseTrap {
     bn::fixed _dx;
     bn::fixed _dy;
 
-    trap_timing::CycleTiming _timing;
-
-    // Frame of the round the trap starts (and restarts after a death) in.
-    unsigned _start_frame;
-    unsigned _frame;
+    trap_timing::CycleClock _clock;
 
     // Optional activation trigger (nullptr = always on).
     Trigger* _trigger;
