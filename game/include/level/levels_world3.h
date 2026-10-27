@@ -500,7 +500,8 @@ const LevelData LEVEL_WORLD3_BOSS = {
     "Still a head. R from above",
     // Checkpoints, in play order
     world3_boss_checkpoints,
-    sizeof(world3_boss_checkpoints) / sizeof(world3_boss_checkpoints[0])};
+    sizeof(world3_boss_checkpoints) / sizeof(world3_boss_checkpoints[0]),
+    8};
 
 // Deliberately NOT given the slippery ground_friction the other two
 // World 3 levels use (see LEVEL_3 / LEVEL_WORLD3_SCROLL above) - a

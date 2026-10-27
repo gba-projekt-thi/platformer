@@ -27,12 +27,16 @@ void boot();
 void start_screen(DataManager& data_manager);
 // A level was loaded: play its recording, if there is one.
 void level_started(Player& player, unsigned level_index);
+// The level's music jumped to song order `order` (the boss section when the
+// fight starts, 0 = the world theme again): logs "BOSS MUSIC <order>".
+void boss_music(int order);
 
 #else
 
 inline void boot() {}
 inline void start_screen(DataManager&) {}
 inline void level_started(Player&, unsigned) {}
+inline void boss_music(int) {}
 
 #endif
 

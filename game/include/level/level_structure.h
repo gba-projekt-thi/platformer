@@ -492,4 +492,13 @@ struct LevelData {
     // keep compiling unchanged.
     const CheckpointData* checkpoints = nullptr;
     int checkpoint_count = 0;
+
+    // -------------------------------------------------------------------------
+    // Boss music
+    // -------------------------------------------------------------------------
+
+    // Song order of the boss section inside `music`'s module (played while
+    // the boss fights, see tools/Make_boss_music.py); 0 = the level has no
+    // boss music. Appended last so existing literals keep compiling unchanged.
+    int boss_music_order = 0;
 };

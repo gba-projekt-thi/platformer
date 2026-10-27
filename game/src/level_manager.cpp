@@ -11,6 +11,7 @@
 #include "replay_capture.h"
 #include "respawn_logic.h"
 #include "switch_logic.h"
+#include "tour.h"
 #include "trap_factory.h"
 #include "world_index.h"
 
@@ -186,6 +187,28 @@ void LevelManager::_load_music(const LevelData& level) {
     if (!_music.has_value() || *_music != level.music) {
         _music.emplace(level.music);
         bn::music::play(*_music);
+        _boss_music = false;
+    }
+}
+
+// The world theme plays until the boss fight starts (the duck is in the
+// arena), then the module's boss section: the same instruments and tune, but
+// faster and driving (tools/Make_boss_music.py). A cut at the moment the
+// arena is entered. When the fight ends - the boss is beaten, or a death
+// starts it over - the theme begins again from its soft start, which is also
+// the relief after the last hit. Only the song position changes, so the
+// music volume (AudioSettings) stays as it is.
+void LevelManager::_update_boss_music() {
+    if (_level == nullptr || _level->boss_music_order <= 0 ||
+        !bn::music::playing()) {
+        return;
+    }
+    const bool fighting = boss_fighting();
+    if (fighting != _boss_music) {
+        _boss_music = fighting;
+        const int order = fighting ? _level->boss_music_order : 0;
+        bn::music::set_position(order);
+        tour::boss_music(order);
     }
 }
 
@@ -722,6 +745,7 @@ LevelManager::UpdateResult LevelManager::update() {
     _fleeing_platforms.update(_player.pos.x, _player.pos.y);
     _sync_boss_door();
     _feel_boss_hits();
+    _update_boss_music();
     if (_door) {
         _door->flee_from(_player.pos.x, _player.pos.y);
     }

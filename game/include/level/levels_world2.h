@@ -442,4 +442,5 @@ const LevelData LEVEL_WORLD2_BOSS = {
     // Shown once the duck reaches the arena (a boss level waits for it).
     "Land on it. Press R midair",
     world2_boss_checkpoints,
-    sizeof(world2_boss_checkpoints) / sizeof(world2_boss_checkpoints[0])};
+    sizeof(world2_boss_checkpoints) / sizeof(world2_boss_checkpoints[0]),
+    6};

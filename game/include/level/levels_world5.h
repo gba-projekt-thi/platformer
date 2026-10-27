@@ -1023,7 +1023,8 @@ const LevelData LEVEL_WORLD5_BOSS = {
     "Bounce it. R midair. Go.",
     // Checkpoints, in play order
     world5_boss_checkpoints,
-    sizeof(world5_boss_checkpoints) / sizeof(world5_boss_checkpoints[0])};
+    sizeof(world5_boss_checkpoints) / sizeof(world5_boss_checkpoints[0]),
+    11};
 
 // =============================================================================
 // WORLD 5 FINALE - "Reunited" (world_width=360, 1.5 screens)
