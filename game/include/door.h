@@ -5,6 +5,7 @@
 #include "bn_sprite_animate_actions.h"
 
 #include "cfg.h"
+#include "clear_logic.h"
 #include "door_flee.h"
 #include "door_logic.h"
 #include "level_structure.h"
@@ -32,8 +33,14 @@ class Door : public PhysicsBody {
     void place_for_attempt(unsigned deaths);
     // A trapped door that killed the duck (door_logic.h) can be touched again.
     void clear_reached();
-    // A locked door (a boss still lives) is hidden and cannot be entered.
+    // A locked door (a boss still lives) stands there faded to grey and cannot
+    // be entered.
     void set_locked(bool locked);
+    // A door that has just been unlocked flashes white and fades back (called
+    // right after set_locked(false)).
+    void unlock_glow();
+    // The level-clear moment: the door blinks white while lit.
+    void set_flash(bool lit);
     // Mark the door as reached when the player collides with it.
     void on_enter(
         [[maybe_unused]] uint16_t hit_layers,
@@ -44,6 +51,7 @@ class Door : public PhysicsBody {
 
    private:
     void _place();
+    void _refresh_tint();
 
     bn::fixed _x;
     bn::fixed _y;
@@ -53,6 +61,9 @@ class Door : public PhysicsBody {
     bn::fixed _origin_y;
     door_flee::Flee<bn::fixed_point> _flee;
     bool _reached = false;
+    clear_logic::Glow _glow;
+    bool _locked = false;
+    bool _flash = false;
     Sprite _door_sprite;
     bn::optional<bn::sprite_animate_action<Cfg::MAX_ANIMATION_FRAMES>> _action;
 };

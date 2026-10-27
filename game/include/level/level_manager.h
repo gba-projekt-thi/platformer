@@ -97,6 +97,14 @@ class LevelManager {
         return _pause_controller.paused();
     }
 
+    // The level has a boss (its hint waits for the arena, see
+    // hint::should_start()) / the boss is fighting: the duck reached the arena.
+    [[nodiscard]] auto has_boss() const -> bool { return _boss != nullptr; }
+    [[nodiscard]] auto boss_fighting() const -> bool;
+
+    // The level-clear moment: the door blinks (lit) or not.
+    void flash_door(bool lit);
+
     // Frames elapsed since this level was loaded, excluding time spent
     // paused. Used by LevelScene to compute this attempt's clear time
     // for the best-time record on reaching the door.

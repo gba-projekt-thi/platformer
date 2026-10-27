@@ -1,5 +1,8 @@
 #include "door.h"
 
+#include "bn_colors.h"
+#include "bn_sprite_palette_ptr.h"
+
 Door::Door(const DoorData& data)
     : PhysicsBody(
           data.x,
@@ -43,6 +46,10 @@ void Door::update() {
     if (_action.has_value()) {
         _action->update();
     }
+    if (_glow.active()) {
+        _glow.tick();
+        _refresh_tint();
+    }
 }
 
 void Door::on_enter(
@@ -65,7 +72,32 @@ void Door::set_locked(bool locked) {
     } else {
         enable();
     }
-    _door_sprite.sprite().set_visible(!locked);
+    _locked = locked;
+    _glow = clear_logic::Glow();
+    _refresh_tint();
+}
+
+void Door::unlock_glow() {
+    _glow.start();
+    _refresh_tint();
+}
+
+void Door::set_flash(bool lit) {
+    _flash = lit;
+    _refresh_tint();
+}
+
+// One white/grey wash over the door's palette: grey while locked, white while
+// it glows or blinks, none otherwise.
+void Door::_refresh_tint() {
+    bn::fixed grey = _locked ? clear_logic::LOCKED_GREY : bn::fixed(0);
+    bn::fixed white = _flash ? bn::fixed(0.85) : _glow.intensity();
+    bn::sprite_palette_ptr palette = _door_sprite.sprite().palette();
+    if (white > 0) {
+        palette.set_fade(bn::colors::white, white);
+    } else {
+        palette.set_fade(bn::colors::gray, grey);
+    }
 }
 
 void Door::reset_flee() {
@@ -100,5 +132,8 @@ bool Door::reached() const {
 }
 
 Door::~Door() {
+    // The palette is shared by every door sprite of this kind.
+    bn::sprite_palette_ptr palette = _door_sprite.sprite().palette();
+    palette.set_fade_intensity(0);
     SpriteRegistry::instance().unregister_sprite(&_door_sprite);
 }

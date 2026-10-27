@@ -44,7 +44,7 @@ BossTrap::~BossTrap() {
     StrikeTargets::instance().remove(static_cast<StaticBody*>(this));
 }
 
-bool BossTrap::_fighting() const {
+bool BossTrap::fighting() const {
     return !_fight.defeated() && (_arena == nullptr || _arena->is_triggered());
 }
 
@@ -54,7 +54,7 @@ void BossTrap::update() {
     if (!_fight.defeated()) {
         _trap_sprite.sprite().set_visible(_fight.visible());
     }
-    if (!_fighting() || _path.size() < 2 || _path_waits == 0) {
+    if (!fighting() || _path.size() < 2 || _path_waits == 0) {
         return;
     }
 
@@ -83,7 +83,7 @@ void BossTrap::on_enter(uint16_t hit_layers, StaticBody* body) {
 }
 
 void BossTrap::on_struck() {
-    if (!_fighting()) {
+    if (!fighting()) {
         return;
     }
     const boss::Hit hit = _fight.strike();

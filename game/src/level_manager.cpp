@@ -580,6 +580,19 @@ void LevelManager::_sync_boss_door() {
     }
     _door_locked = locked;
     _door->set_locked(locked);
+    if (!locked) {
+        _door->unlock_glow();
+    }
+}
+
+auto LevelManager::boss_fighting() const -> bool {
+    return _boss != nullptr && _boss->fighting();
+}
+
+void LevelManager::flash_door(bool lit) {
+    if (_door) {
+        _door->set_flash(lit);
+    }
 }
 
 void LevelManager::_load_checkpoints(const LevelData& level) {
