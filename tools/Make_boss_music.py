@@ -54,20 +54,24 @@ BPM_FACTOR = 1.25  # boss tempo relative to the theme
 KEEP_SHARE = 0.55  # share of the theme's patterns that goes into the boss loop
 MIN_KEEP = 4
 KICK_SHARE = 1.0  # volume of the added kick / hat / bass pulse, relative to
-HAT_SHARE = 0.7  # the instrument's own default volume
+HAT_SHARE = 0.5  # the instrument's own default volume (a quieter hat is darker)
 PULSE_SHARE = 0.7
+DRONE_SHARE = 0.35  # the low pedal tone under every pattern
+STAB_SHARE = 0.25  # the tritone stab before the loop point
+DRONE_LOW = 25  # the pedal lives between C-2 and B-2
+PULSE_FLOOR = 37  # bass pulses above C-3 are played an octave lower
 DEFAULT_KICK_NOTE = 49  # C-4, when the theme never plays the instrument
 
 # Instruments of the world's own percussion that make up the driving layer
 # (1-based, see the module). None = no such layer.
 PRESETS = {
-    "world1": {"kick": 5, "hat": 4},  # Bassdrum, Tambourin
-    "world2": {"kick": 3, "hat": 10},  # kick, Ting
+    "world1": {"kick": 5, "hat": 4, "drone": 1},  # Bassdrum, Tambourin; Wave
+    "world2": {"kick": 3, "hat": 10, "drone": 6},  # kick, Ting; Bass
     # No percussion in the theme: the low Bass as a heartbeat (cut after 4
     # ticks), the pitched-up "Bass short" as a tick.
-    "world3": {"kick": 6, "kick_cut": 4, "hat": 7},
-    "world4": {"kick": 6, "hat": 5},  # Drums, Maracas
-    "world5": {"hat": 4, "hat_cut": 3},  # Noise, cut short as the theme does (EC3)
+    "world3": {"kick": 6, "kick_cut": 4, "hat": 7, "drone": 6, "keep_pulse": True},
+    "world4": {"kick": 6, "hat": 5, "drone": 1},  # Drums, Maracas; Guitar
+    "world5": {"hat": 4, "hat_cut": 3, "drone": 1},  # Noise, cut short as the theme does (EC3)
 }
 
 
@@ -201,8 +205,33 @@ def _add_drive(mod, pattern, layers, bass, preset, kick_note, hat_note):
             continue
         end = events[i + 1] if i + 1 < len(events) else len(rows)
         for r in range(r0 + 2, end - 1, 2):
+            # An octave lower (world3's pitched-up tick stays as it is).
+            low = note.note > PULSE_FLOOR and not preset.get("keep_pulse")
             rows[r][pulse_ch] = Note(
-                note.note, note.inst, _vol_column(mod, note.inst, PULSE_SHARE))
+                note.note - 12 if low else note.note, note.inst, _vol_column(mod, note.inst, PULSE_SHARE))
+
+
+def _root(rows, bass, ignore):
+    """Pitch class (0..11) of the bass channel's most common note, or None."""
+    counts = Counter((r[bass].note - 1) % 12 for r in rows
+                     if bass is not None and 0 < r[bass].note < KEY_OFF
+                     and r[bass].inst not in ignore)
+    return counts.most_common(1)[0][0] if counts else None
+
+
+def _add_menace(mod, pattern, drone_ch, bass, preset, ignore, last):
+    """A pedal tone on the pattern's root, far below the melody; the last
+    pattern adds a tritone stab on the way back to the loop start."""
+    inst = preset.get("drone")
+    root = _root(pattern.rows, bass, ignore)
+    if not inst or root is None:
+        return
+    note = DRONE_LOW + (root + 1 - DRONE_LOW) % 12  # the root in C-2 .. B-2
+    rows = pattern.rows
+    rows[0][drone_ch] = Note(note, inst, _vol_column(mod, inst, DRONE_SHARE))
+    if last:
+        rows[len(rows) * 3 // 4][drone_ch] = Note(
+            note + 6, inst, _vol_column(mod, inst, STAB_SHARE))
 
 
 def build(mod, preset, bpm_factor=BPM_FACTOR):
@@ -215,11 +244,12 @@ def build(mod, preset, bpm_factor=BPM_FACTOR):
     # Free (or new) channels for the drive layer; the first also carries the
     # tempo / jump effects, so the theme's own channels stay untouched.
     free = _free_channels(out)
-    if len(free) < 3:
-        add = 3 - len(free)
+    if len(free) < 4:
+        add = 4 - len(free)
         first_new = out.channels
         _add_channels(out, add)
         free += list(range(first_new, first_new + add))
+    drone_ch = free[-4]
     layers = free[-3:]
     control = layers[0]
 
@@ -238,9 +268,10 @@ def build(mod, preset, bpm_factor=BPM_FACTOR):
     hat_note = _modal_note(out, hat, DEFAULT_KICK_NOTE) if hat else 0
 
     boss_first = len(theme_orders)
-    for pi in chosen:
+    for i, pi in enumerate(chosen):
         copy = Pattern([[Note(**vars(n)) for n in row] for row in out.patterns[pi].rows])
         _add_drive(out, copy, layers, bass, preset, kick_note, hat_note)
+        _add_menace(out, copy, drone_ch, bass, preset, ignore, i == len(chosen) - 1)
         out.patterns.append(copy)
         out.order.append(len(out.patterns) - 1)
 

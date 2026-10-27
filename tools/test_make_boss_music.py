@@ -117,14 +117,14 @@ class BuildTest(unittest.TestCase):
                            density(range(6)))
 
     def test_channels_added_only_when_none_is_free(self):
-        # channels 3..7 are empty: no channel is added
+        # channels 3..7 are empty (the boss layers need four): none is added
         self.assertEqual(self.boss.channels, 8)
         full = synthetic()
         for p in full.patterns:
             for row in p.rows:
                 for c in range(3, 8):
                     row[c] = Note(40, 1)
-        self.assertEqual(mbm.build(full, PRESET).channels, 11)
+        self.assertEqual(mbm.build(full, PRESET).channels, 12)
 
     def test_idempotent_and_strip_restores_the_theme(self):
         self.assertEqual(xmfile.write(mbm.build(self.boss, PRESET)),
@@ -132,11 +132,55 @@ class BuildTest(unittest.TestCase):
         self.assertEqual(xmfile.write(mbm.strip(self.boss)),
                          xmfile.write(self.theme))
 
+    def test_drone_sits_low_and_the_last_pattern_gets_a_tritone(self):
+        preset = dict(PRESET, drone=1)
+        boss = mbm.build(self.theme, preset)
+        first = boss.patterns[boss.order[6]].rows
+        last = boss.patterns[boss.order[-1]].rows
+        notes = [(r, c, n.note) for r, row in enumerate(first)
+                 for c, n in enumerate(row) if c == 4 and n.note]
+        self.assertEqual([r for r, _, _ in notes], [0])
+        self.assertTrue(mbm.DRONE_LOW <= notes[0][2] < mbm.DRONE_LOW + 12)
+        stab = [n.note for row in last for n in row[4:5] if n.note]
+        self.assertEqual(stab[1] - stab[0], 6)
+
     def test_no_boss_section_in_a_plain_module(self):
         self.assertIsNone(mbm.boss_start(self.theme))
 
 
+MAX_MUSIC_CHANNELS = 16  # BN_CFG_AUDIO_MAX_MUSIC_CHANNELS
+
+
 class RealFilesTest(unittest.TestCase):
+    def modules(self):
+        for name in mbm.PRESETS:
+            path = mbm.AUDIO / f"{name}.xm"
+            if path.exists():
+                yield name, xmfile.parse(path.read_bytes())
+
+    def test_only_what_maxmod_plays_in_range(self):
+        for name, mod in self.modules():
+            self.assertLessEqual(mod.channels, MAX_MUSIC_CHANNELS, name)
+            for order, pi in enumerate(mod.order):
+                rows = mod.patterns[pi].rows
+                self.assertLessEqual(len(rows), 256, name)
+                for row in rows:
+                    for n in row:
+                        self.assertLessEqual(n.note, mbm.KEY_OFF, name)
+                        self.assertLessEqual(n.inst, len(mod.instruments), name)
+                        if n.fx == mbm.FX_JUMP:
+                            self.assertLess(n.param, len(mod.order), name)
+                        elif n.fx == mbm.FX_TEMPO:
+                            self.assertGreaterEqual(n.param, 32, name)
+
+    def test_every_boss_section_loops_and_the_theme_returns(self):
+        for name, mod in self.modules():
+            start = mbm.boss_start(mod)
+            jumps = {o: [n.param for n in mod.patterns[pi].rows[-1]
+                         if n.fx == mbm.FX_JUMP] for o, pi in enumerate(mod.order)}
+            self.assertEqual(jumps[len(mod.order) - 1], [start], name)
+            self.assertEqual(jumps[start - 1], [mod.restart], name)
+
     def test_game_modules_are_up_to_date(self):
         self.assertEqual(mbm.main(["--check"]), 0)
 
