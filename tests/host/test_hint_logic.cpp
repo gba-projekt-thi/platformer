@@ -110,3 +110,12 @@ TEST_CASE(hint_timer_can_be_restarted) {
     timer.tick();
     CHECK(!timer.visible());
 }
+
+TEST_CASE(hint_of_a_normal_level_starts_at_once) {
+    CHECK(hint::should_start(false, false));
+}
+
+TEST_CASE(hint_of_a_boss_level_waits_for_the_arena) {
+    CHECK(!hint::should_start(true, false));
+    CHECK(hint::should_start(true, true));
+}

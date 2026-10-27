@@ -433,8 +433,8 @@ const LevelData LEVEL_WORLD4_BOSS = {
     160,
     // Ground friction: default
     1,
-    // No intro hint
-    nullptr,
+    // Shown once the duck reaches the arena (a boss level waits for it).
+    "Same trick: R from above",
     // Checkpoints, in play order
     world4_boss_checkpoints,
     sizeof(world4_boss_checkpoints) / sizeof(world4_boss_checkpoints[0])};

@@ -496,8 +496,8 @@ const LevelData LEVEL_WORLD3_BOSS = {
     160,
     // Ground friction: default
     1,
-    // No intro hint
-    nullptr,
+    // Shown once the duck reaches the arena (a boss level waits for it).
+    "Still a head. R from above",
     // Checkpoints, in play order
     world3_boss_checkpoints,
     sizeof(world3_boss_checkpoints) / sizeof(world3_boss_checkpoints[0])};

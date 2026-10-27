@@ -216,14 +216,16 @@
       "world_width": 758,
       "world_height": 160,
       "ground_friction": 1,
-      "intro_hint": null,
+      "intro_hint": "Same trick: R from above",
+      "intro_hint": "Same trick: R from above",
       "field_notes": {
         "spawn": "Player spawn",
         "door": "Door position",
         "world_width": "World size (enables scrolling)",
         "ground_friction": "Ground friction: default",
-        "intro_hint": "No intro hint",
-        "checkpoints": "Checkpoints, in play order"
+        "checkpoints": "Checkpoints, in play order",
+        "intro_hint": "Shown once the duck reaches the arena (a boss level waits for it).",
+        "intro_hint": "Shown once the duck reaches the arena (a boss level waits for it)."
       }
     }
   ]

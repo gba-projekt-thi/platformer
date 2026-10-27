@@ -44,6 +44,13 @@ inline auto should_draw(bool timer_visible, bool paused) -> bool {
     return timer_visible && !paused;
 }
 
+// When the countdown starts. A hint of a boss level is about the arena, which
+// comes at the end of the level: it waits until the fight has begun (the duck
+// reached the arena) instead of running out unseen at the level start.
+inline auto should_start(bool waits_for_arena, bool arena_reached) -> bool {
+    return !waits_for_arena || arena_reached;
+}
+
 // Frame countdown for a visible hint. Not started = not visible.
 class Timer {
    public:

@@ -231,10 +231,14 @@
       },
       "world_width": 702,
       "world_height": 160,
+      "intro_hint": "Land on it. Press R midair",
+      "intro_hint": "Land on it. Press R midair",
       "field_notes": {
         "spawn": "Player spawn",
         "door": "Door position",
-        "world_width": "World size (enables scrolling)"
+        "world_width": "World size (enables scrolling)",
+        "intro_hint": "Shown once the duck reaches the arena (a boss level waits for it).",
+        "intro_hint": "Shown once the duck reaches the arena (a boss level waits for it)."
       },
       "data_note": "No checkpoint: the cans charge sideways (wave2, wave4) along the whole\ncorridor, so no flag could stand clear of a trap's path\n(tools/Check_checkpoints.py).",
       "checkpoints": {

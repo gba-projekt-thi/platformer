@@ -1019,8 +1019,8 @@ const LevelData LEVEL_WORLD5_BOSS = {
     160,
     // Ground friction: default
     1,
-    // No intro hint
-    nullptr,
+    // Shown once the duck reaches the arena (a boss level waits for it).
+    "Bounce it. R midair. Go.",
     // Checkpoints, in play order
     world5_boss_checkpoints,
     sizeof(world5_boss_checkpoints) / sizeof(world5_boss_checkpoints[0])};

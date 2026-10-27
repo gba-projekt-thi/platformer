@@ -262,10 +262,14 @@
       },
       "world_width": 698,
       "world_height": 160,
+      "intro_hint": "Hit the boss from above: R",
+      "intro_hint": "Hit the boss from above: R",
       "field_notes": {
         "spawn": "Player spawn",
         "door": "Door position",
-        "world_width": "World size (enables scrolling)"
+        "world_width": "World size (enables scrolling)",
+        "intro_hint": "Shown once the duck reaches the arena (a boss level waits for it).",
+        "intro_hint": "Shown once the duck reaches the arena (a boss level waits for it)."
       },
       "data_note": "No checkpoint: the pufferfish charges (wave2, wave4) sweep the whole floor,\nso no flag could stand clear of a trap's path (tools/Check_checkpoints.py).",
       "checkpoints": {

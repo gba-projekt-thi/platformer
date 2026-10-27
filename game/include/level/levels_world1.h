@@ -463,6 +463,7 @@ const LevelData LEVEL_WORLD1_BOSS = {
     698,
     160,
     1,
-    nullptr,
+    // Shown once the duck reaches the arena (a boss level waits for it).
+    "Hit the boss from above: R",
     world1_boss_checkpoints,
     sizeof(world1_boss_checkpoints) / sizeof(world1_boss_checkpoints[0])};
