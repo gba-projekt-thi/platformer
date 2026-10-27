@@ -187,6 +187,12 @@ class LevelManager {
     // Active checkpoint and the triggers that were on when it was reached
     // (checkpoint_logic.h); the level's own spawn point to fall back to.
     CheckpointRun _checkpoint_run;
+    // Which trigger follows which (TriggerData::follows) and the hand-over
+    // between them, once per frame.
+    TriggerChains _trigger_chains;
+    static_assert(
+        Cfg::Level::Limits::TRIGGERS <= TriggerChains::MAX_TRIGGERS,
+        "TriggerChains must cover every trigger of a level");
     bn::fixed _spawn_x = 0;
     bn::fixed _spawn_y = 0;
 

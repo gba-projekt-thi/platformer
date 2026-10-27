@@ -247,6 +247,9 @@ void LevelManager::_finish_respawn() {
     _dynamic_platforms.reset_crumbling();
     _fleeing_platforms.reset();
     _checkpoint_run.restore(_triggers);
+    // Nothing from before the death may reach a follower: the chain starts
+    // from the reset (or checkpoint-restored) triggers.
+    _trigger_chains.capture(_triggers);
     // The duck is back at the spawn point or a checkpoint, possibly far from
     // where it died: cut there instead of gliding across the level.
     _camera_rig.snap(_player.pos.x, _player.pos.y);
@@ -331,13 +334,30 @@ void LevelManager::_load_triggers(const LevelData& level) {
             trigger.x, trigger.y, trigger.width, trigger.height,
             trigger.default_on, trigger.name, trigger.mode, trigger.sprite,
             trigger.sprite_index_off, trigger.sprite_index_on,
-            trigger.delay_frames, trigger.action);
+            trigger.delay_frames, trigger.action, trigger.follows != nullptr);
     }
 
     // Fallback trigger prevents invalid references.
     if (_triggers.empty()) {
         _triggers.emplace_back(1000, 1000, 0, 0, true, nullptr);
     }
+
+    // Delayed trap chains: every follower is linked to its source by name
+    // once all triggers exist (a source may come later in the array).
+    _trigger_chains.clear();
+    for (int i = 0; i < level.trigger_count; ++i) {
+        const char* follows = level.triggers[i].follows;
+        if (follows == nullptr) {
+            continue;
+        }
+        const Trigger* source = find_trigger(follows);
+        if (source == nullptr) {
+            BN_LOG_ERROR(LogCategory::Level, "follows: trigger name not found");
+            continue;
+        }
+        _trigger_chains.link(i, source - _triggers.data());
+    }
+    _trigger_chains.capture(_triggers);
 
     // Triggers reset themselves on death/restart, so one that drives only
     // platforms (no trap to reset it) still returns to its default state.
@@ -539,6 +559,9 @@ LevelManager::UpdateResult LevelManager::update() {
     // -------------------------------------------------------------------------
 
     CollisionRegistry::instance().update_all();
+    // After every trigger ticked and the duck pressed its triggers: one hop
+    // of every delayed trap chain (trigger_logic.h).
+    _trigger_chains.propagate(_triggers);
     _sync_checkpoints();
     _dynamic_platforms.sync_switched(_player.pos);
     _sync_crumble_platforms();
