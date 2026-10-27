@@ -330,3 +330,105 @@ TEST_CASE(trigger_timer_restore_of_an_unfired_timer_counts_again) {
     state.tick();
     CHECK(state.triggered());
 }
+
+// --- TriggerZone: the duck's presence and actions in a Trigger's zone -------
+
+TEST_CASE(zone_enter_trigger_fires_when_the_duck_steps_in) {
+    TriggerZone zone(false, TriggerMode::Latch, 0, TriggerAction::Enter);
+    CHECK(!zone.triggered());
+    zone.enter();
+    CHECK(zone.triggered());
+}
+
+TEST_CASE(zone_enter_trigger_ignores_jumps_and_dashes_outside_and_inside) {
+    TriggerZone zone(false, TriggerMode::Latch, 0, TriggerAction::Enter);
+    zone.update(true, true);
+    CHECK(!zone.triggered());
+}
+
+TEST_CASE(zone_jump_trigger_is_not_set_off_by_walking_in) {
+    TriggerZone zone(false, TriggerMode::Latch, 0, TriggerAction::Jump);
+    zone.enter();
+    CHECK(!zone.triggered());
+    zone.update(false, true);  // a dash is not a jump
+    CHECK(!zone.triggered());
+    zone.update(true, false);
+    CHECK(zone.triggered());
+}
+
+TEST_CASE(zone_dash_trigger_needs_a_dash_inside) {
+    TriggerZone zone(false, TriggerMode::Latch, 0, TriggerAction::Dash);
+    zone.enter();
+    zone.update(true, false);
+    CHECK(!zone.triggered());
+    zone.update(false, true);
+    CHECK(zone.triggered());
+}
+
+TEST_CASE(zone_action_outside_the_zone_does_nothing) {
+    TriggerZone zone(false, TriggerMode::Latch, 0, TriggerAction::Jump);
+    zone.update(true, true);
+    CHECK(!zone.triggered());
+    zone.enter();
+    zone.exit();
+    zone.update(true, true);  // the duck left again before it jumped
+    CHECK(!zone.triggered());
+}
+
+TEST_CASE(zone_hold_plate_with_a_jump_is_pressed_by_it_and_freed_on_exit) {
+    TriggerZone zone(false, TriggerMode::Hold, 0, TriggerAction::Jump);
+    zone.enter();
+    CHECK(!zone.triggered());
+    zone.update(true, false);
+    CHECK(zone.triggered());
+    zone.exit();
+    CHECK(!zone.triggered());
+}
+
+TEST_CASE(zone_toggle_with_a_jump_flips_on_every_jump) {
+    TriggerZone zone(false, TriggerMode::Toggle, 0, TriggerAction::Jump);
+    zone.enter();
+    zone.update(true, false);
+    CHECK(zone.triggered());
+    zone.update(true, false);
+    CHECK(!zone.triggered());
+}
+
+TEST_CASE(zone_update_runs_the_delay_of_the_state) {
+    TriggerZone zone(false, TriggerMode::Latch, 2, TriggerAction::Enter);
+    zone.enter();
+    CHECK(zone.pressed());
+    CHECK(!zone.triggered());
+    zone.update(false, false);
+    CHECK(!zone.triggered());
+    zone.update(false, false);
+    CHECK(zone.triggered());
+}
+
+TEST_CASE(zone_update_runs_a_timer_trigger_without_the_duck) {
+    TriggerZone zone(false, TriggerMode::Timer, 3, TriggerAction::Enter);
+    zone.update(false, false);
+    zone.update(false, false);
+    CHECK(!zone.triggered());
+    zone.update(false, false);
+    CHECK(zone.triggered());
+}
+
+TEST_CASE(zone_follower_is_pressed_by_follow_and_not_by_the_duck) {
+    TriggerZone zone(false, TriggerMode::Latch, 0, TriggerAction::Enter, true);
+    zone.enter();
+    CHECK(!zone.triggered());
+    zone.follow(true);
+    CHECK(zone.triggered());
+    zone.follow(false);
+    CHECK(!zone.triggered());
+}
+
+TEST_CASE(zone_reset_and_restore_go_through_to_the_state) {
+    TriggerZone zone(false, TriggerMode::Latch, 0, TriggerAction::Enter);
+    zone.enter();
+    zone.reset();
+    CHECK(!zone.triggered());
+    zone.restore(true);
+    CHECK(zone.triggered());
+}

@@ -64,11 +64,8 @@ class Trigger : public PhysicsBody, public IResettable {
     // Shows the tile matching the pressed state (no-op without a sprite).
     void _refresh_visual();
 
-    TriggerState _state;
+    TriggerZone _zone;
     const char* _name;
-    TriggerAction _action;
-    // The duck overlaps the zone (set by the overlap callbacks).
-    bool _inside = false;
 
     // Optional switch visual; both tile sets are created up front so a state
     // change is just a tile swap (same idea as PlayerAnimator's tile cache).

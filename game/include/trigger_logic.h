@@ -193,6 +193,59 @@ class TriggerState {
 };
 
 // -----------------------------------------------------------------------------
+// TriggerZone
+//
+// A Trigger without Butano: the state plus what the duck does in the zone.
+// The overlap callbacks call enter() / exit(), Trigger::update() calls
+// update() once per frame with the jump / dash PlayerEvents report. An Enter
+// trigger is pressed by enter(); a Jump / Dash trigger only by update()
+// (action_fires()), whatever the mode.
+// -----------------------------------------------------------------------------
+class TriggerZone {
+   public:
+    TriggerZone(
+        bool default_on,
+        TriggerMode mode,
+        unsigned delay_frames,
+        TriggerAction action,
+        bool follower = false)
+        : _state(default_on, mode, delay_frames, follower), _action(action) {}
+
+    [[nodiscard]] auto triggered() const -> bool { return _state.triggered(); }
+    [[nodiscard]] auto pressed() const -> bool { return _state.pressed(); }
+
+    // The duck overlaps the zone.
+    void enter() {
+        _inside = true;
+        if (_action == TriggerAction::Enter) {
+            _state.on_enter();
+        }
+    }
+
+    void exit() {
+        _inside = false;
+        _state.on_exit();
+    }
+
+    // One frame: runs the delay and the timer, then the duck's action.
+    void update(bool jumped, bool dashed) {
+        _state.tick();
+        if (action_fires(_action, _inside, jumped, dashed)) {
+            _state.on_enter();
+        }
+    }
+
+    void follow(bool source_on) { _state.follow(source_on); }
+    void reset() { _state.reset(); }
+    void restore(bool triggered) { _state.restore(triggered); }
+
+   private:
+    TriggerState _state;
+    TriggerAction _action;
+    bool _inside = false;
+};
+
+// -----------------------------------------------------------------------------
 // TriggerChains
 //
 // Which trigger follows which (TriggerData::follows, resolved to indexes) and
@@ -262,6 +315,16 @@ class TriggerChains {
         for (int i = 0; i < count; ++i) {
             _was_active[i] = triggers[i].is_triggered() != _default_on[i];
         }
+    }
+
+    // A death or checkpoint respawn: `restore` puts the triggers back (their
+    // default state, or the checkpoint's snapshot), and only then is their
+    // state taken as the previous frame - the other way round, a source that
+    // was activated before the death would still press its follower.
+    template <typename Triggers, typename Restore>
+    void respawn(Triggers& triggers, Restore&& restore) {
+        restore(triggers);
+        capture(triggers);
     }
 
     // Once per frame: every follower follows whether its source was

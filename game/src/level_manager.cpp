@@ -327,10 +327,11 @@ void LevelManager::_finish_respawn() {
     }
     _dynamic_platforms.reset_crumbling();
     _fleeing_platforms.reset();
-    _checkpoint_run.restore(_triggers);
     // Nothing from before the death may reach a follower: the chain starts
     // from the reset (or checkpoint-restored) triggers.
-    _trigger_chains.capture(_triggers);
+    _trigger_chains.respawn(_triggers, [this](auto& triggers) {
+        _checkpoint_run.restore(triggers);
+    });
     // The duck is back at the spawn point or a checkpoint, possibly far from
     // where it died: cut there instead of gliding across the level.
     _camera_rig.snap(_player.pos.x, _player.pos.y);

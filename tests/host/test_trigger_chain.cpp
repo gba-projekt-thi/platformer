@@ -63,8 +63,7 @@ struct Level {
         for (ChainTrigger& trigger : triggers) {
             trigger.state.reset();
         }
-        run.restore(triggers);
-        chains.capture(triggers);
+        chains.respawn(triggers, [this](auto& all) { run.restore(all); });
     }
 
     // Touches the level's only checkpoint flag.

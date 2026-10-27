@@ -25,9 +25,8 @@ Trigger::Trigger(
           Cfg::Layer::TRIGGER,
           Cfg::Layer::PLAYER,
           0),
-      _state(t_default_on, t_mode, t_delay_frames, t_follower),
-      _name(t_name),
-      _action(t_action) {
+      _zone(t_default_on, t_mode, t_delay_frames, t_action, t_follower),
+      _name(t_name) {
     if (t_sprite != nullptr) {
         const int graphics_count = t_sprite->tiles_item().graphics_count();
         _tiles_off = t_sprite->tiles_item().create_tiles(
@@ -47,16 +46,13 @@ Trigger::Trigger(
 }
 
 bool Trigger::is_triggered() const {
-    return _state.triggered();
+    return _zone.triggered();
 }
 
 void Trigger::update() {
-    _state.tick();
     // Jump / Dash triggers fire on the duck's action inside the zone.
     const PlayerEvents& events = PlayerEvents::instance();
-    if (action_fires(_action, _inside, events.jumped(), events.dashed())) {
-        _state.on_enter();
-    }
+    _zone.update(events.jumped(), events.dashed());
     // A Timer trigger changes its pressed state on its own.
     _refresh_visual();
 }
@@ -64,33 +60,29 @@ void Trigger::update() {
 void Trigger::on_enter(
     [[maybe_unused]] uint16_t hit_layers,
     [[maybe_unused]] StaticBody* body) {
-    _inside = true;
-    if (_action == TriggerAction::Enter) {
-        _state.on_enter();
-    }
+    _zone.enter();
     _refresh_visual();
 }
 
 void Trigger::on_exit(
     [[maybe_unused]] uint16_t hit_layers,
     [[maybe_unused]] StaticBody* body) {
-    _inside = false;
-    _state.on_exit();
+    _zone.exit();
     _refresh_visual();
 }
 
 void Trigger::reset() {
-    _state.reset();
+    _zone.reset();
     _refresh_visual();
 }
 
 void Trigger::follow(bool source_on) {
-    _state.follow(source_on);
+    _zone.follow(source_on);
     _refresh_visual();
 }
 
 void Trigger::restore(bool triggered) {
-    _state.restore(triggered);
+    _zone.restore(triggered);
     _refresh_visual();
 }
 
@@ -99,5 +91,5 @@ void Trigger::_refresh_visual() {
         return;
     }
     // Follows what the player did, not the delayed state traps see.
-    _sprite->sprite().set_tiles(_state.pressed() ? *_tiles_on : *_tiles_off);
+    _sprite->sprite().set_tiles(_zone.pressed() ? *_tiles_on : *_tiles_off);
 }
