@@ -63,6 +63,10 @@ void start_screen(DataManager& data_manager) {
     ++part;
 }
 
+void boss_music(int order) {
+    BN_LOG("BOSS MUSIC ", order);
+}
+
 void level_started(Player& player, unsigned level_index) {
     const replay_data::Entry& entry = replay_data::ENTRIES[level_index];
     if (entry.runs == nullptr) {

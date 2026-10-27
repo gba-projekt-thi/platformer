@@ -150,6 +150,7 @@ class LevelManager {
     void _load_player_spawn(const LevelData& level);
     void _load_door(const LevelData& level);
     void _load_music(const LevelData& level);
+    void _update_boss_music();
     void _load_background(const LevelData& level);
     void _setup_camera(const LevelData& level);
     // Aims the camera at the duck for this frame (smoothing, look-ahead, look
@@ -285,6 +286,8 @@ class LevelManager {
     void _place_door();
     // A boss hit freezes the world for a moment and shakes the picture.
     int _boss_hits_seen = 0;
+    // The boss section of the level's music plays (see _update_boss_music()).
+    bool _boss_music = false;
     void _feel_boss_hits();
     bn::optional<bn::music_item> _music;
     PauseController _pause_controller;

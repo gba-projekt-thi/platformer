@@ -27,6 +27,9 @@ JSON layout (one file per world):
                                                   // attempt_positions: [[x, y], ...]
           "world_width": 624, "world_height": 160, "ground_friction": 1,
           "intro_hint": "New: Dash with B",       // optional, like the rest
+          "boss_music_order": 9,                  // optional: song order of the boss
+                                                  // section of the module (checked
+                                                  // by tools/Make_boss_music.py)
           "field_notes": {"door": "comment above the door field", ...}
         }
       ]
@@ -100,6 +103,7 @@ LEVEL_KEYS = [
     ("world_width", "world_width"), ("world_height", "world_height"),
     ("ground_friction", "ground_friction"), ("intro_hint", "intro_hint"),
     ("checkpoints", "checkpoints"), ("checkpoint_count", "checkpoints"),
+    ("boss_music_order", "boss_music_order"),
 ]
 ARRAYS = [("platforms", "PlatformData"), ("triggers", "TriggerData"),
           ("traps", "TrapData"), ("checkpoints", "CheckpointData")]
@@ -263,7 +267,8 @@ def _level(level, structs):
                                        zip(("x", "y"), level["spawn"])) + "}",
         "door": positional("DoorData", door, structs),
     }
-    for key in ("world_width", "world_height", "ground_friction", "intro_hint"):
+    for key in ("world_width", "world_height", "ground_friction", "intro_hint",
+                "boss_music_order"):
         if key in level:
             values[key] = value("LevelData", key, level[key])
 

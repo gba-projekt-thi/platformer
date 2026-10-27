@@ -232,6 +232,7 @@
       },
       "background": "world3",
       "music": "world3",
+      "boss_music_order": 8,
       "spawn": [-398, 42],
       "door": {
         "x": 374,

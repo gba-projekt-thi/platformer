@@ -437,4 +437,5 @@ const LevelData LEVEL_WORLD4_BOSS = {
     "Same trick: R from above",
     // Checkpoints, in play order
     world4_boss_checkpoints,
-    sizeof(world4_boss_checkpoints) / sizeof(world4_boss_checkpoints[0])};
+    sizeof(world4_boss_checkpoints) / sizeof(world4_boss_checkpoints[0]),
+    6};
