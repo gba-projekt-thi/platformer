@@ -10,6 +10,7 @@
 #include "bn_vector.h"
 #include "common_variable_8x16_sprite_font.h"
 
+#include "attempt_variant.h"
 #include "base_trap.h"
 #include "camera.h"
 #include "camera_rig.h"
@@ -222,6 +223,11 @@ class LevelManager {
     // where it is while the world is frozen.
     death_fx::Sequence _death_fx;
     unsigned _deaths_seen = 0;
+    // The run's death count when the level was loaded: the deaths of this
+    // visit of the level (attempt_variant.h) decide where a door with
+    // attempt_positions stands.
+    unsigned _deaths_at_entry = 0;
+    unsigned _deaths_in_level() const;
     bool _skip_death_fx = false;
     bool _respawn_pending = false;
     bn::optional<Door> _door;
@@ -230,6 +236,12 @@ class LevelManager {
     BossTrap* _boss = nullptr;
     bool _door_locked = false;
     void _sync_boss_door();
+    // False exits (door_logic.h): the trigger that turns the door into a
+    // trap (DoorData::trap_trigger_name, nullptr = none) and the door's spot
+    // for this attempt (DoorData::attempt_positions).
+    Trigger* _door_trap = nullptr;
+    void _check_door_trap();
+    void _place_door();
     // A boss hit freezes the world for a moment and shakes the picture.
     int _boss_hits_seen = 0;
     void _feel_boss_hits();

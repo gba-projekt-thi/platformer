@@ -119,12 +119,42 @@ void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.cancel_death_fx();
     Camera::instance().set_shake(0, 0);
     _deaths_seen = _player.get_deaths();
+    _deaths_at_entry = _player.get_deaths();
     _skip_death_fx = false;
     _respawn_pending = false;
 }
 
 void LevelManager::_load_door(const LevelData& level) {
     _door.emplace(level.door);
+}
+
+unsigned LevelManager::_deaths_in_level() const {
+    return attempt_variant::deaths_in_level(
+        _player.get_deaths(), _deaths_at_entry);
+}
+
+// The door that moves between attempts stands where the deaths in this level
+// put it (on load, and after every death, checkpoint respawn and Restart
+// Level - they all end in _finish_respawn()).
+void LevelManager::_place_door() {
+    if (_door) {
+        _door->place_for_attempt(_deaths_in_level());
+    }
+}
+
+// The door that turns into a trap: touched while its trigger is on, it kills
+// like a trap does - right after the collision update, so this frame's death
+// starts the death feedback as usual. No tell: the door looks the same.
+void LevelManager::_check_door_trap() {
+    if (!_door) {
+        return;
+    }
+    const door_logic::Touch touch = door_logic::on_touch(
+        _door->reached(), _door_locked, door_logic::trapped(_door_trap));
+    if (touch == door_logic::Touch::Kill) {
+        _door->clear_reached();
+        _player.death();
+    }
 }
 
 void LevelManager::_load_music(const LevelData& level) {
@@ -241,9 +271,7 @@ void LevelManager::_advance_death_fx() {
 
 void LevelManager::_finish_respawn() {
     _reset_entities();
-    if (_door) {
-        _door->reset_flee();
-    }
+    _place_door();
     _dynamic_platforms.reset_crumbling();
     _fleeing_platforms.reset();
     _checkpoint_run.restore(_triggers);
@@ -255,6 +283,7 @@ void LevelManager::_finish_respawn() {
 
 void LevelManager::_clear_runtime_state() {
     _boss = nullptr;
+    _door_trap = nullptr;
     _dynamic_platforms.clear();
     _fleeing_platforms.clear();
     _platforms.clear();
@@ -453,6 +482,7 @@ void LevelManager::load(const LevelData& level) {
 
     _load_player_spawn(level);
     _load_door(level);
+    _place_door();
     _load_music(level);
     _load_background(level);
     _setup_camera(level);
@@ -462,6 +492,7 @@ void LevelManager::load(const LevelData& level) {
 
     _load_platforms(level);
     _load_triggers(level);
+    _door_trap = find_trigger(level.door.trap_trigger_name);
     _load_dynamic_platforms(level);
     _load_traps(level);
     _load_checkpoints(level);
@@ -548,6 +579,7 @@ LevelManager::UpdateResult LevelManager::update() {
     if (_door) {
         _door->flee_from(_player.pos.x, _player.pos.y);
     }
+    _check_door_trap();
     _check_player_died();
 
     // -------------------------------------------------------------------------

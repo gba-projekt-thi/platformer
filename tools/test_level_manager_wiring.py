@@ -108,6 +108,43 @@ class LevelManagerWiringTests(unittest.TestCase):
     def test_the_level_spawn_is_remembered_for_restart(self):
         self.assertIn("_spawn_x = level.player_data.x", self.text)
 
+    # -- false exits (door_logic.h) ------------------------------------------
+
+    def test_the_deaths_of_this_level_count_from_its_entry(self):
+        seen = self.text.index("_deaths_seen = _player.get_deaths();")
+        entry = self.text.index("_deaths_at_entry = _player.get_deaths();")
+        # set right where _deaths_seen is set on level load
+        self.assertLess(abs(entry - seen), 80)
+        deaths = _body(self.text, r"unsigned LevelManager::_deaths_in_level\(\) const") or ""
+        # whitespace aside (clang-format wraps the call)
+        self.assertIn(
+            "attempt_variant::deaths_in_level(_player.get_deaths(),_deaths_at_entry)",
+            re.sub(r"\s+", "", deaths),
+        )
+
+    def test_the_door_is_placed_on_load_and_after_every_respawn(self):
+        place = _method(self.text, "_place_door") or ""
+        self.assertIn("place_for_attempt(_deaths_in_level())", place)
+        self.assertLess(self.load.index("_load_door(level)"), self.load.index("_place_door()"))
+        # a death, a checkpoint respawn and Restart Level all end here
+        self.assertIn("_place_door()", self.finish)
+
+    def test_the_door_trap_trigger_is_found_after_the_triggers_are_loaded(self):
+        self.assertLess(
+            self.load.index("_load_triggers(level)"),
+            self.load.index("_door_trap = find_trigger(level.door.trap_trigger_name)"),
+        )
+        self.assertIn("_door_trap = nullptr", self.clear)
+
+    def test_a_trapped_door_kills_before_the_death_is_noticed(self):
+        # Like a trap: the death of this frame starts the death feedback.
+        check = self.update.index("_check_door_trap()")
+        self.assertLess(self.update.index("update_all()"), check)
+        self.assertLess(check, self.update.index("_check_player_died()"))
+        trap = _method(self.text, "_check_door_trap") or ""
+        self.assertIn("door_logic::on_touch(", trap)
+        self.assertIn("_player.death()", trap)
+
 
 if __name__ == "__main__":
     unittest.main()

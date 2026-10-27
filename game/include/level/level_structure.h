@@ -334,6 +334,22 @@ struct DoorData {
     bn::span<const bn::fixed_point> flee_path = {};
     int flee_range = 0;
     int flee_frames = 0;
+
+    // Level Devil: the door that turns into a trap (door_logic.h). While the
+    // trigger of this name (TriggerData::name) is on, touching the door kills
+    // the duck instead of finishing the level; it is a door again once the
+    // trigger is off (a Hold zone, a death resetting it). No tell: it looks
+    // the same either way. nullptr = always a door.
+    const char* trap_trigger_name = nullptr;
+
+    // Level Devil: the door that stands somewhere else after deaths. Its
+    // origin is (x, y) + attempt_positions[attempt_variant::
+    // variant_for_attempt(deaths in the level, attempt_every, size)] - a new
+    // spot every attempt_every deaths, the last one stays. In the JSON a list
+    // of [x, y] pairs; the first is usually [0, 0] (the door as authored).
+    // Empty = it stays at (x, y). flee_path is relative to that origin.
+    bn::span<const bn::fixed_point> attempt_positions = {};
+    unsigned attempt_every = 0;
 };
 
 // -----------------------------------------------------------------------------
