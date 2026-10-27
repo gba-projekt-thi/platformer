@@ -62,6 +62,7 @@ def _load(name, filename):
 _ctr = _load("check_trigger_references", "Check_trigger_references.py")
 sim = _load("check_level_reachability", "Check_level_reachability.py")
 
+DOOR_OX, DOOR_OY = sim.DOOR_BOXES[32][2:4]  # hitbox centre from the 32 px door sprite centre
 SCREEN_W = 240
 DEATH_Y = 100
 GHOST_EVERY = 12  # frames between the ghost boxes of a MOVING trap
@@ -204,10 +205,10 @@ def load_level_file(path):
         level.sim_triggers = sim_triggers
         level.spawn = spawn
         level.door_hit = door_hit
-        level.door = (door_hit[0], door_hit[1] - 6.0)
+        level.door = (door_hit[0] - DOOR_OX, door_hit[1] - DOOR_OY)
         # A door that moves between attempts (DoorData::attempt_positions):
         # every spot, a new one every attempt_every deaths.
-        level.door_spots = [(x, y - 6.0) for x, y in doors[name]]
+        level.door_spots = [(x - DOOR_OX, y - DOOR_OY) for x, y, *_ in doors[name]]
         door = sim._fields_of(f[9])
         level.door_every = int(_num(door[11], 0.0)) if len(door) > 11 else 0
         if f[2] != "nullptr" and f[2] in trigger_arrays:
@@ -363,7 +364,7 @@ STYLE = """
   .spawn { fill: #2e7d32; stroke: #1b5e20; stroke-width: 0.5; }
   .door { fill: #ffd54f; fill-opacity: 0.45; stroke: #f9a825; stroke-width: 0.6; }
   .door.later { fill-opacity: 0.15; stroke-dasharray: 2 1.2; }
-  .doorhit { fill: #5d4037; }
+  .doorhit { fill: #5d4037; fill-opacity: 0.5; }
   .checkpoint { fill: #26a69a; fill-opacity: 0.35; stroke: #00695c; stroke-width: 0.7; }
 """
 
@@ -496,7 +497,7 @@ def render(level, arcs="all", optimistic=False, show_traps=True, scale=2.0, reac
     svg.rect(level.spawn[0], level.spawn[1], 8, 8, "spawn", "player spawn")
     svg.text(level.spawn[0], level.spawn[1] - 7, "spawn", "small", "middle")
     svg.rect(level.door[0], level.door[1], 32, 32, "door", "door sprite")
-    svg.rect(level.door_hit[0], level.door_hit[1], 3, 3, "doorhit", "door hit box")
+    svg.rect(level.door_hit[0], level.door_hit[1], *sim.door_size(level.door_hit), "doorhit", "door hit box")
     svg.text(level.door[0], level.door[1] - 18, "door", "small", "middle")
     # a door that moves between attempts: where it stands after deaths
     for i, (x, y) in enumerate(level.door_spots[1:], 1):

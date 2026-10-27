@@ -16,6 +16,9 @@ frame height comes from the sprite's .json, palette index 0 is transparent).
   - Traps: a trap must not kill before the pictures touch. Its hitbox may
     reach past its picture only as far as the duck's own picture reaches past
     the duck's body on the facing side, plus TRAP_TOLERANCE px.
+  - Doors: the box (door_logic.h) lies inside the opaque pixels of every frame
+    the door shows, at most DOOR_MAX_INSET px in from each side, so the duck
+    has to visibly walk into the door but cannot be missed by a wide margin.
 
 Usage (from the repository root):
     python3 tools/Check_hitboxes.py
@@ -39,6 +42,8 @@ _spec.loader.exec_module(_ctr)
 
 PLATFORM_TOLERANCE = 3
 TRAP_TOLERANCE = 2
+DOOR_MAX_INSET = 4  # px the door box may sit inside its picture, per side
+DOOR_MAX_OUTSET = 0  # px it may reach past it
 
 
 # ---- bitmaps ----------------------------------------------------------------
@@ -153,6 +158,18 @@ def trap_unfair_by(hit, img, duck):
     )
 
 
+def door_problem(hit, img):
+    """Why a door box (left, top, right, bottom; relative to the sprite's
+    center) does not fit the opaque pixels `img` of its picture, else None."""
+    for side, inset in zip(("left", "top", "right", "bottom"),
+                           (hit[0] - img[0], hit[1] - img[1], img[2] - hit[2], img[3] - hit[3])):
+        if inset < -DOOR_MAX_OUTSET:
+            return f"hitbox reaches {-inset:g} px past the picture on the {side}"
+        if inset > DOOR_MAX_INSET:
+            return f"hitbox is {inset:g} px inside the picture on the {side}"
+    return None
+
+
 # ---- game data --------------------------------------------------------------
 def cfg_player(root, constant):
     text = (Path(root) / "game/include/cfg.h").read_text()
@@ -221,6 +238,18 @@ def trap_field_index(field):
     return [name for name, _ in gen.read_structs()["TrapData"]].index(field)
 
 
+def door_boxes(root):
+    """{sprite height: (left, top, right, bottom)} of the DOOR_BOX_* constants
+    in game/include/door_logic.h (width, height, offset_x, offset_y)."""
+    text = (Path(root) / "game/include/door_logic.h").read_text()
+    boxes = {}
+    for size, w, h, ox, oy in re.findall(
+            r"DOOR_BOX_(\d+)\s*=\s*\{(-?\d+),\s*(-?\d+),\s*(-?\d+),\s*(-?\d+)\}", text):
+        w, h, ox, oy = int(w), int(h), int(ox), int(oy)
+        boxes[int(size)] = (ox - w / 2, oy - h / 2, ox + w / 2, oy + h / 2)
+    return boxes
+
+
 def _world(box, x, y):
     return (x + box[0], y + box[1], x + box[2], y + box[3])
 
@@ -235,6 +264,7 @@ def check(root):
     sequences = _index_arrays([(level_dir / "levels_common.h").read_text(), *texts.values()])
     problems = []
     scale_at = trap_field_index("sprite_scale")
+    boxes = door_boxes(root)
 
     for path, text in texts.items():
         for array, body in _ctr.extract_named_arrays(text, "PlatformData").items():
@@ -276,6 +306,28 @@ def check(root):
                 unfair = trap_unfair_by(hit, _world(img, x, y), duck)
                 if unfair > TRAP_TOLERANCE:
                     problems.append(f"{where}: kills {unfair:g} px before the pictures touch")
+
+        for m in re.finditer(r"(?:const|constexpr) LevelData (\w+)\s*=\s*\{", text):
+            end = _ctr.find_balanced_block(text, m.end() - 1)
+            level = _ctr.top_level_fields(text[m.end():end])
+            door = _ctr.top_level_fields(level[9].strip()[1:-1])
+            name = _sprite(door[2]) if len(door) > 2 else "door32x32"
+            where = f"{path.name} {m.group(1)} door {name}"
+            if name not in sprites:
+                problems.append(f"{where}: unknown sprite")
+                continue
+            frames = [0, 2, 4, 6, 8, 10, 12]  # DOOR32X32_GRAPHICS_INDEXES
+            if len(door) > 3:
+                frames = sequences.get(door[3].strip(), [0])
+            img = _union([sprites.box(name, k) for k in frames])
+            height = json.loads(
+                sprites._paths[name].with_suffix(".json").read_text()).get("height", 32)
+            if height not in boxes:
+                problems.append(f"{where}: no DOOR_BOX_{height} in door_logic.h")
+                continue
+            reason = door_problem(boxes[height], img)
+            if reason:
+                problems.append(f"{where}: {reason}")
     return problems
 
 

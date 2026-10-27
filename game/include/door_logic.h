@@ -61,4 +61,25 @@ auto attempt_offset(
         deaths, every, count)];
 }
 
+// The door's hitbox: the opaque pixels of its picture, 2 px in from every side,
+// so the duck has to visibly walk into the door. One rule per sprite size;
+// offsets are from the sprite's center. tools/Check_hitboxes.py checks them
+// against the pictures (door32x32: opaque -11..11 x -7..16; susanne16x16:
+// -7..7 x -8..8).
+struct Box {
+    int w;
+    int h;
+    int offset_x;
+    int offset_y;
+};
+
+inline constexpr Box DOOR_BOX_32 = {18, 18, 0, 4};  // x -9..9, y -5..13
+inline constexpr Box DOOR_BOX_16 = {10, 12, 0, 0};  // x -5..5, y -6..6
+
+// sprite_height: the door sprite's height in px (32: door32x32, 16: a goal
+// marker like susanne16x16).
+inline constexpr auto box_for(int sprite_height) -> Box {
+    return sprite_height <= 16 ? DOOR_BOX_16 : DOOR_BOX_32;
+}
+
 }  // namespace door_logic

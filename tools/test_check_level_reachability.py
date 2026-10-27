@@ -341,7 +341,7 @@ class RunningDoorTests(unittest.TestCase):
 
     def test_a_plain_door_is_where_it_stands(self):
         _, _, _, door = self.load({"x": 30, "y": 4})
-        self.assertEqual(door, (30.0, 10.0))
+        self.assertEqual(door, (30.0, 8.0, 18.0, 18.0))
 
     def test_a_running_platform_counts_at_its_last_stop(self):
         spec = importlib.util.spec_from_file_location(
@@ -365,7 +365,7 @@ class RunningDoorTests(unittest.TestCase):
     def test_a_running_door_counts_at_its_last_stop(self):
         _, _, _, door = self.load({"x": 30, "y": 4, "flee_path": [[40, 0], [60, -20]],
                                    "flee_range": 24, "flee_frames": 10})
-        self.assertEqual(door, (90.0, -10.0))
+        self.assertEqual(door, (90.0, -12.0, 18.0, 18.0))
 
 
 class DeathWindowTests(unittest.TestCase):
@@ -452,7 +452,7 @@ class AttemptDoorTests(unittest.TestCase):
     def test_a_plain_door_has_one_position(self):
         with tempfile.TemporaryDirectory() as tmp:
             positions = sim.load_door_positions(self.header({"x": 30, "y": 40}, tmp))
-        self.assertEqual(positions["LEVEL_X"], [(30.0, 46.0)])
+        self.assertEqual(positions["LEVEL_X"], [(30.0, 44.0, 18.0, 18.0)])
 
     def test_every_attempt_position_is_a_door_position(self):
         door = {"x": 30, "y": 40, "attempt_positions": [[0, 0], [-60, 0]], "attempt_every": 1}
@@ -460,16 +460,16 @@ class AttemptDoorTests(unittest.TestCase):
             path = self.header(door, tmp)
             positions = sim.load_door_positions(path)["LEVEL_X"]
             first = sim.load_levels(path)["LEVEL_X"][3]
-        self.assertEqual(positions, [(30.0, 46.0), (-30.0, 46.0)])
+        self.assertEqual(positions, [(30.0, 44.0, 18.0, 18.0), (-30.0, 44.0, 18.0, 18.0)])
         # load_levels() keeps the door of the first attempt.
-        self.assertEqual(first, (30.0, 46.0))
+        self.assertEqual(first, (30.0, 44.0, 18.0, 18.0))
 
     def test_a_running_door_runs_from_every_attempt_position(self):
         door = {"x": 30, "y": 40, "flee_path": [[20, 0]], "flee_range": 24, "flee_frames": 8,
                 "attempt_positions": [[0, 0], [-60, 0]], "attempt_every": 1}
         with tempfile.TemporaryDirectory() as tmp:
             positions = sim.load_door_positions(self.header(door, tmp))["LEVEL_X"]
-        self.assertEqual(positions, [(50.0, 46.0), (-10.0, 46.0)])
+        self.assertEqual(positions, [(50.0, 44.0, 18.0, 18.0), (-10.0, 44.0, 18.0, 18.0)])
 
     def test_reachable_attempt_positions_pass(self):
         door = {"x": 30, "y": 40, "attempt_positions": [[0, 0], [-60, 0]], "attempt_every": 1}
@@ -740,11 +740,11 @@ class PlayAreaTests(unittest.TestCase):
         self.assertEqual(sim.outside_play_area((-264, 40), (200, 40), 480), ["spawn"])
 
     def test_a_door_the_duck_touches_at_the_bounce_is_fine(self):
-        # The duck at the bound (230) overlaps a door up to 230 + 4 + 1.
-        self.assertEqual(sim.outside_play_area((0, 40), (235, 40), 480), [])
+        # The duck at the bound (230) overlaps a door box up to 230 + 4 + 9.
+        self.assertEqual(sim.outside_play_area((0, 40), (242, 40), 480), [])
 
     def test_a_door_past_the_right_bounce_is_reported(self):
-        self.assertEqual(sim.outside_play_area((0, 40), (236, 40), 480), ["door"])
+        self.assertEqual(sim.outside_play_area((0, 40), (244, 40), 480), ["door"])
 
 
 @unittest.skipIf(REPO is None, "levels_world5.h not found")
