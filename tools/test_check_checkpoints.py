@@ -270,6 +270,102 @@ class SyntheticTests(unittest.TestCase):
         self.assertEqual(run(bad), 1)
 
 
+# A BASE trap only there from `start` deaths on (until `end`): TrapData's
+# from_death / until_death come after the fields the other literals set.
+BASE_WINDOW = ("{TrapType::BASE, %d, %d, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
+               " 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,"
+               " 0, false, %d, %d}")
+
+# A patrol without a trigger: it runs from the first frame.
+PATH_FREE = ("{TrapType::PATH, %d, %d, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
+             " 0, 0, 0, ROUTE, 15, 0, 0, nullptr}")
+
+# Level Devil: a stone drops onto the spawn (-40, 30) after 2 deaths.
+SPAWN_PLATS = """
+constexpr PlatformData plats_spawn[] = {
+    {-40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0},
+    {-40, 30, 16, 8, 0, 0, bn::sprite_items::p, 0, nullptr, true, 0, 0, {}, 0, 0, 2}};
+"""
+
+SPAWN_LEVELS = HEAD + SPAWN_PLATS + "".join(
+    [
+        # the spawn is (-40, 30); the duck falls from there onto the platform top at y=52
+        level("SPAWN_CLEAR", [], [BASE % (40, 44)]),
+        level("SPAWN_TRAP_LATER", [], [BASE_WINDOW % (-40, 30, 3, 0)]),
+        level("SPAWN_TRAP_FIRST", [], [BASE_WINDOW % (-40, 30, 0, 2)]),
+        level("SPAWN_LANDING_TRAP", [], [BASE % (-40, 46)]),
+        level("SPAWN_ON_ROUTE", [], [PATH_FREE % (-60, 40)]),
+        level("SPAWN_GATED_ROUTE", [], [PATH % (-60, 40)]),
+        level("SPAWN_CYCLE_STROKE", [], [CYCLE % (-40, 90, -50)]),
+        level("SPAWN_CHASER_BEHIND", [], [CHASE % (-200, 44)]),
+        level("SPAWN_STONE_LATER", [], plats_ref="plats_spawn, 2"),
+    ]
+)
+
+
+class SpawnTests(unittest.TestCase):
+    """The level spawn must be clear of every trap and platform on every
+    attempt: a `from_death: 3` trap on it kills on every respawn after the
+    third death."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        Path(cls.tmp.name, "levels_common.h").write_text(COMMON)
+        path = Path(cls.tmp.name, "levels_worldS.h")
+        path.write_text(SPAWN_LEVELS)
+        cls.levels = cc.pv.load_level_file(path)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def errors(self, name):
+        return cc.check_spawn(self.levels[name])
+
+    def assertSpawnError(self, name, fragment):
+        errors = self.errors(name)
+        self.assertTrue(any(fragment in e for e in errors), (name, errors))
+
+    def test_a_spawn_clear_of_every_trap_is_fine(self):
+        self.assertEqual(self.errors("SPAWN_CLEAR"), [])
+
+    def test_a_trap_that_appears_on_the_spawn_after_deaths_is_an_error(self):
+        self.assertSpawnError("SPAWN_TRAP_LATER", "the spawn overlaps a BASE trap at (-40,30) after 3 deaths")
+
+    def test_a_trap_on_the_spawn_on_the_first_attempts_is_an_error(self):
+        self.assertSpawnError("SPAWN_TRAP_FIRST", "the spawn overlaps a BASE trap at (-40,30)")
+        self.assertFalse(any("after" in e for e in self.errors("SPAWN_TRAP_FIRST")))
+
+    def test_the_fall_from_the_spawn_to_the_floor_counts(self):
+        self.assertSpawnError("SPAWN_LANDING_TRAP", "the spawn overlaps a BASE trap at (-40,46)")
+
+    def test_a_patrol_route_over_the_spawn_is_an_error(self):
+        self.assertSpawnError("SPAWN_ON_ROUTE", "overlaps a PATH trap's path")
+
+    def test_a_patrol_that_waits_for_its_trigger_only_counts_where_it_starts(self):
+        # the duck has long left the spawn when the patrol it guards starts
+        self.assertEqual(self.errors("SPAWN_GATED_ROUTE"), [])
+
+    def test_a_cycle_stroke_through_the_spawn_is_an_error(self):
+        self.assertSpawnError("SPAWN_CYCLE_STROKE", "overlaps a CYCLE trap's path")
+
+    def test_a_chaser_behind_the_spawn_is_its_job_not_an_error(self):
+        # it hunts the duck by design: only where it starts counts
+        self.assertEqual(self.errors("SPAWN_CHASER_BEHIND"), [])
+
+    def test_a_platform_that_appears_on_the_spawn_after_deaths_is_an_error(self):
+        self.assertSpawnError("SPAWN_STONE_LATER", "the spawn overlaps platform 1 after 2 deaths")
+
+    def test_main_reports_a_bad_spawn_in_a_level_without_checkpoints(self):
+        import contextlib, io
+
+        bad = Path(self.tmp.name, "levels_worldSPAWNBAD.h")
+        bad.write_text(HEAD + level("ONLY_SPAWN_BAD", [], [BASE_WINDOW % (-40, 30, 3, 0)]))
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(cc.main([str(bad)]), 1)
+
+
 def _real_files():
     here = Path(__file__).resolve().parent
     return sorted(here.glob("levels_world*.h")) or sorted(
@@ -321,6 +417,10 @@ class RealLevelTests(unittest.TestCase):
             self.assertEqual(len(lv.checkpoints), 1, name)
             floor_top = min(p.top for p in lv.platforms if p.top > 40)
             self.assertLess(lv.checkpoints[0][1], floor_top - 20, name)
+
+    def test_no_real_spawn_is_in_a_trap_on_any_attempt(self):
+        for name, lv in self.levels.items():
+            self.assertEqual(cc.check_spawn(lv), [], name)
 
     def test_limit_in_cfg_h_matches_the_data(self):
         limit = cc.max_checkpoints(Path(__file__).resolve().parent)

@@ -488,6 +488,147 @@ class AttemptDoorTests(unittest.TestCase):
                              ["LEVEL_X: door"])
 
 
+    def test_a_single_level_run_checks_every_attempt_position(self):
+        import contextlib, io
+        door = {"x": 30, "y": 40, "attempt_positions": [[0, 0], [0, -200]], "attempt_every": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.header(door, tmp)
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(sim.main([str(path), "LEVEL_X"]), 1)
+
+
+def _header(level, tmp):
+    """`level` (game/levels/ JSON, with defaults for the art) as a generated
+    levels header in `tmp`; returns its path."""
+    spec = importlib.util.spec_from_file_location(
+        "generate_levels", Path(__file__).with_name("Generate_levels.py"))
+    gen = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gen)
+    level = {"name": "LEVEL_X", "background": "world9", "music": "world9",
+             "world_width": 480, **level}
+    path = Path(tmp) / "levels.h"
+    path.write_text(gen.generate({"levels": [level]}, gen.read_structs()))
+    return path
+
+
+def _platforms(*rects):
+    """{"items": ...} of stones (x, y, width[, extra fields])."""
+    items = []
+    for x, y, w, *extra in rects:
+        item = {"x": x, "y": y, "width": w, "height": 16, "offset_x": 0, "offset_y": 0,
+                "sprite": "stone", "sprite_index": 0}
+        item.update(*extra)
+        items.append(item)
+    return {"name": "x_platforms", "items": items}
+
+
+class CheckpointDoorTests(unittest.TestCase):
+    """A respawn at a checkpoint must reach the door on every attempt: a
+    later layout may strand the duck at its flag even though the spawn
+    still reaches the door.
+
+    Spawn on A (0), door on D (100); the flag stands in the pit C (140),
+    32 px below D - too deep to jump out. The step S (168) leads back up."""
+
+    def level(self, step):
+        return {
+            "platforms": _platforms((0, 60, 64), (100, 60, 32), (140, 92, 24), (168, 76, 32, step)),
+            "spawn": [0, 40], "door": {"x": 100, "y": 40},
+            "checkpoints": {"name": "x_checkpoints", "items": [{"x": 140, "y": 76}]},
+        }
+
+    def campaign(self, path):
+        return [sim.CampaignLevel(0, "LEVEL_X", path, False, False, False)]
+
+    def test_checkpoints_are_read_from_the_level(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = _header(self.level({}), tmp)
+            self.assertEqual(sim.load_checkpoints(path), {"LEVEL_X": [(140.0, 76.0)]})
+
+    def test_a_flag_with_a_way_out_on_every_attempt_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(sim.unreachable_doors(self.campaign(_header(self.level({}), tmp))), [])
+
+    def test_a_step_out_of_the_pit_that_is_gone_after_3_deaths_strands_the_respawn(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = _header(self.level({"until_death": 3}), tmp)
+            self.assertEqual(sim.unreachable_doors(self.campaign(path)),
+                             ["LEVEL_X (from checkpoint 1 after 3 deaths)"])
+
+    def lever_level(self):
+        # S is only there while the lever on A is off; the duck can flip it
+        # on, drop into the pit and touch the flag - then it respawns with
+        # the lever on (the checkpoint's trigger snapshot), S gone.
+        a, d, c, s = (sim.Rect(0, 60, 64, 16, 0), sim.Rect(100, 60, 32, 16, 1),
+                      sim.Rect(140, 92, 24, 16, 2), sim.Rect(168, 76, 32, 16, 3, "sw", False))
+        triggers = {"sw": {"default_on": False, "rect": (0, 44, 16, 16)}}
+        return [a, d, c, s], triggers
+
+    def test_the_spawn_reaches_the_door_whatever_the_lever(self):
+        plats, triggers = self.lever_level()
+        self.assertEqual(sim.unreachable_windows(plats, triggers, (0, 40), (100.0, 46.0), False, False), [])
+
+    def test_a_respawn_keeps_the_levers_that_were_on_at_the_flag(self):
+        plats, triggers = self.lever_level()
+        self.assertEqual(sim.checkpoint_unreachable_windows(
+            plats, triggers, (0, 40), (140, 76), (100.0, 46.0), False, False), [0])
+
+    def test_a_flag_the_spawn_never_reaches_is_left_to_check_checkpoints(self):
+        plats, triggers = self.lever_level()
+        plats.append(sim.Rect(400, 60, 32, 16, 4))
+        # never touched, never a respawn point (Check_checkpoints.py reports it)
+        self.assertEqual(sim.checkpoint_unreachable_windows(
+            plats, triggers, (0, 40), (400, 44), (100.0, 46.0), False, False), [])
+
+
+class DoorTrapTriggerTests(unittest.TestCase):
+    """A false exit (DoorData::trap_trigger_name): while the trigger is on the
+    door kills. A Latch (or Toggle) trigger stays on, so the door must be
+    reachable without passing through its zone.
+
+    Spawn on A (-40), door on B (40), a 48 px gap between them."""
+
+    def level(self, trigger):
+        trigger = {"x": 0, "y": 0, "width": 16, "height": 16, "name": "door_trap", **trigger}
+        return {
+            "platforms": _platforms((-40, 60, 32), (40, 60, 32)),
+            "triggers": {"name": "x_triggers", "items": [trigger]},
+            "spawn": [-40, 40], "door": {"x": 40, "y": 34, "trap_trigger_name": "door_trap"},
+        }
+
+    def bad(self, trigger):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = _header(self.level(trigger), tmp)
+            return sim.unreachable_doors([sim.CampaignLevel(0, "LEVEL_X", path, False, False, False)])
+
+    def test_the_door_trap_trigger_is_read_from_the_level(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = _header(self.level({"mode": "Toggle", "y": 30, "height": 160}), tmp)
+            trap = sim.load_door_traps(path)["LEVEL_X"]
+        self.assertEqual(trap["name"], "door_trap")
+        self.assertEqual(trap["mode"], "Toggle")
+        self.assertFalse(trap["default_on"])
+        self.assertEqual(trap["rect"], (0.0, 30.0, 16.0, 160.0))
+
+    def test_a_latch_wall_in_front_of_the_door_turns_it_into_a_trap_for_good(self):
+        self.assertEqual(self.bad({"mode": "Latch", "height": 240}),
+                         ["LEVEL_X (door only through its trap trigger 'door_trap')"])
+
+    def test_a_toggle_wall_counts_too(self):
+        self.assertEqual(self.bad({"mode": "Toggle", "height": 240}),
+                         ["LEVEL_X (door only through its trap trigger 'door_trap')"])
+
+    def test_a_latch_zone_the_duck_can_jump_over_is_fine(self):
+        self.assertEqual(self.bad({"mode": "Latch", "y": 76, "height": 8}), [])
+
+    def test_a_hold_plate_lets_go_so_it_is_not_checked(self):
+        self.assertEqual(self.bad({"mode": "Hold", "height": 240}), [])
+
+    def test_a_latch_that_is_on_from_the_start_never_lets_the_door_be_a_door(self):
+        self.assertEqual(self.bad({"mode": "Latch", "y": -200, "default_on": True}),
+                         ["LEVEL_X (door only through its trap trigger 'door_trap')"])
+
+
 class ResolveAxisTests(unittest.TestCase):
     """Mirrors resolve_axis() in the engine's move_resolution.h."""
 

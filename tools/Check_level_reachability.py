@@ -28,7 +28,18 @@ Two start assumptions bracket real play:
 Level Devil death windows (PlatformData / TrapData::from_death, until_death):
 --all checks the level once per distinct set of objects that are there
 (death_breakpoints()), so the door has to be reachable on every attempt,
-whatever has moved by then.
+whatever has moved by then - from the spawn and from a respawn at every
+checkpoint. A respawn starts with the levers reset, except those that were
+on when the flag was touched (CheckpointRun::restore()); assumed: any lever
+configuration in which the duck reaches the flag's platform, on any attempt
+(respawn_configs()). Every spot of a door that moves between attempts
+(DoorData::attempt_positions) is checked.
+
+False exits (DoorData::trap_trigger_name): when that trigger is a Latch or a
+Toggle (it stays on once touched), --all also wants a route to the door that
+never touches the trigger's zone (a jump touching it ends there); a Latch
+that is on from the start is always reported. Hold / Timer triggers let go
+by themselves and are not checked.
 
 Traps are ignored (this checks geometry, not hazard timing). Wall jumps
 (from Cfg::WallJump::UNLOCK_WORLD on) are simulated frame by frame by Duck,
@@ -40,7 +51,7 @@ Usage (from the repository root):
         jumps count only from their Cfg::...::UNLOCK_WORLD on, as in the game.
     python3 tools/Check_level_reachability.py FILE LEVEL...
         Detailed report (with and without dash, both start assumptions) for
-        the named levels of one file.
+        the named levels of one file, for every spot of their door.
 
 Exit code 0 if every checked level's door is reachable conservatively (with
 the dash where --all allows it, always with it for FILE LEVEL...); 1
@@ -200,11 +211,13 @@ def simulate(
     coyote0,
     release=MAX_FRAMES,
     trace=None,
+    forbid=(),
 ):
     """Runs one policy. Returns (landed_platform_or_None, door_touched).
 
     `trace`, when a list, receives the duck's (x, y) center after every frame
-    (used by tools/Preview_level.py to draw the jump arcs)."""
+    (used by tools/Preview_level.py to draw the jump arcs). A jump that
+    touches a `forbid` box (a false exit's trap trigger zone) ends there."""
     x, y, vx, vy = x0, y0, vx0, 0.0
     if trace is not None:
         trace.append((x, y))
@@ -268,6 +281,8 @@ def simulate(
             vy = 0.0
         if trace is not None:
             trace.append((x, y))
+        if forbid and _hits(forbid, x, y, BW, BH) is not None:
+            return None, door_touched
         if door is not None and overlap(x, y, BW, BH, door[0], door[1], 2, 2):
             door_touched = True
         if y > DEATH_Y:
@@ -398,7 +413,7 @@ class Duck:
             self.vy = 0.0
 
 
-def climb(plats, door, start, x0, vx0, d, mode, slide, jump):
+def climb(plats, door, start, x0, vx0, d, mode, slide, jump, forbid=()):
     """A wall-jump policy from `start`: run toward d (jumping first if `jump`),
     and at every wall touched in the air slide `slide` frames, let go of A for
     a frame and jump off it - then hold toward the next wall ("chimney", the
@@ -418,6 +433,8 @@ def climb(plats, door, start, x0, vx0, d, mode, slide, jump):
             touching = 0
             if mode == "chimney":
                 d = -d
+        if forbid and _hits(forbid, duck.x, duck.y, BW, BH) is not None:
+            return None, door_touched
         if door is not None and overlap(duck.x, duck.y, BW, BH, door[0], door[1], 2, 2):
             door_touched = True
         if duck.y > DEATH_Y:
@@ -430,7 +447,7 @@ def climb(plats, door, start, x0, vx0, d, mode, slide, jump):
     return None, door_touched
 
 
-def pogo_hop(plats, traps, door, start, x0, vx0, d, r_from, wall_jump):
+def pogo_hop(plats, traps, door, start, x0, vx0, d, r_from, wall_jump, forbid=()):
     """A pogo policy from `start`: jump toward d holding A, and from frame
     `r_from` on press R every other frame, bouncing off any trap (`traps`)
     below. Returns (landed platform or None, door touched), like simulate().
@@ -446,6 +463,8 @@ def pogo_hop(plats, traps, door, start, x0, vx0, d, r_from, wall_jump):
         duck.step(left=d < 0, right=d > 0, a_pressed=f == 0, a_held=True, r_pressed=r)
         bounces += duck.pogo_bounced
         if any(overlap(duck.x, duck.y, BW, BH, t.cx, t.cy, t.w, t.h) for t in traps):
+            return None, door_touched
+        if forbid and _hits(forbid, duck.x, duck.y, BW, BH) is not None:
             return None, door_touched
         if door is not None and overlap(duck.x, duck.y, BW, BH, door[0], door[1], 2, 2):
             door_touched = True
@@ -485,8 +504,9 @@ START_OFFSETS = (0.0, 10.0, 20.0, 30.0)  # px back from the edge (conservative)
 
 
 def landings(active, start, door, allow_dash, optimistic, traces=None, allow_wall=False,
-             pogo_targets=()):
-    """Platforms (and door contact) reachable in ONE action from `start`.
+             pogo_targets=(), forbid=()):
+    """Platforms (and door contact) reachable in ONE action from `start`,
+    without touching a `forbid` box.
 
     `traces`, when a dict, collects one jump trajectory per
     (start index, landed index, dash scheduled) - the shortest one found."""
@@ -522,6 +542,7 @@ def landings(active, start, door, allow_dash, optimistic, traces=None, allow_wal
                 COYOTE,
                 release,
                 trace,
+                forbid,
             )
             door_hit |= touched
             if landed is not None and landed is not start:
@@ -543,7 +564,7 @@ def landings(active, start, door, allow_dash, optimistic, traces=None, allow_wal
                 vx0 = d * MAXS if runway >= 12 else 0.0
                 for r_from in POGO_STARTS:
                     landed, touched = pogo_hop(
-                        active, near, door, start, x0, vx0, d, r_from, allow_wall)
+                        active, near, door, start, x0, vx0, d, r_from, allow_wall, forbid)
                     door_hit |= touched
                     if landed is not None and landed is not start:
                         found.add(landed)
@@ -554,7 +575,7 @@ def landings(active, start, door, allow_dash, optimistic, traces=None, allow_wal
                 x0 = edge - d * k
                 if not start.left <= x0 <= start.right:
                     continue
-                landed, touched = climb(active, door, start, x0, 0.0, d, mode, slide, jump)
+                landed, touched = climb(active, door, start, x0, 0.0, d, mode, slide, jump, forbid)
                 door_hit |= touched
                 if landed is not None and landed is not start:
                     found.add(landed)
@@ -577,26 +598,50 @@ def spawn_platform(active, spawn):
     return None
 
 
-def reach(active, spawn, door, allow_dash, optimistic, allow_wall=False, pogo_targets=()):
-    """Returns (reached platforms, door reachable) for a fixed platform set."""
+_REACH_CACHE = {}
+
+
+def reach(active, spawn, door, allow_dash, optimistic, allow_wall=False, pogo_targets=(),
+          forbid=(), until_door=False):
+    """Returns (reached platforms, door reachable) for a fixed platform set,
+    never touching a `forbid` box (see unreachable_windows()). Remembered
+    per argument set: the checkpoint check asks again what the door check
+    already simulated. `until_door` stops as soon as the door is touched (the
+    reached set is then incomplete)."""
+    key = (tuple(active), tuple(spawn), door and tuple(door), allow_dash, optimistic, allow_wall,
+           tuple(pogo_targets), tuple(forbid), until_door)
+    if key not in _REACH_CACHE:
+        _REACH_CACHE[key] = _reach(active, spawn, door, allow_dash, optimistic, allow_wall,
+                                   pogo_targets, forbid, until_door)
+    reached, ok = _REACH_CACHE[key]
+    return set(reached), ok
+
+
+def _reach(active, spawn, door, allow_dash, optimistic, allow_wall, pogo_targets, forbid, until_door):
     first = spawn_platform(active, spawn)
     if first is None:
+        return set(), False
+    if forbid and (_hits(forbid, spawn[0], spawn[1], BW, BH) is not None
+                   or _hits(forbid, spawn[0], first.top - BH / 2, BW, BH) is not None):
         return set(), False
     reached = {first}
     frontier = [first]
     door_ok = False
-    while frontier:
+    while frontier and not (until_door and door_ok):
         cur = frontier.pop()
         found, touched = landings(active, cur, door, allow_dash, optimistic, allow_wall=allow_wall,
-                                  pogo_targets=pogo_targets)
+                                  pogo_targets=pogo_targets, forbid=forbid)
         door_ok |= touched
         for p in found:
             if p not in reached:
                 reached.add(p)
                 frontier.append(p)
-    # standing on a reached platform next to the door also counts
+    # standing on a reached platform next to the door also counts (unless the
+    # walk there could cross a forbid box on that platform)
     if door is not None:
         for p in reached:
+            if forbid and _hits(forbid, p.cx, p.top - BH / 2, p.w, BH) is not None:
+                continue
             if overlap(
                 _clamp(door[0], p.left, p.right),
                 p.top - BH / 2,
@@ -626,23 +671,90 @@ def death_breakpoints(objects):
     return sorted(points)
 
 
+def layouts(platforms, pogo_targets=()):
+    """[(deaths, platforms there, pogo traps there)] for every
+    death_breakpoints() layout of the level."""
+    return [
+        (deaths, [p for p in platforms if present(p, deaths)],
+         [t for t in pogo_targets if present(t, deaths)])
+        for deaths in death_breakpoints(list(platforms) + list(pogo_targets))
+    ]
+
+
+def _door_ok(active, targets, triggers, spawn, door, allow_dash, optimistic, allow_wall,
+             start=None, forbid=(), until_door=False):
+    def ok_with(pogo):
+        return any(ok for _, _, ok in _explore_levers(
+            active, triggers, spawn, door, allow_dash, optimistic, allow_wall, pogo, start, forbid,
+            until_door))
+    # the pogo only adds reach: simulated only where it is needed
+    return ok_with(()) or (bool(targets) and ok_with(targets))
+
+
 def unreachable_windows(platforms, triggers, spawn, door, allow_dash, optimistic,
-                        allow_wall=False, pogo_targets=()):
+                        allow_wall=False, pogo_targets=(), forbid=()):
     """The death counts (death_breakpoints()) after which the door cannot be
     reached with the platforms and pogo traps that are there then. [] = the
-    level can be finished on every attempt."""
+    level can be finished on every attempt. With `forbid` (the zone of a
+    false exit's Latch trap trigger) the routes must not touch those boxes."""
     attach_lever_platforms(platforms, triggers)
+    return [
+        deaths for deaths, active, targets in layouts(platforms, pogo_targets)
+        if not _door_ok(active, targets, triggers, spawn, door, allow_dash, optimistic, allow_wall,
+                        forbid=forbid)
+    ]
+
+
+def flag_support(platforms, checkpoint):
+    """The platform a checkpoint flag (16x16, centred on the respawn point)
+    stands on, as Check_checkpoints.py finds it; None for a floating flag."""
+    x, y = checkpoint
+    for p in platforms:
+        if p.left <= x <= p.right and 0 <= p.top - (y + 8) <= 4:
+            return p
+    return None
+
+
+def respawn_configs(platforms, triggers, spawn, checkpoint, allow_dash, optimistic,
+                    allow_wall=False, pogo_targets=(), door=None):
+    """The lever configurations a respawn at `checkpoint` can start with.
+
+    The game resets every trigger on a death and then switches on again the
+    ones that were on when the flag was touched (CheckpointRun::restore()).
+    Assumed conservatively: the flag can be touched in every configuration
+    in which the duck reaches its platform from the spawn, on any attempt
+    (a flag touched early still counts after later deaths). A floating flag
+    counts as touched everywhere. {} = it is never touched. `door` only
+    lets reach() reuse what the door check simulated."""
+    attach_lever_platforms(platforms, triggers)
+    names = sorted(triggers)
+    if not names:
+        # no lever: only one configuration, whether the flag is touched or not
+        return {()}
+    out = set()
+    for _, active, targets in layouts(platforms, pogo_targets):
+        support = flag_support(active, checkpoint)
+        for cfg, reached, _ in _explore_levers(active, triggers, spawn, door, allow_dash, optimistic,
+                                               allow_wall, targets):
+            if support is None or support in reached:
+                out.add(tuple((n, _default_on(triggers, n) or cfg[n]) for n in names))
+    return out
+
+
+def checkpoint_unreachable_windows(platforms, triggers, spawn, checkpoint, door, allow_dash,
+                                   optimistic, allow_wall=False, pogo_targets=()):
+    """Like unreachable_windows(), from a respawn at `checkpoint`: the death
+    counts after which the duck respawning there with any of the lever
+    configurations of respawn_configs() cannot reach the door."""
+    configs = respawn_configs(platforms, triggers, spawn, checkpoint, allow_dash, optimistic,
+                              allow_wall, pogo_targets, door)
     bad = []
-    for deaths in death_breakpoints(list(platforms) + list(pogo_targets)):
-        active = [p for p in platforms if present(p, deaths)]
-        targets = [t for t in pogo_targets if present(t, deaths)]
-        _, ok, _ = reach_with_levers(active, triggers, spawn, door, allow_dash, optimistic, allow_wall)
-        # the pogo only adds reach: simulated only where it is needed
-        if not ok and targets:
-            _, ok, _ = reach_with_levers(
-                active, triggers, spawn, door, allow_dash, optimistic, allow_wall, targets)
-        if not ok:
-            bad.append(deaths)
+    for deaths, active, targets in layouts(platforms, pogo_targets):
+        for cfg in sorted(configs):
+            if not _door_ok(active, targets, triggers, checkpoint, door, allow_dash, optimistic,
+                            allow_wall, start=dict(cfg), until_door=True):
+                bad.append(deaths)
+                break
     return bad
 
 
@@ -650,11 +762,34 @@ def _clamp(v, lo, hi):
     return max(lo, min(hi, v))
 
 
+def _default_on(triggers, name):
+    # A boss's "<arena>_won" trigger (BossTrap) counts as on: the check
+    # assumes the fight is won (the emulator replays prove that).
+    return triggers[name]["default_on"] or name.endswith("_won")
+
+
 def reach_with_levers(platforms, triggers, spawn, door, allow_dash, optimistic, allow_wall=False,
-                      pogo_targets=()):
+                      pogo_targets=(), start=None, forbid=()):
     """Fixpoint over lever configurations. `triggers` maps name -> dict with
-    default_on and the Rect of the platform the lever stands on (or None).
+    default_on and the Rect of the platform the lever stands on (or None);
+    `start` ({name: on}) replaces the level's initial configuration.
     Returns (reached_ids, door_ok, configs_explored)."""
+    all_reached = set()
+    door_ok = False
+    explored = 0
+    for _, reached, ok in _explore_levers(platforms, triggers, spawn, door, allow_dash, optimistic,
+                                          allow_wall, pogo_targets, start, forbid):
+        door_ok |= ok
+        all_reached |= {p.index for p in reached}
+        explored += 1
+    return all_reached, door_ok, explored
+
+
+def _explore_levers(platforms, triggers, spawn, door, allow_dash, optimistic, allow_wall=False,
+                    pogo_targets=(), start=None, forbid=(), until_door=False):
+    """Yields (configuration, reached platforms, door reached) for every lever
+    configuration the duck can set, from `start` or the level's initial one
+    (`until_door`: see reach())."""
     names = sorted(triggers)
 
     def active_for(config):
@@ -668,19 +803,15 @@ def reach_with_levers(platforms, triggers, spawn, door, allow_dash, optimistic, 
                     out.append(p)
         return out
 
-    # A boss's "<arena>_won" trigger (BossTrap) counts as on: the check
-    # assumes the fight is won (the emulator replays prove that).
-    start = tuple((n, triggers[n]["default_on"] or n.endswith("_won")) for n in names)
-    seen = {start}
-    todo = [start]
-    all_reached = set()
-    door_ok = False
+    first = tuple((n, start[n] if start is not None else _default_on(triggers, n)) for n in names)
+    seen = {first}
+    todo = [first]
     while todo:
         cfg = dict(todo.pop())
         active = active_for(cfg)
-        reached, ok = reach(active, spawn, door, allow_dash, optimistic, allow_wall, pogo_targets)
-        door_ok |= ok
-        all_reached |= {p.index for p in reached}
+        reached, ok = reach(active, spawn, door, allow_dash, optimistic, allow_wall, pogo_targets,
+                            forbid, until_door)
+        yield cfg, reached, ok
         for n in names:
             holder = triggers[n]["platform"]
             if holder is not None and holder in reached:
@@ -690,7 +821,6 @@ def reach_with_levers(platforms, triggers, spawn, door, allow_dash, optimistic, 
                 if key not in seen:
                     seen.add(key)
                     todo.append(key)
-    return all_reached, door_ok, len(seen)
 
 
 # ---- level data parsing -----------------------------------------------------
@@ -788,6 +918,66 @@ def load_door_positions(path):
         f = _ctr.top_level_fields(content[ob + 1 : _ctr.find_balanced_block(content, ob)])
         out[m.group(1)] = _door_positions(_fields_of(f[9]), points)
     return out
+
+
+def _level_fields(content):
+    """(name, top-level fields) of every LevelData literal in `content`."""
+    for m in re.finditer(r"(?:const|constexpr) LevelData ([A-Za-z0-9_]+)\s*=\s*", content):
+        ob = m.end()
+        if content[ob] != "{":
+            continue
+        yield m.group(1), _ctr.top_level_fields(content[ob + 1: _ctr.find_balanced_block(content, ob)])
+
+
+def load_checkpoints(path):
+    """{level: [(x, y), ...]} - the respawn points of its checkpoints
+    (LevelData::checkpoints), in play order."""
+    content = _ctr.strip_comments(Path(path).read_text())
+    arrays = _ctr.extract_named_arrays(content, "CheckpointData")
+    field = field_index("LevelData", "checkpoints")
+    out = {}
+    for name, f in _level_fields(content):
+        points = []
+        if len(f) > field and f[field].strip() in arrays:
+            for lit in _ctr.extract_top_level_literals(arrays[f[field].strip()]):
+                cf = _ctr.top_level_fields(lit)
+                points.append((_num(cf[0]), _num(cf[1])))
+        out[name] = points
+    return out
+
+
+def load_door_traps(path):
+    """{level: trigger or None} - the trigger that turns the level's door into
+    a trap (DoorData::trap_trigger_name), as {name, mode, default_on, rect
+    (cx, cy, w, h)}; None for an ordinary door or an unknown name."""
+    content = _ctr.strip_comments(Path(path).read_text())
+    arrays = _ctr.extract_named_arrays(content, "TriggerData")
+    door_field = field_index("DoorData", "trap_trigger_name")
+    mode_field = field_index("TriggerData", "mode")
+    out = {}
+    for name, f in _level_fields(content):
+        door = _fields_of(f[field_index("LevelData", "door")])
+        trap = None
+        wanted = door[door_field].strip() if len(door) > door_field else "nullptr"
+        array = f[field_index("LevelData", "triggers")].strip()
+        if wanted.startswith('"') and array in arrays:
+            for lit in _ctr.extract_top_level_literals(arrays[array]):
+                tf = _ctr.top_level_fields(lit)
+                if len(tf) > 5 and tf[5].strip() == wanted:
+                    mode = tf[mode_field].split("::")[-1].strip() if len(tf) > mode_field else "Latch"
+                    trap = {
+                        "name": wanted.strip('"'),
+                        "mode": mode,
+                        "default_on": len(tf) > 4 and tf[4].strip() == "true",
+                        "rect": tuple(_num(v) for v in tf[:4]),
+                    }
+        out[name] = trap
+    return out
+
+
+# Trigger modes that stay on once the duck has touched the zone (a Toggle
+# needs a second visit to switch off, which the check does not try).
+STAYS_ON = ("Latch", "Toggle")
 
 
 def load_static_traps(path):
@@ -916,27 +1106,55 @@ def outside_play_areas(levels):
 
 def unreachable_doors(levels):
     """Names of the campaign levels whose door the duck cannot reach from a
-    conservative start with the abilities of that level."""
+    conservative start with the abilities of that level, with what fails in
+    brackets: "(after 3 deaths)", "(from checkpoint 1 after 3 deaths)" (a
+    respawn at that flag), "(door only through its trap trigger 'x')" (a
+    false exit whose Latch / Toggle trigger zone lies on every route)."""
     loaded = {}
-    traps = {}
-    doors = {}
     bad = []
+
+    def report(level, what, deaths):
+        after = f"after {deaths} deaths" if deaths else ""
+        detail = " ".join(part for part in (what, after) if part)
+        name = f"{level.name} ({detail})" if detail else level.name
+        if name not in bad:
+            bad.append(name)
+
     for level in levels:
         if level.path not in loaded:
-            loaded[level.path] = load_levels(level.path)
-            traps[level.path] = load_static_traps(level.path)
-            doors[level.path] = load_door_positions(level.path)
-        platforms, triggers, spawn, _ = loaded[level.path][level.name]
-        targets = traps[level.path].get(level.name, []) if level.pogo else ()
+            loaded[level.path] = (load_levels(level.path), load_static_traps(level.path),
+                                  load_door_positions(level.path), load_checkpoints(level.path),
+                                  load_door_traps(level.path))
+        levels_, traps, doors, checkpoints, door_traps = loaded[level.path]
+        platforms, triggers, spawn, _ = levels_[level.name]
+        targets = traps.get(level.name, []) if level.pogo else ()
+        trap = door_traps.get(level.name)
         # Level Devil: every attempt counts, whatever has moved by then. Every
         # spot of a door that moves between attempts is checked against every
         # death window - more pairs than the game can show, never fewer.
-        for door in doors[level.path][level.name]:
-            for deaths in unreachable_windows(platforms, triggers, spawn, door, level.dash, False,
-                                              level.wall, targets):
-                name = level.name if deaths == 0 else f"{level.name} (after {deaths} deaths)"
-                if name not in bad:
-                    bad.append(name)
+        for door in doors[level.name]:
+            failed = unreachable_windows(platforms, triggers, spawn, door, level.dash, False,
+                                         level.wall, targets)
+            for deaths in failed:
+                report(level, "", deaths)
+            # A false exit whose trigger stays on: the door has to be
+            # reachable without touching the trigger zone.
+            if trap is not None and trap["mode"] in STAYS_ON:
+                what = f"door only through its trap trigger '{trap['name']}'"
+                if trap["default_on"] and trap["mode"] == "Latch":
+                    report(level, what, 0)
+                else:
+                    zone = [Rect(*trap["rect"])]
+                    for deaths in unreachable_windows(platforms, triggers, spawn, door, level.dash,
+                                                      False, level.wall, targets, zone):
+                        if deaths not in failed:
+                            report(level, what, deaths)
+            # A respawn at a checkpoint has to reach the door as well.
+            for i, point in enumerate(checkpoints.get(level.name, []), 1):
+                for deaths in checkpoint_unreachable_windows(
+                        platforms, triggers, spawn, point, door, level.dash, False, level.wall,
+                        targets):
+                    report(level, f"from checkpoint {i}", deaths)
     return bad
 
 
@@ -967,20 +1185,24 @@ def main(argv):
         return 2
     path, names = args[0], args[1:]
     levels = load_levels(path)
+    doors = load_door_positions(path)
     bad = False
     for name in names:
-        platforms, triggers, spawn, door = levels[name]
+        platforms, triggers, spawn, _ = levels[name]
         print(f"== {name}: {len(platforms)} platforms, {len(triggers)} triggers")
-        for dash, wall in ((False, False), (True, False), (True, True)):
-            res = check_level(platforms, triggers, spawn, door, dash, wall)
-            for key, (r, ok, n) in res.items():
-                print(
-                    f"  {key[0]:12s} {key[1]:8s} {'wall' if wall else '':4s} reached "
-                    f"{len(r):2d}/{len(platforms)} door={'yes' if ok else 'NO '} configs={n}"
-                )
-        cons_dash = check_level(platforms, triggers, spawn, door, True, True)[("conservative", "dash")]
-        if not cons_dash[1]:
-            bad = True
+        # every spot of a door that moves between attempts, as --all does
+        for door in doors[name]:
+            if len(doors[name]) > 1:
+                print(f"  door at ({door[0]:g},{door[1]:g})")
+            for dash, wall in ((False, False), (True, False), (True, True)):
+                res = check_level(platforms, triggers, spawn, door, dash, wall)
+                for key, (r, ok, n) in res.items():
+                    print(
+                        f"  {key[0]:12s} {key[1]:8s} {'wall' if wall else '':4s} reached "
+                        f"{len(r):2d}/{len(platforms)} door={'yes' if ok else 'NO '} configs={n}"
+                    )
+                if (dash, wall) == (True, True) and not res[("conservative", "dash")][1]:
+                    bad = True
     return 1 if bad else 0
 
 

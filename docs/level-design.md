@@ -437,9 +437,10 @@ Two more ways for the real door to lie, both on the level's `door`
 - `Check_level_reachability.py` checks **every** spot (each with its flee
   path's last stop) and that none lies outside the play area;
   `Check_trigger_references.py` checks `trap_trigger_name` like any other
-  trigger name and the rules above. Neither knows when the trap trigger is
-  on: make sure there is a way to reach the door while it is off.
-  `Preview_level.py` draws the
+  trigger name and the rules above. For a Latch or Toggle trap trigger the
+  reachability check also wants a route to the door that never touches its
+  zone; a Hold or Timer trigger turns off by itself, so there make sure by
+  hand that the door can be reached while it is off. `Preview_level.py` draws the
   later spots as dashed doors ("door after 3+").
 
 `LEVEL_WORLD4_SCROLL_2` shows both: a lever on the last beet is a pressure
@@ -500,8 +501,15 @@ them plays exactly as before.
   the replay takes.
 - The tools know about it: `Check_level_reachability.py` checks the door on
   every distinct set of objects (one check per death at which a window opens
-  or closes), `Check_checkpoints.py` does not let a flag stand on a platform
-  with a window and wants its platform reachable on every attempt,
+  or closes), from the spawn and from a respawn at every checkpoint (with
+  any lever the duck could have left on when it touched the flag, as the
+  checkpoint's trigger snapshot keeps it); with a false exit whose
+  `trap_trigger_name` is a Latch or Toggle, also without touching that
+  trigger's zone. `Check_checkpoints.py` does not let a flag stand on a
+  platform with a window, wants its platform reachable on every attempt,
+  and keeps the level spawn (and the fall from it) clear of every platform
+  and trap on every attempt - a `from_death: 3` trap there would kill on
+  every respawn from the third death on,
   `Check_sprite_budget.py` counts every copy (all of them are created at load,
   the absent ones only hidden), and `Preview_level.py` labels them "deaths 3+"
   / "deaths 0-2".

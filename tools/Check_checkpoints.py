@@ -26,6 +26,15 @@ Errors (exit code 1):
   - the supporting platform has a death window (from_death / until_death): the
     flag would float on the attempts it is not there
 
+  - the level spawn (every level, with or without checkpoints) or the duck's
+    fall from it to the floor overlaps a platform or a trap on some attempt:
+    checked once per Level Devil death window layout (death_breakpoints()),
+    so a `from_death: 3` trap on the spawn is caught. Counted are a trap's
+    start box and, for a trap that moves on its own from the first frame
+    (PATH / CYCLE / MOVING without a trigger) or lunges (AMBUSH), its whole
+    path; a trap gated by a trigger is assumed to start once the duck has left
+    the spawn, and a CHASE trap hunts the duck by design
+
 Warnings:
   - the respawn lies inside an AMBUSH trap's trigger range (it would lunge at
     once, even if it cannot hit)
@@ -116,6 +125,82 @@ def _trap_boxes(level, trap):
         # ChaserTrap only ever moves right (it never retreats), along its row.
         return _segment_boxes((x, y), (max(x, level.world_w / 2 + w), y), w, h)
     return [(x, y, w, h)]
+
+
+def _after(deaths):
+    return f" after {deaths} deaths" if deaths else ""
+
+
+def _fall_boxes(active, spawn):
+    """The duck's 8x8 box from the spawn down to where it lands on `active`
+    (just the spawn when it lands nowhere): it falls before it can move."""
+    x, y = spawn
+    floor = sim.spawn_platform(active, spawn)
+    if floor is None or floor.top - DUCK / 2 <= y:
+        return [(x, y, DUCK, DUCK)]
+    return _segment_boxes((x, y), (x, floor.top - DUCK / 2), DUCK, DUCK)
+
+
+def _spawn_trap_boxes(level, trap):
+    """Where a trap can hit a duck that has just spawned and waits there: its
+    start box, and the whole path of a trap that moves on its own from the
+    first frame (no trigger: a PATH, CYCLE or MOVING trap) or lunges at a
+    duck in range (AMBUSH). A trap gated by a trigger is assumed to start
+    when the duck has left the spawn, and a CHASE trap hunts the duck by
+    design - for both only their start box counts."""
+    if trap["type"] == "AMBUSH" or (trap["trigger"] is None and trap["type"] != "CHASE"):
+        return _trap_boxes(level, trap)
+    x, y = pv.trap_position(trap)
+    return [(x, y, trap["width"], trap["height"])]
+
+
+def check_spawn(level):
+    """Errors for a level spawn that a platform or trap covers on some
+    attempt (Level Devil death windows): a `from_death: 3` trap there kills
+    the duck on every respawn from the third death on. Checks the spawn box
+    and the fall to the floor once per death_breakpoints() layout."""
+    errors = []
+    where = f"{level.name}: the spawn"
+    reported = set()
+    for deaths in sim.death_breakpoints(level.platforms + [_Window(t) for t in level.traps]):
+        # the platforms there on this attempt, switched ones as the level starts
+        active = [
+            p for p in level.platforms
+            if sim.present(p, deaths) and (
+                p.trigger is None
+                or level.sim_triggers.get(p.trigger, {}).get("default_on", False) == p.active_when_on
+            )
+        ]
+        fall = _fall_boxes(active, level.spawn)
+        for p in level.platforms:
+            if p.index in reported or not sim.present(p, deaths):
+                continue
+            if any(sim.overlap(x, y, w, h, p.cx, p.cy, p.w, p.h) for x, y, w, h in fall[:1]):
+                reported.add(p.index)
+                errors.append(f"{where} overlaps platform {p.index}{_after(deaths)}")
+        for i, trap in enumerate(level.traps):
+            if ("trap", i) in reported or not sim.present(_Window(trap), deaths):
+                continue
+            hit = next(
+                ((bx, by) for bx, by, bw, bh in _spawn_trap_boxes(level, trap)
+                 if any(sim.overlap(x, y, w, h, bx, by, bw, bh) for x, y, w, h in fall)),
+                None,
+            )
+            if hit is not None:
+                reported.add(("trap", i))
+                what = "trap" if trap["type"] == "BASE" else "trap's path"
+                errors.append(
+                    f"{where} overlaps a {trap['type']} {what} at ({hit[0]:g},{hit[1]:g})"
+                    f"{_after(deaths)}"
+                )
+    return errors
+
+
+class _Window:
+    """A trap dict's death window as sim.present() / death_breakpoints() read it."""
+
+    def __init__(self, trap):
+        self.from_death, self.until_death = trap["from_death"], trap["until_death"]
 
 
 def check_level(level, limit=DEFAULT_MAX, reach=True):
@@ -226,6 +311,7 @@ def main(argv):
                 checked += 1
             errors, warnings = check_level(level, limit)
             all_errors.extend(errors)
+            all_errors.extend(check_spawn(level))
             all_warnings.extend(warnings)
     for w in all_warnings:
         print(f"WARN  {w}")
