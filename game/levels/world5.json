@@ -157,7 +157,7 @@
     },
     {
       "name": "LEVEL_WORLD5_LEVERS",
-      "note": "=============================================================================\nWORLD 5 LEVERS - \"Lever Hall\" (world_width=700)\nThe first switch level: Toggle triggers drawn as levers (lever16x16) open\nand close platforms (PlatformData::trigger_name).\n  Room 1: lever1 raises a bridge stone over a 96px chasm. Step on the lever\n          once (each ENTRY flips it).\n  Room 2: the stone in the middle of the 84px chasm is there by default\n          (active_when_off) - but lever2 stands on the path and removes it.\n          Hop over the lever to keep the stone, or step on it and DASH the\n          gap instead; stepping on it a second time brings the stone back,\n          so there is no dead end.\n  Room 3: two levers, two stones. Both on = an easy walk; one lever + the\n          dash (96px) also works.\nEverything resets on death. Checked with tools/Check_level_reachability.py,\nwhich also explores every lever configuration the duck can set.\n=============================================================================",
+      "note": "=============================================================================\nWORLD 5 LEVERS - \"Lever Hall\" (world_width=700)\nThe first switch level: Toggle triggers drawn as levers (lever16x16) open\nand close platforms (PlatformData::trigger_name).\n  Room 1: lever1 raises a bridge stone over a 96px chasm. Step on the lever\n          once (each ENTRY flips it).\n  Room 2: the stone in the middle of the 84px chasm is there by default\n          (active_when_off) - but lever2 stands on the path and removes it.\n          Hop over the lever to keep the stone, or step on it and DASH the\n          gap instead; stepping on it a second time brings the stone back,\n          so there is no dead end.\n  Room 3: two levers, two stones. Both on = an easy walk; one lever + the\n          dash (96px) also works.\n  The trap chain (TriggerData::follows): landing on the gate stone presses\n          an invisible plate; 21 frames later a rusty bar stabs once out of\n          the barrel the duck would land on next, 31 frames after that a\n          second one out of lever2's barrel. Wait on the stone and both\n          stab into the air.\nEverything resets on death. Checked with tools/Check_level_reachability.py,\nwhich also explores every lever configuration the duck can set.\n=============================================================================",
       "platforms": {
         "name": "world5_levers_platforms",
         "items": [
@@ -180,7 +180,10 @@
           {"x": -196, "y": 44, "width": 16, "height": 16, "name": "lever1", "mode": "Toggle", "sprite": "lever16x16"},
           {"x": -12, "y": 44, "width": 16, "height": 16, "name": "lever2", "mode": "Toggle", "sprite": "lever16x16"},
           {"x": 104, "y": 44, "width": 16, "height": 16, "name": "lever3", "mode": "Toggle", "sprite": "lever16x16"},
-          {"x": 140, "y": 44, "width": 16, "height": 16, "name": "lever4", "mode": "Toggle", "sprite": "lever16x16"}
+          {"x": 140, "y": 44, "width": 16, "height": 16, "name": "lever4", "mode": "Toggle", "sprite": "lever16x16"},
+          {"blank_before": true, "note": "The trap chain: an invisible plate on the gate stone ...", "x": -124, "y": 44, "width": 16, "height": 16, "name": "stone_plate"},
+          {"note": "... the landing barrel stabs 1 + 20 frames later ...", "x": -48, "y": 44, "width": 16, "height": 16, "name": "landing_stab", "delay_frames": 20, "follows": "stone_plate"},
+          {"note": "... and lever2's barrel 1 + 30 frames after that.", "x": -16, "y": 44, "width": 16, "height": 16, "name": "lever_stab", "delay_frames": 30, "follows": "landing_stab"}
         ]
       },
       "traps": {
@@ -188,7 +191,9 @@
         "items": [
           {"blank_before": true, "note": "Rusty bars in the pits: the chasms read as lethal.", "type": "BASE", "x": -124, "y": 68, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32"},
           {"type": "BASE", "x": 42, "y": 68, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32"},
-          {"type": "BASE", "x": 228, "y": 68, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32"}
+          {"type": "BASE", "x": 228, "y": 68, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32"},
+          {"blank_before": true, "note": "The chain's spikes: hidden below the screen behind their barrel, one\nstab each (out over 4 frames, up for 20, back over 8, then a rest\nlonger than any attempt - see trap_timing.h).", "type": "CYCLE", "x": -48, "y": 100, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32", "trigger_name": "landing_stab", "cycle_dy": -48, "cycle_extend_frames": 4, "cycle_hold_frames": 20, "cycle_retract_frames": 8, "cycle_wait_frames": 36000, "sprite_z_order": 1},
+          {"type": "CYCLE", "x": -16, "y": 100, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32", "trigger_name": "lever_stab", "cycle_dy": -48, "cycle_extend_frames": 4, "cycle_hold_frames": 20, "cycle_retract_frames": 8, "cycle_wait_frames": 36000, "sprite_z_order": 1}
         ]
       },
       "background": "world5",

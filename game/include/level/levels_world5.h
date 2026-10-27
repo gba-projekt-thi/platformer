@@ -285,6 +285,11 @@ const LevelData LEVEL_WORLD5_DASH = {
 //           so there is no dead end.
 //   Room 3: two levers, two stones. Both on = an easy walk; one lever + the
 //           dash (96px) also works.
+//   The trap chain (TriggerData::follows): landing on the gate stone presses
+//           an invisible plate; 21 frames later a rusty bar stabs once out of
+//           the barrel the duck would land on next, 31 frames after that a
+//           second one out of lever2's barrel. Wait on the stone and both
+//           stab into the air.
 // Everything resets on death. Checked with tools/Check_level_reachability.py,
 // which also explores every lever configuration the duck can set.
 // =============================================================================
@@ -321,7 +326,16 @@ constexpr TriggerData world5_levers_triggers[] = {
     {104, 44, 16, 16, false, "lever3", TriggerMode::Toggle,
      &bn::sprite_items::lever16x16},
     {140, 44, 16, 16, false, "lever4", TriggerMode::Toggle,
-     &bn::sprite_items::lever16x16}};
+     &bn::sprite_items::lever16x16},
+
+    // The trap chain: an invisible plate on the gate stone ...
+    {-124, 44, 16, 16, false, "stone_plate"},
+    // ... the landing barrel stabs 1 + 20 frames later ...
+    {-48, 44, 16, 16, false, "landing_stab", TriggerMode::Latch, nullptr, 0, 1,
+     20, TriggerAction::Enter, "stone_plate"},
+    // ... and lever2's barrel 1 + 30 frames after that.
+    {-16, 44, 16, 16, false, "lever_stab", TriggerMode::Latch, nullptr, 0, 1,
+     30, TriggerAction::Enter, "landing_stab"}};
 
 constexpr TrapData world5_levers_traps[] = {
 
@@ -331,7 +345,69 @@ constexpr TrapData world5_levers_traps[] = {
     {TrapType::BASE, 42, 68, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
     {TrapType::BASE, 228, 68, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP}};
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
+
+    // The chain's spikes: hidden below the screen behind their barrel, one
+    // stab each (out over 4 frames, up for 20, back over 8, then a rest
+    // longer than any attempt - see trap_timing.h).
+    {TrapType::CYCLE,
+     -48,
+     100,
+     16,
+     16,
+     0,
+     0,
+     bn::sprite_items::rostybar32x32,
+     1,
+     TRAP_GRAPHICS_INDEXES_0,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     "landing_stab",
+     0,
+     0,
+     0,
+     0,
+     -48,
+     4,
+     20,
+     8,
+     36000,
+     0,
+     1},
+    {TrapType::CYCLE,
+     -16,
+     100,
+     16,
+     16,
+     0,
+     0,
+     bn::sprite_items::rostybar32x32,
+     1,
+     TRAP_GRAPHICS_INDEXES_0,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     "lever_stab",
+     0,
+     0,
+     0,
+     0,
+     -48,
+     4,
+     20,
+     8,
+     36000,
+     0,
+     1}};
 
 const LevelData LEVEL_WORLD5_LEVERS = {
     world5_levers_platforms,
