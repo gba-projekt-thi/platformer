@@ -152,6 +152,86 @@ class PlatformReferenceTests(unittest.TestCase):
         self.assertIn("platform", errors[0])
 
 
+def follower(name, follows):
+    """A trigger literal that follows `follows` (TriggerData::follows)."""
+    return (
+        f'    {{0, 0, 8, 8, false, "{name}", TriggerMode::Latch, nullptr, 0, 1,'
+        f' 40, TriggerAction::Enter, "{follows}"}},\n'
+    )
+
+
+def cycle_on(name):
+    return CYCLE_A.replace('"a"', f'"{name}"')
+
+
+class FollowsTests(unittest.TestCase):
+    """TriggerData::follows: delayed trap chains."""
+
+    def test_a_resolved_chain_is_clean(self):
+        # plate -> b -> c: the plate and b are used by their followers, c by
+        # a trap.
+        errors, warnings = run_check(
+            triggers='    {0, 0, 8, 8, false, "plate"},\n'
+            + follower("b", "plate") + follower("c", "b"),
+            traps=cycle_on("c"),
+        )
+        self.assertEqual((errors, warnings), ([], []))
+
+    def test_the_follows_name_is_not_a_defined_trigger(self):
+        errors, _ = run_check(
+            triggers=follower("b", "plate"), traps=cycle_on("plate")
+        )
+        self.assertTrue(any('"plate"' in e and "follows" in e for e in errors), errors)
+
+    def test_follows_must_exist_in_the_same_level(self):
+        errors, _ = run_check(
+            triggers=follower("b", "nowhere"), traps=cycle_on("b")
+        )
+        self.assertEqual(len(errors), 1)
+        self.assertIn('"nowhere"', errors[0])
+        self.assertIn("follows", errors[0])
+
+    def test_a_trigger_following_itself_is_an_error(self):
+        errors, _ = run_check(triggers=follower("b", "b"), traps=cycle_on("b"))
+        self.assertEqual(len(errors), 1)
+        self.assertIn("itself", errors[0])
+
+    def test_a_cycle_of_followers_is_an_error(self):
+        errors, _ = run_check(
+            triggers=follower("a", "c") + follower("b", "a") + follower("c", "b"),
+            traps=MOVING_A,
+        )
+        self.assertEqual(len(errors), 1)
+        self.assertIn("cycle", errors[0])
+        for name in ("a", "b", "c"):
+            self.assertIn(f'"{name}"', errors[0])
+
+    def test_a_chain_hanging_off_a_cycle_reports_the_cycle_once(self):
+        errors, _ = run_check(
+            triggers=follower("a", "b") + follower("b", "a") + follower("c", "a"),
+            traps=MOVING_A,
+        )
+        self.assertEqual(len(errors), 1)
+        self.assertIn("cycle", errors[0])
+
+    def test_two_followers_of_one_source_are_fine(self):
+        errors, warnings = run_check(
+            triggers='    {0, 0, 8, 8, false, "a"},\n'
+            + follower("b", "a") + follower("c", "a"),
+            traps=MOVING_A + cycle_on("b") + cycle_on("c"),
+        )
+        self.assertEqual((errors, warnings), ([], []))
+
+    def test_a_follower_nobody_uses_is_still_a_warning(self):
+        errors, warnings = run_check(
+            triggers='    {0, 0, 8, 8, false, "a"},\n' + follower("b", "a"),
+            traps=MOVING_A,
+        )
+        self.assertEqual(errors, [])
+        self.assertEqual(len(warnings), 1)
+        self.assertIn('"b"', warnings[0])
+
+
 class FindFilesTests(unittest.TestCase):
     """Shared lookup of game files by every checker: the known place first,
     a recursive search only as a fallback (it costs seconds on a big tree)."""

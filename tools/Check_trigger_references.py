@@ -128,6 +128,56 @@ def quoted_strings_in(fields):
     return [f[1:-1] for f in fields if f.startswith('"') and f.endswith('"')]
 
 
+# Positions in a TriggerData literal (level_structure.h): x, y, width, height,
+# default_on, name, mode, sprite, sprite_index_off, sprite_index_on,
+# delay_frames, action, follows.
+TRIGGER_NAME_FIELD = 5
+TRIGGER_FOLLOWS_FIELD = 12
+
+
+def quoted_field(fields, index):
+    """The string at position `index` of a literal, or None (missing,
+    nullptr)."""
+    if index < len(fields):
+        f = fields[index]
+        if f.startswith('"') and f.endswith('"'):
+            return f[1:-1]
+    return None
+
+
+def check_follows(follows, defined_names, where, trigger_array_name):
+    """Errors for TriggerData::follows (delayed trap chains): the source must
+    be a trigger of the same level, not the trigger itself, and following
+    must never lead in a circle (such a chain could never fire)."""
+    errors = []
+    for name, source in sorted(follows.items(), key=lambda kv: str(kv[0])):
+        if source == name:
+            errors.append(f'{where} - trigger "{name}" follows itself')
+        elif source not in defined_names:
+            errors.append(
+                f'{where} - trigger "{name}" follows "{source}", '
+                f"not found in '{trigger_array_name}'"
+            )
+    reported = set()
+    for start in sorted(n for n in follows if n is not None):
+        path = []
+        current = start
+        while current in follows and current not in path:
+            path.append(current)
+            current = follows[current]
+        if current not in path:
+            continue  # the chain ends at an ordinary trigger
+        cycle = path[path.index(current):]
+        if len(cycle) == 1 or frozenset(cycle) in reported:
+            continue  # following itself is reported above
+        reported.add(frozenset(cycle))
+        first = cycle.index(min(cycle))
+        cycle = cycle[first:] + cycle[:first]
+        chain = " -> ".join(f'"{n}"' for n in cycle + [cycle[0]])
+        errors.append(f"{where} - follows forms a cycle: {chain}")
+    return errors
+
+
 def check_file(path: Path):
     """Returns (errors, warnings) - lists of human-readable strings."""
     content = strip_comments(path.read_text())
@@ -155,6 +205,7 @@ def check_file(path: Path):
         trap_array_name = level_fields[4]
 
         defined_names = set()
+        follows = {}  # follower name -> source name (TriggerData::follows)
         if trigger_array_name != "nullptr":
             body = trigger_arrays.get(trigger_array_name)
             if body is None:
@@ -164,9 +215,19 @@ def check_file(path: Path):
                 )
             else:
                 for lit in extract_top_level_literals(body):
-                    defined_names.update(quoted_strings_in(top_level_fields(lit)))
+                    fields = top_level_fields(lit)
+                    name = quoted_field(fields, TRIGGER_NAME_FIELD)
+                    if name is not None:
+                        defined_names.add(name)
+                    source = quoted_field(fields, TRIGGER_FOLLOWS_FIELD)
+                    if source is not None:
+                        follows[name] = source
 
-        referenced_names = set()
+        referenced_names = set(follows.values())
+        errors.extend(
+            check_follows(follows, defined_names, f"{path.name}: {level_name}",
+                          trigger_array_name)
+        )
         if trap_array_name != "nullptr":
             body = trap_arrays.get(trap_array_name)
             if body is None:

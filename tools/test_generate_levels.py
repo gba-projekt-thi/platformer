@@ -90,6 +90,19 @@ class GenerateTests(unittest.TestCase):
         self.assertIn('{0,0,8,8,false,"lever1",TriggerMode::Toggle,&bn::sprite_items::lever16x16}', out)
         self.assertIn("t,sizeof(t)/sizeof(t[0])", out)
 
+    def test_a_following_trigger_names_its_source_last(self):
+        triggers = {"name": "t", "items": [
+            {"x": 0, "y": 0, "width": 8, "height": 8, "name": "plate"},
+            {"x": 0, "y": 0, "width": 8, "height": 8, "name": "spikes",
+             "delay_frames": 40, "follows": "plate"}]}
+        out = squash(self.header(level(triggers=triggers)))
+        self.assertIn(
+            '{0,0,8,8,false,"spikes",TriggerMode::Latch,nullptr,0,1,40,'
+            'TriggerAction::Enter,"plate"}',
+            out,
+        )
+        self.assertEqual(STRUCTS["TriggerData"][-1], ("follows", "nullptr"))
+
     def test_trap_type_and_named_spans(self):
         traps = {"name": "tr", "items": [{"type": "PATH", "x": 0, "y": 0, "width": 32, "height": 32,
                                           "offset_x": 0, "offset_y": 0, "sprite": "bubbles",
