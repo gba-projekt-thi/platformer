@@ -398,6 +398,52 @@ Two more ways for the level itself to go after the duck:
   typically just as it jumps for it. `Check_level_reachability.py` checks
   the platform at its last stop, so the route has to work from there.
 
+### Traps and platforms that change with every death
+
+"After the 3rd death the trap sits somewhere else." Any platform or trap
+(except a BOSS) can be limited to some attempts with `from_death` /
+`until_death`: it is only there while the duck has died at least `from_death`
+and fewer than `until_death` times in this visit of the level (`until_death`
+0 = no end). Both 0, the default, means always there - every level without
+them plays exactly as before.
+
+```json
+// the arms lurk under the first gap for the first three attempts ...
+{"type": "AMBUSH", "x": -72, "y": 112, ..., "until_death": 3},
+// ... and under the next one from the 3rd death on
+{"type": "AMBUSH", "x": 80, "y": 112, ..., "from_death": 3}
+```
+
+- An object that is not there has no collision and no picture. A moved trap or
+  platform is simply two entries that split at the same death (`until_death 3`
+  / `from_death 3`), so exactly one of them is there on every attempt.
+- The deaths count from the moment the level is loaded (`LevelManager::
+  _deaths_in_level()`): leaving the level, the title screen or a new visit via
+  Level Select start again at 0. Restart Level counts as a death, as it does
+  for the death counter.
+- The change happens when the duck respawns - after the death freeze, at the
+  spawn or at the checkpoint - never in the middle of an attempt.
+- It combines with the rest of the platform's behaviour: a switched platform
+  that is there still follows its trigger, a crumbling or runaway one starts
+  untouched. A platform that is not there stays gone whatever its trigger
+  does.
+- Not for a BOSS (its fight shows and hides it itself), and never empty
+  (`until_death` <= `from_death`): `Generate_levels.py` rejects both, the level
+  load asserts the first.
+- Keep the first attempts identical to what the recorded replay
+  (`game/replays/`) plays: a window that starts at 0 must not change the route
+  the replay takes.
+- The tools know about it: `Check_level_reachability.py` checks the door on
+  every distinct set of objects (one check per death at which a window opens
+  or closes), `Check_checkpoints.py` does not let a flag stand on a platform
+  with a window and wants its platform reachable on every attempt,
+  `Check_sprite_budget.py` counts every copy (all of them are created at load,
+  the absent ones only hidden), and `Preview_level.py` labels them "deaths 3+"
+  / "deaths 0-2".
+- Fair play: the duck should be able to learn the new place from one death,
+  as with any Level Devil trick. Trickwood (`LEVEL_WORLD3_TRICK`) moves its
+  lurking arms one gap on after the 3rd death.
+
 ### Crumbling platforms
 
 A platform reacts to the duck itself, without any trigger: set

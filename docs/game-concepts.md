@@ -384,6 +384,19 @@ later - the duck must keep moving, and stepping off does not save it. Some come
 back after a while, some are single-use stepping stones. Death puts them all
 back.
 
+### Levels that learn
+
+Death usually puts a level back exactly as it was - which is what makes it
+learnable. A Level Devil level can break that promise on purpose: a trap or a
+platform can be there only for the first few attempts, or only from a certain
+death on. "After the 3rd death the trap sits somewhere else": the player who
+has finally learned where the arms lurk finds them one gap further on. The
+change only ever happens when the duck respawns, never in the middle of an
+attempt, and the count starts again whenever the level is entered anew, so the
+first attempt of every visit is the level as authored. Trickwood in World 3
+is the first level that does it. See
+[Level Design — Traps and platforms that change with every death](level-design.md#traps-and-platforms-that-change-with-every-death).
+
 ### Switches
 
 Beyond the invisible latching zones, a trigger can behave as a **switch**

@@ -211,7 +211,9 @@ constexpr TriggerData world3_trick_triggers[] = {
 
 constexpr TrapData world3_trick_traps[] = {
 
-    // The lurking arms below the gap at -120 .. -88.
+    // The lurking arms below the gap at -88 .. -56, for the first three
+    // attempts only (until_death 3): after the 3rd death they lurk somewhere
+    // else.
     {TrapType::AMBUSH,
      -72,
      112,
@@ -244,7 +246,9 @@ constexpr TrapData world3_trick_traps[] = {
      1,
      0,
      0,
-     true},
+     true,
+     0,
+     3},
 
     // The fake door: a static door picture that kills, behind the duck like
     // the real one (Cfg::ZOrder::DOOR).
@@ -276,7 +280,46 @@ constexpr TrapData world3_trick_traps[] = {
      0,
      0,
      0,
-     Cfg::ZOrder::DOOR}};
+     Cfg::ZOrder::DOOR},
+
+    // Level Devil: from the 3rd death on the arms have moved on to the gap
+    // behind the sagging floor (40 .. 88). They lunge as soon as the duck
+    // stands at its edge (ambush_range 44), so the old trick works again:
+    // lure them out, let them sink, then jump.
+    {TrapType::AMBUSH,
+     80,
+     112,
+     20,
+     24,
+     0,
+     0,
+     bn::sprite_items::slithermanarms32x32,
+     8,
+     TRAP_GRAPHICS_INDEXES_3,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     nullptr,
+     44,
+     -6,
+     14,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     true,
+     3}};
 
 const LevelData LEVEL_WORLD3_TRICK = {
     world3_trick_platforms,

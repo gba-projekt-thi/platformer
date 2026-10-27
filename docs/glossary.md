@@ -130,6 +130,15 @@ hard-coded logic. See [Level Design](level-design.md).
 **Death height** — The vertical threshold below which the duck is considered
 dead (fell off the world). See [Components — Player System](components.md).
 
+**Death window** — `from_death` / `until_death` on a platform or trap: it is
+only there while the duck has died at least `from_death` and fewer than
+`until_death` times since entering the level (0 = no end; both 0 = always
+there). Two copies split at the same death make a trap or platform move after
+that death - the Level Devil "after the 3rd death the trap sits somewhere
+else". Applied on every respawn by `LevelManager::_apply_attempt()`. See
+[Level Design — Traps and platforms that change with every death](level-design.md#traps-and-platforms-that-change-with-every-death)
+and [Components — Death windows](components.md#death-windows-level-devil).
+
 **Door** — The exit object that, when the duck reaches it, advances the game to
 the next stage. Normally the animated door32x32 sprite, but the underlying
 collision/completion logic accepts any sprite and animation sequence,
