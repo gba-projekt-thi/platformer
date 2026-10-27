@@ -30,9 +30,10 @@ inline constexpr WorldEntry WORLDS[] = {
                          // LEVEL_WORLD2_BOSS
     {"World 3", 9, 4},   // LEVEL_3, LEVEL_WORLD3_SCROLL, LEVEL_WORLD3_TRICK,
                          // LEVEL_WORLD3_BOSS
-    {"World 4", 13, 4},  // LEVEL_WORLD4_POGO, LEVEL_WORLD4_SCROLL,
-                         // LEVEL_WORLD4_SCROLL_2, LEVEL_WORLD4_BOSS
-    {"World 5", 17, 8},  // LEVEL_WORLD5_SCROLL, LEVEL_WORLD5_SCROLL_2,
+    {"World 4", 13, 5},  // LEVEL_WORLD4_POGO, LEVEL_WORLD4_SCROLL,
+                         // LEVEL_WORLD4_SCROLL_2, LEVEL_WORLD4_TRICK,
+                         // LEVEL_WORLD4_BOSS
+    {"World 5", 18, 8},  // LEVEL_WORLD5_SCROLL, LEVEL_WORLD5_SCROLL_2,
                          // LEVEL_WORLD5_DASH, LEVEL_WORLD5_LEVERS,
                          // LEVEL_WORLD5_CLIMB, LEVEL_WORLD5_TRICK,
                          // LEVEL_WORLD5_BOSS, LEVEL_WORLD5_FINALE

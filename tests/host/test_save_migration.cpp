@@ -177,7 +177,7 @@ TEST_CASE(game_state_layout_lock) {
     CHECK_EQ(static_cast<int>(offsetof(GameState, assist_mode_enabled)), 150);
     CHECK_EQ(static_cast<int>(offsetof(GameState, entry_level)), 152);
     CHECK_EQ(static_cast<int>(offsetof(GameState, entry_deaths)), 154);
-    CHECK_EQ(SAVE_VERSION, 10);
+    CHECK_EQ(SAVE_VERSION, 11);
 }
 
 TEST_CASE(game_state_current_payload_roundtrips_exactly) {
@@ -217,7 +217,8 @@ TEST_CASE(game_state_schema_4_payload_is_still_rejected) {
 // Schema 6 inserted LEVEL_WORLD5_CLIMB at level index 17 (before World 5's
 // boss), schema 7 LEVEL_WORLD4_POGO at 10 (World 4's first level), schema 8
 // LEVEL_WORLD3_TRICK at 9 (before World 3's boss), schema 9 one level before
-// the bosses of World 1, 2 and 5 (at 3, 7 and 22): everything indexed by
+// the bosses of World 1, 2 and 5 (at 3, 7 and 22), schema 11
+// LEVEL_WORLD4_TRICK at 16 (before World 4's boss): everything indexed by
 // level from there on moves up by one.
 
 namespace {
@@ -270,21 +271,22 @@ TEST_CASE(game_state_inserting_a_level_moves_progress_at_or_after_it) {
 
 TEST_CASE(game_state_v8_saves_get_the_world_1_2_and_5_levels) {
     // Schema 9: index 3 (World 1), then 7 (World 2) and 22 (World 5) of the
-    // roster as it grows.
+    // roster as it grows; schema 11 adds World 4's at 16.
     GameState state = numbered_save();
     state.level = 20;  // World 5's boss in schema 8
     game_state_migration::insert_levels_since(state, 8);
-    CHECK_EQ(int(state.level), 23);
+    CHECK_EQ(int(state.level), 24);
     CHECK_EQ(state.best_time_frames[2], 1002u);
     CHECK_EQ(state.best_time_frames[3], 0u);     // World 1's new level
     CHECK_EQ(state.best_time_frames[4], 1003u);  // World 1's boss
     CHECK_EQ(state.best_time_frames[7], 0u);     // World 2's new level
     CHECK_EQ(state.best_time_frames[8], 1006u);  // World 2's boss
-    CHECK_EQ(state.best_time_frames[20], 1018u);
-    CHECK_EQ(state.best_time_frames[22], 0u);  // World 5's new level
+    CHECK_EQ(state.best_time_frames[16], 0u);    // World 4's new level
+    CHECK_EQ(state.best_time_frames[21], 1018u);
+    CHECK_EQ(state.best_time_frames[23], 0u);  // World 5's new level
     CHECK_EQ(
         state.no_death_clears,
-        (1u << 4) | (1u << 18) | (1u << 19) | (1u << 20));
+        (1u << 4) | (1u << 19) | (1u << 20) | (1u << 21));
 }
 
 TEST_CASE(game_state_v7_saves_get_the_world_3_level) {
@@ -301,11 +303,12 @@ TEST_CASE(game_state_v6_saves_get_the_world_4_and_3_levels) {
     GameState state = numbered_save();
     state.level = 12;  // World 4's boss in schema 6
     game_state_migration::insert_levels_since(state, 6);
-    CHECK_EQ(int(state.level), 16);
+    CHECK_EQ(int(state.level), 17);
     CHECK_EQ(state.best_time_frames[11], 0u);     // World 3's new level
     CHECK_EQ(state.best_time_frames[12], 1009u);  // World 3's boss
     CHECK_EQ(state.best_time_frames[13], 0u);     // World 4's new level
     CHECK_EQ(state.best_time_frames[14], 1010u);
+    CHECK_EQ(state.best_time_frames[16], 0u);  // World 4's trick level
 }
 
 TEST_CASE(game_state_v5_saves_get_every_level_in_order) {
@@ -313,14 +316,15 @@ TEST_CASE(game_state_v5_saves_get_every_level_in_order) {
     GameState state = numbered_save();
     state.level = 17;  // World 5's boss in schema 5
     game_state_migration::insert_levels_since(state, 5);
-    CHECK_EQ(int(state.level), 23);
+    CHECK_EQ(int(state.level), 24);
     CHECK_EQ(state.best_time_frames[11], 0u);  // World 3's new level
     CHECK_EQ(state.best_time_frames[13], 0u);  // World 4's new level
     CHECK_EQ(state.best_time_frames[14], 1010u);
-    CHECK_EQ(state.best_time_frames[20], 1016u);  // LEVERS
-    CHECK_EQ(state.best_time_frames[21], 0u);     // World 5's CLIMB
-    CHECK_EQ(state.best_time_frames[22], 0u);     // World 5's new level
-    CHECK_EQ(state.best_time_frames[23], 1017u);  // the boss
+    CHECK_EQ(state.best_time_frames[16], 0u);     // World 4's trick level
+    CHECK_EQ(state.best_time_frames[21], 1016u);  // LEVERS
+    CHECK_EQ(state.best_time_frames[22], 0u);     // World 5's CLIMB
+    CHECK_EQ(state.best_time_frames[23], 0u);     // World 5's new level
+    CHECK_EQ(state.best_time_frames[24], 1017u);  // the boss
 }
 
 TEST_CASE(game_state_current_saves_are_not_upgraded) {
@@ -384,19 +388,19 @@ TEST_CASE(game_state_v8_flags_and_badges_move_behind_32_levels) {
     CHECK(state.hard_mode_unlocked);
     CHECK(!state.hard_mode_enabled);
     CHECK(state.assist_mode_enabled);
-    // Badges 3 and 23 of schema 8, after the three new levels (3, 7, 22).
-    CHECK_EQ(state.no_death_clears, (1u << 4) | (1u << 26));
+    // Badges 3 and 23 of schema 8, after the four new levels (3, 7, 22, 16).
+    CHECK_EQ(state.no_death_clears, (1u << 4) | (1u << 27));
 }
 
 TEST_CASE(game_state_v8_best_times_and_progress_survive) {
     const GameState state = load_v8();
     CHECK_EQ(state.deaths, 77u);
-    CHECK_EQ(int(state.level), 23);
+    CHECK_EQ(int(state.level), 24);
     CHECK_EQ(state.best_time_frames[0], 1000u);
     CHECK_EQ(state.best_time_frames[3], 0u);
     CHECK_EQ(state.best_time_frames[4], 1003u);
-    CHECK_EQ(state.best_time_frames[26], 1023u);  // schema 8's last level
-    for (int i = 27; i < GameState::MAX_LEVELS; ++i) {
+    CHECK_EQ(state.best_time_frames[27], 1023u);  // schema 8's last level
+    for (int i = 28; i < GameState::MAX_LEVELS; ++i) {
         CHECK_EQ(state.best_time_frames[i], 0u);
     }
 }
@@ -425,4 +429,37 @@ TEST_CASE(game_state_v9_slot_has_no_level_entered) {
     CHECK_EQ(int(out.level), 5);
     CHECK_EQ(int(out.entry_level), -1);
     CHECK_EQ(int(out.entry_deaths), 0);
+}
+
+// ---- schema 11: LEVEL_WORLD4_TRICK before World 4's boss
+// --------------------------------------------------------------
+
+TEST_CASE(game_state_v10_save_gets_the_world_4_level_at_16) {
+    GameState state{};
+    for (int i = 0; i < 25; ++i) {
+        state.best_time_frames[i] = 2000u + unsigned(i);
+    }
+    state.no_death_clears = (1u << 15) | (1u << 16) | (1u << 24);
+    state.level = 16;  // World 4's boss in schema 10
+    state.furthest_level = 20;
+    state.entry_level = 16;
+    state.entry_deaths = 4;
+    game_state_migration::upgrade(state, 10);
+    CHECK_EQ(int(state.level), 17);
+    CHECK_EQ(int(state.furthest_level), 21);
+    CHECK_EQ(int(state.entry_level), 17);
+    CHECK_EQ(state.entry_deaths, 4u);
+    CHECK_EQ(state.best_time_frames[15], 2015u);  // World 4's second scroll
+    CHECK_EQ(state.best_time_frames[16], 0u);     // the new level
+    CHECK_EQ(state.best_time_frames[17], 2016u);  // the boss
+    CHECK_EQ(state.best_time_frames[25], 2024u);  // the finale
+    CHECK_EQ(state.no_death_clears, (1u << 15) | (1u << 17) | (1u << 25));
+}
+
+TEST_CASE(game_state_v10_save_without_a_level_entered_stays_so) {
+    GameState state{};
+    state.level = 3;
+    game_state_migration::upgrade(state, 10);
+    CHECK_EQ(int(state.level), 3);
+    CHECK_EQ(int(state.entry_level), -1);
 }

@@ -29,9 +29,9 @@
 //
 // Inserting a level into main.cpp's levels[] (anywhere but at the end) moves
 // every level index behind it, and the save stores those indices (level,
-// furthest_level, best_time_frames, no_death_clears). Bump SAVE_VERSION and
-// add an insert_level() line to upgrade() below; DataManager calls it with
-// the version the slot was written with.
+// furthest_level, entry_level, best_time_frames, no_death_clears). Bump
+// SAVE_VERSION and add an insert_level() line to upgrade() below; DataManager
+// calls it with the version the slot was written with.
 //
 // Saves older than MIN_VERSION (schema 1-4) have layouts that are not a prefix
 // of the current one (fields were inserted in the middle back then); they stay
@@ -85,6 +85,9 @@ inline void insert_level(GameState& state, int index) {
     if (state.furthest_level >= index) {
         ++state.furthest_level;
     }
+    if (state.entry_level >= index) {
+        ++state.entry_level;
+    }
 }
 
 // A schema 5-8 payload read into the schema 9 layout: its no_death_clears
@@ -125,6 +128,10 @@ inline void insert_levels_since(GameState& state, uint16_t version) {
         insert_level(state, 3);
         insert_level(state, 7);
         insert_level(state, 22);
+    }
+    // Schema 11: LEVEL_WORLD4_TRICK before World 4's boss.
+    if (version < 11) {
+        insert_level(state, 16);
     }
 }
 

@@ -757,7 +757,7 @@ class CampaignTests(unittest.TestCase):
 
     def test_campaign_follows_main_cpp_levels_in_play_order(self):
         names = [level.name for level in self.campaign]
-        self.assertEqual(len(names), 25)
+        self.assertEqual(len(names), 26)
         self.assertEqual(names[0], "LEVEL_0")
         self.assertEqual(names[-1], "LEVEL_WORLD5_FINALE")
 

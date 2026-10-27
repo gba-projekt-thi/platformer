@@ -238,6 +238,112 @@ const LevelData LEVEL_WORLD4_SCROLL_2 = {
     160};
 
 // =============================================================================
+// WORLD 4 TRICK - "Hedge Your Bets", a Level Devil level (world_width=480)
+// Bramble Hop's pogo, with a garden that bites back on a timer:
+//   1 Pit one: 120px, a bush in the middle - strike it (R) and bounce across.
+//   2 The island beyond is a delayed trap chain (TriggerData::follows). Landing
+//     on its first baskets presses an invisible plate; at once a brick falls
+//     on the baskets at the far edge, where a duck that runs on stands, and
+//     well after that a bush sprouts beside its spot. Hold still on the
+//     first basket until both are gone, then walk on.
+//   3 Pit two: 152px, two bushes a bounce apart - bounce twice in a row.
+// Everything resets on death. No checkpoint: a short level, every attempt
+// meets all of it.
+// =============================================================================
+constexpr PlatformData world4_trick_platforms[] = {
+
+    // Start: two baskets, top at y=52.
+    {-216, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+    {-184, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+
+    // The chain island, 120 px past the start: the first two baskets carry
+    // the plate, the far one takes the brick and the sprouting bush.
+    {-32, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+    {0, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+    {32, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0},
+
+    // The door's basket, 152 px past the island.
+    {216, 64, 32, 16, 0, -4, bn::sprite_items::korb, 0}};
+
+constexpr TriggerData world4_trick_triggers[] = {
+
+    // The chain: an invisible plate over the first two baskets of the island
+    // ...
+    {-16, 46, 64, 12, false, "plate"},
+    // ... the brick falls at once onto the island's far edge ...
+    {40, -120, 8, 8, false, "brick_drop", TriggerMode::Latch, nullptr, 0, 1, 0,
+     TriggerAction::Enter, "plate"},
+    // ... and 40 frames after that a bush sprouts beside the brick's spot.
+    {36, 100, 8, 8, false, "sprout", TriggerMode::Latch, nullptr, 0, 1, 40,
+     TriggerAction::Enter, "brick_drop"}};
+
+constexpr TrapData world4_trick_traps[] = {
+
+    // Pit one: one bush, 44 px out - a jump reaches it from above.
+    {TrapType::BASE, -124, 60, 24, 24, 0, 0, bn::sprite_items::strauch32x32, 16,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
+
+    // The chain's brick: falls from above the screen onto the far edge.
+    {TrapType::MOVING, 40, -120, 16, 16, 0, 0, bn::sprite_items::brick16x16, 1,
+     TRAP_GRAPHICS_INDEXES_0, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "brick_drop"},
+    // The chain's end: a bush sprouts once through the far basket (out over 6
+    // frames, up for 24, back over 10, then a rest longer than any attempt).
+    {TrapType::CYCLE,
+     36,
+     100,
+     16,
+     24,
+     0,
+     0,
+     bn::sprite_items::strauch32x32,
+     16,
+     TRAP_GRAPHICS_INDEXES_0,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     "sprout",
+     0,
+     0,
+     0,
+     0,
+     -64,
+     6,
+     24,
+     10,
+     36000,
+     0,
+     1},
+
+    // Pit two: two bushes a bounce apart.
+    {TrapType::BASE, 76, 60, 24, 24, 0, 0, bn::sprite_items::strauch32x32, 16,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
+    {TrapType::BASE, 124, 60, 24, 24, 0, 0, bn::sprite_items::strauch32x32, 16,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP}};
+
+const LevelData LEVEL_WORLD4_TRICK = {
+    world4_trick_platforms,
+    sizeof(world4_trick_platforms) / sizeof(world4_trick_platforms[0]),
+    world4_trick_triggers,
+    sizeof(world4_trick_triggers) / sizeof(world4_trick_triggers[0]),
+    world4_trick_traps,
+    sizeof(world4_trick_traps) / sizeof(world4_trick_traps[0]),
+    bn::regular_bg_items::world4,
+    bn::music_items::world4,
+    // Player spawn
+    {-216, 40},
+    // Door position
+    {216, 42},
+    480,
+    160,
+    1,
+    // A Level Devil level: say once that it is not all about the bounce.
+    "Bounce now, panic later."};
+
+// =============================================================================
 // WORLD 4 BOSS - "The Hive Queen" (world_width=480)
 // =============================================================================
 constexpr PlatformData world4_boss_platforms[] = {

@@ -14,7 +14,7 @@
 // - smaller save size
 // - consistent ABI behavior on ARM
 struct GameState {
-    // Headroom above the current 25-level roster (see levels[] in
+    // Headroom above the current 26-level roster (see levels[] in
     // main.cpp / WorldIndex::WORLDS). 32 since schema 9 (24 before, see
     // game_state_migration::widen_level_records()): no_death_clears has one
     // bit per level, so this cannot grow further without a wider field.

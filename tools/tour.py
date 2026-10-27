@@ -155,12 +155,30 @@ def build_tour(levels):
     start_screen(*slot_1[-1])
     pogo = "LEVEL_WORLD4_POGO"
     t.press("DOWN").press("B").wait(fade).press("DOWN", 3).press("A").wait(fade)
-    t.shot("select_w4", "Levelauswahl Welt 4: 4 Level, Bramble Hop zuerst")
+    t.shot("select_w4", "Levelauswahl Welt 4: 5 Level, Bramble Hop zuerst")
     t.press("A").wait(fade).shot("pogo_start", "Bramble Hop über die Levelauswahl (schon geschafft: ohne Hinweis)")
     steps = replay_steps(pogo)
     t.wait(steps // 3).shot("pogo_1", "Bramble Hop: Abprall vom ersten Busch")
     t.wait(steps // 3).shot("pogo_2", "Bramble Hop: zweite Grube, zwei Büsche")
     t.wait(steps // 3 + 120).press("A").wait(fade)
+    to_title(*slot_1[-1])
+
+    # Slot 2: Hedge Your Bets, World 4's delayed trap chain before the boss.
+    trick = "LEVEL_WORLD4_TRICK"
+    t.press("DOWN").press("B").wait(fade).press("DOWN", 3).press("A").wait(fade)
+    t.press("DOWN", 3).press("A").wait(fade).shot("trick_start", "Hedge Your Bets: Start vor der ersten Grube")
+    steps = replay_steps(trick)
+    done = 0  # frames of the recording played so far
+    for name, step, check in (
+            ("trick_1", 60, "Hedge Your Bets: Absprung zur ersten Grube"),
+            ("trick_2", 90, "Hedge Your Bets: Abprall vom Busch, Landung auf der Kettenplatte"),
+            ("trick_3", 125, "Hedge Your Bets: der Ziegel fällt auf den fernen Korb, die Ente wartet"),
+            ("trick_4", 150, "Hedge Your Bets: der Busch sprießt aus dem fernen Korb"),
+            ("trick_5", 185, "Hedge Your Bets: wieder weg, die Ente geht zur zweiten Grube")):
+        t.wait(max(0, step - done))
+        t.shot(name, check)
+        done = step + 30
+    t.wait(max(0, steps - done) + 120).press("A").wait(fade)
     to_title(*slot_1[-1])
 
     # Slot 2: World 5's level select (7 rows) and Barrel Tower.

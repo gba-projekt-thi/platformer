@@ -150,6 +150,55 @@
       }
     },
     {
+      "name": "LEVEL_WORLD4_TRICK",
+      "note": "=============================================================================\nWORLD 4 TRICK - \"Hedge Your Bets\", a Level Devil level (world_width=480)\nBramble Hop's pogo, with a garden that bites back on a timer:\n  1 Pit one: 120px, a bush in the middle - strike it (R) and bounce across.\n  2 The island beyond is a delayed trap chain (TriggerData::follows). Landing\n    on its first baskets presses an invisible plate; at once a brick falls\n    on the baskets at the far edge, where a duck that runs on stands, and\n    well after that a bush sprouts beside its spot. Hold still on the\n    first basket until both are gone, then walk on.\n  3 Pit two: 152px, two bushes a bounce apart - bounce twice in a row.\nEverything resets on death. No checkpoint: a short level, every attempt\nmeets all of it.\n=============================================================================",
+      "platforms": {
+        "name": "world4_trick_platforms",
+        "items": [
+          {"x": -216, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "blank_before": true, "note": "Start: two baskets, top at y=52."},
+          {"x": -184, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": -32, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "blank_before": true, "note": "The chain island, 120 px past the start: the first two baskets carry\nthe plate, the far one takes the brick and the sprouting bush."},
+          {"x": 0, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 32, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 216, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "blank_before": true, "note": "The door's basket, 152 px past the island."}
+        ]
+      },
+      "triggers": {
+        "name": "world4_trick_triggers",
+        "items": [
+          {"blank_before": true, "note": "The chain: an invisible plate over the first two baskets of the island ...", "x": -16, "y": 46, "width": 64, "height": 12, "name": "plate"},
+          {"note": "... the brick falls at once onto the island's far edge ...", "x": 40, "y": -120, "width": 8, "height": 8, "name": "brick_drop", "delay_frames": 0, "follows": "plate"},
+          {"note": "... and 40 frames after that a bush sprouts beside the brick's spot.", "x": 36, "y": 100, "width": 8, "height": 8, "name": "sprout", "delay_frames": 40, "follows": "brick_drop"}
+        ]
+      },
+      "traps": {
+        "name": "world4_trick_traps",
+        "items": [
+          {"type": "BASE", "x": -124, "y": 60, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16, "blank_before": true, "note": "Pit one: one bush, 44 px out - a jump reaches it from above."},
+          {"blank_before": true, "note": "The chain's brick: falls from above the screen onto the far edge.", "type": "MOVING", "x": 40, "y": -120, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4, "trigger_name": "brick_drop"},
+          {"note": "The chain's end: a bush sprouts once through the far basket (out over 6 frames, up for 24, back over 10, then a rest longer than any attempt).", "type": "CYCLE", "x": 36, "y": 100, "width": 16, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16, "trigger_name": "sprout", "cycle_dy": -64, "cycle_extend_frames": 6, "cycle_hold_frames": 24, "cycle_retract_frames": 10, "cycle_wait_frames": 36000, "sprite_z_order": 1},
+          {"type": "BASE", "x": 76, "y": 60, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16, "blank_before": true, "note": "Pit two: two bushes a bounce apart."},
+          {"type": "BASE", "x": 124, "y": 60, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16}
+        ]
+      },
+      "background": "world4",
+      "music": "world4",
+      "spawn": [-216, 40],
+      "door": {
+        "x": 216,
+        "y": 42
+      },
+      "world_width": 480,
+      "world_height": 160,
+      "ground_friction": 1,
+      "intro_hint": "Bounce now, panic later.",
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "Door position",
+        "intro_hint": "A Level Devil level: say once that it is not all about the bounce."
+      }
+    },
+    {
       "name": "LEVEL_WORLD4_BOSS",
       "note": "=============================================================================\nWORLD 4 BOSS - \"The Hive Queen\" (world_width=480)\n=============================================================================",
       "platforms": {
