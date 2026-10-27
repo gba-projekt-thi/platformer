@@ -25,15 +25,6 @@ jobs:
   gba-build:
     name: GBA build + headless boot
     runs-on: ubuntu-latest
-    # TEMPORARY: pkg.devkitpro.org has returned 403 on GitHub-hosted
-    # runners (see docker/Dockerfile's retry loop around dkp-pacman).
-    # continue-on-error keeps this job's failure from blocking the whole
-    # workflow/PR checks while that's investigated, without hiding it -
-    # the job still shows as failed (yellow "!"), just non-blocking.
-    # Remove this once a build has gone green on GitHub Actions, or once
-    # the fix (retry, or switching to devkitPro's prebuilt CI image) is
-    # confirmed to work reliably there.
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
