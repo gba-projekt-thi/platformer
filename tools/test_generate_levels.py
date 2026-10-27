@@ -149,6 +149,33 @@ class GenerateTests(unittest.TestCase):
         self.assertIn("LEVEL_X_door_flee_path,24,12}", text)
         self.assertLess(text.index("LEVEL_X_door_flee_path[]"), text.index("constLevelDataLEVEL_X"))
 
+    def test_a_trapped_door_names_its_trigger(self):
+        door = {"x": 30, "y": 4, "trap_trigger_name": "door_trap"}
+        out = squash(self.header(level(door=door)))
+        self.assertIn(
+            '{30,4,bn::sprite_items::door32x32,DOOR32X32_GRAPHICS_INDEXES,8,false,{},0,0,"door_trap"}',
+            out,
+        )
+
+    def test_a_moving_door_gets_its_attempt_positions_as_an_array(self):
+        door = {"x": 30, "y": 4, "attempt_positions": [[0, 0], [-60, 8]], "attempt_every": 2}
+        text = squash(gen.generate(world(level(door=door)), STRUCTS))
+        self.assertIn("constexprbn::fixed_pointLEVEL_X_door_attempt_positions[]={{0,0},{-60,8}};", text)
+        self.assertIn(",{},0,0,nullptr,LEVEL_X_door_attempt_positions,2}", text)
+        self.assertLess(text.index("LEVEL_X_door_attempt_positions[]"), text.index("constLevelDataLEVEL_X"))
+
+    def test_a_door_can_run_away_and_move_between_attempts(self):
+        door = {"x": 30, "y": 4, "flee_path": [[0, -40]], "flee_range": 24, "flee_frames": 10,
+                "attempt_positions": [[0, 0], [90, 0]], "attempt_every": 1}
+        text = squash(gen.generate(world(level(door=door)), STRUCTS))
+        self.assertIn("LEVEL_X_door_flee_path,24,10,nullptr,LEVEL_X_door_attempt_positions,1}", text)
+
+    def test_attempt_positions_need_attempt_every(self):
+        # attempt_every 0 would keep the door at its first spot for good.
+        door = {"x": 30, "y": 4, "attempt_positions": [[0, 0], [-60, 0]]}
+        with self.assertRaises(ValueError):
+            gen.generate(world(level(door=door)), STRUCTS)
+
     def test_a_running_platform_gets_its_path_as_an_array(self):
         lv = level()
         lv["platforms"]["items"][0].update(
