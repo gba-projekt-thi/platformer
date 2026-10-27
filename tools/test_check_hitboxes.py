@@ -107,6 +107,29 @@ class TrapRuleTests(unittest.TestCase):
         self.assertEqual(checker.trap_unfair_by((-5, 0, 16, 16), (0, 0, 16, 16), self.DUCK), 2)
 
 
+class DoorRuleTests(unittest.TestCase):
+    PICTURE = (-11, -7, 11, 16)
+
+    def test_a_box_two_px_inside_the_picture_is_fine(self):
+        self.assertEqual(checker.door_problem((-9, -5, 9, 14), self.PICTURE), None)
+
+    def test_the_old_point_is_too_small_to_walk_into(self):
+        self.assertIn("left", checker.door_problem((-1, 5, 1, 7), self.PICTURE))
+
+    def test_a_box_past_the_picture_enters_before_the_pictures_touch(self):
+        self.assertIn("right", checker.door_problem((-9, -5, 14, 14), self.PICTURE))
+
+    def test_a_box_matching_the_picture_exactly_is_fine(self):
+        self.assertEqual(checker.door_problem(self.PICTURE, self.PICTURE), None)
+
+
+@unittest.skipUnless(HAS_GAME, "game/ not found")
+class DoorDataTests(unittest.TestCase):
+    def test_the_boxes_come_from_door_logic_h(self):
+        self.assertEqual(checker.door_boxes(REPO)[32], (-9, -5, 9, 13))
+        self.assertEqual(checker.door_boxes(REPO)[16], (-5, -6, 5, 6))
+
+
 @unittest.skipUnless(HAS_GAME, "game/ not found")
 class ScaledSpriteTests(unittest.TestCase):
     """TrapData::sprite_scale draws the picture larger around its center."""

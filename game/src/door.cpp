@@ -7,8 +7,8 @@ Door::Door(const DoorData& data)
     : PhysicsBody(
           data.x,
           data.y,
-          2,
-          2,
+          door_logic::box_for(data.sprite.shape_size().height()).w,
+          door_logic::box_for(data.sprite.shape_size().height()).h,
           Cfg::Layer::DOOR,
           Cfg::Layer::PLAYER,
           0),
@@ -39,7 +39,10 @@ Door::Door(const DoorData& data)
     _door_sprite.sprite().set_z_order(Cfg::ZOrder::DOOR);
     _door_sprite.sprite().set_blending_enabled(true);
     this->sprite = &_door_sprite;
-    this->shape_pos.offset_y = +6;
+    const door_logic::Box box =
+        door_logic::box_for(data.sprite.shape_size().height());
+    this->shape_pos.offset_x = box.offset_x;
+    this->shape_pos.offset_y = box.offset_y;
 }
 
 void Door::update() {

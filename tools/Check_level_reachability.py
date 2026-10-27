@@ -110,6 +110,35 @@ DASH_SPEED = 4.0
 DASH_FRAMES = 8
 BW = 8.0
 BH = 8.0
+# A door is a box (x, y, w, h) around its hitbox centre: door_logic.h's
+# DOOR_BOX_<sprite height> (the opaque pixels of the picture, 2 px in). A bare
+# (x, y) means the standard 32 px door.
+_REPO = Path(__file__).resolve().parent.parent
+
+
+def _door_boxes():
+    """{sprite height: (w, h, offset_x, offset_y)} from door_logic.h."""
+    text = (_REPO / "game/include/door_logic.h").read_text()
+    return {
+        int(size): tuple(float(v) for v in dims)
+        for size, *dims in re.findall(
+            r"DOOR_BOX_(\d+)\s*=\s*\{(-?\d+),\s*(-?\d+),\s*(-?\d+),\s*(-?\d+)\}", text)
+    }
+
+
+DOOR_BOXES = _door_boxes()
+DOOR_W, DOOR_H = DOOR_BOXES[32][:2]
+
+
+def door_size(door):
+    return door[2:4] if len(door) > 2 else (DOOR_W, DOOR_H)
+
+
+def _sprite_height(name):
+    """Height of the door sprite `bn::sprite_items::<name>` (32 if unknown)."""
+    for path in (_REPO / "game/graphics").rglob(name + ".json"):
+        return json.loads(path.read_text()).get("height", 32)
+    return 32
 DEATH_Y = 100.0
 EDGE_MARGIN = 10  # Cfg::Screen: the duck bounces back past world_width / 2 - this
 MAX_FRAMES = 160
@@ -283,7 +312,7 @@ def simulate(
             trace.append((x, y))
         if forbid and _hits(forbid, x, y, BW, BH) is not None:
             return None, door_touched
-        if door is not None and overlap(x, y, BW, BH, door[0], door[1], 2, 2):
+        if door is not None and overlap(x, y, BW, BH, door[0], door[1], *door_size(door)):
             door_touched = True
         if y > DEATH_Y:
             return None, door_touched
@@ -435,7 +464,7 @@ def climb(plats, door, start, x0, vx0, d, mode, slide, jump, forbid=()):
                 d = -d
         if forbid and _hits(forbid, duck.x, duck.y, BW, BH) is not None:
             return None, door_touched
-        if door is not None and overlap(duck.x, duck.y, BW, BH, door[0], door[1], 2, 2):
+        if door is not None and overlap(duck.x, duck.y, BW, BH, door[0], door[1], *door_size(door)):
             door_touched = True
         if duck.y > DEATH_Y:
             return None, door_touched
@@ -466,7 +495,7 @@ def pogo_hop(plats, traps, door, start, x0, vx0, d, r_from, wall_jump, forbid=()
             return None, door_touched
         if forbid and _hits(forbid, duck.x, duck.y, BW, BH) is not None:
             return None, door_touched
-        if door is not None and overlap(duck.x, duck.y, BW, BH, door[0], door[1], 2, 2):
+        if door is not None and overlap(duck.x, duck.y, BW, BH, door[0], door[1], *door_size(door)):
             door_touched = True
         if duck.y > DEATH_Y:
             return None, door_touched
@@ -649,8 +678,7 @@ def _reach(active, spawn, door, allow_dash, optimistic, allow_wall, pogo_targets
                 BH,
                 door[0],
                 door[1],
-                2,
-                2,
+                *door_size(door),
             ):
                 door_ok = True
     return reached, door_ok
@@ -895,14 +923,16 @@ def _point_arrays(content):
 
 
 def _door_positions(door, points):
-    """Where the duck has to touch the door (the 2 px point, 6 px below its
-    centre), for each spot it can stand on: DoorData::attempt_positions moves
-    its origin after deaths, and a running door (flee_path) has to be reached
-    where it ends up, its last stop."""
-    x, y = _num(door[0]), _num(door[1]) + 6.0
+    """Where the duck has to touch the door: its hitbox (x, y, w, h), for each
+    spot it can stand on. DoorData::attempt_positions moves its origin after
+    deaths, and a running door (flee_path) has to be reached where it ends up,
+    its last stop."""
+    match = re.search(r"sprite_items::(\w+)", door[2]) if len(door) > 2 else None
+    w, h, ox, oy = DOOR_BOXES.get(_sprite_height(match.group(1)) if match else 32, DOOR_BOXES[32])
+    x, y = _num(door[0]) + ox, _num(door[1]) + oy
     flee = points.get(door[6].strip(), [(0.0, 0.0)])[-1] if len(door) > 6 else (0.0, 0.0)
     spots = points.get(door[10].strip(), [(0.0, 0.0)]) if len(door) > 10 else [(0.0, 0.0)]
-    return [(x + sx + flee[0], y + sy + flee[1]) for sx, sy in spots]
+    return [(x + sx + flee[0], y + sy + flee[1], w, h) for sx, sy in spots]
 
 
 def load_door_positions(path):
@@ -1067,10 +1097,10 @@ def campaign(root):
 def outside_play_area(spawn, door, world_width):
     """Which of "spawn" / "door" lies past the world-edge bounce
     (Core::set_horizontal_bound), where the duck cannot stay. The door
-    counts as reached once the duck's body touches its 2 px point."""
+    counts as reached once the duck's body touches its box."""
     bound = world_width / 2 - EDGE_MARGIN
-    reach = {"spawn": bound, "door": bound + BW / 2 + 1}
-    return [name for name, (x, _) in (("spawn", spawn), ("door", door)) if abs(x) > reach[name]]
+    reach = {"spawn": bound, "door": bound + BW / 2 + door_size(door)[0] / 2}
+    return [name for name, pos in (("spawn", spawn), ("door", door)) if abs(pos[0]) > reach[name]]
 
 
 def load_world_widths(path):

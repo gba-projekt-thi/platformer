@@ -85,3 +85,17 @@ TEST_CASE(door_logic_the_door_moves_on_every_few_deaths) {
 TEST_CASE(door_logic_attempt_every_zero_keeps_the_first_spot) {
     CHECK_EQ(door_logic::attempt_offset(SPOTS, 3, 7, 0).x(), bn::fixed(0));
 }
+
+TEST_CASE(door_logic_the_hitbox_sits_inside_the_picture) {
+    // door32x32: opaque -11..11 x -7..16; susanne16x16: -7..7 x -8..8.
+    const auto big = door_logic::box_for(32);
+    CHECK(big.offset_x - big.w / 2 >= -11 && big.offset_x + big.w / 2 <= 11);
+    CHECK(big.offset_y - big.h / 2 >= -7 && big.offset_y + big.h / 2 <= 16);
+    const auto small = door_logic::box_for(16);
+    CHECK(
+        small.offset_x - small.w / 2 >= -7 &&
+        small.offset_x + small.w / 2 <= 7);
+    CHECK(
+        small.offset_y - small.h / 2 >= -8 &&
+        small.offset_y + small.h / 2 <= 8);
+}
