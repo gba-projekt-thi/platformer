@@ -74,10 +74,15 @@ const LevelData LEVEL_T = {
     bn::regular_bg_items::w, bn::music_items::m, {-40, 30}, {40, 40},
     640, 160, 1, "hello", cps, 2};
 
+// a door that stands somewhere else after every death
+constexpr bn::fixed_point LEVEL_T2_door_attempt_positions[] = {{0, 0}, {-80, 0}};
+
 const LevelData LEVEL_T2 = {
     plats, sizeof(plats) / sizeof(plats[0]),
     nullptr, 0, nullptr, 0,
-    bn::regular_bg_items::w, bn::music_items::m, {-40, 30}, {40, 40}};
+    bn::regular_bg_items::w, bn::music_items::m, {-40, 30},
+    {40, 40, bn::sprite_items::door32x32, DOOR32X32_GRAPHICS_INDEXES, 8, false,
+     {}, 0, 0, nullptr, LEVEL_T2_door_attempt_positions, 1}};
 """
 
 
@@ -348,6 +353,16 @@ class DrawingTests(Fixture):
         spawn = rects_with(root, "spawn")[0]
         self.assertEqual(float(spawn.get("x")), -44.0)  # center -40, width 8
         self.assertEqual(len(rects_with(root, "door")), 1)
+
+    def test_a_door_that_moves_between_attempts_shows_every_spot(self):
+        other = self.levels["LEVEL_T2"]
+        self.assertEqual(other.door, (40.0, 40.0))
+        self.assertEqual(other.door_spots, [(40.0, 40.0), (-40.0, 40.0)])
+        root = ET.fromstring(pv.render(other, arcs="none"))
+        later = rects_with(root, "door", "later")
+        self.assertEqual(len(later), 1)
+        self.assertEqual(float(later[0].get("x")), -56.0)  # center -40, width 32
+        self.assertIn("after 1 death", title_of(later[0]))
 
     def test_no_traps_option_hides_traps_and_triggers(self):
         root = ET.fromstring(pv.render(self.level, arcs="none", show_traps=False))

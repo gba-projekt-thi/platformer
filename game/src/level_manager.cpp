@@ -130,6 +130,35 @@ void LevelManager::_load_door(const LevelData& level) {
     _door.emplace(level.door);
 }
 
+unsigned LevelManager::_deaths_in_level() const {
+    return attempt_variant::deaths_in_level(
+        _player.get_deaths(), _deaths_at_entry);
+}
+
+// The door that moves between attempts stands where the deaths in this level
+// put it (on load, and after every death, checkpoint respawn and Restart
+// Level - they all end in _finish_respawn()).
+void LevelManager::_place_door() {
+    if (_door) {
+        _door->place_for_attempt(_deaths_in_level());
+    }
+}
+
+// The door that turns into a trap: touched while its trigger is on, it kills
+// like a trap does - right after the collision update, so this frame's death
+// starts the death feedback as usual. No tell: the door looks the same.
+void LevelManager::_check_door_trap() {
+    if (!_door) {
+        return;
+    }
+    const door_logic::Touch touch = door_logic::on_touch(
+        _door->reached(), _door_locked, door_logic::trapped(_door_trap));
+    if (touch == door_logic::Touch::Kill) {
+        _door->clear_reached();
+        _player.death();
+    }
+}
+
 void LevelManager::_load_music(const LevelData& level) {
     if (!_music.has_value() || *_music != level.music) {
         _music.emplace(level.music);
@@ -244,9 +273,7 @@ void LevelManager::_advance_death_fx() {
 
 void LevelManager::_finish_respawn() {
     _reset_entities();
-    if (_door) {
-        _door->reset_flee();
-    }
+    _place_door();
     // Level Devil: this attempt's traps and platforms, then the dynamic
     // platforms that are there start over (the resets below put them back).
     if (_level != nullptr) {
@@ -264,6 +291,7 @@ void LevelManager::_finish_respawn() {
 
 void LevelManager::_clear_runtime_state() {
     _boss = nullptr;
+    _door_trap = nullptr;
     _dynamic_platforms.clear();
     _fleeing_platforms.clear();
     _platforms.clear();
@@ -398,11 +426,6 @@ void LevelManager::_sync_crumble_platforms() {
         });
 }
 
-unsigned LevelManager::_deaths_in_level() const {
-    return attempt_variant::deaths_in_level(
-        _player.get_deaths(), _deaths_at_entry);
-}
-
 bool LevelManager::_present(unsigned from_death, unsigned until_death) const {
     return attempt_variant::active_for_deaths(
         _deaths_in_level(), from_death, until_death);
@@ -517,6 +540,7 @@ void LevelManager::load(const LevelData& level) {
 
     _load_player_spawn(level);
     _load_door(level);
+    _place_door();
     _load_music(level);
     _load_background(level);
     _setup_camera(level);
@@ -526,6 +550,7 @@ void LevelManager::load(const LevelData& level) {
 
     _load_platforms(level);
     _load_triggers(level);
+    _door_trap = find_trigger(level.door.trap_trigger_name);
     _load_dynamic_platforms(level);
     _load_traps(level);
     _load_checkpoints(level);
@@ -615,6 +640,7 @@ LevelManager::UpdateResult LevelManager::update() {
     if (_door) {
         _door->flee_from(_player.pos.x, _player.pos.y);
     }
+    _check_door_trap();
     _check_player_died();
 
     // -------------------------------------------------------------------------

@@ -9,6 +9,10 @@ Door::Door(const DoorData& data)
           Cfg::Layer::DOOR,
           Cfg::Layer::PLAYER,
           0),
+      _x(data.x),
+      _y(data.y),
+      _attempt_positions(data.attempt_positions),
+      _attempt_every(data.attempt_every),
       _origin_x(data.x),
       _origin_y(data.y),
       _flee(
@@ -67,6 +71,19 @@ void Door::set_locked(bool locked) {
 void Door::reset_flee() {
     _flee.reset();
     _place();
+}
+
+void Door::place_for_attempt(unsigned deaths) {
+    const bn::fixed_point offset = door_logic::attempt_offset(
+        _attempt_positions.data(), _attempt_positions.size(), deaths,
+        _attempt_every);
+    _origin_x = _x + offset.x();
+    _origin_y = _y + offset.y();
+    reset_flee();
+}
+
+void Door::clear_reached() {
+    _reached = false;
 }
 
 // Direct position writes bypass PhysicsBody::move(): the collision shape and

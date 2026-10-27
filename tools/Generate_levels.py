@@ -24,6 +24,7 @@ JSON layout (one file per world):
           "spawn": [-96, 42],
           "door": {"x": 32, "y": 4, ...DoorData fields},
                                                   // flee_path: [[x, y], ...]
+                                                  // attempt_positions: [[x, y], ...]
           "world_width": 624, "world_height": 160, "ground_friction": 1,
           "intro_hint": "New: Dash with B",       // optional, like the rest
           "field_notes": {"door": "comment above the door field", ...}
@@ -69,6 +70,7 @@ STRING_FIELDS = {
     ("PlatformData", "trigger_name"),
     ("TriggerData", "name"),
     ("TrapData", "trigger_name"),
+    ("DoorData", "trap_trigger_name"),
     ("LevelData", "intro_hint"),
 }
 PREFIXES = {
@@ -215,20 +217,26 @@ def _array(struct, array, structs):
     return out + "};\n"
 
 
-def _flee_path(item, name):
-    """(definition, item) - a running door's or platform's flee_path
-    ([[x, y], ...]) becomes its own bn::fixed_point array called `name`."""
-    path = item.get("flee_path")
+def _flee_path(item, name, field="flee_path"):
+    """(definition, item) - a list of [x, y] points in `field` (a running
+    door's or platform's flee_path, the door's attempt_positions) becomes its
+    own bn::fixed_point array called `name`."""
+    path = item.get(field)
     if not isinstance(path, list):
         return "", item
-    item = dict(item, flee_path=name)
+    item = dict(item, **{field: name})
     points = ", ".join(f"{{{value('DoorData', 'x', x)}, {value('DoorData', 'y', y)}}}" for x, y in path)
     return f"constexpr bn::fixed_point {name}[] = {{{points}}};\n\n", item
 
 
 def _door(level):
     """(definitions to put before the level, DoorData fields)."""
-    return _flee_path(level["door"], f"{level['name']}_door_flee_path")
+    door = level["door"]
+    if door.get("attempt_positions") and door.get("attempt_every", 0) < 1:
+        raise ValueError(f"{level['name']}: a door with attempt_positions needs attempt_every >= 1")
+    flee, door = _flee_path(door, f"{level['name']}_door_flee_path")
+    attempts, door = _flee_path(door, f"{level['name']}_door_attempt_positions", "attempt_positions")
+    return flee + attempts, door
 
 
 def _level(level, structs):

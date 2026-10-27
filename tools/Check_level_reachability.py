@@ -709,10 +709,7 @@ def load_levels(path):
     content = _ctr.strip_comments(Path(path).read_text())
     plat_arrays = _ctr.extract_named_arrays(content, "PlatformData")
     trig_arrays = _ctr.extract_named_arrays(content, "TriggerData")
-    flee_paths = {
-        m.group(1): [(_num(x), _num(y)) for x, y in re.findall(r"\{\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\}", m.group(2))]
-        for m in re.finditer(r"constexpr bn::fixed_point (\w+)\[\]\s*=\s*\{(.*?)\};", content, re.S)
-    }
+    flee_paths = _point_arrays(content)
     levels = {}
     for m in re.finditer(r"(?:const|constexpr) LevelData ([A-Za-z0-9_]+)\s*=\s*", content):
         name = m.group(1)
@@ -748,15 +745,45 @@ def load_levels(path):
                         "rect": (tx, ty, tw, th),
                     }
         spawn = tuple(_num(v) for v in _fields_of(f[8])[:2])
-        door = _fields_of(f[9])
-        door_pos = (_num(door[0]), _num(door[1]) + 6.0)
-        # A running door (DoorData::flee_path) has to be reached where it
-        # ends up: its last stop.
-        if len(door) > 6 and door[6].strip() in flee_paths:
-            dx, dy = flee_paths[door[6].strip()][-1]
-            door_pos = (door_pos[0] + dx, door_pos[1] + dy)
+        # The door of the first attempt (see load_door_positions()).
+        door_pos = _door_positions(_fields_of(f[9]), flee_paths)[0]
         levels[name] = (platforms, triggers, spawn, door_pos)
     return levels
+
+
+def _point_arrays(content):
+    """{name: [(x, y), ...]} of every bn::fixed_point array (flee paths, a
+    door's attempt positions)."""
+    return {
+        m.group(1): [(_num(x), _num(y)) for x, y in re.findall(r"\{\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\}", m.group(2))]
+        for m in re.finditer(r"constexpr bn::fixed_point (\w+)\[\]\s*=\s*\{(.*?)\};", content, re.S)
+    }
+
+
+def _door_positions(door, points):
+    """Where the duck has to touch the door (the 2 px point, 6 px below its
+    centre), for each spot it can stand on: DoorData::attempt_positions moves
+    its origin after deaths, and a running door (flee_path) has to be reached
+    where it ends up, its last stop."""
+    x, y = _num(door[0]), _num(door[1]) + 6.0
+    flee = points.get(door[6].strip(), [(0.0, 0.0)])[-1] if len(door) > 6 else (0.0, 0.0)
+    spots = points.get(door[10].strip(), [(0.0, 0.0)]) if len(door) > 10 else [(0.0, 0.0)]
+    return [(x + sx + flee[0], y + sy + flee[1]) for sx, sy in spots]
+
+
+def load_door_positions(path):
+    """{level: [door position, ...]} - every spot the level's door can stand
+    on (one for an ordinary door), the first attempt's first."""
+    content = _ctr.strip_comments(Path(path).read_text())
+    points = _point_arrays(content)
+    out = {}
+    for m in re.finditer(r"(?:const|constexpr) LevelData ([A-Za-z0-9_]+)\s*=\s*", content):
+        ob = m.end()
+        if content[ob] != "{":
+            continue
+        f = _ctr.top_level_fields(content[ob + 1 : _ctr.find_balanced_block(content, ob)])
+        out[m.group(1)] = _door_positions(_fields_of(f[9]), points)
+    return out
 
 
 def load_static_traps(path):
@@ -867,14 +894,19 @@ def load_world_widths(path):
 def outside_play_areas(levels):
     """'LEVEL: spawn' / 'LEVEL: door' for each campaign level whose spawn or
     door lies past its world-edge bounce."""
-    loaded, widths, bad = {}, {}, []
+    loaded, widths, doors, bad = {}, {}, {}, []
     for level in levels:
         if level.path not in loaded:
             loaded[level.path] = load_levels(level.path)
             widths[level.path] = load_world_widths(level.path)
-        _, _, spawn, door = loaded[level.path][level.name]
-        bad += [f"{level.name}: {what}" for what in
-                outside_play_area(spawn, door, widths[level.path][level.name])]
+            doors[level.path] = load_door_positions(level.path)
+        _, _, spawn, _ = loaded[level.path][level.name]
+        found = []
+        # every spot of a door that moves between attempts
+        for door in doors[level.path][level.name]:
+            found += [w for w in outside_play_area(spawn, door, widths[level.path][level.name])
+                      if w not in found]
+        bad += [f"{level.name}: {what}" for what in found]
     return bad
 
 
@@ -883,17 +915,24 @@ def unreachable_doors(levels):
     conservative start with the abilities of that level."""
     loaded = {}
     traps = {}
+    doors = {}
     bad = []
     for level in levels:
         if level.path not in loaded:
             loaded[level.path] = load_levels(level.path)
             traps[level.path] = load_static_traps(level.path)
-        platforms, triggers, spawn, door = loaded[level.path][level.name]
+            doors[level.path] = load_door_positions(level.path)
+        platforms, triggers, spawn, _ = loaded[level.path][level.name]
         targets = traps[level.path].get(level.name, []) if level.pogo else ()
-        # Level Devil: every attempt counts, whatever has moved by then
-        for deaths in unreachable_windows(platforms, triggers, spawn, door, level.dash, False,
-                                          level.wall, targets):
-            bad.append(level.name if deaths == 0 else f"{level.name} (after {deaths} deaths)")
+        # Level Devil: every attempt counts, whatever has moved by then. Every
+        # spot of a door that moves between attempts is checked against every
+        # death window - more pairs than the game can show, never fewer.
+        for door in doors[level.path][level.name]:
+            for deaths in unreachable_windows(platforms, triggers, spawn, door, level.dash, False,
+                                              level.wall, targets):
+                name = level.name if deaths == 0 else f"{level.name} (after {deaths} deaths)"
+                if name not in bad:
+                    bad.append(name)
     return bad
 
 

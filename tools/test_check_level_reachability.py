@@ -419,6 +419,69 @@ class DeathWindowTests(unittest.TestCase):
         self.assertEqual((trap.from_death, trap.until_death), (0, 2))
 
 
+class AttemptDoorTests(unittest.TestCase):
+    """A door with DoorData::attempt_positions stands somewhere else after
+    deaths: every one of its spots has to be reachable and in the play area."""
+
+    def header(self, door, tmp):
+        spec = importlib.util.spec_from_file_location(
+            "generate_levels", Path(__file__).with_name("Generate_levels.py"))
+        gen = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gen)
+        level = {
+            "name": "LEVEL_X",
+            "platforms": {"name": "x_platforms", "items": [
+                {"x": 0, "y": 60, "width": 160, "height": 16, "offset_x": 0,
+                 "offset_y": 0, "sprite": "stone", "sprite_index": 0}]},
+            "background": "world9", "music": "world9",
+            "spawn": [0, 40], "door": door, "world_width": 240,
+        }
+        path = Path(tmp) / "levels.h"
+        path.write_text(gen.generate({"levels": [level]}, gen.read_structs()))
+        return path
+
+    def campaign(self, path):
+        return [sim.CampaignLevel(0, "LEVEL_X", path, False, False, False)]
+
+    def test_a_plain_door_has_one_position(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            positions = sim.load_door_positions(self.header({"x": 30, "y": 40}, tmp))
+        self.assertEqual(positions["LEVEL_X"], [(30.0, 46.0)])
+
+    def test_every_attempt_position_is_a_door_position(self):
+        door = {"x": 30, "y": 40, "attempt_positions": [[0, 0], [-60, 0]], "attempt_every": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.header(door, tmp)
+            positions = sim.load_door_positions(path)["LEVEL_X"]
+            first = sim.load_levels(path)["LEVEL_X"][3]
+        self.assertEqual(positions, [(30.0, 46.0), (-30.0, 46.0)])
+        # load_levels() keeps the door of the first attempt.
+        self.assertEqual(first, (30.0, 46.0))
+
+    def test_a_running_door_runs_from_every_attempt_position(self):
+        door = {"x": 30, "y": 40, "flee_path": [[20, 0]], "flee_range": 24, "flee_frames": 8,
+                "attempt_positions": [[0, 0], [-60, 0]], "attempt_every": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            positions = sim.load_door_positions(self.header(door, tmp))["LEVEL_X"]
+        self.assertEqual(positions, [(50.0, 46.0), (-10.0, 46.0)])
+
+    def test_reachable_attempt_positions_pass(self):
+        door = {"x": 30, "y": 40, "attempt_positions": [[0, 0], [-60, 0]], "attempt_every": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(sim.unreachable_doors(self.campaign(self.header(door, tmp))), [])
+
+    def test_one_unreachable_attempt_position_fails_the_level(self):
+        door = {"x": 30, "y": 40, "attempt_positions": [[0, 0], [0, -200]], "attempt_every": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(sim.unreachable_doors(self.campaign(self.header(door, tmp))), ["LEVEL_X"])
+
+    def test_an_attempt_position_outside_the_play_area_is_reported(self):
+        door = {"x": 30, "y": 40, "attempt_positions": [[0, 0], [300, 0]], "attempt_every": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(sim.outside_play_areas(self.campaign(self.header(door, tmp))),
+                             ["LEVEL_X: door"])
+
+
 class ResolveAxisTests(unittest.TestCase):
     """Mirrors resolve_axis() in the engine's move_resolution.h."""
 

@@ -3,7 +3,8 @@
 Check_trigger_references.py
 
 Statically validates every TrapData::trigger_name a MOVING/PATH/CYCLE/BOSS trap - and
-every PlatformData::trigger_name a switched platform - references against the TriggerData::name entries actually defined for
+every PlatformData::trigger_name a switched platform and the DoorData::trap_trigger_name
+of a door that turns into a trap - references against the TriggerData::name entries actually defined for
 THAT SAME LEVEL - the exact per-level lookup
 LevelManager::get_trigger_by_name() performs at runtime, but checked here
 without compiling or running the game.
@@ -208,12 +209,24 @@ def check_file(path: Path):
                                 f'"{n}", not found in \'{trigger_array_name}\''
                             )
 
+        # DoorData::trap_trigger_name: the door that turns into a trap. The
+        # door literal (LevelData field 9) has no other quoted field.
+        if len(level_fields) > 9:
+            for n in quoted_strings_in(top_level_fields(level_fields[9].strip()[1:-1])):
+                referenced_names.add(n)
+                if n not in defined_names:
+                    errors.append(
+                        f"{path.name}: {level_name} - door references "
+                        f'trap_trigger_name "{n}", not found in '
+                        f"'{trigger_array_name}'"
+                    )
+
         unused = defined_names - referenced_names
         for n in sorted(unused):
             warnings.append(
                 f"{path.name}: {level_name} - trigger \"{n}\" in "
                 f"'{trigger_array_name}' is never referenced by any "
-                f"MOVING/PATH/CYCLE/BOSS trap or platform in this level"
+                f"MOVING/PATH/CYCLE/BOSS trap, platform or door in this level"
             )
 
     return errors, warnings

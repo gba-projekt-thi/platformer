@@ -10,6 +10,7 @@
 #include "bn_vector.h"
 #include "common_variable_8x16_sprite_font.h"
 
+#include "attempt_variant.h"
 #include "base_trap.h"
 #include "camera.h"
 #include "camera_rig.h"
@@ -249,6 +250,12 @@ class LevelManager {
     BossTrap* _boss = nullptr;
     bool _door_locked = false;
     void _sync_boss_door();
+    // False exits (door_logic.h): the trigger that turns the door into a
+    // trap (DoorData::trap_trigger_name, nullptr = none) and the door's spot
+    // for this attempt (DoorData::attempt_positions).
+    Trigger* _door_trap = nullptr;
+    void _check_door_trap();
+    void _place_door();
     // A boss hit freezes the world for a moment and shakes the picture.
     int _boss_hits_seen = 0;
     void _feel_boss_hits();

@@ -6,6 +6,7 @@
 
 #include "cfg.h"
 #include "door_flee.h"
+#include "door_logic.h"
 #include "level_structure.h"
 #include "physics_body.h"
 #include "sprite.h"
@@ -25,6 +26,12 @@ class Door : public PhysicsBody {
     void flee_from(bn::fixed duck_x, bn::fixed duck_y);
     // Back to its origin (death, restart).
     void reset_flee();
+    // The door that moves between attempts (DoorData::attempt_positions):
+    // its origin for this many deaths in the level (door_logic.h), the flee
+    // path starting over from there.
+    void place_for_attempt(unsigned deaths);
+    // A trapped door that killed the duck (door_logic.h) can be touched again.
+    void clear_reached();
     // A locked door (a boss still lives) is hidden and cannot be entered.
     void set_locked(bool locked);
     // Mark the door as reached when the player collides with it.
@@ -38,6 +45,10 @@ class Door : public PhysicsBody {
    private:
     void _place();
 
+    bn::fixed _x;
+    bn::fixed _y;
+    bn::span<const bn::fixed_point> _attempt_positions;
+    unsigned _attempt_every;
     bn::fixed _origin_x;
     bn::fixed _origin_y;
     door_flee::Flee<bn::fixed_point> _flee;

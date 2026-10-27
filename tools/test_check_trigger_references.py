@@ -30,7 +30,7 @@ const LevelData LEVEL_X = {
     plats, sizeof(plats) / sizeof(plats[0]),
     trigs, sizeof(trigs) / sizeof(trigs[0]),
     traps, sizeof(traps) / sizeof(traps[0]),
-    bn::regular_bg_items::w, bn::music_items::m, {0, 0}, {1, 1}};
+    bn::regular_bg_items::w, bn::music_items::m, {0, 0}, %(door)s};
 """
 
 MOVING_A = (
@@ -39,11 +39,12 @@ MOVING_A = (
 )
 
 
-def run_check(triggers="", traps="", extra_platforms=""):
+def run_check(triggers="", traps="", extra_platforms="", door="{1, 1}"):
     text = HEADER % {
         "triggers": triggers,
         "traps": traps,
         "extra_platforms": extra_platforms,
+        "door": door,
     }
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "levels_worldX.h"
@@ -150,6 +151,33 @@ class PlatformReferenceTests(unittest.TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIn('"sw"', errors[0])
         self.assertIn("platform", errors[0])
+
+
+class DoorReferenceTests(unittest.TestCase):
+    """DoorData::trap_trigger_name: the door that turns into a trap."""
+
+    TRAPPED_DOOR = (
+        '{1, 1, bn::sprite_items::door32x32, DOOR32X32_GRAPHICS_INDEXES, 8, false, {}, 0, 0, "%s"}'
+    )
+
+    def test_resolved_door_reference_is_clean(self):
+        errors, warnings = run_check(
+            triggers='    {0, 0, 8, 8, false, "a"},\n    {9, 9, 8, 8, false, "door_trap"},\n',
+            traps=MOVING_A,
+            door=self.TRAPPED_DOOR % "door_trap",
+        )
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
+
+    def test_dangling_door_reference_is_an_error(self):
+        errors, _ = run_check(
+            triggers='    {0, 0, 8, 8, false, "a"},\n',
+            traps=MOVING_A,
+            door=self.TRAPPED_DOOR % "missing",
+        )
+        self.assertEqual(len(errors), 1)
+        self.assertIn("door", errors[0])
+        self.assertIn('"missing"', errors[0])
 
 
 class FindFilesTests(unittest.TestCase):

@@ -363,6 +363,7 @@ any trap type.
   of the wrong colour, no light behind the door), and never put the only way
   forward behind an unmarked fake. `Check_checkpoints.py` only knows real
   checkpoints, so a fake one is not subject to its placement rules.
+- The real door can lie too: see [False exits](#false-exits-the-door-that-turns-the-door-that-moves).
 
 ### The door that runs away
 
@@ -382,6 +383,56 @@ points), a `flee_range` and a `flee_frames`:
 - `Check_level_reachability.py` checks the **last** stop, so the route has to
   lead there. Every stop should be visible or reachable on the way - the joke
   is the door running, not a door that hides.
+
+### False exits: the door that turns, the door that moves
+
+Two more ways for the real door to lie, both on the level's `door`
+(`door_logic.h`, host-tested in `tests/host/test_door_logic.cpp`):
+
+```json
+"door": {"x": 152, "y": 42,
+         "trap_trigger_name": "door_trap",
+         "attempt_positions": [[0, 0], [-96, -16]], "attempt_every": 3}
+```
+
+- **The door that turns into a trap.** `trap_trigger_name` names a trigger of
+  the level. While it is on, touching the door kills the duck instead of
+  finishing the level; while it is off the door is a door. Any trigger works:
+  a zone right in front of the door, a Hold plate somewhere else, a Timer
+  ("the door does not wait"), a delay. A death resets the trigger and with it
+  the door. **No tell:** the door looks exactly the same either way - as in
+  Level Devil, the joke is that the safe door a moment ago is not safe now.
+  The tell belongs to the trigger: give it a visible sprite (a lever drops
+  the moment the duck steps on it) or make the rule learnable in one death.
+- **The door that moves between attempts.** `attempt_positions` (offsets
+  from `(x, y)`, a list of `[x, y]` pairs) and `attempt_every`: after every
+  `attempt_every` deaths in this level the door stands at the next spot, the
+  last one stays (`attempt_variant::variant_for_attempt()`). Make the first
+  spot `[0, 0]` so the first attempt - and a recorded replay - is unchanged.
+  A death, a checkpoint respawn and Restart Level all re-place it; the deaths
+  count from entering the level, not over the whole run.
+  `Generate_levels.py` refuses `attempt_positions` without an
+  `attempt_every` >= 1.
+- Both combine with the rest of the door: a `flee_path` runs from whichever
+  spot the door stands on, a trapped door can run away, and a boss lock still
+  hides the door (a locked door neither finishes nor kills).
+- "Which door is real?": put [fake doors](#fake-doors-and-fake-checkpoints)
+  at the spots the real door is not. Fakes that should swap places with the
+  real door after deaths need `TrapData::from_death` / `until_death` (the
+  same death count, `attempt_variant::active_for_deaths()`); the door's spots
+  and the fakes' windows combine, so keep the same `attempt_every` rhythm.
+- `Check_level_reachability.py` checks **every** spot (each with its flee
+  path's last stop) and that none lies outside the play area;
+  `Check_trigger_references.py` checks `trap_trigger_name` like any other
+  trigger name. Neither knows when the trap trigger is on: make sure there
+  is a way to reach the door while it is off. `Preview_level.py` draws the
+  later spots as dashed doors ("door after 3+").
+
+`LEVEL_WORLD4_SCROLL_2` shows both: a lever on the last beet is a pressure
+plate (Hold) with a 30-frame lag both ways. Hop across it and nothing
+happens; stand on it and the lever drops, and the door kills the duck that
+jumps over to it. After three deaths the door takes pity and waits one
+flower earlier, before the lever.
 
 ### Lurking arms and runaway platforms
 
