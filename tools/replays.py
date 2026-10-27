@@ -46,9 +46,9 @@ HEADER = ROOT / "game/include/replay_data.h"
 
 # Must match game/include/replay.h (checked by tools/test_replays.py).
 SRAM_OFFSET = 0x2000
-BLOCK_SIZE = 0x400
+BLOCK_SIZE = 0x300
 HEADER_SIZE = 6
-MAGIC = 0x53
+MAGIC = 0x54
 FLAG_TRUNCATED = 0x01
 
 

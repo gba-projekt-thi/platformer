@@ -35,14 +35,16 @@ inline auto unpack(uint16_t packed) -> Run {
 // `make record` stores each level's last recording in SRAM behind the save
 // slots (which take well under 1 KB from offset 0): one BLOCK_SIZE block per
 // level index, a HEADER_SIZE header (MAGIC, flags, run count, the deaths in
-// the level the recording began with - StartDeaths) and packed runs.
-// tools/replays.py reads them from the .sav file.
+// the level the recording began with - StartDeaths) and packed runs: 32
+// blocks of 381 runs, one for every level a save can hold
+// (GameState::MAX_LEVELS). tools/replays.py reads them from the .sav file.
 inline constexpr int SRAM_OFFSET = 0x2000;
-inline constexpr int BLOCK_SIZE = 0x400;
+inline constexpr int BLOCK_SIZE = 0x300;
 inline constexpr int HEADER_SIZE = 6;
 inline constexpr int LEVEL_BLOCKS = (0x8000 - SRAM_OFFSET) / BLOCK_SIZE;
 inline constexpr int MAX_BLOCK_RUNS = (BLOCK_SIZE - HEADER_SIZE) / 2;
-inline constexpr uint8_t MAGIC = 0x53;           // 'S' ('R': no deaths yet)
+// 'T' ('S': 1 KB blocks, 'R': no deaths yet - both ignored)
+inline constexpr uint8_t MAGIC = 0x54;
 inline constexpr uint8_t FLAG_TRUNCATED = 0x01;  // more runs than fit
 
 inline constexpr auto block_offset(int level_index) -> int {

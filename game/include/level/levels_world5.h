@@ -9,6 +9,7 @@
 #include "bn_sprite_items_barrel32x32.h"
 #include "bn_sprite_items_bars32x32.h"
 #include "bn_sprite_items_chest32x32.h"
+#include "bn_sprite_items_door32x32.h"
 #include "bn_sprite_items_lever16x16.h"
 #include "bn_sprite_items_mimic32x32.h"
 #include "bn_sprite_items_rostybar32x32.h"
@@ -489,6 +490,328 @@ const LevelData LEVEL_WORLD5_CLIMB = {
     // First level built on the wall jump (Cfg::WallJump::UNLOCK_WORLD = World
     // 5).
     "New: wall jump with A"};
+
+// =============================================================================
+// WORLD 5 TRICK - "Liar's Keep", the Level Devil exam (world_width=640)
+// Everything the duck has learned, and then it stops working:
+//   1 Trapdoor: a barrel drops when the duck runs into "trapdoor" - jump
+//     the hole. From the 2nd death on the barrel stays (from_death /
+//     until_death) and a JUMP there wakes a stab in the landing barrel:
+//     now the duck has to walk.
+//   2 Pogo pit: 112px, beyond jump and dash - strike (R) the rusty bar in
+//     the middle to bounce across.
+//   3 Delayed chain: landing presses an invisible plate; 21 frames later
+//     the second barrel stabs, 31 frames after that the third. Run on and
+//     be skewered twice; wait on the first two barrels and both miss.
+//   4 Lurking bar under the next gap (vertical AMBUSH): lure it from the
+//     edge, jump while it sinks - onto a barrel that crumbles at once
+//     (24 frames).
+//   5 False exit: the lever on the floor before the door turns the door
+//     into a trap; jump from the step over it. After three deaths the door
+//     waits on the step instead and a dead copy (no animation) stands at
+//     the old spot (attempt_positions + a from_death fake).
+// No dash needed anywhere, and no checkpoint: a short level of tricks,
+// every attempt meets all of them.
+// =============================================================================
+constexpr PlatformData world5_trick_platforms[] = {
+
+    // 1 - spawn and the trapdoor row.
+    {-296, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-270, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    // The trapdoor: drops when the duck runs into "trapdoor", but only on
+    // the first two attempts ...
+    {-244,
+     68,
+     26,
+     16,
+     0,
+     -8,
+     bn::sprite_items::barrel32x32,
+     0,
+     "trapdoor",
+     false,
+     0,
+     0,
+     {},
+     0,
+     0,
+     0,
+     2},
+    // ... from the 2nd death on it holds (and the jump is what kills).
+    {-244,
+     68,
+     26,
+     16,
+     0,
+     -8,
+     bn::sprite_items::barrel32x32,
+     0,
+     nullptr,
+     true,
+     0,
+     0,
+     {},
+     0,
+     0,
+     2},
+    {-218, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    // Edge of the pogo pit (112px to the next barrel).
+    {-192, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+
+    // 3 - the chain row: plate, a safe barrel, stab, stab.
+    {-54, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-28, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {-2, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {24, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+
+    // 4 - beyond the lurking bar: gives way 24 frames after the first step.
+    {82, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0, nullptr, true,
+     24},
+
+    // 5 - the exit: floor, the step (16px up), the lever barrel, the door
+    // barrel.
+    {140, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {166, 52, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {192, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
+    {218, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0}};
+
+constexpr TriggerData world5_trick_triggers[] = {
+
+    // Drops the trapdoor (attempts 0-1) when the duck runs in.
+    {-262, 44, 16, 16, false, "trapdoor"},
+    // A jump taken anywhere on the first two barrels (the learned way over
+    // the trapdoor) wakes the stab in the barrel behind it - only there from
+    // the 2nd death on.
+    {-278, 44, 40, 16, false, "hop", TriggerMode::Latch, nullptr, 0, 1, 10,
+     TriggerAction::Jump},
+
+    // The chain: an invisible plate on the landing barrel ...
+    {-54, 44, 16, 16, false, "plate"},
+    // ... the second barrel along stabs 1 + 20 frames later ...
+    {-2, 44, 16, 16, false, "stab_a", TriggerMode::Latch, nullptr, 0, 1, 20,
+     TriggerAction::Enter, "plate"},
+    // ... and the third 1 + 30 frames after that.
+    {24, 44, 16, 16, false, "stab_b", TriggerMode::Latch, nullptr, 0, 1, 30,
+     TriggerAction::Enter, "stab_a"},
+
+    // False exit: a lever on the barrel before the door. Stepped on, it drops
+    // and the door kills until the next death.
+    {192, 44, 16, 16, false, "door_lever", TriggerMode::Latch,
+     &bn::sprite_items::lever16x16}};
+
+constexpr TrapData world5_trick_traps[] = {
+
+    // 1 - the stab for a jump over the trapdoor that is no longer one
+    // (from the 2nd death on), hidden below the screen behind its barrel.
+    {TrapType::CYCLE,
+     -218,
+     100,
+     16,
+     16,
+     0,
+     0,
+     bn::sprite_items::rostybar32x32,
+     1,
+     TRAP_GRAPHICS_INDEXES_0,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     "hop",
+     0,
+     0,
+     0,
+     0,
+     -48,
+     4,
+     24,
+     8,
+     36000,
+     0,
+     1,
+     1,
+     0,
+     0,
+     false,
+     2},
+
+    // 2 - the pogo bar in the middle of the pit.
+    {TrapType::BASE, -122, 68, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
+
+    // 3 - the chain's stabs, one each.
+    {TrapType::CYCLE,
+     -2,
+     100,
+     16,
+     16,
+     0,
+     0,
+     bn::sprite_items::rostybar32x32,
+     1,
+     TRAP_GRAPHICS_INDEXES_0,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     "stab_a",
+     0,
+     0,
+     0,
+     0,
+     -48,
+     4,
+     24,
+     8,
+     36000,
+     0,
+     1},
+    {TrapType::CYCLE,
+     24,
+     100,
+     16,
+     16,
+     0,
+     0,
+     bn::sprite_items::rostybar32x32,
+     1,
+     TRAP_GRAPHICS_INDEXES_0,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     "stab_b",
+     0,
+     0,
+     0,
+     0,
+     -48,
+     4,
+     24,
+     8,
+     36000,
+     0,
+     1},
+
+    // 4 - a rusty bar lurking below the gap 37 .. 69: it shoots up when the
+    // duck stands at the edge of the last chain barrel (range 22) and sinks
+    // back.
+    {TrapType::AMBUSH,
+     53,
+     112,
+     16,
+     24,
+     0,
+     0,
+     bn::sprite_items::rostybar32x32,
+     1,
+     TRAP_GRAPHICS_INDEXES_0,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     nullptr,
+     22,
+     -6,
+     14,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     true},
+
+    // 5 - after three deaths the real door has moved onto the step and this
+    // dead copy (it does not animate) stands where it was.
+    {TrapType::BASE,
+     218,
+     42,
+     10,
+     16,
+     0,
+     2,
+     bn::sprite_items::door32x32,
+     1,
+     TRAP_GRAPHICS_INDEXES_0,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     nullptr,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     Cfg::ZOrder::DOOR,
+     1,
+     0,
+     0,
+     false,
+     3}};
+
+constexpr bn::fixed_point LEVEL_WORLD5_TRICK_door_attempt_positions[] = {
+    {0, 0},
+    {-52, -16}};
+
+const LevelData LEVEL_WORLD5_TRICK = {
+    world5_trick_platforms,
+    sizeof(world5_trick_platforms) / sizeof(world5_trick_platforms[0]),
+    world5_trick_triggers,
+    sizeof(world5_trick_triggers) / sizeof(world5_trick_triggers[0]),
+    world5_trick_traps,
+    sizeof(world5_trick_traps) / sizeof(world5_trick_traps[0]),
+    bn::regular_bg_items::world5,
+    bn::music_items::world5,
+    // Player spawn
+    {-296, 42},
+    // A trap once door_lever is down; after three deaths it waits on the
+    // step (166, 26) instead (attempt_positions).
+    {218,
+     42,
+     bn::sprite_items::door32x32,
+     DOOR32X32_GRAPHICS_INDEXES,
+     8,
+     false,
+     {},
+     0,
+     0,
+     "door_lever",
+     LEVEL_WORLD5_TRICK_door_attempt_positions,
+     3},
+    // World size (enables scrolling)
+    640,
+    160,
+    // Ground friction: default
+    1,
+    // The Level Devil exam: say once that the rules change.
+    "Nothing works twice here."};
 
 // =============================================================================
 // WORLD 5 BOSS - "The Mimic Lord" (world_width=650)

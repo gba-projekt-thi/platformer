@@ -266,6 +266,67 @@
       }
     },
     {
+      "name": "LEVEL_WORLD5_TRICK",
+      "note": "=============================================================================\nWORLD 5 TRICK - \"Liar's Keep\", the Level Devil exam (world_width=640)\nEverything the duck has learned, and then it stops working:\n  1 Trapdoor: a barrel drops when the duck runs into \"trapdoor\" - jump\n    the hole. From the 2nd death on the barrel stays (from_death /\n    until_death) and a JUMP there wakes a stab in the landing barrel:\n    now the duck has to walk.\n  2 Pogo pit: 112px, beyond jump and dash - strike (R) the rusty bar in\n    the middle to bounce across.\n  3 Delayed chain: landing presses an invisible plate; 21 frames later\n    the second barrel stabs, 31 frames after that the third. Run on and\n    be skewered twice; wait on the first two barrels and both miss.\n  4 Lurking bar under the next gap (vertical AMBUSH): lure it from the\n    edge, jump while it sinks - onto a barrel that crumbles at once\n    (24 frames).\n  5 False exit: the lever on the floor before the door turns the door\n    into a trap; jump from the step over it. After three deaths the door\n    waits on the step instead and a dead copy (no animation) stands at\n    the old spot (attempt_positions + a from_death fake).\nNo dash needed anywhere, and no checkpoint: a short level of tricks,\nevery attempt meets all of them.\n=============================================================================",
+      "platforms": {
+        "name": "world5_trick_platforms",
+        "items": [
+          {"blank_before": true, "note": "1 - spawn and the trapdoor row.", "x": -296, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -270, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"note": "The trapdoor: drops when the duck runs into \"trapdoor\", but only on\nthe first two attempts ...", "x": -244, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0, "trigger_name": "trapdoor", "active_when_on": false, "until_death": 2},
+          {"note": "... from the 2nd death on it holds (and the jump is what kills).", "x": -244, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0, "from_death": 2},
+          {"x": -218, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"note": "Edge of the pogo pit (112px to the next barrel).", "x": -192, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"blank_before": true, "note": "3 - the chain row: plate, a safe barrel, stab, stab.", "x": -54, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -28, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": -2, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 24, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"blank_before": true, "note": "4 - beyond the lurking bar: gives way 24 frames after the first step.", "x": 82, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0, "crumble_frames": 24},
+          {"blank_before": true, "note": "5 - the exit: floor, the step (16px up), the lever barrel, the door barrel.", "x": 140, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 166, "y": 52, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 192, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"x": 218, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0}
+        ]
+      },
+      "triggers": {
+        "name": "world5_trick_triggers",
+        "items": [
+          {"blank_before": true, "note": "Drops the trapdoor (attempts 0-1) when the duck runs in.", "x": -262, "y": 44, "width": 16, "height": 16, "name": "trapdoor"},
+          {"note": "A jump taken anywhere on the first two barrels (the learned way over\nthe trapdoor) wakes the stab in the barrel behind it - only there from the 2nd death on.", "x": -278, "y": 44, "width": 40, "height": 16, "name": "hop", "action": "Jump", "delay_frames": 10},
+          {"blank_before": true, "note": "The chain: an invisible plate on the landing barrel ...", "x": -54, "y": 44, "width": 16, "height": 16, "name": "plate"},
+          {"note": "... the second barrel along stabs 1 + 20 frames later ...", "x": -2, "y": 44, "width": 16, "height": 16, "name": "stab_a", "delay_frames": 20, "follows": "plate"},
+          {"note": "... and the third 1 + 30 frames after that.", "x": 24, "y": 44, "width": 16, "height": 16, "name": "stab_b", "delay_frames": 30, "follows": "stab_a"},
+          {"blank_before": true, "note": "False exit: a lever on the barrel before the door. Stepped on, it drops\nand the door kills until the next death.", "x": 192, "y": 44, "width": 16, "height": 16, "name": "door_lever", "sprite": "lever16x16"}
+        ]
+      },
+      "traps": {
+        "name": "world5_trick_traps",
+        "items": [
+          {"blank_before": true, "note": "1 - the stab for a jump over the trapdoor that is no longer one\n(from the 2nd death on), hidden below the screen behind its barrel.", "type": "CYCLE", "x": -218, "y": 100, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32", "cycle_dy": -48, "cycle_extend_frames": 4, "cycle_hold_frames": 24, "cycle_retract_frames": 8, "cycle_wait_frames": 36000, "sprite_z_order": 1, "trigger_name": "hop", "from_death": 2},
+          {"blank_before": true, "note": "2 - the pogo bar in the middle of the pit.", "type": "BASE", "x": -122, "y": 68, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32"},
+          {"blank_before": true, "note": "3 - the chain's stabs, one each.", "type": "CYCLE", "x": -2, "y": 100, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32", "cycle_dy": -48, "cycle_extend_frames": 4, "cycle_hold_frames": 24, "cycle_retract_frames": 8, "cycle_wait_frames": 36000, "sprite_z_order": 1, "trigger_name": "stab_a"},
+          {"type": "CYCLE", "x": 24, "y": 100, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32", "cycle_dy": -48, "cycle_extend_frames": 4, "cycle_hold_frames": 24, "cycle_retract_frames": 8, "cycle_wait_frames": 36000, "sprite_z_order": 1, "trigger_name": "stab_b"},
+          {"blank_before": true, "note": "4 - a rusty bar lurking below the gap 37 .. 69: it shoots up when the\nduck stands at the edge of the last chain barrel (range 22) and sinks back.", "type": "AMBUSH", "x": 53, "y": 112, "width": 16, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "rostybar32x32", "ambush_range": 22, "ambush_speed": -6, "ambush_duration": 14, "ambush_vertical": true},
+          {"blank_before": true, "note": "5 - after three deaths the real door has moved onto the step and this\ndead copy (it does not animate) stands where it was.", "type": "BASE", "x": 218, "y": 42, "width": 10, "height": 16, "offset_x": 0, "offset_y": 2, "sprite": "door32x32", "sprite_z_order": "Cfg::ZOrder::DOOR", "from_death": 3}
+        ]
+      },
+      "background": "world5",
+      "music": "world5",
+      "spawn": [-296, 42],
+      "door": {"x": 218, "y": 42, "trap_trigger_name": "door_lever", "attempt_positions": [[0, 0], [-52, -16]], "attempt_every": 3},
+      "world_width": 640,
+      "world_height": 160,
+      "ground_friction": 1,
+      "intro_hint": "Nothing works twice here.",
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "A trap once door_lever is down; after three deaths it waits on the\nstep (166, 26) instead (attempt_positions).",
+        "world_width": "World size (enables scrolling)",
+        "ground_friction": "Ground friction: default",
+        "intro_hint": "The Level Devil exam: say once that the rules change."
+      }
+    },
+    {
       "name": "LEVEL_WORLD5_BOSS",
       "note": "=============================================================================\nWORLD 5 BOSS - \"The Mimic Lord\" (world_width=650)\nThe final gauntlet: the axe from World 5's first level returns, closer\nand hungrier, while a trio of thwomps slam down in sequence and two\nmimics lie in wait among the real chests.\n=============================================================================",
       "platforms": {

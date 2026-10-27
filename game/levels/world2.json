@@ -97,6 +97,74 @@
       }
     },
     {
+      "name": "LEVEL_WORLD2_TRICK",
+      "note": "=============================================================================\nWORLD 2 TRICK - \"Rigged Yard\", a Level Devil level (world_width=480)\nThe scrapyard is rigged, and the grates tell where (pipes hold, grates lie):\n  Yard 1: a warm-up gap over rusty nails.\n  Yard 2: a delayed trap chain (TriggerData::follows). An invisible plate on\n          the third pipe; 7 frames later the two grates ahead drop away\n          (nails show beneath them), 21 frames after that a can falls on the\n          edge where a startled duck stops, and 25 frames after that a nail\n          bed stabs once out of the landing pipe beyond the hole. Jump the\n          hole at once and all of it misses; hop over the plate and nothing\n          happens at all.\n  Yard 3: a false exit (DoorData::trap_trigger_name). The grate doormat is a\n          pressure plate (Hold, 20 frames both ways): walk across it and the\n          door kills, it does not wait for a dawdler. Jump over the mat onto\n          the door.\nEverything resets on death. Jump only (World 2).\n=============================================================================",
+      "platforms": {
+        "name": "world2_trick_platforms",
+        "items": [
+          {"x": -216, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1, "blank_before": true, "note": "Yard 1: spawn floor, then a 32px gap."},
+          {"x": -200, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -184, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -168, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -120, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1, "blank_before": true, "note": "Yard 2: pipes, the plate on the third one (x -88)."},
+          {"x": -104, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -88, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -72, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -56, "y": 63, "width": 16, "height": 6, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world2", "sprite_index": 0, "note": "The rigged grates: gone 7 frames after the plate (bound to the\nchain's source, not to a follower).", "trigger_name": "plate", "active_when_on": false},
+          {"x": -40, "y": 63, "width": 16, "height": 6, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world2", "sprite_index": 0, "trigger_name": "plate", "active_when_on": false},
+          {"x": -24, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1, "note": "Landing pipes beyond the hole; the nail bed hides under -24."},
+          {"x": -8, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 8, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 24, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 72, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1, "blank_before": true, "note": "Yard 3: pipes, the grate doormat, the door's pipe."},
+          {"x": 88, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 104, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 120, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 136, "y": 63, "width": 16, "height": 6, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world2", "sprite_index": 0, "note": "The doormat (door_wait lies on it)."},
+          {"x": 152, "y": 63, "width": 16, "height": 6, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world2", "sprite_index": 0},
+          {"x": 168, "y": 63, "width": 16, "height": 6, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world2", "sprite_index": 0},
+          {"x": 184, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1, "note": "The door's pipe."},
+          {"x": 200, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1}
+        ]
+      },
+      "triggers": {
+        "name": "world2_trick_triggers",
+        "items": [
+          {"blank_before": true, "note": "The chain: an invisible plate on the third pipe, 6 frames of lag ...", "x": -88, "y": 56, "width": 16, "height": 8, "name": "plate", "delay_frames": 6},
+          {"note": "... the can falls 1 + 20 frames after the grates drop ...", "x": -72, "y": -120, "width": 8, "height": 8, "name": "can_drop", "delay_frames": 20, "follows": "plate"},
+          {"note": "... and the nail bed stabs 1 + 24 frames after that.", "x": -24, "y": 100, "width": 8, "height": 8, "name": "stab", "delay_frames": 24, "follows": "can_drop"},
+          {"blank_before": true, "note": "False exit: the doormat is a pressure plate. On 20 frames after the\nduck steps on it, off 20 frames after it leaves; the door's alone.", "x": 152, "y": 56, "width": 48, "height": 8, "name": "door_wait", "mode": "Hold", "delay_frames": 20}
+        ]
+      },
+      "traps": {
+        "name": "world2_trick_traps",
+        "items": [
+          {"type": "BASE", "x": -144, "y": 80, "width": 24, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "rustynails32x16", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "blank_before": true, "note": "Rusty nails in every pit: the holes read as lethal."},
+          {"type": "BASE", "x": -48, "y": 80, "width": 24, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "rustynails32x16", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "note": "Under the rigged grates - a tell for the duck that looks."},
+          {"type": "BASE", "x": 48, "y": 80, "width": 24, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "rustynails32x16", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3"},
+          {"blank_before": true, "note": "The chain's can: falls from above the screen onto the hole's edge.", "type": "MOVING", "x": -72, "y": -120, "width": 28, "height": 28, "offset_x": 0, "offset_y": 0, "sprite": "can32x32", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4, "trigger_name": "can_drop"},
+          {"note": "The chain's end: a nail bed hidden below the landing pipe stabs once\n(out over 4 frames, up for 20, back over 8, then a rest longer than\nany attempt).", "type": "CYCLE", "x": -24, "y": 100, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "rustynails32x16", "trigger_name": "stab", "cycle_dy": -48, "cycle_extend_frames": 4, "cycle_hold_frames": 20, "cycle_retract_frames": 8, "cycle_wait_frames": 36000, "sprite_z_order": 1}
+        ]
+      },
+      "background": "world2",
+      "music": "world2",
+      "spawn": [-216, 42],
+      "door": {
+        "x": 184,
+        "y": 51,
+        "trap_trigger_name": "door_wait"
+      },
+      "world_width": 480,
+      "world_height": 160,
+      "intro_hint": "Watch your step.",
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "The real door - a trap while the doormat is pressed (door_wait).",
+        "world_width": "World size (enables scrolling)",
+        "intro_hint": "Pipes hold, grates lie; say so gently."
+      }
+    },
+    {
       "name": "LEVEL_WORLD2_BOSS",
       "note": "=============================================================================\nWORLD 2 BOSS - \"The Rusty Behemoth\" (world_width=480)\n=============================================================================",
       "platforms": {

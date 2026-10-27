@@ -125,6 +125,152 @@ const LevelData LEVEL_WORLD2_SCROLL = {
     160};
 
 // =============================================================================
+// WORLD 2 TRICK - "Rigged Yard", a Level Devil level (world_width=480)
+// The scrapyard is rigged, and the grates tell where (pipes hold, grates lie):
+//   Yard 1: a warm-up gap over rusty nails.
+//   Yard 2: a delayed trap chain (TriggerData::follows). An invisible plate on
+//           the third pipe; 7 frames later the two grates ahead drop away
+//           (nails show beneath them), 21 frames after that a can falls on the
+//           edge where a startled duck stops, and 25 frames after that a nail
+//           bed stabs once out of the landing pipe beyond the hole. Jump the
+//           hole at once and all of it misses; hop over the plate and nothing
+//           happens at all.
+//   Yard 3: a false exit (DoorData::trap_trigger_name). The grate doormat is a
+//           pressure plate (Hold, 20 frames both ways): walk across it and the
+//           door kills, it does not wait for a dawdler. Jump over the mat onto
+//           the door.
+// Everything resets on death. Jump only (World 2).
+// =============================================================================
+constexpr PlatformData world2_trick_platforms[] = {
+
+    // Yard 1: spawn floor, then a 32px gap.
+    {-216, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-200, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-184, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-168, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+
+    // Yard 2: pipes, the plate on the third one (x -88).
+    {-120, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-104, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-88, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-72, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    // The rigged grates: gone 7 frames after the plate (bound to the
+    // chain's source, not to a follower).
+    {-56, 63, 16, 6, 0, 1, bn::sprite_items::platforms_world2, 0, "plate",
+     false},
+    {-40, 63, 16, 6, 0, 1, bn::sprite_items::platforms_world2, 0, "plate",
+     false},
+    // Landing pipes beyond the hole; the nail bed hides under -24.
+    {-24, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {-8, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {8, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {24, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+
+    // Yard 3: pipes, the grate doormat, the door's pipe.
+    {72, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {88, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {104, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {120, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    // The doormat (door_wait lies on it).
+    {136, 63, 16, 6, 0, 1, bn::sprite_items::platforms_world2, 0},
+    {152, 63, 16, 6, 0, 1, bn::sprite_items::platforms_world2, 0},
+    {168, 63, 16, 6, 0, 1, bn::sprite_items::platforms_world2, 0},
+    // The door's pipe.
+    {184, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1},
+    {200, 64, 16, 6, 0, 0, bn::sprite_items::platforms_world2, 1}};
+
+constexpr TriggerData world2_trick_triggers[] = {
+
+    // The chain: an invisible plate on the third pipe, 6 frames of lag ...
+    {-88, 56, 16, 8, false, "plate", TriggerMode::Latch, nullptr, 0, 1, 6},
+    // ... the can falls 1 + 20 frames after the grates drop ...
+    {-72, -120, 8, 8, false, "can_drop", TriggerMode::Latch, nullptr, 0, 1, 20,
+     TriggerAction::Enter, "plate"},
+    // ... and the nail bed stabs 1 + 24 frames after that.
+    {-24, 100, 8, 8, false, "stab", TriggerMode::Latch, nullptr, 0, 1, 24,
+     TriggerAction::Enter, "can_drop"},
+
+    // False exit: the doormat is a pressure plate. On 20 frames after the
+    // duck steps on it, off 20 frames after it leaves; the door's alone.
+    {152, 56, 48, 8, false, "door_wait", TriggerMode::Hold, nullptr, 0, 1, 20}};
+
+constexpr TrapData world2_trick_traps[] = {
+
+    // Rusty nails in every pit: the holes read as lethal.
+    {TrapType::BASE, -144, 80, 24, 10, 0, 0, bn::sprite_items::rustynails32x16,
+     26, TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, NO_PATH_TRAP},
+    // Under the rigged grates - a tell for the duck that looks.
+    {TrapType::BASE, -48, 80, 24, 10, 0, 0, bn::sprite_items::rustynails32x16,
+     26, TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, NO_PATH_TRAP},
+    {TrapType::BASE, 48, 80, 24, 10, 0, 0, bn::sprite_items::rustynails32x16,
+     26, TRAP_GRAPHICS_INDEXES_3, 0, 0, 0, NO_PATH_TRAP},
+
+    // The chain's can: falls from above the screen onto the hole's edge.
+    {TrapType::MOVING, -72, -120, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
+     TRAP_GRAPHICS_INDEXES_3, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "can_drop"},
+    // The chain's end: a nail bed hidden below the landing pipe stabs once
+    // (out over 4 frames, up for 20, back over 8, then a rest longer than
+    // any attempt).
+    {TrapType::CYCLE,
+     -24,
+     100,
+     16,
+     10,
+     0,
+     0,
+     bn::sprite_items::rustynails32x16,
+     1,
+     TRAP_GRAPHICS_INDEXES_0,
+     0,
+     0,
+     0,
+     NO_PATH_TRAP,
+     0,
+     0,
+     0,
+     "stab",
+     0,
+     0,
+     0,
+     0,
+     -48,
+     4,
+     20,
+     8,
+     36000,
+     0,
+     1}};
+
+const LevelData LEVEL_WORLD2_TRICK = {
+    world2_trick_platforms,
+    sizeof(world2_trick_platforms) / sizeof(world2_trick_platforms[0]),
+    world2_trick_triggers,
+    sizeof(world2_trick_triggers) / sizeof(world2_trick_triggers[0]),
+    world2_trick_traps,
+    sizeof(world2_trick_traps) / sizeof(world2_trick_traps[0]),
+    bn::regular_bg_items::world2,
+    bn::music_items::world2,
+    // Player spawn
+    {-216, 42},
+    // The real door - a trap while the doormat is pressed (door_wait).
+    {184,
+     51,
+     bn::sprite_items::door32x32,
+     DOOR32X32_GRAPHICS_INDEXES,
+     8,
+     false,
+     {},
+     0,
+     0,
+     "door_wait"},
+    // World size (enables scrolling)
+    480,
+    160,
+    1,
+    // Pipes hold, grates lie; say so gently.
+    "Watch your step."};
+
+// =============================================================================
 // WORLD 2 BOSS - "The Rusty Behemoth" (world_width=480)
 // =============================================================================
 constexpr PlatformData world2_boss_platforms[] = {

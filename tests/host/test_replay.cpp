@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "game_state.h"
 #include "replay.h"
 #include "world_index.h"
 
@@ -139,6 +140,8 @@ TEST_CASE(replay_level_blocks_fill_the_sram_behind_the_saves) {
         replay::SRAM_OFFSET + replay::LEVEL_BLOCKS * replay::BLOCK_SIZE,
         0x8000);
     CHECK(replay::LEVEL_BLOCKS >= WorldIndex::LEVEL_COUNT);
+    // Every level a save can hold has a block, not only today's roster.
+    CHECK(replay::LEVEL_BLOCKS >= GameState::MAX_LEVELS);
     CHECK_EQ(replay::block_offset(0), replay::SRAM_OFFSET);
     CHECK_EQ(
         replay::block_offset(2), replay::SRAM_OFFSET + 2 * replay::BLOCK_SIZE);

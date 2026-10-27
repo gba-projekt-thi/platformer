@@ -54,9 +54,11 @@ int main() {
         LEVEL_0,
         LEVEL_1,
         LEVEL_WORLD1_SCROLL,
+        LEVEL_WORLD1_TRICK,
         LEVEL_WORLD1_BOSS,
         LEVEL_2,
         LEVEL_WORLD2_SCROLL,
+        LEVEL_WORLD2_TRICK,
         LEVEL_WORLD2_BOSS,
         LEVEL_3,
         LEVEL_WORLD3_SCROLL,
@@ -71,6 +73,7 @@ int main() {
         LEVEL_WORLD5_DASH,
         LEVEL_WORLD5_LEVERS,
         LEVEL_WORLD5_CLIMB,
+        LEVEL_WORLD5_TRICK,
         LEVEL_WORLD5_BOSS,
         LEVEL_WORLD5_FINALE};
     static_assert(

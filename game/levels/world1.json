@@ -145,6 +145,58 @@
       }
     },
     {
+      "name": "LEVEL_WORLD1_TRICK",
+      "note": "=============================================================================\nWORLD 1 TRICK - \"Second Chances\", a kind Level Devil level (world_width=384)\nThe pond plays its first tricks - and takes pity: after three deaths a\nstepping stone surfaces and the door comes down from its ledge to the\nmiddle bank. Jump only.\n=============================================================================",
+      "platforms": {
+        "name": "world1_trick_platforms",
+        "items": [
+          {"blank_before": true, "note": "Start: the bank.", "x": -176, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0},
+          {"x": -160, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": -144, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": -128, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world1", "sprite_index": 2},
+          {"blank_before": true, "note": "1 - a 48 px gap, a plain running jump. Kind Level Devil: from the\n3rd death on a stepping stone surfaces in the middle of it.", "x": -96, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0, "from_death": 3},
+          {"blank_before": true, "note": "2 - the landing: an invisible plate (\"ripple\") starts a chain, and a\nbubble drops onto this landing a little later. Keep moving and it\nfalls behind the duck.", "x": -64, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0},
+          {"x": -48, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world1", "sprite_index": 2},
+          {"blank_before": true, "note": "3 - the middle bank. The door stands at its end from the 3rd death on.", "x": -8, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0},
+          {"x": 8, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": 24, "y": 60, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": 40, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world1", "sprite_index": 2},
+          {"blank_before": true, "note": "4 - the way up to the door's first spot: a step, then the ledge.", "x": 80, "y": 44, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0},
+          {"x": 96, "y": 44, "width": 16, "height": 10, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world1", "sprite_index": 2},
+          {"blank_before": true, "note": "The door's ledge.", "x": 136, "y": 28, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 0},
+          {"x": 152, "y": 28, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": 168, "y": 28, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world1", "sprite_index": 1},
+          {"x": 184, "y": 28, "width": 16, "height": 10, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world1", "sprite_index": 2}
+        ]
+      },
+      "triggers": {
+        "name": "world1_trick_triggers",
+        "items": [
+          {"note": "The plate on the landing (invisible).", "x": -56, "y": 44, "width": 32, "height": 30, "name": "ripple"},
+          {"note": "Follows the plate 1 + 36 frames later: the bubble lets go.", "x": -56, "y": 44, "width": 8, "height": 8, "name": "ripple_drop", "delay_frames": 36, "follows": "ripple"}
+        ]
+      },
+      "traps": {
+        "name": "world1_trick_traps",
+        "items": [
+          {"blank_before": true, "note": "The bubble the chain drops onto the landing, at the speed of the\nfirst World 1 levels' falling bubbles.", "type": "MOVING", "x": -56, "y": -40, "width": 32, "height": 32, "offset_x": 0, "offset_y": 0, "sprite": "bubbles", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4, "trigger_name": "ripple_drop"}
+        ]
+      },
+      "background": "world1",
+      "music": "world1",
+      "spawn": [-176, 42],
+      "door": {"x": 168, "y": 8, "attempt_positions": [[0, 0], [-128, 32]], "attempt_every": 3},
+      "world_width": 384,
+      "world_height": 160,
+      "intro_hint": "The pond forgives. Mostly.",
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "On the high ledge; from the 3rd death on at the end of the middle bank (40, 40).",
+        "world_width": "World size (enables scrolling)",
+        "intro_hint": "The first trick level: tell the player it is a kind one."
+      }
+    },
+    {
       "name": "LEVEL_WORLD1_BOSS",
       "note": "=============================================================================\nWORLD 1 BOSS - \"The Kugelfisch King\" (world_width=480)\nA Hollow-Knight-style dodge gauntlet: a patrolling bubble sweep overlays\nthe whole arena, four trigger-gated \"attacks\" fire in sequence as the\nduck advances, and a disguised pufferfish punishes lingering too long\nnear the midpoint. Reaching the door on the right is \"winning\" the fight.\n=============================================================================",
       "platforms": {

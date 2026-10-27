@@ -18,10 +18,17 @@ struct Entry {
     unsigned deaths;  // deaths in the level before the first step
 };
 
+constexpr replay::Run LEVEL_WORLD1_TRICK_RUNS[] = {
+    {0, 20},  {2, 28}, {14, 1}, {10, 27}, {2, 10}, {14, 1},
+    {10, 27}, {2, 15}, {14, 1}, {10, 20}, {2, 9},  {14, 1},
+    {10, 20}, {2, 11}, {0, 7},  {12, 1},  {0, 10}};
 constexpr replay::Run LEVEL_WORLD1_BOSS_RUNS[] = {
     {0, 5},  {14, 1},  {10, 4}, {2, 6},  {34, 1}, {2, 9},   {1, 24}, {0, 24},
     {14, 1}, {10, 10}, {2, 10}, {33, 1}, {1, 32}, {0, 38},  {14, 1}, {10, 10},
     {2, 12}, {34, 1},  {2, 27}, {0, 4},  {14, 1}, {10, 28}, {2, 4},  {0, 10}};
+constexpr replay::Run LEVEL_WORLD2_TRICK_RUNS[] = {
+    {0, 30}, {2, 26}, {14, 1},  {10, 28}, {2, 21}, {14, 1},  {10, 28},
+    {2, 17}, {14, 1}, {10, 28}, {2, 21},  {14, 1}, {10, 27}, {0, 10}};
 constexpr replay::Run LEVEL_WORLD2_BOSS_RUNS[] = {
     {0, 5},  {14, 1},  {10, 4},  {2, 6},  {34, 1}, {2, 9},  {1, 24},
     {0, 24}, {14, 1},  {10, 10}, {2, 10}, {1, 2},  {33, 1}, {1, 30},
@@ -81,6 +88,21 @@ constexpr replay::Run LEVEL_WORLD5_CLIMB_RUNS[] = {
     {2, 1},  {14, 1},  {10, 14}, {2, 1},   {14, 1}, {9, 14}, {1, 1},
     {13, 1}, {10, 14}, {2, 1},   {14, 1},  {9, 24}, {14, 1}, {2, 10},
     {14, 1}, {2, 10},  {14, 1},  {2, 9},   {0, 10}};
+constexpr replay::Run LEVEL_WORLD5_TRICK_RUNS[] = {
+    {0, 30}, {1, 4},   {0, 2},  {1, 1},  {0, 3},   {2, 3},  {0, 3},   {2, 12},
+    {14, 1}, {10, 28}, {0, 8},  {2, 16}, {0, 5},   {2, 1},  {0, 2},   {1, 2},
+    {0, 2},  {1, 6},   {0, 7},  {2, 11}, {14, 1},  {10, 4}, {42, 1},  {10, 1},
+    {42, 1}, {10, 1},  {42, 1}, {10, 1}, {42, 1},  {10, 1}, {42, 1},  {10, 1},
+    {42, 1}, {10, 1},  {42, 1}, {10, 1}, {42, 1},  {10, 1}, {42, 1},  {10, 1},
+    {42, 1}, {10, 1},  {42, 1}, {10, 1}, {42, 1},  {10, 1}, {42, 1},  {10, 1},
+    {42, 1}, {10, 1},  {42, 1}, {10, 1}, {42, 1},  {10, 1}, {42, 1},  {10, 1},
+    {42, 1}, {10, 1},  {42, 1}, {10, 1}, {42, 1},  {10, 1}, {42, 1},  {10, 1},
+    {42, 1}, {10, 1},  {42, 1}, {10, 1}, {42, 1},  {10, 1}, {42, 1},  {10, 1},
+    {42, 1}, {10, 1},  {0, 8},  {2, 13}, {0, 77},  {2, 31}, {0, 3},   {2, 1},
+    {0, 3},  {1, 4},   {0, 2},  {2, 2},  {0, 5},   {14, 1}, {10, 28}, {2, 3},
+    {14, 1}, {10, 28}, {0, 8},  {1, 7},  {0, 3},   {1, 1},  {0, 3},   {2, 4},
+    {0, 2},  {1, 2},   {0, 2},  {14, 1}, {10, 21}, {0, 8},  {1, 10},  {0, 7},
+    {14, 1}, {10, 32}, {0, 10}};
 constexpr replay::Run LEVEL_WORLD5_BOSS_RUNS[] = {
     {0, 129}, {14, 1}, {10, 4}, {2, 16}, {1, 2},  {33, 1},  {1, 27}, {0, 90},
     {14, 1},  {10, 4}, {2, 16}, {1, 6},  {33, 1}, {1, 26},  {0, 34}, {14, 1},
@@ -95,9 +117,11 @@ inline constexpr Entry ENTRIES[] = {
     {"LEVEL_0", nullptr, 0, 0, false, 0, 0, 0},
     {"LEVEL_1", nullptr, 0, 0, false, 0, 0, 0},
     {"LEVEL_WORLD1_SCROLL", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD1_TRICK", LEVEL_WORLD1_TRICK_RUNS, 17, 209, false, 0, 0, 0},
     {"LEVEL_WORLD1_BOSS", LEVEL_WORLD1_BOSS_RUNS, 24, 264, true, 173, 16, 0},
     {"LEVEL_2", nullptr, 0, 0, false, 0, 0, 0},
     {"LEVEL_WORLD2_SCROLL", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD2_TRICK", LEVEL_WORLD2_TRICK_RUNS, 14, 240, false, 0, 0, 0},
     {"LEVEL_WORLD2_BOSS", LEVEL_WORLD2_BOSS_RUNS, 25, 264, true, 175, 17, 0},
     {"LEVEL_3", nullptr, 0, 0, false, 0, 0, 0},
     {"LEVEL_WORLD3_SCROLL", nullptr, 0, 0, false, 0, 0, 0},
@@ -113,6 +137,7 @@ inline constexpr Entry ENTRIES[] = {
     {"LEVEL_WORLD5_DASH", nullptr, 0, 0, false, 0, 0, 0},
     {"LEVEL_WORLD5_LEVERS", nullptr, 0, 0, false, 0, 0, 0},
     {"LEVEL_WORLD5_CLIMB", LEVEL_WORLD5_CLIMB_RUNS, 26, 251, false, 0, 0, 0},
+    {"LEVEL_WORLD5_TRICK", LEVEL_WORLD5_TRICK_RUNS, 107, 536, false, 0, 0, 0},
     {"LEVEL_WORLD5_BOSS", LEVEL_WORLD5_BOSS_RUNS, 48, 632, true, 231, 12, 0},
     {"LEVEL_WORLD5_FINALE", LEVEL_WORLD5_FINALE_RUNS, 1, 400, false, 0, 0, 0}};
 

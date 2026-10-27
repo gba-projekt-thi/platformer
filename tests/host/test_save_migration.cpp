@@ -1,5 +1,6 @@
 #include "test_framework.h"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -168,13 +169,13 @@ TEST_CASE(game_state_layout_lock) {
     // SAVE_VERSION, add the previous version's line to
     // game_state_migration.h::valid_bytes() (offsetof the new field), then
     // update the numbers below.
-    CHECK_EQ(static_cast<int>(sizeof(GameState)), 120);
+    CHECK_EQ(static_cast<int>(sizeof(GameState)), 152);
     CHECK_EQ(static_cast<int>(offsetof(GameState, level)), 0);
     CHECK_EQ(static_cast<int>(offsetof(GameState, furthest_level)), 10);
     CHECK_EQ(static_cast<int>(offsetof(GameState, best_time_frames)), 16);
-    CHECK_EQ(static_cast<int>(offsetof(GameState, no_death_clears)), 112);
-    CHECK_EQ(static_cast<int>(offsetof(GameState, assist_mode_enabled)), 118);
-    CHECK_EQ(SAVE_VERSION, 8);
+    CHECK_EQ(static_cast<int>(offsetof(GameState, no_death_clears)), 144);
+    CHECK_EQ(static_cast<int>(offsetof(GameState, assist_mode_enabled)), 150);
+    CHECK_EQ(SAVE_VERSION, 9);
 }
 
 TEST_CASE(game_state_current_payload_roundtrips_exactly) {
@@ -213,7 +214,8 @@ TEST_CASE(game_state_schema_4_payload_is_still_rejected) {
 //
 // Schema 6 inserted LEVEL_WORLD5_CLIMB at level index 17 (before World 5's
 // boss), schema 7 LEVEL_WORLD4_POGO at 10 (World 4's first level), schema 8
-// LEVEL_WORLD3_TRICK at 9 (before World 3's boss): everything indexed by
+// LEVEL_WORLD3_TRICK at 9 (before World 3's boss), schema 9 one level before
+// the bosses of World 1, 2 and 5 (at 3, 7 and 22): everything indexed by
 // level from there on moves up by one.
 
 namespace {
@@ -264,49 +266,135 @@ TEST_CASE(game_state_inserting_a_level_moves_progress_at_or_after_it) {
     CHECK_EQ(int(before.furthest_level), 16);
 }
 
+TEST_CASE(game_state_v8_saves_get_the_world_1_2_and_5_levels) {
+    // Schema 9: index 3 (World 1), then 7 (World 2) and 22 (World 5) of the
+    // roster as it grows.
+    GameState state = numbered_save();
+    state.level = 20;  // World 5's boss in schema 8
+    game_state_migration::insert_levels_since(state, 8);
+    CHECK_EQ(int(state.level), 23);
+    CHECK_EQ(state.best_time_frames[2], 1002u);
+    CHECK_EQ(state.best_time_frames[3], 0u);     // World 1's new level
+    CHECK_EQ(state.best_time_frames[4], 1003u);  // World 1's boss
+    CHECK_EQ(state.best_time_frames[7], 0u);     // World 2's new level
+    CHECK_EQ(state.best_time_frames[8], 1006u);  // World 2's boss
+    CHECK_EQ(state.best_time_frames[20], 1018u);
+    CHECK_EQ(state.best_time_frames[22], 0u);  // World 5's new level
+    CHECK_EQ(
+        state.no_death_clears,
+        (1u << 4) | (1u << 18) | (1u << 19) | (1u << 20));
+}
+
 TEST_CASE(game_state_v7_saves_get_the_world_3_level) {
     GameState state = numbered_save();
     state.level = 9;  // World 3's boss in schema 7
-    game_state_migration::upgrade(state, 7);
-    CHECK_EQ(int(state.level), 10);
-    CHECK_EQ(state.best_time_frames[8], 1008u);
-    CHECK_EQ(state.best_time_frames[9], 0u);
-    CHECK_EQ(state.best_time_frames[10], 1009u);
+    game_state_migration::insert_levels_since(state, 7);
+    CHECK_EQ(int(state.level), 12);  // + World 3's, then World 1's and 2's
+    CHECK_EQ(state.best_time_frames[10], 1008u);
+    CHECK_EQ(state.best_time_frames[11], 0u);
+    CHECK_EQ(state.best_time_frames[12], 1009u);
 }
 
 TEST_CASE(game_state_v6_saves_get_the_world_4_and_3_levels) {
     GameState state = numbered_save();
     state.level = 12;  // World 4's boss in schema 6
-    game_state_migration::upgrade(state, 6);
-    CHECK_EQ(int(state.level), 14);
-    CHECK_EQ(state.best_time_frames[9], 0u);      // World 3's new level
-    CHECK_EQ(state.best_time_frames[10], 1009u);  // World 3's boss
-    CHECK_EQ(state.best_time_frames[11], 0u);     // World 4's new level
-    CHECK_EQ(state.best_time_frames[12], 1010u);
+    game_state_migration::insert_levels_since(state, 6);
+    CHECK_EQ(int(state.level), 16);
+    CHECK_EQ(state.best_time_frames[11], 0u);     // World 3's new level
+    CHECK_EQ(state.best_time_frames[12], 1009u);  // World 3's boss
+    CHECK_EQ(state.best_time_frames[13], 0u);     // World 4's new level
+    CHECK_EQ(state.best_time_frames[14], 1010u);
 }
 
 TEST_CASE(game_state_v5_saves_get_every_level_in_order) {
     // Schema 6 (index 17 of the v5 roster), 7 (10), then 8 (9).
     GameState state = numbered_save();
     state.level = 17;  // World 5's boss in schema 5
-    game_state_migration::upgrade(state, 5);
-    CHECK_EQ(int(state.level), 20);
-    CHECK_EQ(state.best_time_frames[9], 0u);   // World 3's new level
-    CHECK_EQ(state.best_time_frames[11], 0u);  // World 4's new level
-    CHECK_EQ(state.best_time_frames[12], 1010u);
-    CHECK_EQ(state.best_time_frames[18], 1016u);  // LEVERS
-    CHECK_EQ(state.best_time_frames[19], 0u);     // World 5's new level
-    CHECK_EQ(state.best_time_frames[20], 1017u);  // the boss
+    game_state_migration::insert_levels_since(state, 5);
+    CHECK_EQ(int(state.level), 23);
+    CHECK_EQ(state.best_time_frames[11], 0u);  // World 3's new level
+    CHECK_EQ(state.best_time_frames[13], 0u);  // World 4's new level
+    CHECK_EQ(state.best_time_frames[14], 1010u);
+    CHECK_EQ(state.best_time_frames[20], 1016u);  // LEVERS
+    CHECK_EQ(state.best_time_frames[21], 0u);     // World 5's CLIMB
+    CHECK_EQ(state.best_time_frames[22], 0u);     // World 5's new level
+    CHECK_EQ(state.best_time_frames[23], 1017u);  // the boss
 }
 
 TEST_CASE(game_state_current_saves_are_not_upgraded) {
     GameState state = numbered_save();
     state.level = 18;
-    game_state_migration::upgrade(state, SAVE_VERSION);
+    game_state_migration::insert_levels_since(state, SAVE_VERSION);
     CHECK_EQ(state.best_time_frames[17], 1017u);
     CHECK_EQ(int(state.level), 18);
 }
 
 TEST_CASE(game_state_roster_still_fits_the_save) {
     CHECK(WorldIndex::LEVEL_COUNT <= GameState::MAX_LEVELS);
+}
+
+// ---- schema 9: room for 32 levels
+// ----------------------------------------------
+//
+// Schema 8 held 24 best times; what came after them (no_death_clears and the
+// three mode flags) now sits behind 32. upgrade() moves it there.
+
+namespace {
+
+// A schema 8 payload: 24 best times, then no_death_clears and the flags.
+constexpr int V8_SIZE = 120;
+
+auto v8_payload() -> std::array<uint8_t, V8_SIZE> {
+    std::array<uint8_t, V8_SIZE> bytes{};
+    const int16_t level = 20;
+    const uint16_t deaths = 77;
+    std::memcpy(&bytes[0], &level, 2);
+    std::memcpy(&bytes[2], &deaths, 2);
+    for (int i = 0; i < 24; ++i) {
+        const uint32_t frames = 1000u + unsigned(i);
+        std::memcpy(&bytes[16 + 4 * i], &frames, 4);
+    }
+    const uint32_t clears = (1u << 3) | (1u << 23);
+    std::memcpy(&bytes[112], &clears, 4);
+    bytes[116] = 1;  // hard_mode_unlocked
+    bytes[117] = 0;  // hard_mode_enabled
+    bytes[118] = 1;  // assist_mode_enabled
+    return bytes;
+}
+
+auto load_v8() -> GameState {
+    const auto bytes = v8_payload();
+    GameState out{};
+    restore_state(
+        bytes.data(), V8_SIZE, 8, &game_state_migration::valid_bytes, out);
+    game_state_migration::upgrade(out, 8);
+    return out;
+}
+
+}  // namespace
+
+TEST_CASE(game_state_v8_payload_is_read_in_full) {
+    CHECK_EQ(game_state_migration::valid_bytes(8), V8_SIZE);
+}
+
+TEST_CASE(game_state_v8_flags_and_badges_move_behind_32_levels) {
+    const GameState state = load_v8();
+    CHECK(state.hard_mode_unlocked);
+    CHECK(!state.hard_mode_enabled);
+    CHECK(state.assist_mode_enabled);
+    // Badges 3 and 23 of schema 8, after the three new levels (3, 7, 22).
+    CHECK_EQ(state.no_death_clears, (1u << 4) | (1u << 26));
+}
+
+TEST_CASE(game_state_v8_best_times_and_progress_survive) {
+    const GameState state = load_v8();
+    CHECK_EQ(state.deaths, 77u);
+    CHECK_EQ(int(state.level), 23);
+    CHECK_EQ(state.best_time_frames[0], 1000u);
+    CHECK_EQ(state.best_time_frames[3], 0u);
+    CHECK_EQ(state.best_time_frames[4], 1003u);
+    CHECK_EQ(state.best_time_frames[26], 1023u);  // schema 8's last level
+    for (int i = 27; i < GameState::MAX_LEVELS; ++i) {
+        CHECK_EQ(state.best_time_frames[i], 0u);
+    }
 }

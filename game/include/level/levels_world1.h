@@ -190,6 +190,111 @@ const LevelData LEVEL_WORLD1_SCROLL = {
     160};
 
 // =============================================================================
+// WORLD 1 TRICK - "Second Chances", a kind Level Devil level (world_width=384)
+// The pond plays its first tricks - and takes pity: after three deaths a
+// stepping stone surfaces and the door comes down from its ledge to the
+// middle bank. Jump only.
+// =============================================================================
+constexpr PlatformData world1_trick_platforms[] = {
+
+    // Start: the bank.
+    {-176, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {-160, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {-144, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {-128, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
+
+    // 1 - a 48 px gap, a plain running jump. Kind Level Devil: from the
+    // 3rd death on a stepping stone surfaces in the middle of it.
+    {-96,
+     60,
+     16,
+     8,
+     0,
+     0,
+     bn::sprite_items::platforms_world1,
+     0,
+     nullptr,
+     true,
+     0,
+     0,
+     {},
+     0,
+     0,
+     3},
+
+    // 2 - the landing: an invisible plate ("ripple") starts a chain, and a
+    // bubble drops onto this landing a little later. Keep moving and it
+    // falls behind the duck.
+    {-64, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {-48, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
+
+    // 3 - the middle bank. The door stands at its end from the 3rd death on.
+    {-8, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {8, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {24, 60, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {40, 60, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
+
+    // 4 - the way up to the door's first spot: a step, then the ledge.
+    {80, 44, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {96, 44, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2},
+
+    // The door's ledge.
+    {136, 28, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 0},
+    {152, 28, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {168, 28, 16, 8, 0, 0, bn::sprite_items::platforms_world1, 1},
+    {184, 28, 16, 10, 0, 1, bn::sprite_items::platforms_world1, 2}};
+
+constexpr TriggerData world1_trick_triggers[] = {
+    // The plate on the landing (invisible).
+    {-56, 44, 32, 30, false, "ripple"},
+    // Follows the plate 1 + 36 frames later: the bubble lets go.
+    {-56, 44, 8, 8, false, "ripple_drop", TriggerMode::Latch, nullptr, 0, 1, 36,
+     TriggerAction::Enter, "ripple"}};
+
+constexpr TrapData world1_trick_traps[] = {
+
+    // The bubble the chain drops onto the landing, at the speed of the
+    // first World 1 levels' falling bubbles.
+    {TrapType::MOVING, -56, -40, 32, 32, 0, 0, bn::sprite_items::bubbles, 26,
+     TRAP_GRAPHICS_INDEXES_3, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "ripple_drop"}};
+
+constexpr bn::fixed_point LEVEL_WORLD1_TRICK_door_attempt_positions[] = {
+    {0, 0},
+    {-128, 32}};
+
+const LevelData LEVEL_WORLD1_TRICK = {
+    world1_trick_platforms,
+    sizeof(world1_trick_platforms) / sizeof(world1_trick_platforms[0]),
+    world1_trick_triggers,
+    sizeof(world1_trick_triggers) / sizeof(world1_trick_triggers[0]),
+    world1_trick_traps,
+    sizeof(world1_trick_traps) / sizeof(world1_trick_traps[0]),
+    bn::regular_bg_items::world1,
+    bn::music_items::world1,
+    // Player spawn
+    {-176, 42},
+    // On the high ledge; from the 3rd death on at the end of the middle bank
+    // (40, 40).
+    {168,
+     8,
+     bn::sprite_items::door32x32,
+     DOOR32X32_GRAPHICS_INDEXES,
+     8,
+     false,
+     {},
+     0,
+     0,
+     nullptr,
+     LEVEL_WORLD1_TRICK_door_attempt_positions,
+     3},
+    // World size (enables scrolling)
+    384,
+    160,
+    1,
+    // The first trick level: tell the player it is a kind one.
+    "The pond forgives. Mostly."};
+
+// =============================================================================
 // WORLD 1 BOSS - "The Kugelfisch King" (world_width=480)
 // A Hollow-Knight-style dodge gauntlet: a patrolling bubble sweep overlays
 // the whole arena, four trigger-gated "attacks" fire in sequence as the
