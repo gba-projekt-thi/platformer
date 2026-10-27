@@ -13,6 +13,7 @@
 //     switches. Short on purpose: the game is about quick retries.
 //   * Glow: the white flash of a door that has just been unlocked, fading out.
 //   * LOCKED_GREY: how far a still locked boss door is faded to grey.
+//   * BLINK_WHITE: how far a blinking door is faded to white.
 // -----------------------------------------------------------------------------
 namespace clear_logic {
 
@@ -21,6 +22,7 @@ inline constexpr int MOMENT_FRAMES = 40;
 inline constexpr int BLINK_FRAMES = 5;
 inline constexpr int GLOW_FRAMES = 30;
 inline constexpr bn::fixed LOCKED_GREY = bn::fixed(0.7);
+inline constexpr bn::fixed BLINK_WHITE = bn::fixed(0.85);
 
 class Moment {
    public:

@@ -91,7 +91,7 @@ void Door::set_flash(bool lit) {
 // it glows or blinks, none otherwise.
 void Door::_refresh_tint() {
     bn::fixed grey = _locked ? clear_logic::LOCKED_GREY : bn::fixed(0);
-    bn::fixed white = _flash ? bn::fixed(0.85) : _glow.intensity();
+    bn::fixed white = _flash ? clear_logic::BLINK_WHITE : _glow.intensity();
     bn::sprite_palette_ptr palette = _door_sprite.sprite().palette();
     if (white > 0) {
         palette.set_fade(bn::colors::white, white);

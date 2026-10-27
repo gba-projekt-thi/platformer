@@ -38,7 +38,7 @@ class BossTrap : public BaseTrap, public Strikeable {
     [[nodiscard]] bool defeated() const { return _fight.defeated(); }
     [[nodiscard]] int hits_left() const { return _fight.hits_left(); }
     // The duck reached the arena and the boss lives.
-    bool fighting() const;
+    [[nodiscard]] bool fighting() const;
 
    private:
     void _place(bn::fixed x, bn::fixed y);
