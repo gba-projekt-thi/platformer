@@ -362,6 +362,63 @@ class RunningDoorTests(unittest.TestCase):
         self.assertEqual(door, (90.0, -10.0))
 
 
+class DeathWindowTests(unittest.TestCase):
+    """Level Devil: platforms and traps only there for some attempts
+    (from_death / until_death). The door must be reachable on every one."""
+
+    def rect(self, cx, index, start=0, end=0):
+        return sim.Rect(cx, 60, 32, 16, index, from_death=start, until_death=end)
+
+    def test_attempts_split_where_a_window_opens_or_closes(self):
+        self.assertEqual(sim.death_breakpoints([self.rect(0, 0)]), [0])
+        self.assertEqual(
+            sim.death_breakpoints([self.rect(0, 0, 0, 3), self.rect(0, 1, 3, 0), self.rect(0, 2, 2, 5)]),
+            [0, 2, 3, 5])
+
+    def test_present_follows_attempt_variant(self):
+        r = self.rect(0, 0, 2, 5)
+        self.assertEqual([sim.present(r, d) for d in range(7)],
+                         [False, False, True, True, True, False, False])
+        self.assertTrue(sim.present(self.rect(0, 0), 99))
+
+    def level(self, bridges):
+        # start 0, door platform at 160: 96 px between them, too wide for a
+        # plain jump without a bridge in between
+        plats = [self.rect(0, 0), self.rect(160, 1)] + bridges
+        return plats, {}, (0, 40), (160.0, 48.0)
+
+    def test_a_bridge_that_is_gone_after_3_deaths_fails_from_then_on(self):
+        plats, triggers, spawn, door = self.level([self.rect(80, 2, 0, 3)])
+        self.assertEqual(sim.unreachable_windows(plats, triggers, spawn, door, False, False), [3])
+
+    def test_a_bridge_that_moves_after_3_deaths_keeps_the_level_finishable(self):
+        plats, triggers, spawn, door = self.level([self.rect(80, 2, 0, 3), self.rect(72, 3, 3, 0)])
+        self.assertEqual(sim.unreachable_windows(plats, triggers, spawn, door, False, False), [])
+
+    def test_the_window_is_read_from_the_level(self):
+        spec = importlib.util.spec_from_file_location(
+            "generate_levels", Path(__file__).with_name("Generate_levels.py"))
+        gen = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gen)
+        level = {
+            "name": "LEVEL_X",
+            "platforms": {"name": "x_platforms", "items": [
+                {"x": 0, "y": 60, "width": 32, "height": 16, "offset_x": 0, "offset_y": 0,
+                 "sprite": "stone", "sprite_index": 0, "from_death": 3}]},
+            "traps": {"name": "x_traps", "items": [
+                {"type": "BASE", "x": 0, "y": 0, "width": 8, "height": 8, "offset_x": 0,
+                 "offset_y": 0, "sprite": "b", "until_death": 2}]},
+            "background": "world9", "music": "world9", "spawn": [0, 40], "door": {"x": 30, "y": 4},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "levels.h"
+            path.write_text(gen.generate({"levels": [level]}, gen.read_structs()))
+            platform = sim.load_levels(path)["LEVEL_X"][0][0]
+            trap = sim.load_static_traps(path)["LEVEL_X"][0]
+        self.assertEqual((platform.from_death, platform.until_death), (3, 0))
+        self.assertEqual((trap.from_death, trap.until_death), (0, 2))
+
+
 class ResolveAxisTests(unittest.TestCase):
     """Mirrors resolve_axis() in the engine's move_resolution.h."""
 

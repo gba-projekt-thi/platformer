@@ -116,6 +116,27 @@ class DemandTests(Fixture):
         registry, _ = sb.demand(lv, b)
         self.assertEqual(registry, 2 + 3 + 2 + 1 + b.SLOTS + sb.POGO_SLASH)
 
+    def test_objects_with_a_death_window_count_on_every_attempt(self):
+        # Level Devil: a trap that moves after the 3rd death is two traps
+        # (until_death 3 / from_death 3). LevelManager creates both at load
+        # and only hides the absent one, so both sprites are allocated.
+        text, _ = platforms(1)
+        text += (
+            "constexpr TrapData W_traps[] = {"
+            "{TrapType::BASE, 0, 40, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
+            " 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,"
+            " false, 0, 3},"
+            "{TrapType::BASE, 40, 40, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
+            " 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,"
+            " false, 3, 0}};\n"
+            "const LevelData W = {plats1, 1, nullptr, 0, W_traps, 2, bn::regular_bg_items::w,"
+            " bn::music_items::m, {-40, 30}, {40, 40}};\n"
+        )
+        lv = self.load(text)["W"]
+        b = self.budget()
+        registry, _ = sb.demand(lv, b)
+        self.assertEqual(registry, 2 + 1 + 2 + b.SLOTS + sb.POGO_SLASH)
+
     def test_dash_trail_counts_only_where_the_dash_is(self):
         lv = self.load(level("A", plats=3))["A"]
         b = self.budget()

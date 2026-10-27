@@ -54,6 +54,14 @@ constexpr PlatformData plats_crumble[] = {
     {40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0, nullptr, true, 30, 0}};
 """
 
+# Level Devil: the platform at 40 is only there for the first 3 attempts.
+WINDOW_PLATS = """
+constexpr PlatformData plats_window[] = {
+    {-40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0},
+    {40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0, nullptr, true, 0, 0, {}, 0, 0, 0, 3},
+    {110, 60, 32, 16, 0, 0, bn::sprite_items::p, 0}};
+"""
+
 
 def level(name, cps, traps=(), plats_ref="plats, 5"):
     traps_text = ""
@@ -71,8 +79,11 @@ def level(name, cps, traps=(), plats_ref="plats, 5"):
     )
 
 
-LEVELS = HEAD + CRUMBLE_PLATS + "".join(
+LEVELS = HEAD + CRUMBLE_PLATS + WINDOW_PLATS + "".join(
     [
+        level("WINDOW_GONE", [(40, 44)], plats_ref="plats_window, 3"),
+        level("WINDOW_REACH", [(110, 44)], plats_ref="plats_window, 3"),
+        level("WINDOW_OK", [(-40, 44)], plats_ref="plats_window, 3"),
         level("CRUMBLE", [(40, 44)], plats_ref="plats_crumble, 2"),
         level("CRUMBLE_OK", [(-40, 44)], plats_ref="plats_crumble, 2"),
         level("OK", [(-40, 44), (40, 44)]),
@@ -158,6 +169,16 @@ class SyntheticTests(unittest.TestCase):
 
     def test_the_other_platform_of_a_crumbling_level_is_fine(self):
         errors, _ = self.run_check("CRUMBLE_OK")
+        self.assertEqual(errors, [])
+
+    def test_a_platform_that_is_not_there_on_every_attempt_is_no_support(self):
+        self.assertError("WINDOW_GONE", "only there after 0 .. 2 deaths")
+
+    def test_the_support_must_be_reachable_on_every_attempt(self):
+        self.assertError("WINDOW_REACH", "cannot be reached from the spawn after 3 deaths")
+
+    def test_an_always_there_support_in_a_level_with_windows_is_fine(self):
+        errors, _ = self.run_check("WINDOW_OK")
         self.assertEqual(errors, [])
 
     def test_respawn_inside_a_platform(self):

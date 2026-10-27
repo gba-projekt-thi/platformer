@@ -437,6 +437,49 @@ class CommandLineTests(Fixture):
             self.assertEqual(code, 1)
 
 
+WINDOW_LEVEL = """
+constexpr PlatformData wplats[] = {
+    {-40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0},
+    {40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0, nullptr, true, 0, 0, {}, 0, 0, 3}};
+
+constexpr TrapData wtraps[] = {
+    {TrapType::BASE, 0, 40, 12, 12, 0, 0, bn::sprite_items::t, 1,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, false, 0, 3}};
+
+const LevelData LEVEL_W = {
+    wplats, 2, nullptr, 0, wtraps, 1,
+    bn::regular_bg_items::w, bn::music_items::m, {-40, 30}, {40, 40}};
+"""
+
+
+class DeathWindowTests(unittest.TestCase):
+    """Level Devil: objects only there for some attempts are labelled."""
+
+    @classmethod
+    def setUpClass(cls):
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "levels_common.h").write_text(COMMON)
+            path = Path(tmp, "levels_worldW.h")
+            path.write_text(WINDOW_LEVEL)
+            cls.level = pv.load_level_file(path)["LEVEL_W"]
+
+    def test_window_label(self):
+        self.assertIsNone(pv.window_label(0, 0))
+        self.assertEqual(pv.window_label(3, 0), "deaths 3+")
+        self.assertEqual(pv.window_label(0, 3), "deaths 0-2")
+        self.assertEqual(pv.window_label(2, 3), "deaths 2")
+
+    def test_trap_window_is_parsed(self):
+        trap = self.level.traps[0]
+        self.assertEqual((trap["from_death"], trap["until_death"]), (0, 3))
+
+    def test_windowed_platform_and_trap_are_labelled(self):
+        svg = pv.render(self.level, arcs="none", reach=False)
+        self.assertIn("deaths 3+", svg)
+        self.assertIn("deaths 0-2", svg)
+
+
 def _real_files():
     here = Path(__file__).resolve().parent
     files = sorted(here.glob("levels_world*.h")) or sorted(

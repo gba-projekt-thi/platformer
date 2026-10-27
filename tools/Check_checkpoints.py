@@ -22,7 +22,9 @@ Errors (exit code 1):
     an AMBUSH trap
   - the supporting platform cannot be reached from the spawn (checked with the
     jump + dash movement model of Check_level_reachability.py, over every lever
-    configuration)
+    configuration and, with Level Devil death windows, on every attempt)
+  - the supporting platform has a death window (from_death / until_death): the
+    flag would float on the attempts it is not there
 
 Warnings:
   - the respawn lies inside an AMBUSH trap's trigger range (it would lunge at
@@ -133,15 +135,19 @@ def check_level(level, limit=DEFAULT_MAX, reach=True):
         err(f"{len(points)} checkpoints, at most {limit} allowed")
 
     half_w, half_h = level.world_w / 2, level.world_h / 2
-    reached_plain = reached_dash = None
+    # Level Devil: {deaths: (reached plain, reached with dash)} for every set
+    # of platforms the level can have (death_breakpoints()).
+    reached = {}
     if reach:
         sim.attach_lever_platforms(level.platforms, level.sim_triggers)
-        reached_plain, _, _ = sim.reach_with_levers(
-            level.platforms, level.sim_triggers, level.spawn, level.door_hit, False, False
-        )
-        reached_dash, _, _ = sim.reach_with_levers(
-            level.platforms, level.sim_triggers, level.spawn, level.door_hit, True, False
-        )
+        for deaths in sim.death_breakpoints(level.platforms):
+            active = [p for p in level.platforms if sim.present(p, deaths)]
+            reached[deaths] = tuple(
+                sim.reach_with_levers(
+                    active, level.sim_triggers, level.spawn, level.door_hit, dash, False
+                )[0]
+                for dash in (False, True)
+            )
 
     for i, (x, y) in enumerate(points, 1):
         where = f"checkpoint {i} at ({x:g},{y:g})"
@@ -163,11 +169,21 @@ def check_level(level, limit=DEFAULT_MAX, reach=True):
             err(f"{where}: stands on platform {support.index}, which is switched by '{support.trigger}'")
         elif support.crumble:
             err(f"{where}: stands on platform {support.index}, which crumbles after {support.crumble} frames")
+        elif support.from_death or support.until_death:
+            last = f"{support.until_death - 1}" if support.until_death else "more"
+            err(
+                f"{where}: stands on platform {support.index}, which is only there after "
+                f"{support.from_death} .. {last} deaths"
+            )
         elif reach:
-            if support.index not in reached_dash:
-                err(f"{where}: platform {support.index} cannot be reached from the spawn")
-            elif support.index not in reached_plain:
-                warn(f"{where}: platform {support.index} is only reachable with the dash")
+            for deaths, (plain, dash) in reached.items():
+                after = f" after {deaths} deaths" if deaths else ""
+                if support.index not in dash:
+                    err(f"{where}: platform {support.index} cannot be reached from the spawn{after}")
+                    break
+                if support.index not in plain:
+                    warn(f"{where}: platform {support.index} is only reachable with the dash{after}")
+                    break
 
         for p in level.platforms:
             if sim.overlap(x, y, DUCK, DUCK, p.cx, p.cy, p.w, p.h):

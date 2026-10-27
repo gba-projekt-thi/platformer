@@ -25,6 +25,11 @@ Two start assumptions bracket real play:
     full speed). If a platform is NOT reachable here, no player can do it, so
     a gap that is meant to require the dash must fail this check without dash.
 
+Level Devil death windows (PlatformData / TrapData::from_death, until_death):
+--all checks the level once per distinct set of objects that are there
+(death_breakpoints()), so the door has to be reachable on every attempt,
+whatever has moved by then.
+
 Traps are ignored (this checks geometry, not hazard timing). Wall jumps
 (from Cfg::WallJump::UNLOCK_WORLD on) are simulated frame by frame by Duck,
 with a few climb policies (between two walls, up one wall).
@@ -60,6 +65,27 @@ _spec = importlib.util.spec_from_file_location(
 )
 _cwi = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_cwi)
+_spec = importlib.util.spec_from_file_location(
+    "generate_levels", _here / "Generate_levels.py"
+)
+_gen = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_gen)
+_STRUCTS = _gen.read_structs()
+
+
+def field_index(struct, field):
+    """Position of a PlatformData / TrapData field in the generated
+    (positional) literals, read from level_structure.h."""
+    return [name for name, _ in _STRUCTS[struct]].index(field)
+
+
+def _window(fields, struct):
+    """(from_death, until_death) of a literal; 0, 0 when they are left out."""
+    out = []
+    for name in ("from_death", "until_death"):
+        i = field_index(struct, name)
+        out.append(int(_num(fields[i])) if len(fields) > i else 0)
+    return tuple(out)
 
 # ---- constants mirrored from cfg.h / cfg_dash.h ---------------------------
 ACC = 0.38
@@ -93,13 +119,17 @@ POGO_BOUNCE = -3.0
 class Rect:
     __slots__ = (
         "cx", "cy", "w", "h", "index", "trigger", "active_when_on",
-        "crumble", "respawn",
+        "crumble", "respawn", "from_death", "until_death",
     )
 
     def __init__(
         self, cx, cy, w, h, index=-1, trigger=None, active_when_on=True,
-        crumble=0, respawn=0,
+        crumble=0, respawn=0, from_death=0, until_death=0,
     ):
+        # PlatformData / TrapData::from_death, until_death (Level Devil): only
+        # there while the duck has died [from, until) times, see present().
+        self.from_death = from_death
+        self.until_death = until_death
         self.cx, self.cy, self.w, self.h = cx, cy, w, h
         self.index = index
         self.trigger = trigger
@@ -581,6 +611,41 @@ def reach(active, spawn, door, allow_dash, optimistic, allow_wall=False, pogo_ta
     return reached, door_ok
 
 
+def present(obj, deaths):
+    """attempt_variant::active_for_deaths(): is a platform / trap with a
+    death window there after `deaths` deaths in the level (until 0 = no end)?"""
+    return deaths >= obj.from_death and (obj.until_death == 0 or deaths < obj.until_death)
+
+
+def death_breakpoints(objects):
+    """The death counts at which the set of present objects can change, from
+    0 on: checking each of them covers every attempt of the level."""
+    points = {0}
+    for obj in objects:
+        points.update(d for d in (obj.from_death, obj.until_death) if d)
+    return sorted(points)
+
+
+def unreachable_windows(platforms, triggers, spawn, door, allow_dash, optimistic,
+                        allow_wall=False, pogo_targets=()):
+    """The death counts (death_breakpoints()) after which the door cannot be
+    reached with the platforms and pogo traps that are there then. [] = the
+    level can be finished on every attempt."""
+    attach_lever_platforms(platforms, triggers)
+    bad = []
+    for deaths in death_breakpoints(list(platforms) + list(pogo_targets)):
+        active = [p for p in platforms if present(p, deaths)]
+        targets = [t for t in pogo_targets if present(t, deaths)]
+        _, ok, _ = reach_with_levers(active, triggers, spawn, door, allow_dash, optimistic, allow_wall)
+        # the pogo only adds reach: simulated only where it is needed
+        if not ok and targets:
+            _, ok, _ = reach_with_levers(
+                active, triggers, spawn, door, allow_dash, optimistic, allow_wall, targets)
+        if not ok:
+            bad.append(deaths)
+    return bad
+
+
 def _clamp(v, lo, hi):
     return max(lo, min(hi, v))
 
@@ -669,7 +734,9 @@ def load_levels(path):
                 if len(pf) > 12 and pf[12].strip() in flee_paths:
                     dx, dy = flee_paths[pf[12].strip()][-1]
                     x, y = x + dx, y + dy
-                platforms.append(Rect(x + ox, y + oy, w, h, i, trig, awo, crumble, respawn))
+                start, end = _window(pf, "PlatformData")
+                platforms.append(Rect(x + ox, y + oy, w, h, i, trig, awo, crumble, respawn,
+                                      start, end))
         triggers = {}
         if f[2] != "nullptr":
             for lit in _ctr.extract_top_level_literals(trig_arrays[f[2]]):
@@ -710,7 +777,8 @@ def load_static_traps(path):
                 tf = _ctr.top_level_fields(lit)
                 if tf[0].strip() == "TrapType::BASE":
                     x, y, w, h, ox, oy = (_num(v) for v in tf[1:7])
-                    traps.append(Rect(x + ox, y + oy, w, h, i))
+                    start, end = _window(tf, "TrapData")
+                    traps.append(Rect(x + ox, y + oy, w, h, i, from_death=start, until_death=end))
         out[m.group(1)] = traps
     return out
 
@@ -821,15 +889,11 @@ def unreachable_doors(levels):
             loaded[level.path] = load_levels(level.path)
             traps[level.path] = load_static_traps(level.path)
         platforms, triggers, spawn, door = loaded[level.path][level.name]
-        attach_lever_platforms(platforms, triggers)
-        _, ok, _ = reach_with_levers(platforms, triggers, spawn, door, level.dash, False, level.wall)
-        # the pogo only adds reach: simulated only where it is needed
-        if not ok and level.pogo:
-            _, ok, _ = reach_with_levers(
-                platforms, triggers, spawn, door, level.dash, False, level.wall,
-                traps[level.path].get(level.name, []))
-        if not ok:
-            bad.append(level.name)
+        targets = traps[level.path].get(level.name, []) if level.pogo else ()
+        # Level Devil: every attempt counts, whatever has moved by then
+        for deaths in unreachable_windows(platforms, triggers, spawn, door, level.dash, False,
+                                          level.wall, targets):
+            bad.append(level.name if deaths == 0 else f"{level.name} (after {deaths} deaths)")
     return bad
 
 
@@ -837,11 +901,14 @@ def main_all(root="."):
     levels = campaign(root)
     bad = unreachable_doors(levels)
     for level in levels:
-        state = "NO DOOR" if level.name in bad else "ok"
+        mine = [b for b in bad if b == level.name or b.startswith(level.name + " (")]
+        state = "NO DOOR " + ", ".join(b[len(level.name):].strip() or "(at first)" for b in mine) \
+            if mine else "ok"
         abilities = "+".join(
             n for n, on in (("dash", level.dash), ("pogo", level.pogo), ("wall", level.wall)) if on) or "-"
         print(f"{level.index:2d} {level.name:24s} {abilities:15s} {state}")
-    print(f"\nReachability check: {len(bad)} of {len(levels)} level(s) cannot be finished.")
+    failed = {b.split(" (")[0] for b in bad}
+    print(f"\nReachability check: {len(failed)} of {len(levels)} level(s) cannot be finished.")
     outside = outside_play_areas(levels)
     for entry in outside:
         print(f"OUTSIDE THE PLAY AREA {entry}")

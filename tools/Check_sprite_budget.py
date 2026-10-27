@@ -24,6 +24,11 @@ long before anybody runs the ROM:
   * registry capacities of the collision system (collision_registry.h) against
     the entity limits.
 
+Level Devil objects with a death window (from_death / until_death) count on
+every attempt: LevelManager creates all of them at load and only hides the
+ones that are not there, so a trap that moves after the 3rd death (two copies)
+costs two sprites and two traps.
+
 Everything is a worst-case model, counted in drawn glyphs (spaces draw no
 sprite). The text constants mirror pause_controller.cpp / level_scene.cpp /
 death_counter.h - keep them in sync when those strings change (the tests

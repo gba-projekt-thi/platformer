@@ -73,7 +73,7 @@ TRAP_FIELDS = (
     "velocity_x velocity_y max_vel path path_waits chase_follow_distance chase_speed "
     "trigger_name ambush_range ambush_speed ambush_duration "
     "cycle_dx cycle_dy cycle_extend cycle_hold cycle_retract cycle_wait cycle_phase "
-    "sprite_z_order"
+    "sprite_z_order sprite_scale boss_hits chase_limit ambush_vertical from_death until_death"
 ).split()
 
 
@@ -119,6 +119,8 @@ def parse_traps(array_body, paths):
             "sprite_z_order"
         ).split():
             trap[key] = _num(fields.get(key, 0))
+        for key in ("from_death", "until_death"):
+            trap[key] = int(_num(fields.get(key, 0)))
         trap["trigger"] = _string(fields.get("trigger_name", "nullptr"))
         trap["path"] = paths.get(fields.get("path", "").strip(), [])
         traps.append(trap)
@@ -213,6 +215,17 @@ def load_level_file(path):
             level.checkpoints = parse_checkpoints(checkpoint_arrays[f[14]])
         levels[name] = level
     return levels
+
+
+def window_label(from_death, until_death):
+    """'deaths 3+' / 'deaths 0-2' for a Level Devil object that is only there
+    on some attempts (from_death / until_death), None for an ordinary one."""
+    if not from_death and not until_death:
+        return None
+    if not until_death:
+        return f"deaths {from_death}+"
+    last = until_death - 1
+    return f"deaths {from_death}" if last == from_death else f"deaths {from_death}-{last}"
 
 
 # ---------------------------------------------------------- geometry --
@@ -319,6 +332,7 @@ STYLE = """
   .platform.unreachable { fill: #ef9a9a; stroke: #b71c1c; }
   .platform.switched { stroke-dasharray: 2 1; }
   .platform.crumble { stroke-dasharray: 1 1; }
+  .windowed { stroke-dasharray: 4 1 1 1; }
   .trigger { fill: #4aa3df; fill-opacity: 0.15; stroke: #1e78b4; stroke-width: 0.5; stroke-dasharray: 2 1; }
   .link { stroke: #1e78b4; stroke-width: 0.4; stroke-dasharray: 0.5 1.5; fill: none; }
   .trap { stroke-width: 0.6; fill-opacity: 0.35; }
@@ -451,7 +465,13 @@ def render(level, arcs="all", optimistic=False, show_traps=True, scale=2.0, reac
             cls += " crumble"
             back = f"back after {p.respawn}f" if p.respawn else "never back"
             title += f" - crumbles {p.crumble}f after the first step, {back}"
+        window = window_label(p.from_death, p.until_death)
+        if window:
+            cls += " windowed"
+            title += f" - only there after {window}"
         svg.rect(p.cx, p.cy, p.w, p.h, cls, title)
+        if window:
+            svg.text(p.cx, p.cy + p.h / 2 + 6, window, "small", "middle")
         if p.crumble:
             svg.text(p.cx, p.cy - p.h / 2 - 2, f"crumbles {p.crumble}f", "small", "middle")
         if p.trigger is not None:
@@ -595,6 +615,11 @@ def _draw_triggers_and_traps(svg, level):
         x, y = trap_position(trap)
         cls = f"trap trap-{kind.lower()}"
         title = f"{kind} trap at ({x:g},{y:g}) {trap['width']:g}x{trap['height']:g}"
+        window = window_label(trap["from_death"], trap["until_death"])
+        if window:
+            cls += " windowed"
+            title += f" - only there after {window}"
+            svg.text(x, y + trap["height"] / 2 + 6, window, "small", "middle")
         if trap["trigger"]:
             title += f" - trigger {trap['trigger']}"
             t = by_name.get(trap["trigger"])
