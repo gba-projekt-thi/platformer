@@ -578,7 +578,7 @@ void LevelManager::load(const LevelData& level) {
     _load_triggers(level);
     _door_trap = find_trigger(level.door.trap_trigger_name);
     _checkpoint_run.forget_trigger(
-        _door_trap != nullptr ? int(_door_trap - _triggers.data())
+        _door_trap != nullptr ? _door_trap - _triggers.data()
                               : CheckpointRun::NO_TRIGGER);
     _load_dynamic_platforms(level);
     _load_traps(level);
