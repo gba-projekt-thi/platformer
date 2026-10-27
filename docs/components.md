@@ -352,6 +352,23 @@ clears them on level load. An event stays readable until the player's next
 update, so every trigger sees it exactly once, whatever the order of the
 collision shapes in `CollisionRegistry`.
 
+**Delayed trap chains.** A trigger with `TriggerData::follows` is built as a
+*follower* (`TriggerState(default_on, mode, delay, true)`): `on_enter()` /
+`on_exit()` and its own mode do nothing, and `follow(source_on)` presses it to
+`!default_on` or releases it - only a change starts its delay. The links live
+in `TriggerChains` (`trigger_logic.h`, Butano-free, unit-tested in
+`tests/host/test_trigger_chain.cpp`): `_load_triggers()` resolves each
+`follows` name to an index once every trigger exists and takes their start
+state with `capture()`. Every frame, right after the collision update,
+`_trigger_chains.propagate(_triggers)` hands each follower its source's state
+**of the previous frame** and then takes the new one. So every hop costs
+exactly one frame plus the follower's delay, independent of the order of the
+trigger array and of the chain's length, and a cycle of followers can neither
+fire nor loop. `_finish_respawn()` calls `capture()` after the reset and the
+checkpoint restore, so nothing from before the death reaches a follower: a
+chain the checkpoint saw fully fired stays on, a hop that was still counting
+runs again from the respawn.
+
 Platforms bind to a trigger through `PlatformData::trigger_name`. After the
 triggers load, `LevelManager::_bind_switched_platforms()` resolves each name
 once with `get_trigger_by_name()`. Every frame, right after the collision

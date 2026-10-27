@@ -402,6 +402,15 @@ starts a moment after the duck stepped on the zone or flipped the lever, and a
 seconds after the level begins. Both keep a death cheap, because a respawn
 restarts the clock.
 
+Triggers can also be **chained**: one trigger sets off the next a moment later,
+which can set off a third - the duck steps on a plate, the floor drops at once,
+and a breath later spikes shoot out exactly where it would have landed. A chain
+plays the same way every time, whatever the duck does in between, so the
+player can learn it: the first time it is a Level Devil surprise, the second
+time a rhythm to wait out. A death resets the whole chain; a checkpoint keeps
+what had already happened before it was reached. Lever Hall in World 5 hides
+one behind its first lever.
+
 ## Boss levels
 
 Every world's gameplay culminates in a **boss level**: a mostly flat corridor
