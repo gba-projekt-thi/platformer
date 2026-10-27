@@ -146,6 +146,16 @@ struct TriggerData {
     // default) or jumping / dashing while inside it (Jump, Dash). Appended
     // after delay_frames.
     TriggerAction action = TriggerAction::Enter;
+
+    // Delayed trap chains: the name of another trigger of the same level.
+    // This trigger then ignores the duck (and its own mode/action) and is
+    // switched by that trigger instead - on (!default_on) when the source's
+    // state turns on, back when it turns off - one frame plus delay_frames
+    // later (see TriggerChains in trigger_logic.h). A follower can be the
+    // source of the next one: plate -> floor drops -> spikes shoot out.
+    // nullptr = an ordinary trigger. Appended last so positional literals
+    // that stop earlier keep compiling unchanged.
+    const char* follows = nullptr;
 };
 
 // -----------------------------------------------------------------------------

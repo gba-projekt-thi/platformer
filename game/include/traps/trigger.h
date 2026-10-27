@@ -24,6 +24,8 @@
 // - Timer: switches on by itself delay_frames after the level (re)starts
 // - delay_frames > 0: traps and platforms follow the player's action only
 //   after that many frames; a visible switch still flips at once
+// - Follower (TriggerData::follows): ignores the player and is switched by
+//   another trigger via follow() - LevelManager runs the chain
 // - Can start enabled or disabled
 // - Resettable on death/restart: LevelManager resets triggers directly, so a
 //   trigger driving only platforms resets too
@@ -43,13 +45,16 @@ class Trigger : public PhysicsBody, public IResettable {
         int t_sprite_index_off = 0,
         int t_sprite_index_on = 1,
         unsigned t_delay_frames = 0,
-        TriggerAction t_action = TriggerAction::Enter);
+        TriggerAction t_action = TriggerAction::Enter,
+        bool t_follower = false);
     bool is_triggered() const;
     // Runs the delay / timer of the trigger state (see trigger_logic.h).
     void update() override;
     void on_enter(uint16_t hit_layers, StaticBody* body) override;
     void on_exit(uint16_t hit_layers, StaticBody* body) override;
     void reset() override;
+    // Delayed trap chain: the source trigger's state (see TriggerChains).
+    void follow(bool source_on);
     // Checkpoint respawn: puts the state back to a snapshot (not for Hold).
     void restore(bool triggered);
 

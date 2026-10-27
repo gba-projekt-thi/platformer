@@ -744,6 +744,10 @@ def load_levels(path):
                         "default_on": tf[4].strip() == "true",
                         "rect": (tx, ty, tw, th),
                     }
+        # Only a trigger some platform is bound to can change what is
+        # reachable; the rest (trap cues, delayed trap chains) are no levers.
+        switching = {p.trigger for p in platforms if p.trigger is not None}
+        triggers = {n: t for n, t in triggers.items() if n in switching}
         spawn = tuple(_num(v) for v in _fields_of(f[8])[:2])
         # The door of the first attempt (see load_door_positions()).
         door_pos = _door_positions(_fields_of(f[9]), flee_paths)[0]

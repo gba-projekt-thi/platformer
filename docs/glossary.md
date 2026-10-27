@@ -127,6 +127,13 @@ slot, and load/save/reset operations. See [Architecture](architecture.md).
 triggers, traps, spawn, door, world size, background, music) rather than
 hard-coded logic. See [Level Design](level-design.md).
 
+**Delayed trap chain** — Triggers that fire one after the other: a trigger
+with `TriggerData::follows` ignores the duck and switches on when the named
+trigger of the same level does (and off when it does), one frame plus its own
+`delay_frames` later; it can be the source of the next one. Plate -> floor
+drops -> spikes shoot out. See
+[Level Design — Delayed trap chains](level-design.md#delayed-trap-chains).
+
 **Death height** — The vertical threshold below which the duck is considered
 dead (fell off the world). See [Components — Player System](components.md).
 
@@ -366,6 +373,9 @@ by the handheld audio hardware. See [Asset Management](asset-management.md).
 **Trigger** — An invisible rectangular zone that activates linked hazards when
 the duck enters it; may start active or inactive. See
 [Level Design](level-design.md).
+
+**Trigger follower** — A trigger with `TriggerData::follows`, a link in a
+[delayed trap chain](#d).
 
 **Trigger action** — `TriggerData::action`: what counts as entering a trigger's
 zone - the duck stepping in (Enter, default) or jumping / dashing while inside

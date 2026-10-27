@@ -36,7 +36,7 @@ Items carry the fields of PlatformData / TriggerData / TrapData /
 CheckpointData by name (see level_structure.h) plus an optional "note"
 (comment above it) and "blank_before" (empty line above it). Field order and
 defaults are read from level_structure.h. Values: numbers, true/false, null
-(nullptr), strings for the names (trigger names, hints); sprites by item name
+(nullptr), strings for the names (trigger names, follows, hints); sprites by item name
 ("bubbles"), trap types and trigger modes / actions by their enumerator
 ("MOVING", "Toggle"), spans and paths by their constant (levels_common.h);
 any other string is written as a C++ expression ("Cfg::ZOrder::DOOR").
@@ -69,6 +69,7 @@ STRUCTURE = HEADER_DIR / "level_structure.h"
 STRING_FIELDS = {
     ("PlatformData", "trigger_name"),
     ("TriggerData", "name"),
+    ("TriggerData", "follows"),
     ("TrapData", "trigger_name"),
     ("DoorData", "trap_trigger_name"),
     ("LevelData", "intro_hint"),

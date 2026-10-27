@@ -59,6 +59,12 @@ class TriggerWiringTests(unittest.TestCase):
         self.assertIn("_inside = true", self.enter)
         self.assertIn("_inside = false", self.exit)
 
+    def test_a_follower_is_pressed_through_its_state(self):
+        follow = _body(self.text, r"void\s+Trigger::follow\s*\(\s*bool\s+\w+\s*\)")
+        self.assertIsNotNone(follow)
+        self.assertIn("_state.follow(", follow)
+        self.assertIn("_refresh_visual()", follow)
+
     def test_only_enter_triggers_fire_from_the_overlap(self):
         self.assertRegex(
             self.enter, r"if\s*\(_action\s*==\s*TriggerAction::Enter\)\s*\{\s*_state\.on_enter\(\);"
@@ -76,6 +82,26 @@ class LevelManagerWiringTests(unittest.TestCase):
     def test_delay_and_action_reach_the_trigger(self):
         self.assertIn("trigger.delay_frames", self.triggers)
         self.assertIn("trigger.action", self.triggers)
+
+    def test_follows_makes_a_follower_and_links_it_by_name(self):
+        self.assertIn("trigger.follows != nullptr", self.triggers)
+        self.assertIn("_trigger_chains.clear()", self.triggers)
+        self.assertIn("_trigger_chains.link(", self.triggers)
+        # The links need every trigger of the level, so they come after the
+        # loop that creates them; the chain starts from their default state.
+        self.assertLess(self.triggers.index("emplace_back("), self.triggers.index("_trigger_chains.link("))
+        self.assertIn("_trigger_chains.capture(_triggers)", self.triggers)
+
+    def test_every_frame_hands_the_sources_to_the_followers_after_the_collisions(self):
+        update = _body(self.text, r"LevelManager::UpdateResult\s+LevelManager::update\s*\(\s*\)")
+        self.assertLess(update.index("update_all()"), update.index("_trigger_chains.propagate(_triggers)"))
+
+    def test_a_respawn_takes_the_restored_triggers_as_the_chains_start(self):
+        finish = _body(self.text, r"void\s+LevelManager::_finish_respawn\s*\(\s*\)")
+        self.assertLess(
+            finish.index("_checkpoint_run.restore(_triggers)"),
+            finish.index("_trigger_chains.capture(_triggers)"),
+        )
 
     def test_a_level_load_forgets_the_last_levels_jump_and_dash(self):
         self.assertIn("PlayerEvents::instance().clear()", self.spawn)

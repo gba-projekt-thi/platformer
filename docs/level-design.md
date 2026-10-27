@@ -234,6 +234,13 @@ where it is otherwise: a Timer trigger makes the cycle start a few seconds in,
 a lever switches the spikes off (or on). Without one it cycles from the first
 frame of the level. A death restarts every cycle from its phase.
 
+**One stab only.** A `cycle_wait_frames` longer than any attempt (e.g. 36000,
+ten minutes) turns the cycle into a one-shot: bound to a trigger it stabs once
+when the trigger turns on, sinks back and stays hidden until the next death
+restarts it. That is the end piece of a [delayed trap
+chain](#delayed-trap-chains); no separate trap type is needed. Start it below
+the screen or behind a platform (`sprite_z_order` 1) so it is not seen before.
+
 ```json
 // spikes rise 12px out of the floor: 6 frames up, 30 up, 6 down, 60 resting;
 // the second one starts half a round (51 frames) later
@@ -626,9 +633,10 @@ Triggers are the stage's **director**: they decide *when* things happen.
 
 - Each moving/path trap references a trigger by its stable `name`. When the
   duck enters the trigger's rectangle, every trap bound to that name
-  activates - so one trigger can fire several traps at once (a **trigger
-  chain**), which is how several levels pair a falling hazard with a patrol
-  or a second hazard on the same cue.
+  activates - so one trigger can fire several traps at once, which is how
+  several levels pair a falling hazard with a patrol or a second hazard on
+  the same cue. For hazards that follow each other *in time* see
+  [Delayed trap chains](#delayed-trap-chains).
 - A trigger can start **already active**, so its hazards move from the moment
   the stage loads — useful for a constant patrol the duck must dodge from the
   start.
@@ -718,6 +726,55 @@ the duck does and what the traps and platforms bound to the trigger do:
 {"x": -196, "y": 44, "width": 16, "height": 16, "name": "late", "mode": "Toggle",
  "sprite": "lever16x16", "delay_frames": 30}
 ```
+
+### Delayed trap chains
+
+One cue, several effects one after the other - the Level Devil classic: the duck
+steps on a plate, the floor drops at once, and 40 frames later spikes shoot out
+where it would land. `TriggerData::follows` (the last field, default none)
+names another trigger of the same level; this trigger then **follows** it
+instead of the duck:
+
+- A follower ignores the duck (its zone, `mode` and `action` do nothing). It
+  turns on (to `!default_on`) when its source's state turns on and back off
+  when the source turns off - a Toggle lever flipped back or a Hold plate left
+  undoes the chain step by step, a Latch plate keeps it on until the next
+  death.
+- Each hop costs **1 frame plus the follower's own `delay_frames`**:
+  `plate -> drop (0) -> spikes (40)` fires the drop 1 frame after the plate and
+  the spikes 41 frames after the drop. The order of the trigger array does not
+  matter, and a follower can be the source of the next one (3, 4, ... hops).
+  Several followers may share one source.
+- Changes undone within a follower's delay never show, exactly as for the
+  duck's own triggers.
+- **Death** resets the whole chain. After a **checkpoint** respawn, every trigger
+  that was on when the flag was reached is on again: a chain that had fully
+  fired stays fired; a hop that was still counting starts again from the
+  respawn (its source is on, so it fires 1 + delay frames later).
+- `Check_trigger_references.py` fails on a `follows` that names no trigger of
+  the level, a trigger that follows itself and a cycle (`a` follows `b`, `b`
+  follows `a`) - such a chain could never fire.
+- `Check_level_reachability.py` treats every trigger as a lever the duck can
+  set, so bind followers to **traps**, not to switched platforms the level
+  depends on.
+
+For spikes that shoot out **once**, bind a Cycle trap to the chain's last
+trigger and give it a rest longer than any attempt (see
+[The cycle](#6-the-cycle-cycle-trap)). Lever Hall (World 5) has a 3-step
+chain: an invisible plate on the gate stone, then a stab out of the landing
+barrel 21 frames later and one out of lever2's barrel 31 frames after that.
+
+```json
+// plate -> the landing barrel stabs 21 frames later -> the next one 31 after that
+{"x": -124, "y": 44, "width": 16, "height": 16, "name": "stone_plate"},
+{"x": -48, "y": 44, "width": 16, "height": 16, "name": "landing_stab",
+ "delay_frames": 20, "follows": "stone_plate"},
+{"x": -16, "y": 44, "width": 16, "height": 16, "name": "lever_stab",
+ "delay_frames": 30, "follows": "landing_stab"}
+```
+
+Two overlapping zones with different delays fake the same thing, but break as
+soon as the duck enters them in a different order; a chain cannot.
 
 A trigger can also have an optional **visible sprite** with an "off" and an
 "on" tile, so a switch reads as a switch. Without one it stays invisible,

@@ -184,6 +184,29 @@ TEST_CASE(cycle_scaling_keeps_a_zero_phase_at_zero) {
     CHECK(hard.hold >= 1u);
 }
 
+TEST_CASE(cycle_with_a_wait_longer_than_any_attempt_stabs_exactly_once) {
+    // The one-shot spike of a delayed trap chain: a CYCLE trap bound to the
+    // chain's last trigger, whose rest outlasts any attempt (a death resets
+    // the trap to the start of its round). Out over 4 frames, out for 20,
+    // back over 8, then 10 minutes of rest - even in Hard Mode.
+    for (int speed : {100, 135, 50}) {
+        const CycleTiming stab = scaled_cycle({4, 20, 8, 36000}, speed);
+        int stabs = 0;
+        bool out = false;
+        unsigned frame = 0;
+        for (int i = 0; i < 60 * 60 * 3; ++i) {  // three minutes
+            const bool now_out = cycle_progress(stab, frame) > 0;
+            if (now_out && !out) {
+                ++stabs;
+            }
+            out = now_out;
+            frame = next_cycle_frame(stab, frame);
+        }
+        CHECK_EQ(stabs, 1);
+        CHECK(!out);  // and back in its hiding place afterwards
+    }
+}
+
 // ---- chaser target ----------------------------------------------------------
 
 TEST_CASE(chase_target_follows_behind_the_duck) {

@@ -15,7 +15,8 @@ Trigger::Trigger(
     int t_sprite_index_off,
     int t_sprite_index_on,
     unsigned t_delay_frames,
-    TriggerAction t_action)
+    TriggerAction t_action,
+    bool t_follower)
     : PhysicsBody(
           t_x,
           t_y,
@@ -24,7 +25,7 @@ Trigger::Trigger(
           Cfg::Layer::TRIGGER,
           Cfg::Layer::PLAYER,
           0),
-      _state(t_default_on, t_mode, t_delay_frames),
+      _state(t_default_on, t_mode, t_delay_frames, t_follower),
       _name(t_name),
       _action(t_action) {
     if (t_sprite != nullptr) {
@@ -80,6 +81,11 @@ void Trigger::on_exit(
 
 void Trigger::reset() {
     _state.reset();
+    _refresh_visual();
+}
+
+void Trigger::follow(bool source_on) {
+    _state.follow(source_on);
     _refresh_visual();
 }
 
