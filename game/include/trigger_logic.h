@@ -34,6 +34,12 @@
 // delay) works the same on top of it; a Hold plate with Jump is pressed by a
 // jump inside it and released when the duck leaves.
 //
+// Follower (TriggerData::follows): a trigger in a delayed trap chain. It
+// ignores the duck completely (and its own mode) and is pressed by another
+// trigger instead: follow(true) when the source's triggered() is on,
+// follow(false) when it is off again. Its delay_frames run as usual on top.
+// TriggerChains below hands the sources' state to the followers.
+//
 // In every mode reset() restores default_on.
 // -----------------------------------------------------------------------------
 
@@ -61,12 +67,19 @@ action_fires(TriggerAction action, bool inside, bool jumped, bool dashed)
 
 class TriggerState {
    public:
-    TriggerState(bool default_on, TriggerMode mode, unsigned delay_frames = 0)
+    // `follower`: pressed by its source (follow()), never by the duck; its
+    // mode is then ignored.
+    TriggerState(
+        bool default_on,
+        TriggerMode mode,
+        unsigned delay_frames = 0,
+        bool follower = false)
         : _effective(default_on),
           _pressed(default_on),
           _default_on(default_on),
-          _mode(mode),
-          _delay(delay_frames) {}
+          _mode(follower ? TriggerMode::Latch : mode),
+          _delay(delay_frames),
+          _follower(follower) {}
 
     // The state traps and switched platforms follow (after the delay).
     [[nodiscard]] auto triggered() const -> bool { return _effective; }
@@ -79,7 +92,7 @@ class TriggerState {
     [[nodiscard]] auto pending() const -> bool { return _countdown > 0; }
 
     void on_enter() {
-        if (_mode == TriggerMode::Timer) {
+        if (_follower || _mode == TriggerMode::Timer) {
             return;
         }
         if (_mode == TriggerMode::Toggle) {
@@ -93,6 +106,20 @@ class TriggerState {
     void on_exit() {
         if (_mode == TriggerMode::Hold) {
             _set_pressed(_default_on);
+        }
+    }
+
+    // A follower's source turned on (or is on) / off: pressed() becomes
+    // !default_on / default_on. Called every frame with the source's state;
+    // only a change starts the delay. No effect on a trigger that is not a
+    // follower.
+    void follow(bool source_on) {
+        if (!_follower) {
+            return;
+        }
+        const bool pressed = source_on ? !_default_on : _default_on;
+        if (pressed != _pressed) {
+            _set_pressed(pressed);
         }
     }
 
@@ -159,6 +186,86 @@ class TriggerState {
     bool _default_on;
     TriggerMode _mode;
     unsigned _delay;
+    bool _follower;
     unsigned _countdown = 0;
     unsigned _clock = 0;
+};
+
+// -----------------------------------------------------------------------------
+// TriggerChains
+//
+// Which trigger follows which (TriggerData::follows, resolved to indexes) and
+// the once-per-frame hand-over from the sources to the followers. Works on any
+// container with size() and operator[] whose elements have is_triggered() and
+// follow(bool) (Trigger in the game, a stand-in in
+// tests/host/test_trigger_chain.cpp).
+//
+// Timing: propagate() runs once per frame, after every trigger has ticked and
+// the duck has pressed / left its triggers. It hands over the sources' state
+// as it was at the end of the PREVIOUS frame, so every hop costs exactly one
+// frame (plus the follower's delay_frames), whether the source is listed
+// before or after the follower and however long the chain is: a follower is
+// pressed as if the duck had stepped into it one frame after its source's
+// triggered() changed.
+//
+// After the triggers are reset or restored (death, checkpoint respawn, level
+// load) capture() takes their state as the new "previous frame", so nothing
+// from before the reset reaches a follower.
+// -----------------------------------------------------------------------------
+class TriggerChains {
+   public:
+    // Matches Cfg::Level::Limits::TRIGGERS (checked in LevelManager).
+    static constexpr int MAX_TRIGGERS = 16;
+    static constexpr int8_t NO_SOURCE = -1;
+
+    TriggerChains() {
+        for (int8_t& source : _source) {
+            source = NO_SOURCE;
+        }
+    }
+
+    // Trigger `follower` follows trigger `source`. Out-of-range indexes and a
+    // trigger following itself are ignored.
+    void link(int follower, int source) {
+        if (follower < 0 || follower >= MAX_TRIGGERS || source < 0 ||
+            source >= MAX_TRIGGERS || follower == source) {
+            return;
+        }
+        _source[follower] = static_cast<int8_t>(source);
+    }
+
+    // Level load: no trigger follows any other.
+    void clear() { *this = TriggerChains(); }
+
+    // Takes the triggers' current state as the previous frame's.
+    template <typename Triggers>
+    void capture(const Triggers& triggers) {
+        for (int i = 0; i < _count(triggers); ++i) {
+            _was_on[i] = triggers[i].is_triggered();
+        }
+    }
+
+    // Once per frame: every follower follows its source's previous-frame
+    // state, then the current state is taken for the next frame.
+    template <typename Triggers>
+    void propagate(Triggers& triggers) {
+        const int count = _count(triggers);
+        for (int i = 0; i < count; ++i) {
+            const int source = _source[i];
+            if (source != NO_SOURCE && source < count) {
+                triggers[i].follow(_was_on[source]);
+            }
+        }
+        capture(triggers);
+    }
+
+   private:
+    template <typename Triggers>
+    static auto _count(const Triggers& triggers) -> int {
+        const int size = static_cast<int>(triggers.size());
+        return size < MAX_TRIGGERS ? size : MAX_TRIGGERS;
+    }
+
+    int8_t _source[MAX_TRIGGERS];
+    bool _was_on[MAX_TRIGGERS] = {};
 };
