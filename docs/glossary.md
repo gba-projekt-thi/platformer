@@ -134,7 +134,8 @@ dead (fell off the world). See [Components — Player System](components.md).
 the next stage. Normally the animated door32x32 sprite, but the underlying
 collision/completion logic accepts any sprite and animation sequence,
 including a static one - used in World 5's finale, where the "door" is
-Susanne. See [Components — Level Management](components.md).
+Susanne. It can also run away (`flee_path`), turn into a trap or move between
+attempts - see *False exit*. See [Components — Level Management](components.md).
 
 ## E
 
@@ -150,6 +151,12 @@ See [Architecture](architecture.md).
 
 **Facing** — The direction the duck is oriented (forward, back, left, right),
 feeding animation selection. See [Components — Player System](components.md).
+
+**False exit** — The real door lying: with `DoorData::trap_trigger_name` it
+kills on touch while that trigger is on (it looks the same either way), and
+with `DoorData::attempt_positions` / `attempt_every` it stands somewhere else
+after every few deaths in the level. Decided in `door_logic.h`. See [Level
+Design — False exits](level-design.md#false-exits-the-door-that-turns-the-door-that-moves).
 
 **Fixed-capacity container** — A collection with a compile-time maximum size,
 used for per-level objects to avoid heap fragmentation on a memory-constrained

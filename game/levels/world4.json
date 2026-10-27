@@ -117,6 +117,12 @@
           {"x": 152, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower1", "sprite_index": 0}
         ]
       },
+      "triggers": {
+        "name": "world4b_scroll_triggers",
+        "items": [
+          {"note": "False exit: a lever on the last beet, a pressure plate (Hold) with a\nhalf-second lag both ways. Hop across and nothing happens; stand on it\nand the lever drops, and the door turns into a trap until half a second\nafter the duck has left - it kills the duck that jumps over to it.", "x": 104, "y": 44, "width": 16, "height": 16, "default_on": false, "name": "door_trap", "mode": "Hold", "sprite": "lever16x16", "delay_frames": 30}
+        ]
+      },
       "traps": {
         "name": "world4b_scroll_traps",
         "items": [
@@ -130,13 +136,16 @@
       "spawn": [-144, 42],
       "door": {
         "x": 152,
-        "y": 42
+        "y": 42,
+        "trap_trigger_name": "door_trap",
+        "attempt_positions": [[0, 0], [-96, -16]],
+        "attempt_every": 3
       },
       "world_width": 320,
       "world_height": 160,
       "field_notes": {
         "spawn": "Player spawn",
-        "door": "Door position",
+        "door": "Door position. A trap while the lever is down (door_trap); after\nthree deaths in the level it takes pity and waits on flower3 (56, 26),\nbefore the lever (attempt_positions).",
         "world_width": "World size (enables scrolling)"
       }
     },

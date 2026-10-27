@@ -13,6 +13,7 @@
 #include "bn_sprite_items_flower2.h"
 #include "bn_sprite_items_flower3.h"
 #include "bn_sprite_items_korb.h"
+#include "bn_sprite_items_lever16x16.h"
 #include "bn_sprite_items_nest32x16.h"
 #include "bn_sprite_items_strauch32x32.h"
 
@@ -155,6 +156,14 @@ constexpr PlatformData world4b_scroll_platforms[] = {
     {104, 64, 16, 16, 0, -4, bn::sprite_items::beet, 0},
     {152, 60, 16, 10, 0, 0, bn::sprite_items::flower1, 0}};
 
+constexpr TriggerData world4b_scroll_triggers[] = {
+    // False exit: a lever on the last beet, a pressure plate (Hold) with a
+    // half-second lag both ways. Hop across and nothing happens; stand on it
+    // and the lever drops, and the door turns into a trap until half a second
+    // after the duck has left - it kills the duck that jumps over to it.
+    {104, 44, 16, 16, false, "door_trap", TriggerMode::Hold,
+     &bn::sprite_items::lever16x16, 0, 1, 30}};
+
 constexpr TrapData world4b_scroll_traps[] = {
 
     // Trailing bug, introducing CHASE outside a boss fight: eases toward
@@ -194,19 +203,36 @@ constexpr TrapData world4b_scroll_traps[] = {
      1.5,
      30}};
 
+constexpr bn::fixed_point LEVEL_WORLD4_SCROLL_2_door_attempt_positions[] = {
+    {0, 0},
+    {-96, -16}};
+
 const LevelData LEVEL_WORLD4_SCROLL_2 = {
     world4b_scroll_platforms,
     sizeof(world4b_scroll_platforms) / sizeof(world4b_scroll_platforms[0]),
-    nullptr,
-    0,
+    world4b_scroll_triggers,
+    sizeof(world4b_scroll_triggers) / sizeof(world4b_scroll_triggers[0]),
     world4b_scroll_traps,
     sizeof(world4b_scroll_traps) / sizeof(world4b_scroll_traps[0]),
     bn::regular_bg_items::world4,
     bn::music_items::world4,
     // Player spawn
     {-144, 42},
-    // Door position
-    {152, 42},
+    // Door position. A trap while the lever is down (door_trap); after
+    // three deaths in the level it takes pity and waits on flower3 (56, 26),
+    // before the lever (attempt_positions).
+    {152,
+     42,
+     bn::sprite_items::door32x32,
+     DOOR32X32_GRAPHICS_INDEXES,
+     8,
+     false,
+     {},
+     0,
+     0,
+     "door_trap",
+     LEVEL_WORLD4_SCROLL_2_door_attempt_positions,
+     3},
     // World size (enables scrolling)
     320,
     160};

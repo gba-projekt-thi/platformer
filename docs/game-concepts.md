@@ -376,6 +376,15 @@ kills on touch like any static hazard. They exist for the levels that want to
 be mean on purpose; the real checkpoint's flag turns green when it is reached,
 which is the one thing a fake never does.
 
+The real door can lie as well. A **false exit** is the level's own door,
+turned into a trap while some trigger is on - step on the wrong lever, wait
+too long, walk instead of jump - and then it kills like a fake, without
+looking any different. And a door can **move between attempts**: after a
+few deaths in the level it stands somewhere else, so the route learnt by
+dying leads to the wrong place (or, in a kind level, to a nearer one).
+Death puts the trigger back, so every attempt starts with an honest door;
+only the death count decides where it stands.
+
 ### Crumbling platforms
 
 Some platforms do not wait for a trigger: they react to the duck itself. A

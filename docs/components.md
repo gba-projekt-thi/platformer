@@ -292,6 +292,20 @@ The base trap owns:
   `TrapData::sprite_z_order` (any trap type) is applied by `TrapFactory::create()`
   after the concrete trap is built, through `BaseTrap::set_sprite_z_order()`, so
   the fake stands behind the duck like the real one.
+- **False exits** are the real door lying, decided in `door_logic.h` (pure,
+  host-tested): `on_touch(reached, locked, trapped)` turns a touch into
+  `Finish`, `Kill` or nothing (a boss-locked door does neither), `trapped()`
+  reads the `DoorData::trap_trigger_name` trigger that `LevelManager` looks up
+  after loading the triggers, and `attempt_offset()` picks the door's spot
+  from `DoorData::attempt_positions` with `attempt_variant::variant_for_attempt()`.
+  `LevelManager::_check_door_trap()` runs right after the collision update,
+  before `_check_player_died()`, so a door that kills starts the death
+  feedback like a trap does; it clears the door's `reached()` and calls
+  `Player::death()`. `_deaths_at_entry` (set where `_deaths_seen` is on level
+  load) gives `_deaths_in_level()`, and `_place_door()` hands it to
+  `Door::place_for_attempt()` on load and in `_finish_respawn()` - which
+  every death, checkpoint respawn and Restart Level ends in. The door keeps
+  no tell: its sprite never changes.
 - **Cycle traps** run a fixed timeline (`trap_timing::CycleTiming`, pure and
   unit-tested: `cycle_progress()` returns how far out the trap is in permille
   for a frame of the round, `next_cycle_frame()` wraps the round without a
