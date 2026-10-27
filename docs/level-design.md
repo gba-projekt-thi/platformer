@@ -755,9 +755,11 @@ instead of the duck:
 - `Check_trigger_references.py` fails on a `follows` that names no trigger of
   the level, a trigger that follows itself and a cycle (`a` follows `b`, `b`
   follows `a`) - such a chain could never fire.
-- `Check_level_reachability.py` treats every trigger as a lever the duck can
-  set, so bind followers to **traps**, not to switched platforms the level
-  depends on.
+- Bind followers to **traps**, not to switched platforms:
+  `Check_level_reachability.py` takes a platform's trigger for a lever the duck
+  sets in its zone, which a follower never is, so `Check_trigger_references.py`
+  rejects a platform bound to a follower. To open or close a platform with a
+  chain, bind it to the chain's source.
 
 For spikes that shoot out **once**, bind a Cycle trap to the chain's last
 trigger and give it a rest longer than any attempt (see

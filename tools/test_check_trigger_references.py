@@ -250,6 +250,19 @@ class FollowsTests(unittest.TestCase):
         )
         self.assertEqual((errors, warnings), ([], []))
 
+    def test_a_platform_on_a_follower_is_an_error(self):
+        # The reachability check takes a platform's trigger for a lever the
+        # duck flips in its zone; a follower ignores the duck, so the check
+        # would be wrong either way. Bind followers to traps.
+        errors, _ = run_check(
+            triggers='    {0, 0, 8, 8, false, "a"},\n' + follower("sw", "a"),
+            traps=MOVING_A,
+            extra_platforms='    {16, 60, 16, 8, 0, 0, bn::sprite_items::p, 0, "sw", true},\n',
+        )
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn('"sw"', errors[0])
+        self.assertIn("follows", errors[0])
+
     def test_a_follower_nobody_uses_is_still_a_warning(self):
         errors, warnings = run_check(
             triggers='    {0, 0, 8, 8, false, "a"},\n' + follower("b", "a"),

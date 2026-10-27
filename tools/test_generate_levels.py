@@ -227,6 +227,20 @@ class GenerateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "from_death"):
             gen.generate(world(lv), STRUCTS)
 
+    def test_a_misspelled_field_is_an_error(self):
+        # Dropped without a word it would turn the Level Devil part off: a
+        # trap with "until_deth" is simply always there.
+        lv = level()
+        lv["platforms"]["items"][0]["until_deth"] = 3
+        with self.assertRaisesRegex(ValueError, "until_deth"):
+            gen.generate(world(lv), STRUCTS)
+
+    def test_a_door_field_that_does_not_exist_is_an_error(self):
+        lv = level()
+        lv["door"] = {"x": 1, "y": 2, "from_death": 3}
+        with self.assertRaisesRegex(ValueError, "from_death"):
+            gen.generate(world(lv), STRUCTS)
+
     def test_a_boss_cannot_have_a_death_window(self):
         lv = level(traps={"name": "tr", "items": [
             {"type": "BOSS", "x": 0, "y": 0, "width": 8, "height": 8, "offset_x": 0,

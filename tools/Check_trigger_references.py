@@ -269,6 +269,15 @@ def check_file(path: Path):
                                 f"'{platform_array_name}' references trigger_name "
                                 f'"{n}", not found in \'{trigger_array_name}\''
                             )
+                        elif n in follows:
+                            # The reachability check takes it for a lever the
+                            # duck flips; a follower ignores the duck.
+                            errors.append(
+                                f"{path.name}: {level_name} - platform in "
+                                f"'{platform_array_name}' is bound to trigger "
+                                f'"{n}", which follows "{follows[n]}": bind '
+                                f"followers to traps, platforms to the source"
+                            )
 
         # DoorData::trap_trigger_name: the door that turns into a trap. The
         # door literal (LevelData field 9) has no other quoted field.

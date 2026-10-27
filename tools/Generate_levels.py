@@ -167,6 +167,11 @@ def positional(struct, item, structs):
     """The fields of `item` in declaration order, up to the last one given;
     skipped ones in between get their default."""
     fields = structs[struct]
+    # A misspelled field would be dropped without a word (a trap with
+    # "until_deth" is simply always there).
+    unknown = sorted(set(item) - {f for f, _ in fields})
+    if unknown:
+        raise ValueError(f"{struct}: no field {', '.join(unknown)} in {item}")
     # Up to the last field given, and always past every field without a
     # default member initializer (leaving one out of an aggregate is a
     # -Wmissing-field-initializers warning).
