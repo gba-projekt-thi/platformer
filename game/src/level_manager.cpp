@@ -1,5 +1,7 @@
 #include "level_manager.h"
 
+#include "attempt_objects.h"
+#include "attempt_variant.h"
 #include "audio_settings.h"
 #include "background.h"
 #include "bn_keypad.h"
@@ -119,6 +121,7 @@ void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.cancel_death_fx();
     Camera::instance().set_shake(0, 0);
     _deaths_seen = _player.get_deaths();
+    _deaths_at_entry = _player.get_deaths();
     _skip_death_fx = false;
     _respawn_pending = false;
 }
@@ -244,6 +247,12 @@ void LevelManager::_finish_respawn() {
     if (_door) {
         _door->reset_flee();
     }
+    // Level Devil: this attempt's traps and platforms, then the dynamic
+    // platforms that are there start over (the resets below put them back).
+    if (_level != nullptr) {
+        _apply_attempt(*_level);
+        _load_dynamic_platforms(*_level);
+    }
     _dynamic_platforms.reset_crumbling();
     _fleeing_platforms.reset();
     _checkpoint_run.restore(_triggers);
@@ -312,13 +321,6 @@ void LevelManager::_load_platforms(const LevelData& level) {
         _platform_bodies.back().pos.offset_x = platform.offset_x;
         _platform_bodies.back().pos.offset_y = platform.offset_y;
         _platform_bodies.back().sprite = wrapped_sprite.get();
-        if (!platform.flee_path.empty()) {
-            _fleeing_platforms.add(
-                _platform_bodies.back(), *wrapped_sprite, platform.x,
-                platform.y, platform.flee_path.data(),
-                platform.flee_path.size(), platform.flee_range,
-                platform.flee_frames);
-        }
 
         _platforms.push_back(bn::move(wrapped_sprite));
     }
@@ -347,10 +349,23 @@ void LevelManager::_load_triggers(const LevelData& level) {
 }
 
 void LevelManager::_load_dynamic_platforms(const LevelData& level) {
+    _dynamic_platforms.clear();
+    _fleeing_platforms.clear();
     // _platforms / _platform_bodies hold exactly one entry per platform, in
     // the same order as level.platforms (see _load_platforms()).
     for (int i = 0; i < level.platform_count; ++i) {
         const PlatformData& platform = level.platforms[i];
+        // One that is not there this attempt stays hidden (_apply_attempt()):
+        // no switch, crumble or flee may bring it back.
+        if (!_present(platform.from_death, platform.until_death)) {
+            continue;
+        }
+        if (!platform.flee_path.empty()) {
+            _fleeing_platforms.add(
+                _platform_bodies[i], *_platforms[i], platform.x, platform.y,
+                platform.flee_path.data(), platform.flee_path.size(),
+                platform.flee_range, platform.flee_frames);
+        }
         if (platform.trigger_name != nullptr) {
             BN_ASSERT(
                 platform.crumble_frames == 0,
@@ -383,8 +398,57 @@ void LevelManager::_sync_crumble_platforms() {
         });
 }
 
+unsigned LevelManager::_deaths_in_level() const {
+    return attempt_variant::deaths_in_level(
+        _player.get_deaths(), _deaths_at_entry);
+}
+
+bool LevelManager::_present(unsigned from_death, unsigned until_death) const {
+    return attempt_variant::active_for_deaths(
+        _deaths_in_level(), from_death, until_death);
+}
+
+void LevelManager::_apply_attempt(const LevelData& level) {
+    // Objects without a window are never touched: every level without one
+    // plays exactly as before.
+    for (int i = 0; i < level.platform_count; ++i) {
+        const PlatformData& platform = level.platforms[i];
+        if (!attempt_objects::has_window(
+                platform.from_death, platform.until_death)) {
+            continue;
+        }
+        switch (attempt_objects::platform_action(
+            _present(platform.from_death, platform.until_death),
+            platform.trigger_name != nullptr)) {
+            case attempt_objects::PlatformAction::Show:
+                _platform_bodies[i].enable();
+                _platforms[i]->enable();
+                break;
+            case attempt_objects::PlatformAction::Hide:
+                _platform_bodies[i].disable();
+                _platforms[i]->disable();
+                break;
+            case attempt_objects::PlatformAction::LeaveToSwitch:
+            default:
+                break;
+        }
+    }
+    // _traps holds one trap per level.traps entry, in order (_load_traps()).
+    for (int i = 0; i < level.trap_count; ++i) {
+        const TrapData& trap = level.traps[i];
+        if (attempt_objects::has_window(trap.from_death, trap.until_death)) {
+            _traps[i]->set_present(_present(trap.from_death, trap.until_death));
+        }
+    }
+}
+
 void LevelManager::_load_traps(const LevelData& level) {
     for (int i = 0; i < level.trap_count; ++i) {
+        BN_ASSERT(
+            level.traps[i].type != TrapType::BOSS ||
+                !attempt_objects::has_window(
+                    level.traps[i].from_death, level.traps[i].until_death),
+            "A boss cannot have from_death / until_death");
         _traps.push_back(TrapFactory::create(level.traps[i], *this));
         _resettables.push_back(_traps.back().get());
         if (level.traps[i].type == TrapType::BOSS) {
@@ -465,6 +529,8 @@ void LevelManager::load(const LevelData& level) {
     _load_dynamic_platforms(level);
     _load_traps(level);
     _load_checkpoints(level);
+    _level = &level;
+    _apply_attempt(level);
     _dynamic_platforms.sync_switched(_player.pos);
 }
 
@@ -477,6 +543,7 @@ void LevelManager::unload() {
     _door.reset();
     _music.reset();
     _clear_runtime_state();
+    _level = nullptr;
 }
 
 LevelManager::UpdateResult LevelManager::update() {

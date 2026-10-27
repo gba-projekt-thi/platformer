@@ -163,9 +163,22 @@ class LevelManager {
     // Restart Level / level load: no checkpoint, respawn at the level spawn.
     void _clear_checkpoint();
     // Hands the switched (trigger_name) and crumbling (crumble_frames)
-    // platforms to _dynamic_platforms, after the platforms and triggers are
-    // loaded.
+    // platforms to _dynamic_platforms and the running ones (flee_path) to
+    // _fleeing_platforms, after the platforms and triggers are loaded - only
+    // those that are there on this attempt (_present()). Starts both over, so
+    // _finish_respawn() calls it again after every death.
     void _load_dynamic_platforms(const LevelData& level);
+
+    // Level Devil: deaths of this visit of the level (the run's total since
+    // load()), see attempt_variant.h.
+    unsigned _deaths_in_level() const;
+    // Whether an object with this death window (from_death / until_death) is
+    // there on the current attempt.
+    bool _present(unsigned from_death, unsigned until_death) const;
+    // Shows / hides every platform and trap with a death window for the
+    // current attempt (attempt_objects.h). At level load and after every
+    // death, the checkpoint respawn and Restart Level included.
+    void _apply_attempt(const LevelData& level);
     // One frame of the crumbling platforms, after the collision update.
     void _sync_crumble_platforms();
 
@@ -222,6 +235,12 @@ class LevelManager {
     // where it is while the world is frozen.
     death_fx::Sequence _death_fx;
     unsigned _deaths_seen = 0;
+    // The run's death total when the level was loaded: what
+    // _deaths_in_level() counts from (Level Devil death windows).
+    unsigned _deaths_at_entry = 0;
+    // The loaded level (ROM data), for the per-attempt work after a death;
+    // nullptr after unload().
+    const LevelData* _level = nullptr;
     bool _skip_death_fx = false;
     bool _respawn_pending = false;
     bn::optional<Door> _door;

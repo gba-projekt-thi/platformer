@@ -84,6 +84,16 @@ struct PlatformData {
     bn::span<const bn::fixed_point> flee_path = {};
     int flee_range = 0;
     int flee_frames = 0;
+
+    // Level Devil: the platform is only there while the duck has died
+    // [from_death, until_death) times in this visit of the level
+    // (attempt_variant::active_for_deaths(); until_death 0 = no end). Outside
+    // that window it has no collision and no picture. 0, 0 = always there, as
+    // every platform before these fields existed. Two copies split at the same
+    // death (until 3 / from 3) make a platform move after the 3rd death.
+    // Appended last so existing literals keep compiling unchanged.
+    unsigned from_death = 0;
+    unsigned until_death = 0;
 };
 
 // -----------------------------------------------------------------------------
@@ -286,6 +296,21 @@ struct TrapData {
     // spikes shooting out of the ground the moment the duck is above them.
     // The trigger stays the duck's horizontal distance (ambush_range).
     bool ambush_vertical = false;
+
+    // -------------------------------------------------------------------------
+    // Any trap except BOSS
+    // -------------------------------------------------------------------------
+
+    // Level Devil: the trap is only there while the duck has died
+    // [from_death, until_death) times in this visit of the level
+    // (attempt_variant::active_for_deaths(); until_death 0 = no end). Outside
+    // that window it has no collision and no picture. 0, 0 = always there, as
+    // every trap before these fields existed. "After the 3rd death the trap
+    // sits somewhere else": one copy with until_death 3, one with
+    // from_death 3. Not for a BOSS (its fight shows and hides it itself).
+    // Appended last so existing literals keep compiling unchanged.
+    unsigned from_death = 0;
+    unsigned until_death = 0;
 };
 
 // -----------------------------------------------------------------------------
@@ -334,6 +359,16 @@ struct DoorData {
     bn::span<const bn::fixed_point> flee_path = {};
     int flee_range = 0;
     int flee_frames = 0;
+
+    // Level Devil: the platform is only there while the duck has died
+    // [from_death, until_death) times in this visit of the level
+    // (attempt_variant::active_for_deaths(); until_death 0 = no end). Outside
+    // that window it has no collision and no picture. 0, 0 = always there, as
+    // every platform before these fields existed. Two copies split at the same
+    // death (until 3 / from 3) make a platform move after the 3rd death.
+    // Appended last so existing literals keep compiling unchanged.
+    unsigned from_death = 0;
+    unsigned until_death = 0;
 };
 
 // -----------------------------------------------------------------------------

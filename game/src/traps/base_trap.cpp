@@ -52,6 +52,20 @@ void BaseTrap::on_enter(
     }
 }
 
+void BaseTrap::set_present(bool present) {
+    // The body keeps the duck's shape from finding the trap, the shape keeps
+    // the trap from finding the duck (on_enter() kills).
+    if (present) {
+        enable();
+        shape_enable();
+        _trap_sprite.enable();
+    } else {
+        disable();
+        shape_disable();
+        _trap_sprite.disable();
+    }
+}
+
 BaseTrap::~BaseTrap() {
     SpriteRegistry::instance().unregister_sprite(&_trap_sprite);
 }

@@ -158,6 +158,42 @@ class GenerateTests(unittest.TestCase):
         self.assertIn("x_platforms_0_flee_path,32,8}", text)
         self.assertLess(text.index("x_platforms_0_flee_path[]"), text.index("constexprPlatformDatax_platforms"))
 
+    def test_death_window_is_written_last_for_platforms_and_traps(self):
+        lv = level()
+        lv["platforms"]["items"][0].update({"from_death": 3})
+        lv["traps"] = {"name": "tr", "items": [
+            {"type": "BASE", "x": 0, "y": 0, "width": 8, "height": 8, "offset_x": 0,
+             "offset_y": 0, "sprite": "b", "until_death": 3}]}
+        text = squash(gen.generate(world(lv), STRUCTS))
+        # PlatformData: the defaults up to flee_frames, then from 3, until 0
+        self.assertIn("bn::sprite_items::stone,0,nullptr,true,0,0,{},0,0,3}", text)
+        self.assertIn(",false,0,3}", text)  # ...ambush_vertical, from 0, until 3
+
+    def test_death_window_fields_come_from_level_structure_h(self):
+        for struct in ("PlatformData", "TrapData"):
+            fields = [f for f, _ in STRUCTS[struct]]
+            self.assertEqual(fields[-2:], ["from_death", "until_death"])
+            self.assertEqual(dict(STRUCTS[struct])["from_death"], "0")
+
+    def test_an_empty_death_window_is_an_error(self):
+        lv = level()
+        lv["platforms"]["items"][0].update({"from_death": 3, "until_death": 3})
+        with self.assertRaisesRegex(ValueError, "never there"):
+            gen.generate(world(lv), STRUCTS)
+
+    def test_a_negative_death_window_is_an_error(self):
+        lv = level()
+        lv["platforms"]["items"][0].update({"from_death": -1})
+        with self.assertRaisesRegex(ValueError, "from_death"):
+            gen.generate(world(lv), STRUCTS)
+
+    def test_a_boss_cannot_have_a_death_window(self):
+        lv = level(traps={"name": "tr", "items": [
+            {"type": "BOSS", "x": 0, "y": 0, "width": 8, "height": 8, "offset_x": 0,
+             "offset_y": 0, "sprite": "b", "from_death": 2}]})
+        with self.assertRaisesRegex(ValueError, "BOSS"):
+            gen.generate(world(lv), STRUCTS)
+
     def test_includes_follow_the_assets_used(self):
         out = self.header(level())
         for include in ("bn_music_items.h", "bn_regular_bg_items_world9.h",

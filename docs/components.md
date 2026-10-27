@@ -399,7 +399,8 @@ Every trap implements the shared **resettable** interface. On player death or a
 manual restart, the level manager walks its resettable list and calls reset on
 each. Traps return to their start positions, re-arm, and (for chase traps)
 forget their tracking history. This keeps respawn deterministic: the same stage
-layout faces the player each time.
+layout faces the player each time - unless the level asks for a different one
+(see [Death windows](#death-windows-level-devil) below).
 
 ### Hard Mode speed scaling
 
@@ -554,6 +555,42 @@ The shake and the fall are the sprite's `pos.offset_x/offset_y`, so the
 collision box never moves. `_finish_respawn()` calls
 `_reset_crumble_platforms()`, which also covers Restart Level. No new sprites
 are created, so the sprite budget is unchanged.
+
+### Death windows (Level Devil)
+
+`PlatformData` and `TrapData` end with `from_death` / `until_death`: the
+object is only there while `attempt_variant::active_for_deaths(deaths, from,
+until)` holds, where `deaths` is `_deaths_in_level()` - the run's death total
+minus `_deaths_at_entry`, which `_load_player_spawn()` takes right where it
+takes `_deaths_seen`. 0, 0 (the default) is always there, and such objects are
+never touched, so every level without windows behaves as before.
+
+Everything is created at load as usual; `_apply_attempt()` then shows or hides
+the objects with a window. It runs at the end of `load()` and in
+`_finish_respawn()` after the entities are reset, so it covers a death, the
+checkpoint respawn and Restart Level alike - and only after the death freeze,
+so the trap that killed the duck stays put while the world is frozen.
+
+- **Traps**: `BaseTrap::set_present()` switches the body (the duck's shape does
+  not find it), the collision shape (it does not find the duck) and the sprite.
+  An absent trap keeps updating invisibly and is reset like any other before it
+  reappears. A BOSS cannot have a window (`Generate_levels.py` rejects it, the
+  load asserts it).
+- **Platforms**: the decision is `attempt_objects::platform_action()`
+  (`attempt_objects.h`, Butano-free, host-tested): absent -> Hide (body and
+  sprite off), present -> Show, present and switched -> LeaveToSwitch
+  (`sync_switched()` decides as always, so a returning switched platform still
+  never appears inside the duck). `_load_dynamic_platforms()` starts
+  `_dynamic_platforms` and `_fleeing_platforms` over on every respawn and
+  registers only the platforms that are there, so no crumble respawn, switch or
+  flee can bring an absent one back; the following `reset_crumbling()` /
+  `reset()` put the present ones back untouched.
+- **Checkpoints** are not windowed, and the checkpoint snapshot only restores
+  trigger states, so it is independent of the windows.
+  `Check_checkpoints.py` keeps a flag off platforms with a window.
+
+Absent objects keep their sprites allocated (hidden), so the sprite budget
+counts every copy.
 
 ### Checkpoints
 

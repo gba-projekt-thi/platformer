@@ -109,5 +109,62 @@ class LevelManagerWiringTests(unittest.TestCase):
         self.assertIn("_spawn_x = level.player_data.x", self.text)
 
 
+@unittest.skipIf(CPP is None, "level_manager.cpp not found")
+class AttemptObjectsWiringTests(unittest.TestCase):
+    """Level Devil: traps and platforms with a death window (from_death /
+    until_death). The rules are host-tested (test_attempt_variant.cpp,
+    test_attempt_objects.cpp); these pin down when LevelManager applies them."""
+
+    @classmethod
+    def setUpClass(cls):
+        text = CPP.read_text()
+        cls.text = text
+        cls.load = _method(text, "load", r"\s*const LevelData&\s*\w+\s*")
+        cls.spawn = _method(text, "_load_player_spawn", r"\s*const LevelData&\s*\w+\s*")
+        cls.finish = _method(text, "_finish_respawn")
+        cls.apply = _method(text, "_apply_attempt", r"\s*const LevelData&\s*\w+\s*")
+        cls.dynamic = _method(text, "_load_dynamic_platforms", r"\s*const LevelData&\s*\w+\s*")
+        cls.deaths = _body(text, r"LevelManager::_deaths_in_level\s*\(\)\s*const")
+
+    def test_every_method_is_found(self):
+        for name in ("load", "spawn", "finish", "apply", "dynamic", "deaths"):
+            self.assertIsNotNone(getattr(self, name), name)
+
+    def test_the_run_total_is_taken_where_the_death_feedback_takes_it(self):
+        seen = self.spawn.index("_deaths_seen = _player.get_deaths()")
+        self.assertLess(seen, self.spawn.index("_deaths_at_entry = _player.get_deaths()"))
+
+    def test_deaths_in_level_count_from_the_entry(self):
+        self.assertIn(
+            "attempt_variant::deaths_in_level(_player.get_deaths(),_deaths_at_entry)",
+            re.sub(r"\s+", "", self.deaths))
+
+    def test_load_applies_the_windows_once_everything_exists(self):
+        apply = self.load.index("_apply_attempt(level)")
+        for call in ("_load_platforms(level)", "_load_dynamic_platforms(level)", "_load_traps(level)"):
+            self.assertLess(self.load.index(call), apply, call)
+        self.assertLess(apply, self.load.index("_dynamic_platforms.sync_switched("))
+
+    def test_a_respawn_applies_them_after_the_reset_and_before_the_platform_resets(self):
+        # Covers a death, the checkpoint respawn and Restart Level: all of them
+        # end in _finish_respawn().
+        apply = self.finish.index("_apply_attempt(")
+        dynamic = self.finish.index("_load_dynamic_platforms(")
+        self.assertLess(self.finish.index("_reset_entities()"), apply)
+        self.assertLess(apply, dynamic)
+        self.assertLess(dynamic, self.finish.index("_dynamic_platforms.reset_crumbling()"))
+        self.assertLess(dynamic, self.finish.index("_fleeing_platforms.reset()"))
+
+    def test_absent_platforms_stay_out_of_the_dynamic_helpers(self):
+        self.assertIn("_dynamic_platforms.clear()", self.dynamic)
+        self.assertIn("_fleeing_platforms.clear()", self.dynamic)
+        self.assertIn("_present(", self.dynamic)
+        self.assertIn("_fleeing_platforms.add(", self.dynamic)
+
+    def test_apply_uses_the_host_tested_rules(self):
+        self.assertIn("attempt_objects::platform_action(", self.apply)
+        self.assertIn("set_present(", self.apply)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -40,6 +40,11 @@ defaults are read from level_structure.h. Values: numbers, true/false, null
 ("MOVING", "Toggle"), spans and paths by their constant (levels_common.h);
 any other string is written as a C++ expression ("Cfg::ZOrder::DOOR").
 
+Platforms and traps take "from_death" / "until_death" (Level Devil: only
+there while the duck has died that many times in the level, see
+attempt_variant.h); a window that is never open (until <= from) or one on a
+BOSS is an error.
+
 Usage (from the repository root):
     python3 tools/Generate_levels.py           write every header
     python3 tools/Generate_levels.py --check   exit 1 if a header is out of date
@@ -174,10 +179,26 @@ def positional(struct, item, structs):
     return "{" + ", ".join(out) + "}"
 
 
+def death_window(struct, item):
+    """Checks an item's from_death / until_death (Level Devil: only there
+    while the duck has died [from, until) times in the level, until 0 = no
+    end) and raises ValueError for one that can never work."""
+    window = {key: item.get(key, 0) for key in ("from_death", "until_death")}
+    for key, v in window.items():
+        if isinstance(v, bool) or not isinstance(v, int) or v < 0:
+            raise ValueError(f"{struct}: {key} must be a whole number >= 0 in {item}")
+    start, end = window["from_death"], window["until_death"]
+    if end and end <= start:
+        raise ValueError(f"{struct}: until_death {end} <= from_death {start}, it is never there: {item}")
+    if (start or end) and struct == "TrapData" and item.get("type") == "BOSS":
+        raise ValueError(f"TrapData: a BOSS cannot have from_death / until_death: {item}")
+
+
 def _array(struct, array, structs):
     definitions = ""
     items = []
     for i, item in enumerate(array["items"]):
+        death_window(struct, item)
         definition, item = _flee_path(item, f"{array['name']}_{i}_flee_path")
         definitions += definition
         text = ""

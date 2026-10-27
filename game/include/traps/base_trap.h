@@ -44,6 +44,12 @@ class BaseTrap : public PhysicsBody, public IResettable {
     // Reset trap state after player death or level restart.
     void reset() override {}
 
+    // Level Devil (TrapData::from_death / until_death): false takes the trap
+    // out of this attempt - no collision either way, no picture - true puts
+    // it back. LevelManager calls it after reset(), only for traps with a
+    // death window; never for a BOSS (its fight shows and hides it itself).
+    void set_present(bool present);
+
     // Draw order of the trap's sprite (see TrapData::sprite_z_order).
     void set_sprite_z_order(int z_order) {
         _trap_sprite.sprite().set_z_order(z_order);
