@@ -257,7 +257,7 @@ resets entities, unloads it, and reports outcomes to the scene. See
 **Mailmap** — A Git file normalizing commit authorship identities across
 contributors. See [Development Workflow](development-workflow.md).
 
-**Mimic** — An animated disguised-hazard enemy (dungeon theme) that stays
+**Mimic** — An animated disguised-hazard enemy (castle theme) that stays
 motionless while cycling animation frames. See
 [Components — Trap System](components.md).
 
@@ -406,7 +406,7 @@ A forgiving-control mechanic. See [Game Concepts](game-concepts.md).
 
 ## W
 
-**World** — A themed group of stages (ocean, factory, forest, garden, dungeon).
+**World** — A themed group of stages (bathtub, sewers, forest, village, castle).
 See [Game Concepts](game-concepts.md).
 
 **World size** — The extents of a stage's playable area; larger than the screen

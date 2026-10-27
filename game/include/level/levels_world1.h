@@ -191,7 +191,7 @@ const LevelData LEVEL_WORLD1_SCROLL = {
 
 // =============================================================================
 // WORLD 1 TRICK - "Second Chances", a kind Level Devil level (world_width=384)
-// The pond plays its first tricks - and takes pity: after three deaths a
+// The bathtub plays its first tricks - and takes pity: after three deaths a
 // stepping stone surfaces and the door comes down from its ledge to the
 // middle bank. Jump only.
 // =============================================================================
@@ -292,7 +292,7 @@ const LevelData LEVEL_WORLD1_TRICK = {
     160,
     1,
     // The first trick level: tell the player it is a kind one.
-    "The pond forgives. Mostly."};
+    "The tub forgives. Mostly."};
 
 // =============================================================================
 // WORLD 1 BOSS - "The Kugelfisch King" (world_width=480)

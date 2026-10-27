@@ -222,7 +222,7 @@ The current world themes, in order, are:
 | Sewerage (World 2, 3 levels incl. boss) | Industrial hazards | Pipes, cans, rusty nails |
 | Forest (World 3, 3 levels incl. boss) | Misty climb | Trees, fog, mushrooms, slither arms |
 | Village (World 4, 3 levels incl. boss) | Bright open spaces | Flowers, baskets, bugs, nests, an ambush bug |
-| Dungeon (World 5, 6 levels incl. boss and finale) | Final gauntlet | Barrels, bars, chests, levers, an ambush mimic, axes, thwomps |
+| Castle (World 5, 6 levels incl. boss and finale) | Final gauntlet | Barrels, bars, chests, levers, an ambush mimic, axes, thwomps |
 
 Each theme pairs a tilemap background, a music track, a set of themed trap
 sprites, and a platform tileset. This pairing is what gives each world its

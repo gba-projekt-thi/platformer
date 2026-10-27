@@ -844,14 +844,14 @@ Each world is a coherent theme that ties visuals and audio together:
 
 | World | Theme | Background | Themed hazards |
 |-------|-------|-----------|----------------|
-| 1 | Ocean | Underwater tilemap | Bubbles |
-| 2 | Factory | Industrial tilemap | Pipes, cans, rusty nails |
+| 1 | Bathtub | Bathroom tilemap | Bubbles |
+| 2 | Sewers | Sewer tilemap | Pipes, cans, rusty nails |
 | 3 | Forest | Misty forest tilemap | Mushrooms, slither arms, branches |
-| 4 | Garden | Bright garden tilemap | Nests, bushes, bugs, bricks |
-| 5 | Dungeon | Dark dungeon tilemap | Barrels, bars, chests, levers, mimics, axes, thwomps |
+| 4 | Village | Bright village tilemap | Nests, bushes, bugs, bricks |
+| 5 | Castle | Dark castle tilemap | Barrels, bars, chests, levers, mimics, axes, thwomps |
 
-When designing a stage, pick hazards that *belong* to the theme. A factory stage
-with ocean bubbles breaks immersion. The goal is that a player who sees a frame
+When designing a stage, pick hazards that *belong* to the theme. A sewer stage
+with bathtub bubbles breaks immersion. The goal is that a player who sees a frame
 can tell which world they are in — background, platform art, hazard art, and
 music all reinforcing one identity. See [Asset Management](asset-management.md)
 for how these assets are organized.
@@ -873,7 +873,7 @@ graph LR
    jumping a gap.
 4. **Test.** Later stages introduce new hazards and tighter spacing that test
    everything learned.
-5. **Mastery.** The final stage (dungeon) combines the full hazard vocabulary —
+5. **Mastery.** The final stage (castle) combines the full hazard vocabulary —
    static hazards, an animated mimic, a triggered thwomp, and a relentless
    chasing axe — into a climactic gauntlet.
 6. **Release.** After mastery, one last stage deliberately breaks the ramp:

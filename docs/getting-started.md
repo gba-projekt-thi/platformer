@@ -14,7 +14,7 @@ worlds, dodging hazards, and reaching an exit door in each stage. It is a
 complete, playable experience with:
 
 - A start screen with multiple **save slots**
-- A sequence of themed levels (ocean, factory, forest, garden, dungeon)
+- A sequence of themed levels (bathtub, sewers, forest, village, castle)
 - A variety of **traps** and **trigger zones** that bring levels to life
 - Per-level music, tilemap backgrounds, and animated sprites
 - A persistent **death counter** and a run **timer**

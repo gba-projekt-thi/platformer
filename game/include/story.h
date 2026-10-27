@@ -48,14 +48,14 @@ inline constexpr Page WORLDS[] = {
     {{"A village! The ducks here", "saw Susanne pass by - and",
       "show Hildegard a trick:", "press R to strike down."},
      4},
-    {{"Susanne's trail leads down", "into a deep, steep dungeon.",
+    {{"Susanne's trail leads on", "into a deep, steep castle.",
       "Hold toward a wall and", "press A: wall jump!"},
      4},
 };
 
 // After the finale, before the reunion (KissingScene).
 inline constexpr Page ENDING = {
-    {"Bath, sewers, forest,", "village and dungeon -",
+    {"Bath, sewers, forest,", "village and castle -",
      "Hildegard made it through", "all of them. Susanne!",
      "Never pull the plug again."},
     5};
