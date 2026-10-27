@@ -122,6 +122,8 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
     // The pogo strike's slash, shown below the duck while it reaches.
     void _update_pogo_slash();
     bn::optional<Sprite> _pogo_slash;
+    // Ticks of the current strike; picks the slash's frame.
+    int _pogo_age = 0;
 
     // PlayerDeathHandler
     void on_locomotion_death() override { death(); }
