@@ -64,3 +64,26 @@ TEST_CASE(attempt_variant_degenerate_inputs_pick_the_first) {
     CHECK(variant_for_attempt(5, 2, 0) == 0);  // no variants
     CHECK(variant_for_attempt(5, 2, 1) == 0);  // only one
 }
+
+// ---- deaths at entry across a reload (Title -> Continue)
+// ------------------------------------------------------------------
+
+TEST_CASE(attempt_entry_deaths_resume_in_the_same_level) {
+    // Entered level 7 with 40 deaths, died 5 times, back via Continue: the
+    // level is still on its 6th attempt.
+    CHECK(attempt_variant::entry_deaths(7, 40, 7, 45) == 40u);
+}
+
+TEST_CASE(attempt_entry_deaths_start_over_in_another_level) {
+    CHECK(attempt_variant::entry_deaths(7, 40, 8, 45) == 45u);
+}
+
+TEST_CASE(attempt_entry_deaths_start_over_without_a_saved_level) {
+    // A fresh save (or a schema 9 one): no level entered yet.
+    CHECK(attempt_variant::entry_deaths(-1, 0, 0, 12) == 12u);
+}
+
+TEST_CASE(attempt_entry_deaths_never_exceed_the_total) {
+    // Inconsistent data must not hand out deaths the run never had.
+    CHECK(attempt_variant::entry_deaths(3, 50, 3, 20) == 20u);
+}

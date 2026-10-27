@@ -423,7 +423,9 @@ Two more ways for the real door to lie, both on the level's `door`
   last one stays (`attempt_variant::variant_for_attempt()`). Make the first
   spot `[0, 0]` so the first attempt - and a recorded replay - is unchanged.
   A death, a checkpoint respawn and Restart Level all re-place it; the deaths
-  count from entering the level, not over the whole run.
+  count from entering the level, not over the whole run. Leaving to the
+  title and continuing does not start the count over: the save keeps the
+  level the duck is in and its deaths at entry.
   `Generate_levels.py` refuses `attempt_positions` without an
   `attempt_every` >= 1.
 - Both combine with the rest of the door: a `flee_path` runs from whichever

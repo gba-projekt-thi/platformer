@@ -169,13 +169,15 @@ TEST_CASE(game_state_layout_lock) {
     // SAVE_VERSION, add the previous version's line to
     // game_state_migration.h::valid_bytes() (offsetof the new field), then
     // update the numbers below.
-    CHECK_EQ(static_cast<int>(sizeof(GameState)), 152);
+    CHECK_EQ(static_cast<int>(sizeof(GameState)), 156);
     CHECK_EQ(static_cast<int>(offsetof(GameState, level)), 0);
     CHECK_EQ(static_cast<int>(offsetof(GameState, furthest_level)), 10);
     CHECK_EQ(static_cast<int>(offsetof(GameState, best_time_frames)), 16);
     CHECK_EQ(static_cast<int>(offsetof(GameState, no_death_clears)), 144);
     CHECK_EQ(static_cast<int>(offsetof(GameState, assist_mode_enabled)), 150);
-    CHECK_EQ(SAVE_VERSION, 9);
+    CHECK_EQ(static_cast<int>(offsetof(GameState, entry_level)), 152);
+    CHECK_EQ(static_cast<int>(offsetof(GameState, entry_deaths)), 154);
+    CHECK_EQ(SAVE_VERSION, 10);
 }
 
 TEST_CASE(game_state_current_payload_roundtrips_exactly) {
@@ -397,4 +399,30 @@ TEST_CASE(game_state_v8_best_times_and_progress_survive) {
     for (int i = 27; i < GameState::MAX_LEVELS; ++i) {
         CHECK_EQ(state.best_time_frames[i], 0u);
     }
+}
+
+// ---- schema 10: the level the duck is in and its deaths at entry
+// --------------------------------------------------------------
+
+TEST_CASE(game_state_v9_payload_keeps_everything_before_entry_level) {
+    CHECK_EQ(
+        game_state_migration::valid_bytes(9),
+        static_cast<int>(offsetof(GameState, entry_level)));
+}
+
+TEST_CASE(game_state_v9_slot_has_no_level_entered) {
+    GameState saved{};
+    saved.level = 5;
+    saved.deaths = 9;
+    uint8_t bytes[sizeof(GameState)];
+    std::memset(bytes, 0xAB, sizeof(bytes));
+    std::memcpy(bytes, &saved, offsetof(GameState, entry_level));
+
+    GameState out{};
+    restore_state(
+        bytes, sizeof(GameState), 9, &game_state_migration::valid_bytes, out);
+    game_state_migration::upgrade(out, 9);
+    CHECK_EQ(int(out.level), 5);
+    CHECK_EQ(int(out.entry_level), -1);
+    CHECK_EQ(int(out.entry_deaths), 0);
 }

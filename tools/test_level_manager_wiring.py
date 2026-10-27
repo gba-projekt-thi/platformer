@@ -139,15 +139,27 @@ class LevelManagerWiringTests(unittest.TestCase):
 
     def test_the_deaths_of_this_level_count_from_its_entry(self):
         seen = self.text.index("_deaths_seen = _player.get_deaths();")
-        entry = self.text.index("_deaths_at_entry = _player.get_deaths();")
-        # set right where _deaths_seen is set on level load
-        self.assertLess(abs(entry - seen), 80)
+        entry = self.text.index("_deaths_at_entry = attempt_variant::entry_deaths(")
+        # set right after _deaths_seen on level load
+        self.assertLess(seen, entry)
+        self.assertLess(entry - seen, 400)
         deaths = _body(self.text, r"unsigned LevelManager::_deaths_in_level\(\) const") or ""
         # whitespace aside (clang-format wraps the call)
         self.assertIn(
             "attempt_variant::deaths_in_level(_player.get_deaths(),_deaths_at_entry)",
             re.sub(r"\s+", "", deaths),
         )
+
+    def test_the_entry_is_kept_in_the_save_for_continue(self):
+        # Title -> Continue must not set the level back to its first attempt.
+        body = re.sub(r"\s+", "", self.text[self.text.index("_deaths_at_entry = attempt_variant"):])
+        self.assertTrue(body.startswith(
+            "_deaths_at_entry=attempt_variant::entry_deaths(state.entry_level,state.entry_deaths,"
+            "state.level,_player.get_deaths());"))
+        self.assertIn("state.entry_level=state.level;", body[:400])
+        self.assertIn("state.entry_deaths=uint16_t(_deaths_at_entry);", body[:400])
+        # a continued level starts in the layout of its deaths: no cue for it
+        self.assertIn("_layout_deaths=_deaths_in_level();", body[:400])
 
     def test_the_door_is_placed_on_load_and_after_every_respawn(self):
         place = _method(self.text, "_place_door") or ""
@@ -205,7 +217,7 @@ class AttemptObjectsWiringTests(unittest.TestCase):
 
     def test_the_run_total_is_taken_where_the_death_feedback_takes_it(self):
         seen = self.spawn.index("_deaths_seen = _player.get_deaths()")
-        self.assertLess(seen, self.spawn.index("_deaths_at_entry = _player.get_deaths()"))
+        self.assertLess(seen, self.spawn.index("_deaths_at_entry = attempt_variant::entry_deaths("))
 
     def test_deaths_in_level_count_from_the_entry(self):
         self.assertIn(
@@ -246,7 +258,8 @@ class AttemptObjectsWiringTests(unittest.TestCase):
         self.assertLess(self.finish.index("_apply_attempt("), self.finish.index("_cue_layout_change()"))
 
     def test_level_load_and_the_replay_setup_give_no_cue(self):
-        self.assertIn("_layout_deaths = 0", self.spawn)
+        # the layout the load applies (attempt 0, or a continued level's own)
+        self.assertIn("_layout_deaths = _deaths_in_level()", self.spawn)
         setup = _method(self.text, "set_deaths_in_level", r"\s*unsigned\s+\w+\s*") or ""
         self.assertLess(setup.index("_layout_deaths = deaths"), setup.index("_finish_respawn()"))
         self.assertNotIn("_cue_layout_change()", self.load)

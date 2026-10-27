@@ -607,7 +607,12 @@ are created, so the sprite budget is unchanged.
 object is only there while `attempt_variant::active_for_deaths(deaths, from,
 until)` holds, where `deaths` is `_deaths_in_level()` - the run's death total
 minus `_deaths_at_entry`, which `_load_player_spawn()` takes right where it
-takes `_deaths_seen`. 0, 0 (the default) is always there, and such objects are
+takes `_deaths_seen`: `attempt_variant::entry_deaths()` keeps
+`GameState::entry_deaths` when `GameState::entry_level` is the level being
+loaded (Title -> Continue carries on with the level's deaths), else the run's
+total; both are written back on every load and saved with the next death
+(schema 10). `_layout_deaths` starts at that attempt, so a continued level
+gives no layout cue. 0, 0 (the default) is always there, and such objects are
 never touched, so every level without windows behaves as before.
 
 Everything is created at load as usual; `_apply_attempt()` then shows or hides

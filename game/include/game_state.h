@@ -89,6 +89,14 @@ struct GameState {
     // hard_mode_enabled and the audio volume settings. Added in save
     // schema version 5.
     bool assist_mode_enabled = false;
+
+    // The level the duck is in (-1: none yet) and the death total when it
+    // entered it, so a level that changes with the deaths in it
+    // (attempt_variant.h) is not set back to its first attempt by
+    // Title -> Continue. Written by LevelManager on every level load.
+    // Added in save schema version 10.
+    int16_t entry_level = -1;
+    uint16_t entry_deaths = 0;
 };
 
 inline void set_no_death_clear(GameState& state, unsigned level_index) {

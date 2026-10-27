@@ -59,6 +59,9 @@ inline auto valid_bytes(uint16_t version) -> int {
     if (version < 9) {
         return V8_SIZE;
     }
+    if (version < 10) {
+        return static_cast<int>(offsetof(GameState, entry_level));
+    }
     // Add "if (version < N) return offsetof(GameState, field);" lines here,
     // newest first, when a field is appended (see the procedure above).
     return static_cast<int>(sizeof(GameState));

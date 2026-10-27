@@ -122,8 +122,16 @@ void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.cancel_death_fx();
     Camera::instance().set_shake(0, 0);
     _deaths_seen = _player.get_deaths();
-    _deaths_at_entry = _player.get_deaths();
-    _layout_deaths = 0;
+    // Back in the level the save was in (Title -> Continue): it carries on
+    // with its deaths, so its death windows and door spot stay where they
+    // were. Saved with the next death.
+    GameState& state = _data_manager.state();
+    _deaths_at_entry = attempt_variant::entry_deaths(
+        state.entry_level, state.entry_deaths, state.level,
+        _player.get_deaths());
+    state.entry_level = state.level;
+    state.entry_deaths = uint16_t(_deaths_at_entry);
+    _layout_deaths = _deaths_in_level();
     _respawn_pending = false;
 }
 
