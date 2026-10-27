@@ -48,7 +48,7 @@ inline constexpr Page WORLDS[] = {
     {{"A village! The ducks here", "saw Susanne pass by - and",
       "show Hildegard a trick:", "press R to strike down."},
      4},
-    {{"Susanne's trail leads on", "into a deep, steep castle.",
+    {{"Susanne's trail leads up", "to a tall, grim castle.",
       "Hold toward a wall and", "press A: wall jump!"},
      4},
 };
