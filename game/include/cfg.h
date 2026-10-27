@@ -94,6 +94,11 @@ inline constexpr int FRAMES = 300;  // visible for 5s unless dismissed
 inline constexpr int Y = -48;       // below the HUD row (y = -70), above play
 }  // namespace Hint
 
+namespace ClearMoment {
+// "Clear!" of the level-clear moment (clear_logic.h), above the door's row.
+inline constexpr int Y = -24;
+}  // namespace ClearMoment
+
 namespace DeathCounter {
 inline constexpr int X = -110;
 inline constexpr int Y = -70;

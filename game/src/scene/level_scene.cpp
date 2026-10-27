@@ -2,8 +2,10 @@
 
 #include "bn_core.h"
 #include "bn_keypad.h"
+#include "bn_sound_items.h"
 #include "bn_unique_ptr.h"
 
+#include "audio_settings.h"
 #include "cfg.h"
 #include "data_manager.h"
 #include "game_session.h"
@@ -60,8 +62,12 @@ void LevelScene::_show_hint_if_needed() {
     }
 
     _hint_text = text;
-    _hint_timer.start();
-    _draw_hint();
+    // A boss level's hint is about the arena: it starts there (_update_hint).
+    _hint_waits_for_arena = _level_manager.has_boss();
+    if (!_hint_waits_for_arena) {
+        _hint_timer.start();
+        _draw_hint();
+    }
 }
 
 void LevelScene::_draw_hint() {
@@ -83,6 +89,14 @@ void LevelScene::_update_hint() {
     // The countdown only runs while the game does, and B only dismisses the
     // hint in play (in the pause menu B means 'back').
     const bool paused = _level_manager.paused();
+    if (_hint_waits_for_arena &&
+        hint::should_start(true, _level_manager.boss_fighting())) {
+        _hint_waits_for_arena = false;
+        _hint_timer.start();
+    }
+    if (_hint_waits_for_arena) {
+        return;
+    }
     if (!paused) {
         // Pressing B (the player has tried the dash) dismisses it at once.
         if (bn::keypad::b_pressed()) {
@@ -110,6 +124,17 @@ void LevelScene::_update_hint() {
 void LevelScene::update() {
     _update_hint();
 
+    // The clear moment: only the picture's blink and the sound go on.
+    if (_clear_moment.running()) {
+        _clear_moment.tick();
+        _level_manager.flash_door(_clear_moment.lit());
+        if (!_clear_moment.running()) {
+            _end_clear_moment();
+        }
+        bn::core::update();
+        return;
+    }
+
     // Waiting for the player to acknowledge a new best-time banner before
     // actually committing the level transition (see _new_best_pending's
     // comment in level_scene.h).
@@ -117,12 +142,7 @@ void LevelScene::update() {
         if (bn::keypad::a_pressed() || bn::keypad::start_pressed()) {
             _hide_new_best_banner();
             _new_best_pending = false;
-
-            if (_next_is_game_completion) {
-                _finalize_completion();
-            } else {
-                _finalize_advance(_pending_next_level_index);
-            }
+            _leave_level();
         }
         bn::core::update();
         return;
@@ -177,19 +197,49 @@ void LevelScene::update() {
     const bool completes_game =
         next_level_index >= static_cast<unsigned int>(_levels.size());
 
-    if (new_best) {
-        // Hold here - _finalize_advance()/_finalize_completion() run once
-        // the player acknowledges the banner (see top of this function).
-        _next_is_game_completion = completes_game;
-        _pending_next_level_index = next_level_index;
+    // Hold here - _finalize_advance()/_finalize_completion() run once the
+    // clear moment is over and, for a new best, the player acknowledged the
+    // banner (see top of this function).
+    _next_is_game_completion = completes_game;
+    _pending_next_level_index = next_level_index;
+    _clear_new_best = new_best;
+    _start_clear_moment();
+}
+
+void LevelScene::_start_clear_moment() {
+    // The level is done: the hint has nothing left to say.
+    _hint_sprites.clear();
+    _hint_text = nullptr;
+    _hint_text_gen.reset();
+
+    AudioSettings::instance().play_sfx(bn::sound_items::confirm);
+    _banner_text_gen.emplace(common::variable_8x16_sprite_font);
+    _banner_text_gen->set_z_order(Cfg::ZOrder::PAUSE_MENU);
+    _banner_text_gen->set_center_alignment();
+    _banner_text_gen->generate(
+        0, Cfg::ClearMoment::Y, "Clear!", _clear_sprites);
+    _clear_moment.start();
+    _level_manager.flash_door(true);
+    bn::core::update();
+}
+
+void LevelScene::_end_clear_moment() {
+    _level_manager.flash_door(false);
+    _clear_sprites.clear();
+    _banner_text_gen.reset();
+    if (_clear_new_best) {
         _new_best_pending = true;
         _show_new_best_banner();
         return;
-    };
-    if (completes_game) {
+    }
+    _leave_level();
+}
+
+void LevelScene::_leave_level() {
+    if (_next_is_game_completion) {
         _finalize_completion();
     } else {
-        _finalize_advance(next_level_index);
+        _finalize_advance(_pending_next_level_index);
     }
 }
 
