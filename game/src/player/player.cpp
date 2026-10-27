@@ -7,6 +7,14 @@
 
 #include "death_fx.h"
 
+namespace {
+// The pogo graphic's frames (swoosh, then impact star) and how many ticks
+// each shows; the age counts the strike's ticks (one Player exists at a time).
+constexpr int POGO_FRAMES = 3;
+constexpr int POGO_FRAME_TICKS = 4;
+int pogo_age = 0;
+}  // namespace
+
 Player::Player(
     bn::fixed in_start_x,
     bn::fixed in_start_y,
@@ -202,6 +210,7 @@ void Player::set_pogo_enabled(bool enabled) {
 void Player::_update_pogo_slash() {
     if (!_locomotion.pogo_striking() || !_player_sprite.is_enabled()) {
         _pogo_slash.reset();
+        pogo_age = 0;
         return;
     }
     // Centered on the strike's box below the body.
@@ -216,6 +225,11 @@ void Player::_update_pogo_slash() {
         _pogo_slash.emplace(bn::move(raw_sprite), x, y);
     }
     _pogo_slash->pos.move(x, y);
+    // Swoosh, then the impact star: a new frame every few ticks.
+    const int frame = bn::min(pogo_age / POGO_FRAME_TICKS, POGO_FRAMES - 1);
+    _pogo_slash->sprite().set_tiles(
+        bn::sprite_items::pogo16x16.tiles_item().create_tiles(frame));
+    ++pogo_age;
 }
 
 void Player::begin_death_fx() {
