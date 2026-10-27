@@ -158,6 +158,12 @@ class NewLevelTests(unittest.TestCase):
         self.assertTrue(ok)
         self.assertGreater(configs, 1)
 
+    def test_only_triggers_that_switch_a_platform_are_levers(self):
+        # Lever Hall's trap chain (an invisible plate and its followers) only
+        # drives traps: flipping it changes no platform, so it is no lever.
+        _, triggers, _, _ = self.level("LEVEL_WORLD5_LEVERS")
+        self.assertEqual(sorted(triggers), ["lever1", "lever2", "lever3", "lever4"])
+
     def test_every_lever_stands_on_a_platform(self):
         _, triggers, _, _ = self.level("LEVEL_WORLD5_LEVERS")
         for name, t in triggers.items():
