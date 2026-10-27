@@ -132,6 +132,7 @@ def quoted_strings_in(fields):
 # Positions in a TriggerData literal (level_structure.h): x, y, width, height,
 # default_on, name, mode, sprite, sprite_index_off, sprite_index_on,
 # delay_frames, action, follows.
+TRIGGER_DEFAULT_ON_FIELD = 4
 TRIGGER_NAME_FIELD = 5
 TRIGGER_FOLLOWS_FIELD = 12
 
@@ -146,12 +147,16 @@ def quoted_field(fields, index):
     return None
 
 
-def check_follows(follows, defined_names, where, trigger_array_name):
-    """Errors for TriggerData::follows (delayed trap chains): the source must
-    be a trigger of the same level, not the trigger itself, and following
-    must never lead in a circle (such a chain could never fire)."""
+def check_follows(followers, defined_names, where, trigger_array_name):
+    """Errors for TriggerData::follows (delayed trap chains). `followers`:
+    one (name, source, default_on) per following trigger, so unnamed and
+    same-named followers are each checked. The source must be a trigger of
+    the same level, not the trigger itself, and following must never lead in
+    a circle (nothing outside a cycle could ever start it). A follower must
+    not start on: fired, it is off, and a checkpoint's snapshot only switches
+    triggers back on, so it would fire again late after a respawn."""
     errors = []
-    for name, source in sorted(follows.items(), key=lambda kv: str(kv[0])):
+    for name, source, default_on in sorted(followers, key=lambda f: (str(f[0]), f[1])):
         if source == name:
             errors.append(f'{where} - trigger "{name}" follows itself')
         elif source not in defined_names:
@@ -159,6 +164,17 @@ def check_follows(follows, defined_names, where, trigger_array_name):
                 f'{where} - trigger "{name}" follows "{source}", '
                 f"not found in '{trigger_array_name}'"
             )
+        if default_on:
+            errors.append(
+                f'{where} - trigger "{name}" follows "{source}" with '
+                f"default_on true: a checkpoint cannot keep such a follower "
+                f"fired; start it off"
+            )
+    # By name, as the game looks the source up (the first of a name wins).
+    follows = {}
+    for name, source, _ in followers:
+        if name is not None:
+            follows.setdefault(name, source)
     reported = set()
     for start in sorted(n for n in follows if n is not None):
         path = []
@@ -206,7 +222,7 @@ def check_file(path: Path):
         trap_array_name = level_fields[4]
 
         defined_names = set()
-        follows = {}  # follower name -> source name (TriggerData::follows)
+        followers = []  # (name, source, default_on) per TriggerData::follows
         if trigger_array_name != "nullptr":
             body = trigger_arrays.get(trigger_array_name)
             if body is None:
@@ -222,11 +238,25 @@ def check_file(path: Path):
                         defined_names.add(name)
                     source = quoted_field(fields, TRIGGER_FOLLOWS_FIELD)
                     if source is not None:
-                        follows[name] = source
+                        default_on = (
+                            len(fields) > TRIGGER_DEFAULT_ON_FIELD
+                            and fields[TRIGGER_DEFAULT_ON_FIELD] == "true"
+                        )
+                        followers.append((name, source, default_on))
 
-        referenced_names = set(follows.values())
+        follows = {}  # follower name -> source name (the first of a name)
+        for name, source, _ in followers:
+            if name is not None:
+                follows.setdefault(name, source)
+        # Every use of a trigger name: one entry per follower, trap and
+        # platform bound to it (the door is checked against these below).
+        uses = {}
+        for name, source, _ in followers:
+            uses.setdefault(source, []).append(f'follower "{name}"')
+
+        referenced_names = {source for _, source, _ in followers}
         errors.extend(
-            check_follows(follows, defined_names, f"{path.name}: {level_name}",
+            check_follows(followers, defined_names, f"{path.name}: {level_name}",
                           trigger_array_name)
         )
         if trap_array_name != "nullptr":
@@ -246,6 +276,7 @@ def check_file(path: Path):
                         names = quoted_strings_in(fields)
                         referenced_names.update(names)
                         for n in names:
+                            uses.setdefault(n, []).append(f"trap in '{trap_array_name}'")
                             if n not in defined_names:
                                 errors.append(
                                     f"{path.name}: {level_name} - trap in "
@@ -263,6 +294,7 @@ def check_file(path: Path):
                 for lit in extract_top_level_literals(body):
                     for n in quoted_strings_in(top_level_fields(lit)):
                         referenced_names.add(n)
+                        uses.setdefault(n, []).append(f"platform in '{platform_array_name}'")
                         if n not in defined_names:
                             errors.append(
                                 f"{path.name}: {level_name} - platform in "
@@ -289,6 +321,23 @@ def check_file(path: Path):
                         f"{path.name}: {level_name} - door references "
                         f'trap_trigger_name "{n}", not found in '
                         f"'{trigger_array_name}'"
+                    )
+                # CheckpointRun::forget_trigger() leaves only this trigger
+                # out of the checkpoint snapshot. A source it follows would
+                # be restored and re-arm the door after every respawn, and
+                # whatever else uses it would lose its checkpoint state too.
+                elif n in follows:
+                    errors.append(
+                        f"{path.name}: {level_name} - door's trap_trigger_name "
+                        f'"{n}" follows "{follows[n]}": a checkpoint restores '
+                        f"the source and re-arms the door; use a trigger "
+                        f"that follows nothing"
+                    )
+                for use in uses.get(n, []):
+                    errors.append(
+                        f"{path.name}: {level_name} - door's trap_trigger_name "
+                        f'"{n}" is also used by a {use}: the checkpoint '
+                        f"forgets it for both; give the door its own trigger"
                     )
 
         unused = defined_names - referenced_names

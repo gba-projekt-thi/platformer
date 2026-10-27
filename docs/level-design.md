@@ -408,8 +408,13 @@ Two more ways for the real door to lie, both on the level's `door`
   a zone right in front of the door, a Hold plate somewhere else, a Timer
   ("the door does not wait"), a delay. A death resets the trigger and with it
   the door - behind a checkpoint too: the checkpoint's snapshot of the
-  triggers that were on never keeps this one. **No tell:** the door looks exactly the same either way - as in
-  Level Devil, the joke is that the safe door a moment ago is not safe now.
+  triggers that were on never keeps this one. So the trap trigger must be the
+  door's alone and must not follow another trigger: `Check_trigger_references.py`
+  rejects one that also drives a trap, a platform or a follower (they would
+  lose their checkpoint state with it) and one with `follows` (its source is
+  restored and would re-arm the door after every respawn). **No tell:** the
+  door looks exactly the same either way - as in Level Devil, the joke is
+  that the safe door a moment ago is not safe now.
   The tell belongs to the trigger: give it a visible sprite (a lever drops
   the moment the duck steps on it) or make the rule learnable in one death.
 - **The door that moves between attempts.** `attempt_positions` (offsets
@@ -432,8 +437,9 @@ Two more ways for the real door to lie, both on the level's `door`
 - `Check_level_reachability.py` checks **every** spot (each with its flee
   path's last stop) and that none lies outside the play area;
   `Check_trigger_references.py` checks `trap_trigger_name` like any other
-  trigger name. Neither knows when the trap trigger is on: make sure there
-  is a way to reach the door while it is off. `Preview_level.py` draws the
+  trigger name and the rules above. Neither knows when the trap trigger is
+  on: make sure there is a way to reach the door while it is off.
+  `Preview_level.py` draws the
   later spots as dashed doors ("door after 3+").
 
 `LEVEL_WORLD4_SCROLL_2` shows both: a lever on the last beet is a pressure
@@ -737,10 +743,13 @@ names another trigger of the same level; this trigger then **follows** it
 instead of the duck:
 
 - A follower ignores the duck (its zone, `mode` and `action` do nothing). It
-  turns on (to `!default_on`) when its source's state turns on and back off
-  when the source turns off - a Toggle lever flipped back or a Hold plate left
-  undoes the chain step by step, a Latch plate keeps it on until the next
-  death.
+  turns on when its source is **activated** - the source's state differs
+  from the source's own `default_on` - and back off when the source returns
+  to its default: a Toggle lever flipped back or a Hold plate left undoes the
+  chain step by step, a Latch plate keeps it on until the next death. A source
+  with `default_on: true` works the same way: its follower stays quiet at
+  load and fires when the duck switches the source off. A follower itself
+  must start off (`default_on: false`).
 - Each hop costs **1 frame plus the follower's own `delay_frames`**:
   `plate -> drop (0) -> spikes (40)` fires the drop 1 frame after the plate and
   the spikes 41 frames after the drop. The order of the trigger array does not
@@ -753,8 +762,11 @@ instead of the duck:
   fired stays fired; a hop that was still counting starts again from the
   respawn (its source is on, so it fires 1 + delay frames later).
 - `Check_trigger_references.py` fails on a `follows` that names no trigger of
-  the level, a trigger that follows itself and a cycle (`a` follows `b`, `b`
-  follows `a`) - such a chain could never fire.
+  the level, a trigger that follows itself, a cycle (`a` follows `b`, `b`
+  follows `a`) - nothing outside a cycle could ever start it - and a follower
+  with `default_on: true`: fired, it would be off, and the checkpoint's
+  snapshot only switches triggers back on, so it would fire again late after
+  every respawn. Every follower is checked, unnamed ones too.
 - Bind followers to **traps**, not to switched platforms:
   `Check_level_reachability.py` takes a platform's trigger for a lever the duck
   sets in its zone, which a follower never is, so `Check_trigger_references.py`

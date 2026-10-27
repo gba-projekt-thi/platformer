@@ -179,11 +179,60 @@ class DoorReferenceTests(unittest.TestCase):
         self.assertIn("door", errors[0])
         self.assertIn('"missing"', errors[0])
 
+    # A trapped door's trigger is left out of the checkpoint snapshot
+    # (CheckpointRun::forget_trigger()); anything else hanging on it would be
+    # left out as well, or would switch it back on after a respawn.
 
-def follower(name, follows):
-    """A trigger literal that follows `follows` (TriggerData::follows)."""
+    def test_a_door_trap_trigger_that_follows_is_an_error(self):
+        # Its source is restored after a checkpoint respawn and re-arms the
+        # door 1 + delay frames later, every attempt.
+        errors, _ = run_check(
+            triggers='    {0, 0, 8, 8, false, "a"},\n' + follower("door_trap", "a"),
+            traps=MOVING_A,
+            door=self.TRAPPED_DOOR % "door_trap",
+        )
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn("door", errors[0])
+        self.assertIn('"door_trap"', errors[0])
+        self.assertIn("follows", errors[0])
+
+    def test_a_door_trap_trigger_shared_with_a_platform_is_an_error(self):
+        errors, _ = run_check(
+            triggers='    {0, 0, 8, 8, false, "a"},\n    {9, 9, 8, 8, false, "door_trap"},\n',
+            traps=MOVING_A,
+            extra_platforms='    {16, 60, 16, 8, 0, 0, bn::sprite_items::p, 0, "door_trap", true},\n',
+            door=self.TRAPPED_DOOR % "door_trap",
+        )
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn("door", errors[0])
+        self.assertIn('"door_trap"', errors[0])
+
+    def test_a_door_trap_trigger_shared_with_a_trap_is_an_error(self):
+        errors, _ = run_check(
+            triggers='    {0, 0, 8, 8, false, "a"},\n',
+            traps=MOVING_A,
+            door=self.TRAPPED_DOOR % "a",
+        )
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn("door", errors[0])
+        self.assertIn('"a"', errors[0])
+
+    def test_a_door_trap_trigger_as_a_chain_source_is_an_error(self):
+        errors, _ = run_check(
+            triggers='    {9, 9, 8, 8, false, "door_trap"},\n' + follower("a", "door_trap"),
+            traps=MOVING_A,
+            door=self.TRAPPED_DOOR % "door_trap",
+        )
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn('"door_trap"', errors[0])
+
+
+def follower(name, follows, default_on="false"):
+    """A trigger literal that follows `follows` (TriggerData::follows).
+    `name` None: an unnamed trigger (nullptr)."""
+    quoted = "nullptr" if name is None else f'"{name}"'
     return (
-        f'    {{0, 0, 8, 8, false, "{name}", TriggerMode::Latch, nullptr, 0, 1,'
+        f'    {{0, 0, 8, 8, {default_on}, {quoted}, TriggerMode::Latch, nullptr, 0, 1,'
         f' 40, TriggerAction::Enter, "{follows}"}},\n'
     )
 
@@ -262,6 +311,43 @@ class FollowsTests(unittest.TestCase):
         self.assertEqual(len(errors), 1, errors)
         self.assertIn('"sw"', errors[0])
         self.assertIn("follows", errors[0])
+
+    def test_a_follower_that_starts_on_is_an_error(self):
+        # Fired, it is off - and a checkpoint's snapshot only switches
+        # triggers back on, so it would fire again late after a respawn.
+        errors, _ = run_check(
+            triggers='    {0, 0, 8, 8, false, "a"},\n' + follower("b", "a", "true"),
+            traps=MOVING_A + cycle_on("b"),
+        )
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn('"b"', errors[0])
+        self.assertIn("default_on", errors[0])
+
+    def test_a_source_that_starts_on_is_fine(self):
+        errors, warnings = run_check(
+            triggers='    {0, 0, 8, 8, true, "a"},\n' + follower("b", "a"),
+            traps=MOVING_A + cycle_on("b"),
+        )
+        self.assertEqual((errors, warnings), ([], []))
+
+    def test_every_unnamed_follower_is_checked(self):
+        errors, _ = run_check(
+            triggers='    {0, 0, 8, 8, false, "a"},\n'
+            + follower(None, "x") + follower(None, "y"),
+            traps=MOVING_A,
+        )
+        self.assertEqual(len(errors), 2, errors)
+        self.assertTrue(any('"x"' in e for e in errors), errors)
+        self.assertTrue(any('"y"' in e for e in errors), errors)
+
+    def test_every_follower_sharing_a_name_is_checked(self):
+        errors, _ = run_check(
+            triggers='    {0, 0, 8, 8, false, "a"},\n'
+            + follower("b", "x") + follower("b", "y"),
+            traps=MOVING_A + cycle_on("b"),
+        )
+        self.assertTrue(any('"x"' in e for e in errors), errors)
+        self.assertTrue(any('"y"' in e for e in errors), errors)
 
     def test_a_follower_nobody_uses_is_still_a_warning(self):
         errors, warnings = run_check(

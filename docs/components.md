@@ -298,7 +298,8 @@ The base trap owns:
   already caught this frame is not killed twice), `trapped()`
   reads the `DoorData::trap_trigger_name` trigger that `LevelManager` looks up
   after loading the triggers (and tells `CheckpointRun::forget_trigger()` to
-  leave out of the checkpoint snapshot), and `attempt_offset()` picks the door's spot
+  leave out of the checkpoint snapshot - which is why `Check_trigger_references.py`
+  rejects a trap trigger that follows another one or that anything else uses), and `attempt_offset()` picks the door's spot
   from `DoorData::attempt_positions` with `attempt_variant::variant_for_attempt()`.
   `LevelManager::_check_door_trap()` runs right after the collision update,
   before `_check_player_died()`, so a door that kills starts the death
@@ -370,8 +371,11 @@ collision shapes in `CollisionRegistry`.
 
 **Delayed trap chains.** A trigger with `TriggerData::follows` is built as a
 *follower* (`TriggerState(default_on, mode, delay, true)`): `on_enter()` /
-`on_exit()` and its own mode do nothing, and `follow(source_on)` presses it to
-`!default_on` or releases it - only a change starts its delay. The links live
+`on_exit()` and its own mode do nothing, and `follow(source_active)` presses it
+to `!default_on` or releases it - only a change starts its delay. A follower
+follows whether its source is **activated** (`triggered()` differs from the
+source's `default_on`), not the raw state: the first `capture()` after
+`clear()` (the level load) takes every trigger's state as its default. The links live
 in `TriggerChains` (`trigger_logic.h`, Butano-free, unit-tested in
 `tests/host/test_trigger_chain.cpp`): `_load_triggers()` resolves each
 `follows` name to an index once every trigger exists and takes their start
@@ -380,10 +384,13 @@ state with `capture()`. Every frame, right after the collision update,
 **of the previous frame** and then takes the new one. So every hop costs
 exactly one frame plus the follower's delay, independent of the order of the
 trigger array and of the chain's length, and a cycle of followers can neither
-fire nor loop. `_finish_respawn()` calls `capture()` after the reset and the
+fire (nobody in it is activated at load, and nothing outside can start it) nor
+loop. `_finish_respawn()` calls `capture()` after the reset and the
 checkpoint restore, so nothing from before the death reaches a follower: a
 chain the checkpoint saw fully fired stays on, a hop that was still counting
-runs again from the respawn.
+runs again from the respawn. That relies on a fired follower being *on* (the
+snapshot only switches triggers back on), so `Check_trigger_references.py`
+rejects a follower with `default_on: true`.
 
 Platforms bind to a trigger through `PlatformData::trigger_name`. After the
 triggers load, `LevelManager::_bind_switched_platforms()` resolves each name

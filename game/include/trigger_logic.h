@@ -36,9 +36,10 @@
 //
 // Follower (TriggerData::follows): a trigger in a delayed trap chain. It
 // ignores the duck completely (and its own mode) and is pressed by another
-// trigger instead: follow(true) when the source's triggered() is on,
-// follow(false) when it is off again. Its delay_frames run as usual on top.
-// TriggerChains below hands the sources' state to the followers.
+// trigger instead: follow(true) when the source is activated (its triggered()
+// differs from its default_on), follow(false) when it is back at its default.
+// Its delay_frames run as usual on top. TriggerChains below hands the
+// sources' state to the followers.
 //
 // In every mode reset() restores default_on.
 // -----------------------------------------------------------------------------
@@ -109,10 +110,10 @@ class TriggerState {
         }
     }
 
-    // A follower's source turned on (or is on) / off: pressed() becomes
-    // !default_on / default_on. Called every frame with the source's state;
-    // only a change starts the delay. No effect on a trigger that is not a
-    // follower.
+    // A follower's source was activated (or still is) / is back at its
+    // default: pressed() becomes !default_on / default_on. Called every frame
+    // with the source's state; only a change starts the delay. No effect on a
+    // trigger that is not a follower.
     void follow(bool source_on) {
         if (!_follower) {
             return;
@@ -195,7 +196,11 @@ class TriggerState {
 // TriggerChains
 //
 // Which trigger follows which (TriggerData::follows, resolved to indexes) and
-// the once-per-frame hand-over from the sources to the followers. Works on any
+// the once-per-frame hand-over from the sources to the followers. A follower
+// follows whether its source is ACTIVATED - triggered() differs from the
+// source's default_on - not the source's raw state, so the follower of a
+// source that starts on stays quiet at load and fires when the duck switches
+// the source off. Works on any
 // container with size() and operator[] whose elements have is_triggered() and
 // follow(bool) (Trigger in the game, a stand-in in
 // tests/host/test_trigger_chain.cpp).
@@ -210,7 +215,13 @@ class TriggerState {
 //
 // After the triggers are reset or restored (death, checkpoint respawn, level
 // load) capture() takes their state as the new "previous frame", so nothing
-// from before the reset reaches a follower.
+// from before the reset reaches a follower. The first capture() after
+// clear() is the level load: every trigger is still at its default_on then,
+// and that state is kept as the triggers' defaults (the elements need no
+// default_on() of their own).
+//
+// A cycle of followers never fires: at load nobody in it is activated, and
+// nothing outside the cycle can start it.
 // -----------------------------------------------------------------------------
 class TriggerChains {
    public:
@@ -237,23 +248,32 @@ class TriggerChains {
     // Level load: no trigger follows any other.
     void clear() { *this = TriggerChains(); }
 
-    // Takes the triggers' current state as the previous frame's.
+    // Takes the triggers' current state as the previous frame's; the first
+    // call after clear() (the level load) also takes it as their defaults.
     template <typename Triggers>
     void capture(const Triggers& triggers) {
-        for (int i = 0; i < _count(triggers); ++i) {
-            _was_on[i] = triggers[i].is_triggered();
+        const int count = _count(triggers);
+        if (!_defaults_known) {
+            for (int i = 0; i < count; ++i) {
+                _default_on[i] = triggers[i].is_triggered();
+            }
+            _defaults_known = true;
+        }
+        for (int i = 0; i < count; ++i) {
+            _was_active[i] = triggers[i].is_triggered() != _default_on[i];
         }
     }
 
-    // Once per frame: every follower follows its source's previous-frame
-    // state, then the current state is taken for the next frame.
+    // Once per frame: every follower follows whether its source was
+    // activated in the previous frame, then the current state is taken for
+    // the next frame.
     template <typename Triggers>
     void propagate(Triggers& triggers) {
         const int count = _count(triggers);
         for (int i = 0; i < count; ++i) {
             const int source = _source[i];
             if (source != NO_SOURCE && source < count) {
-                triggers[i].follow(_was_on[source]);
+                triggers[i].follow(_was_active[source]);
             }
         }
         capture(triggers);
@@ -267,5 +287,7 @@ class TriggerChains {
     }
 
     int8_t _source[MAX_TRIGGERS];
-    bool _was_on[MAX_TRIGGERS] = {};
+    bool _default_on[MAX_TRIGGERS] = {};
+    bool _defaults_known = false;
+    bool _was_active[MAX_TRIGGERS] = {};
 };

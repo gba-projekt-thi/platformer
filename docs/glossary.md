@@ -129,9 +129,9 @@ hard-coded logic. See [Level Design](level-design.md).
 
 **Delayed trap chain** — Triggers that fire one after the other: a trigger
 with `TriggerData::follows` ignores the duck and switches on when the named
-trigger of the same level does (and off when it does), one frame plus its own
-`delay_frames` later; it can be the source of the next one. Plate -> floor
-drops -> spikes shoot out. See
+trigger of the same level is activated (and off when it returns to its
+default), one frame plus its own `delay_frames` later; it can be the source of
+the next one. Plate -> floor drops -> spikes shoot out. See
 [Level Design — Delayed trap chains](level-design.md#delayed-trap-chains).
 
 **Death height** — The vertical threshold below which the duck is considered

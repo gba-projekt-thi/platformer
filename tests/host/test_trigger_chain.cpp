@@ -36,6 +36,9 @@ struct Level {
     // One game frame; `enter` / `exit`: the trigger the duck steps into /
     // out of in this frame.
     void frame(int enter = NONE, int exit = NONE) {
+        if (frame_count == 0) {
+            chains.capture(triggers);  // the level load (_load_triggers())
+        }
         ++frame_count;
         for (ChainTrigger& trigger : triggers) {
             trigger.state.tick();
@@ -84,8 +87,9 @@ struct Level {
     }
 };
 
-auto source(TriggerMode mode, unsigned delay = 0) -> ChainTrigger {
-    return {TriggerState(false, mode, delay)};
+auto source(TriggerMode mode, unsigned delay = 0, bool default_on = false)
+    -> ChainTrigger {
+    return {TriggerState(default_on, mode, delay)};
 }
 
 auto follower(unsigned delay = 0, bool default_on = false) -> ChainTrigger {
@@ -213,6 +217,64 @@ TEST_CASE(chain_one_source_can_start_several_followers) {
     const std::vector<int> first = first_on_frames(level, 0, 10);
     CHECK_EQ(first[1], 2);
     CHECK_EQ(first[2], 4);
+}
+
+// --- sources that start on ---------------------------------------------------
+
+// A follower follows whether its source was ACTIVATED (triggered() differs
+// from the source's default_on), not the source's raw state.
+
+TEST_CASE(chain_follower_of_a_default_on_source_stays_quiet_at_load) {
+    Level level;
+    level.triggers = {source(TriggerMode::Latch, 0, true), follower(3)};
+    level.chains.link(1, 0);
+    for (int i = 0; i < 30; ++i) {
+        level.frame();
+        CHECK(level.on(0));
+        CHECK(!level.on(1));
+    }
+}
+
+TEST_CASE(chain_follower_fires_after_a_default_on_source_is_activated) {
+    Level level;
+    level.triggers = {source(TriggerMode::Latch, 0, true), follower(3)};
+    level.chains.link(1, 0);
+    level.frames(5);
+    level.frame(0);  // onto the plate: the source switches off
+    CHECK(!level.on(0));
+    level.frames(3);
+    CHECK(!level.on(1));
+    level.frame();
+    CHECK(level.on(1));  // 1 + 3 frames after the plate
+    level.frames(30);
+    CHECK(level.on(1));
+}
+
+TEST_CASE(chain_follower_releases_when_a_default_on_source_returns) {
+    Level level;
+    level.triggers = {source(TriggerMode::Hold, 0, true), follower(2)};
+    level.chains.link(1, 0);
+    level.frame(0);  // onto the plate
+    level.frames(5);
+    CHECK(level.on(1));
+    level.frame(NONE, 0);  // off the plate: the source is back to default
+    CHECK(level.on(0));
+    level.frames(2);
+    CHECK(level.on(1));
+    level.frame();
+    CHECK(!level.on(1));
+}
+
+TEST_CASE(chain_a_cycle_with_a_default_on_follower_never_fires) {
+    // Nobody in a cycle is activated at load, so nothing starts it, whatever
+    // the followers' default_on.
+    Level level;
+    level.triggers = {follower(), follower(0, true)};
+    level.chains.link(0, 1);
+    level.chains.link(1, 0);
+    level.frames(10);
+    CHECK(!level.on(0));
+    CHECK(level.on(1));
 }
 
 // --- sources that turn off again --------------------------------------------
