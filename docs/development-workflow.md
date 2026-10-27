@@ -157,6 +157,12 @@ of a finished attempt, one file per level in `game/replays/`.
   and pauses do not shift them. A change to movement, physics, traps or level
   data that breaks a recorded solution fails the replay: re-record that level
   if the change is intended.
+- A level can change with the deaths in it (death windows, a door with
+  `attempt_positions`), and Restart Level is one of them. A recording keeps
+  the deaths in the level it began with (`"deaths": N` in its JSON, left out
+  for 0); the replay ROM sets the level up as after that many deaths before
+  the first step, so a recording made after three restarts plays the layout
+  it was made on.
 
 ### Semi-automated: the photographed tour (`make tour`)
 

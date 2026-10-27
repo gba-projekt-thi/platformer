@@ -86,6 +86,10 @@ class LevelManager {
 
     auto player() -> Player& { return _player; }
 
+    // Replay ROM: right after load(), the level as it stands after `deaths`
+    // deaths in it, set up the way a respawn does.
+    void set_deaths_in_level(unsigned deaths);
+
     // True while the pause menu is open. LevelScene reads it to release the
     // level hint's sprites for the duration (see hint::should_draw()).
     [[nodiscard]] auto paused() const -> bool {

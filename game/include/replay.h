@@ -34,13 +34,15 @@ inline auto unpack(uint16_t packed) -> Run {
 
 // `make record` stores each level's last recording in SRAM behind the save
 // slots (which take well under 1 KB from offset 0): one BLOCK_SIZE block per
-// level index, a 4 byte header (MAGIC, flags, run count) and packed runs.
+// level index, a HEADER_SIZE header (MAGIC, flags, run count, the deaths in
+// the level the recording began with - StartDeaths) and packed runs.
 // tools/replays.py reads them from the .sav file.
 inline constexpr int SRAM_OFFSET = 0x2000;
 inline constexpr int BLOCK_SIZE = 0x400;
+inline constexpr int HEADER_SIZE = 6;
 inline constexpr int LEVEL_BLOCKS = (0x8000 - SRAM_OFFSET) / BLOCK_SIZE;
-inline constexpr int MAX_BLOCK_RUNS = (BLOCK_SIZE - 4) / 2;
-inline constexpr uint8_t MAGIC = 0x52;           // 'R'
+inline constexpr int MAX_BLOCK_RUNS = (BLOCK_SIZE - HEADER_SIZE) / 2;
+inline constexpr uint8_t MAGIC = 0x53;           // 'S' ('R': no deaths yet)
 inline constexpr uint8_t FLAG_TRUNCATED = 0x01;  // more runs than fit
 
 inline constexpr auto block_offset(int level_index) -> int {
@@ -93,6 +95,36 @@ class Recorder {
    private:
     uint8_t _buttons = 0;
     int _count = 0;
+};
+
+// The deaths in the level a recording began with: the level changes with
+// them (death windows, a door that moves), and Restart Level is one of them.
+// Read at the first step after a (re)start, when the restart's death has
+// been counted.
+class StartDeaths {
+   public:
+    // `total`: the run's death total as the level loads.
+    void level_started(unsigned total) {
+        _entry = total;
+        _deaths = 0;
+        _pending = true;
+    }
+
+    void restarted() { _pending = true; }
+
+    void step(unsigned total) {
+        if (_pending) {
+            _deaths = total >= _entry ? total - _entry : 0u;
+            _pending = false;
+        }
+    }
+
+    [[nodiscard]] auto deaths() const -> unsigned { return _deaths; }
+
+   private:
+    unsigned _entry = 0;
+    unsigned _deaths = 0;
+    bool _pending = false;
 };
 
 // Plays recorded runs back step by step; after the last one no button is

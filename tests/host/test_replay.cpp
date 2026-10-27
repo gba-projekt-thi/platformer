@@ -142,5 +142,40 @@ TEST_CASE(replay_level_blocks_fill_the_sram_behind_the_saves) {
     CHECK_EQ(replay::block_offset(0), replay::SRAM_OFFSET);
     CHECK_EQ(
         replay::block_offset(2), replay::SRAM_OFFSET + 2 * replay::BLOCK_SIZE);
-    CHECK(replay::MAX_BLOCK_RUNS * 2 + 4 <= replay::BLOCK_SIZE);
+    CHECK(
+        replay::MAX_BLOCK_RUNS * 2 + replay::HEADER_SIZE <= replay::BLOCK_SIZE);
+}
+
+TEST_CASE(replay_a_recording_from_the_level_start_begins_at_no_death) {
+    replay::StartDeaths start;
+    start.level_started(7);  // the run's death total when the level loads
+    start.step(7);
+    CHECK_EQ(start.deaths(), 0u);
+    // Deaths along the way do not move the start.
+    start.step(9);
+    CHECK_EQ(start.deaths(), 0u);
+}
+
+TEST_CASE(replay_a_restart_begins_after_the_deaths_in_the_level) {
+    // Two deaths, then Restart Level: it counts as the third, before the
+    // first step of the new recording.
+    replay::StartDeaths start;
+    start.level_started(7);
+    start.step(7);
+    start.step(9);
+    start.restarted();
+    start.step(10);
+    CHECK_EQ(start.deaths(), 3u);
+    start.step(11);
+    CHECK_EQ(start.deaths(), 3u);
+}
+
+TEST_CASE(replay_a_new_level_forgets_the_last_ones_deaths) {
+    replay::StartDeaths start;
+    start.level_started(0);
+    start.restarted();
+    start.step(4);
+    start.level_started(4);
+    start.step(4);
+    CHECK_EQ(start.deaths(), 0u);
 }

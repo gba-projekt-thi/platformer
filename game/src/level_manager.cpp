@@ -135,6 +135,12 @@ unsigned LevelManager::_deaths_in_level() const {
         _player.get_deaths(), _deaths_at_entry);
 }
 
+void LevelManager::set_deaths_in_level(unsigned deaths) {
+    _player.set_deaths(_deaths_at_entry + deaths);
+    _deaths_seen = _player.get_deaths();
+    _finish_respawn();
+}
+
 // The door that moves between attempts stands where the deaths in this level
 // put it (on load, and after every death, checkpoint respawn and Restart
 // Level - they all end in _finish_respawn()).

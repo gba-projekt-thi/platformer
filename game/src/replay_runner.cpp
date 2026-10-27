@@ -55,6 +55,11 @@ void run_replays(
         playing = &buttons;
         player.set_input_hook(play);
         level_manager.load(levels[index]);
+        // The layout the recording began with (death windows, a door that
+        // moves): as after that many deaths in the level.
+        if (entry.deaths > 0) {
+            level_manager.set_deaths_in_level(entry.deaths);
+        }
         if (entry.has_start) {
             player.teleport_to(entry.start_x, entry.start_y);
         }
