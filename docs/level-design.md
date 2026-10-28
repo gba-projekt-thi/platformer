@@ -459,7 +459,9 @@ Two more ways for the level itself to go after the duck:
   trap lunge along y: put arms or spikes below the screen or inside a tall
   platform, `ambush_speed` negative (up), and they shoot out the moment the
   duck is within `ambush_range` horizontally, then sink back
-  (`ambush_logic.h`). Fair only if the duck can see them coming or can keep
+  (`ambush_logic.h`). `ambush_rest` keeps them down that many frames after
+  sinking, even with the duck in range - without it a duck lured to the
+  edge sees them spring again at once. Fair only if the duck can see them coming or can keep
   running: a range a little wider than the trap lets a running duck through.
 - **Runaway platform.** A platform with `flee_path` / `flee_range` /
   `flee_frames` (like the runaway door) slides on when the duck comes close -

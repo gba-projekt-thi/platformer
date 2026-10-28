@@ -636,6 +636,7 @@ constexpr TrapData world5_trick_traps[] = {
      0,
      0,
      false,
+     0,
      2},
 
     // 2 - the pogo bar in the middle of the pit.
@@ -774,6 +775,7 @@ constexpr TrapData world5_trick_traps[] = {
      0,
      0,
      false,
+     0,
      3}};
 
 constexpr bn::fixed_point LEVEL_WORLD5_TRICK_door_attempt_positions[] = {
