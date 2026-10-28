@@ -136,11 +136,10 @@ to every stage.
 ### Ground friction
 
 Speeding up and braking are deliberately separate constants
-(`Cfg::Player::ACCELERATION` and `Cfg::Player::DECELERATION`), even though
-they used to share one value. Keeping them apart means either can be tuned
-without touching the other - most usefully, acceleration can be made
-snappier globally without also making braking snappier (which would quietly
-give every level more stopping precision than it was authored around).
+(`Cfg::Player::ACCELERATION` and `Cfg::Player::DECELERATION`), so either can be
+tuned without touching the other - most usefully, acceleration can be snappier
+without also making braking snappier (which would quietly give every level
+more stopping precision than it was authored around).
 
 Braking is also the one movement value a level can override on its own:
 `LevelData::ground_friction` (default `1`) scales `DECELERATION` only,
@@ -343,8 +342,8 @@ Two activation styles exist:
 
 `Trigger` keeps its state in a `TriggerState` (`trigger_logic.h`, Butano-free
 and unit-tested). The mode (`TriggerData::mode`) decides what an entry or exit
-does: **Latch** (default, identical to the original behavior), **Toggle**
-(flip on every entry) or **Hold** (on while inside). `Trigger` now also
+does: **Latch** (default), **Toggle**
+(flip on every entry) or **Hold** (on while inside). `Trigger` also
 implements the resettable interface, and the level manager registers every
 trigger in its resettable list - so a trigger that drives only platforms still
 resets on death. An optional sprite (`TriggerData::sprite` plus an off and an
@@ -419,11 +418,7 @@ lookup is a simple linear scan over the level's triggers — with a per-level
 cap of 16 and the lookup happening once per trap at level load (never per
 frame), this costs nothing worth measuring.
 
-An earlier version of `TrapData` also carried a raw `trigger_index` field for
-binding by array position, kept for a time so no existing level literal
-needed editing. It was never actually read (every level had already
-migrated to named binding) and has since been removed from the struct - see
-[Extensibility Guide](extensibility.md) for how to author a trigger today.
+See the [Extensibility Guide](extensibility.md) for how to author a trigger.
 Because binding is by identity rather than position, one trigger can freely
 activate several traps at once (a **trigger chain**): give each trap the
 same `trigger_name` and they all fire together, as `level0_traps` in
@@ -735,7 +730,7 @@ it to the world:
 - **Dead zone (horizontal).** The duck can move 8px either way before the
   camera moves; beyond that the camera moves exactly as far as the duck, with
   no easing. The duck keeps its spot on the screen, small steps do not scroll
-  at all and nothing slides on after it stops (an eased follow used to make the
+  at all and nothing slides on after it stops (an eased follow would make the
   duck wobble by a pixel when tapping the D-Pad). Vertically the camera still
   closes 1/8 of the gap per frame and never overshoots.
 - **Look-ahead.** It aims 20px in front of the duck in its direction of travel,
@@ -835,9 +830,8 @@ counts `has_no_death_clear()` hits across the level list - the same fields
 aggregated once more, at the moment right after completion when the totals
 are most meaningful.
 
-Moving `DataManager::reset()` here (out of `KissingScene`, which used to
-call it directly once its timer expired) is what makes the ordering work:
-`SummaryScene::init()` reads `GameState` while it's still the just-finished
+`DataManager::reset()` runs here rather than in `KissingScene` so the ordering
+works: `SummaryScene::init()` reads `GameState` while it's still the just-finished
 run's live state, and only calls `reset()` itself once the player
 acknowledges the screen with A or Start - a held-scene-transition pattern
 matching the New Best banner's "read the state, then gate the transition on

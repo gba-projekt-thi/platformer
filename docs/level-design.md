@@ -87,7 +87,7 @@ envelope above already reflects the current values. A level's
 factors into this at all: it only scales how quickly the duck brakes while
 grounded, never acceleration, gravity, or jump speed, so a slippery floor
 can change how precisely a level plays without ever making a jump fall
-short of a platform it used to reach.
+short of a platform.
 
 These are deliberately *inside* the measured envelope (22 / 50), leaving a
 comfort margin so the intended path is always achievable even with imperfect

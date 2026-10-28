@@ -25,6 +25,7 @@ graph TD
     Glob --> Lever[Lever sprite, two frames]
     Glob --> Flag[Checkpoint flag, two frames]
     Glob --> Duck[Duck sprite]
+    Glob --> Pogo[Pogo strike graphic]
     Glob --> Kiss[Kiss scene backdrop]
     Glob --> Start[Start screen backdrop]
     W1 --> T1[Bathtub platforms, bubbles, connectors]
@@ -60,8 +61,8 @@ backdrop art. Always create full-screen backgrounds through it.
 
 The `height` in a sprite's `.json` is the height of one animation frame: the
 image is cut into frames of that height. A sheet that holds a single picture
-taller than `height` shows only its top part in the game (that is how
-`barrel32x32` used to show half a barrel).
+taller than `height` shows only its top part in the game.
+`tools/Check_hitboxes.py` compares every such frame with the hitbox.
 
 The build tooling reads the pair and produces the compact in-game representation
 (a sprite item, a background item, a palette, etc.). Designers and artists edit
@@ -78,13 +79,19 @@ Audio is organized by role rather than by world:
 | Folder / kind | Contents | Use |
 |---------------|----------|-----|
 | **Music tracks** (tracker modules) | One per world plus menu, start, and end themes. | Background music per stage/scene. |
-| **Sound effects** (short samples) | Jump, dash, footsteps, confirm/cancel, trap hit, trap fall, spikes, death. | Momentary playback on gameplay events. |
+| **Sound effects** (short samples) | Jump, dash, pogo, footsteps, confirm/cancel, trap hit, trap fall, spikes, layout shift, death. | Momentary playback on gameplay events. |
 | **Legacy audio** | An older-format audio set kept for compatibility. | Optional / historical support. |
 
 The music files are compact **tracker modules** — small pattern-based music that
 the handheld audio hardware can play back efficiently, which is the traditional
 approach for this class of device. Sound effects are short one-shot samples
 triggered by gameplay events (a jump, a trap hit, a footstep while running).
+
+The boss music is not a file of its own: it is a second section of each
+world's module, written by `tools/Make_boss_music.py` and started with
+`LevelData::boss_music_order` when the fight begins. WAV previews are in
+`docs/audio/` (kept outside `game/audio`, where Butano would build them into
+the ROM).
 
 A stage's music is chosen at load time from the level definition and plays for
 the stage's duration. Sound effects layer on top, independent of the music.
