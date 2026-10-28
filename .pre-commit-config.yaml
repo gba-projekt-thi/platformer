@@ -5,21 +5,23 @@ repos:
     hooks:
       - id: clang-format
         args: [-i]
-      - id: clang-tidy
-        # tests/host/ builds with the host's own g++/clang++ (see
-        # tests/host/Makefile) and is never compiled by the ARM
-        # toolchain, so it has no entry in compile_commands.json.
-        # Without a matching compile command, clang-tidy falls back to
-        # this repo's .clang-tidy ExtraArgsBefore standalone (-std=c++23
-        # plus --target=arm-none-eabi/--sysroot=devkitARM/-I<butano
-        # paths>), which don't apply to host-only code and made clang's
-        # driver misdetect the .h files as C in the process (invalid
-        # argument '-std=c++23' not allowed with 'C'). clang-format
-        # still runs here - formatting is language/target-agnostic.
-        exclude: ^tests/
 
   - repo: local
     hooks:
+      - id: clang-tidy
+        name: clang-tidy
+        description: >-
+          Runs clang-tidy through tools/run_clang_tidy.py. A git worktree has
+          no compile_commands.json of its own (git-ignored, written by the
+          build) and the main checkout's one points at the main checkout's
+          headers, so the wrapper builds the database for the checkout it runs
+          in and gives headers a C++ command (they would be guessed as C).
+        entry: python3 tools/run_clang_tidy.py
+        language: system
+        types_or: [c, c++]
+        # tests/host/ builds with the host's own g++ (see tests/host/Makefile)
+        # and is not for the ARM target clang-tidy is set up for.
+        exclude: ^tests/
       - id: check-level-hints
         name: Validate LevelData::intro_hint strings
         description: >-
