@@ -120,8 +120,11 @@ the file format and the recording workflow are documented at the top of
 - Buttons are recorded per movement step, so the death freeze and pauses do
   not shift them. A change to movement, physics, traps or level data that
   breaks a recording fails the replay: re-record that level if the change is
-  intended. A recording keeps the deaths it began with (`"deaths"`), so a
-  level with death windows replays on the layout it was recorded on.
+  intended.
+- A level that changes with the deaths in it (death windows, a moving door)
+  has one recording per layout: `<LEVEL>.json` (0 deaths) and
+  `<LEVEL>@<deaths>.json`. `python3 tools/replays.py layouts --strict` (part of
+  `make checks`) fails if a layout has no recording.
 
 ### Photographed tour (`make tour`)
 
