@@ -184,6 +184,13 @@ class LevelManagerWiringTests(unittest.TestCase):
         self.assertIn("door_logic::on_touch(", trap)
         self.assertIn("_player.death()", trap)
 
+    def test_a_locked_door_never_completes_the_level(self):
+        # The door's own shape still fires on_enter while locked: the finish
+        # goes through on_touch, which knows the boss lock.
+        flat = re.sub(r"\s+", "", self.update)
+        self.assertIn("door_logic::on_touch(_door->reached(),_door_locked,false)==door_logic::Touch::Finish", flat)
+        self.assertLess(flat.index("door_logic::Touch::Finish"), flat.index("returnUpdateResult::LevelComplete"))
+
     def test_a_duck_a_trap_caught_on_the_trapped_door_dies_once(self):
         trap = _method(self.text, "_check_door_trap") or ""
         self.assertIn("_player.get_deaths() != _deaths_seen", trap)

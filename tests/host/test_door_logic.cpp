@@ -52,6 +52,13 @@ TEST_CASE(door_logic_a_locked_door_is_never_entered) {
     // The boss lock wins over both: a hidden door neither finishes nor kills.
     CHECK(door_logic::on_touch(true, true, false) == Touch::None);
     CHECK(door_logic::on_touch(true, true, true) == Touch::None);
+    for (bool trapped : {false, true}) {
+        for (bool died : {false, true}) {
+            CHECK(
+                door_logic::on_touch(true, true, trapped, died) !=
+                Touch::Finish);
+        }
+    }
 }
 
 TEST_CASE(door_logic_trapped_only_while_its_trigger_is_on) {
