@@ -207,7 +207,15 @@ class GenerateTests(unittest.TestCase):
         text = squash(gen.generate(world(lv), STRUCTS))
         # PlatformData: the defaults up to flee_frames, then from 3, until 0
         self.assertIn("bn::sprite_items::stone,0,nullptr,true,0,0,{},0,0,3}", text)
-        self.assertIn(",false,0,3}", text)  # ...ambush_vertical, from 0, until 3
+        self.assertIn(",false,0,0,3}", text)  # ...ambush_vertical, ambush_rest, from 0, until 3
+
+    def test_ambush_rest_is_written_after_ambush_vertical(self):
+        lv = level()
+        lv["traps"] = {"name": "tr", "items": [
+            {"type": "AMBUSH", "x": 0, "y": 0, "width": 8, "height": 8, "offset_x": 0,
+             "offset_y": 0, "sprite": "b", "ambush_vertical": True, "ambush_rest": 45}]}
+        text = squash(gen.generate(world(lv), STRUCTS))
+        self.assertIn(",true,45}", text)
 
     def test_death_window_fields_come_from_level_structure_h(self):
         for struct in ("PlatformData", "TrapData"):

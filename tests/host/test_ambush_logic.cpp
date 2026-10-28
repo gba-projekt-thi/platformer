@@ -65,3 +65,45 @@ TEST_CASE(ambush_reset_puts_it_back_to_waiting) {
     CHECK(m.state() == ambush::State::Dormant);
     CHECK_EQ(m.offset(), 0);
 }
+
+TEST_CASE(ambush_rests_after_sinking_even_with_the_duck_in_range) {
+    ambush::Motion<int> m(RANGE, SPEED, DURATION, 5);
+    m.update(0);
+    for (unsigned i = 0; i < 2 * DURATION; ++i) {
+        m.update(0);
+    }
+    CHECK_EQ(m.offset(), 0);
+    CHECK(m.state() == ambush::State::Resting);
+    for (int i = 0; i < 4; ++i) {
+        m.update(0);  // still resting although the duck stands at the edge
+        CHECK_EQ(m.offset(), 0);
+    }
+    CHECK(m.state() == ambush::State::Resting);
+    m.update(0);  // the 5th rest frame is over
+    CHECK(m.state() == ambush::State::Dormant);
+    m.update(0);
+    CHECK(m.state() == ambush::State::Lunging);
+}
+
+TEST_CASE(ambush_without_rest_springs_again_right_away) {
+    Motion m(RANGE, SPEED, DURATION);
+    m.update(0);
+    for (unsigned i = 0; i < 2 * DURATION; ++i) {
+        m.update(0);
+    }
+    CHECK(m.state() == ambush::State::Dormant);
+    m.update(0);
+    CHECK(m.state() == ambush::State::Lunging);
+}
+
+TEST_CASE(ambush_reset_ends_the_rest) {
+    ambush::Motion<int> m(RANGE, SPEED, 1, 5);
+    m.update(0);
+    m.update(0);
+    m.update(0);
+    CHECK(m.state() == ambush::State::Resting);
+    m.reset();
+    CHECK(m.state() == ambush::State::Dormant);
+    m.update(0);
+    CHECK(m.state() == ambush::State::Lunging);
+}

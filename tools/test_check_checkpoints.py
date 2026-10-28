@@ -274,7 +274,7 @@ class SyntheticTests(unittest.TestCase):
 # from_death / until_death come after the fields the other literals set.
 BASE_WINDOW = ("{TrapType::BASE, %d, %d, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
                " 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,"
-               " 0, false, %d, %d}")
+               " 0, false, 0, %d, %d}")
 
 # A patrol without a trigger: it runs from the first frame.
 PATH_FREE = ("{TrapType::PATH, %d, %d, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"

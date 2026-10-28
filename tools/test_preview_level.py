@@ -460,7 +460,7 @@ constexpr PlatformData wplats[] = {
 constexpr TrapData wtraps[] = {
     {TrapType::BASE, 0, 40, 12, 12, 0, 0, bn::sprite_items::t, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0,
-     0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, false, 0, 3}};
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, false, 0, 0, 3}};
 
 const LevelData LEVEL_W = {
     wplats, 2, nullptr, 0, wtraps, 1,

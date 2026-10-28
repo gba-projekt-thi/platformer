@@ -6,7 +6,7 @@ AmbushTrap::AmbushTrap(const TrapData& data, bn::fixed speed, Player& player)
       _start_x(pos.x),
       _start_y(pos.y),
       _vertical(data.ambush_vertical),
-      _motion(data.ambush_range, speed, data.ambush_duration),
+      _motion(data.ambush_range, speed, data.ambush_duration, data.ambush_rest),
       _player(player) {}
 
 void AmbushTrap::update() {

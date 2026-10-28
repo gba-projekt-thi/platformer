@@ -307,6 +307,11 @@ struct TrapData {
     // The trigger stays the duck's horizontal distance (ambush_range).
     bool ambush_vertical = false;
 
+    // AMBUSH: frames it stays down after sinking back, even with the duck
+    // in range (0 = it springs again at once). Lets a duck lured to the edge
+    // jump the gap in the calm after the lunge.
+    unsigned ambush_rest = 0;
+
     // -------------------------------------------------------------------------
     // Any trap except BOSS
     // -------------------------------------------------------------------------

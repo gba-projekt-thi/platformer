@@ -214,6 +214,9 @@ constexpr TrapData world3_trick_traps[] = {
     // The lurking arms below the gap at -88 .. -56, for the first three
     // attempts only (until_death 3): after the 3rd death they lurk somewhere
     // else.
+    // Once sunk back they stay down 45 frames (ambush_rest), even with the duck
+    // at the edge: lure them out, let them sink (they rest 45 frames), then
+    // jump.
     {TrapType::AMBUSH,
      -72,
      112,
@@ -247,6 +250,7 @@ constexpr TrapData world3_trick_traps[] = {
      0,
      0,
      true,
+     45,
      0,
      3},
 
@@ -285,7 +289,7 @@ constexpr TrapData world3_trick_traps[] = {
     // Level Devil: from the 3rd death on the arms have moved on to the gap
     // behind the sagging floor (40 .. 88). They lunge as soon as the duck
     // stands at its edge (ambush_range 44), so the old trick works again:
-    // lure them out, let them sink, then jump.
+    // lure them out, let them sink (they rest 45 frames), then jump.
     {TrapType::AMBUSH,
      80,
      112,
@@ -319,6 +323,7 @@ constexpr TrapData world3_trick_traps[] = {
      0,
      0,
      true,
+     45,
      3}};
 
 const LevelData LEVEL_WORLD3_TRICK = {
