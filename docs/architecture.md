@@ -158,26 +158,19 @@ graph LR
 
 - **Game state** is a small, fixed-width record: current level, death count, and
   the run timer. Fixed-width fields keep the memory layout predictable on ARM.
-  `GameState` deliberately separates two concerns that used to be
-  conflated: `level` is the **resume point** (where a normal "Continue"
+  `GameState` separates two concerns: `level` is the **resume point** (where a normal "Continue"
   picks up), while `furthest_level` is the **unlock marker** the
   World/Level Select scenes check against. Only real progression
   (reaching a door) advances `furthest_level`; jumping to an earlier
   level via Level Select only moves the resume point, so previously
   unlocked levels stay selectable afterwards.
-- **Save migration.** Adding a `GameState` field does not wipe saves any more.
-  `SaveManager::load()` takes a small version table
-  (`game_state_migration::valid_bytes()`): for a payload written by an older
-  schema version it copies only the bytes that existed then, and the fields
-  added later keep their default values (result `MIGRATED`, logged, nothing
-  written back until the next progress save). The table is keyed by schema
-  version rather than payload size because a new field can fit into the
-  struct's tail padding, where an old payload has the same size but a
-  meaningless byte. The rules: fields are only appended at the end, each gets a
-  default initializer, `SAVE_VERSION` is bumped, and the previous version gets a
-  line in the table. Schemas 1-4 (layouts that are not a prefix of the current
-  one) stay incompatible and fall back to a fresh state. A layout-lock unit
-  test fails when `GameState` changes without the table being updated.
+- **Save migration.** Adding a `GameState` field does not wipe saves.
+  `SaveManager::load()` asks `game_state_migration::valid_bytes()` how many
+  bytes the payload's schema version had, copies only those and leaves newer
+  fields at their default (logged as `MIGRATED`, written back with the next
+  progress save). The procedure for adding a field is the header comment of
+  `game_state_migration.h`; a layout-lock unit test fails when `GameState`
+  changes without it. Schemas 1-4 stay incompatible and start fresh.
 - **Data manager** owns the runtime copy of the game state, the selected save
   slot (three slots), and the operations to load, save, and reset. It wraps a
   generic save manager that performs the actual SRAM reads/writes.
@@ -235,6 +228,11 @@ A few recurring patterns shape how pieces talk to each other:
 - **Shared base + specialization.** Traps share a common base for the concerns
   they all have (collision, animation, registration), while behavior differences
   live in subclasses chosen by a factory.
+- **Pure rules, thin glue.** Decisions live in Butano-free headers (the
+  `*_logic.h` files, `locomotion.h`, `level_flow.h`, `pause_flow.h`,
+  `hint_logic.h`) that the host unit tests drive directly; `LevelManager`,
+  `PlayerLocomotion`, `PauseController` and the scenes feed them input and
+  apply the result. New rules go into such a header first.
 - **Interface-based reset.** Resettable entities (currently traps) opt into the
   death/restart flow through a shared interface, decoupling the level manager
   from concrete entity types.

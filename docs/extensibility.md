@@ -12,25 +12,14 @@ than fighting it.
 
 ## Adding a new level
 
-1. Because stages are **data-driven**, adding one is mostly a data authoring task,
-   not a code-writing task.
-2. 
-   ```mermaid
-   flowchart TD
-      A[Author stage data<br/>platforms, triggers, traps, spawn, door, world size, background, music] --> B[Register the stage in the level sequence]
-      B --> C[Build]
-      C --> D[Test clearability]
-   ```
-3. **Author the trigger list.** Define the invisible rectangles that will
-   activate your timed hazards; optionally start one already active. Give
-   every trigger a stable `name` - every MOVING/PATH trap binds to its
-   trigger by this name (via `TrapData::trigger_name`), never by array
-   position, so inserting or reordering triggers in the same level never
-   silently rebinds a trap. A single named trigger can activate more than
-   one trap at once - just point several traps' `trigger_name` at the same
-   trigger to build a trigger chain (see `level0_traps` in
-   `game/levels/world1.json` for a worked example: one trigger releases both a
-   falling hazard and a patrol).
+Stages are **data-driven**, so adding one is mostly data authoring:
+
+```mermaid
+flowchart TD
+   A[Author stage data<br/>platforms, triggers, traps, spawn, door, world size, background, music] --> B[Register the stage in the level sequence]
+   B --> C[Build]
+   C --> D[Test clearability]
+```
 
 ### Conceptual steps
 
@@ -47,7 +36,11 @@ plus an include in `levels.h`.
    (smaller Y is higher) and respect the physics envelope — **climbs ≤ 16px,
    horizontal gaps ≤ 40px** per jump. See [Level Design](level-design.md).
 3. **Author the trigger list.** Define the invisible rectangles that will
-   activate your timed hazards; optionally start one already active.
+   activate your hazards; optionally start one already active. Give every
+   trigger a stable `name`: MOVING/PATH traps bind to it via
+   `TrapData::trigger_name`, never by array position, and several traps can
+   share one trigger (a trigger chain; see `level0_traps` in
+   `game/levels/world1.json`).
 4. **Author the trap list.** For each hazard, choose a trap type and provide its
    appearance, optional animation, activation (a named trigger, or direct
    player tracking for a chase/ambush trap), and the behavior parameters its
@@ -56,9 +49,8 @@ plus an include in `levels.h`.
 5. **Set spawn, door, and world size.** The spawn is where the duck begins and
    respawns; the door is the exit; the world size determines whether the stage
    scrolls and sets the duck's horizontal bounce boundary.
-6. **Register the stage** in the ordered list of stages so the game knows it
-   exists and where it sits in the progression. The list drives the sequence of
-   worlds and the final-stage → kiss-scene transition.
+6. **Register the stage** in `levels[]` (`main.cpp`) and `WorldIndex::WORLDS`;
+   the list drives the progression and the final-stage → kiss-scene transition.
 7. **Build and test.** Verify the stage loads, every required jump is
    achievable, and hazards activate at the intended moments.
 
@@ -171,14 +163,11 @@ responsible approach:
 4. Audit existing stages against the new envelope; adjust layouts that depended
    on the old one.
 
-`ACCELERATION` (ramp-up speed) is the one exception worth calling out: because
-`MAX_SPEED` dominates horizontal travel over any real distance, changing
-`ACCELERATION` alone barely moves the envelope and is safe to treat as a
-pure feel tweak rather than a full envelope re-derivation - it still climbs
-the same height and, if anything, reaches a hair further, never less.
-`DECELERATION` (braking) is a separate constant precisely so it can be tuned,
-or overridden per level via `ground_friction`, without touching the envelope
-at all - see [Level Design — Platform placement principles](level-design.md#platform-placement-principles).
+`ACCELERATION` is the exception: `MAX_SPEED` dominates horizontal travel, so
+changing it alone barely moves the envelope and is a feel tweak.
+`DECELERATION` (braking) is a separate constant so it can be tuned, or
+overridden per level via `ground_friction`, without touching the envelope - see
+[Level Design - Platform placement principles](level-design.md#platform-placement-principles).
 
 ### Adding a new player capability
 
