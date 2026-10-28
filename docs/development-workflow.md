@@ -411,6 +411,11 @@ automatically in the container. If you work outside the container, you need
 pre-commit plus the same linters installed locally. Let the hooks reformat your
 code rather than fighting them — the goal is uniform style across contributors.
 
+clang-tidy runs through `tools/run_clang_tidy.py`, which works in a `git
+worktree` without any setup: it derives a private compile database from the
+main checkout's `compile_commands.json` (root path rewritten to the worktree)
+and gives headers a C++ command, so they are never mistaken for C.
+
 ### How to make a change well
 
 1. **Read the relevant concept doc first** (this documentation set) so your

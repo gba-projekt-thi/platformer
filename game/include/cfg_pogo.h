@@ -14,6 +14,9 @@ namespace Pogo {
 // How long a strike reaches below the duck, then how long until the next.
 inline constexpr int STRIKE_FRAMES = 10;
 inline constexpr int COOLDOWN_FRAMES = 8;
+// The picture shows at least this long, even when a trap in reach ends the
+// strike by bouncing at once (looks only, no gameplay).
+inline constexpr int MIN_SHOW_FRAMES = 6;
 // The strike's box: REACH px below the body's bottom, WIDTH px wide,
 // centered under the duck. REACH must exceed Player::MAX_FALL_SPEED so a
 // falling duck meets the trap with the strike before its body touches it.

@@ -63,14 +63,19 @@ PULSE_FLOOR = 37  # bass pulses above C-3 are played an octave lower
 DEFAULT_KICK_NOTE = 49  # C-4, when the theme never plays the instrument
 
 # Instruments of the world's own percussion that make up the driving layer
-# (1-based, see the module). None = no such layer.
+# (1-based, see the module). None = no such layer. Optional "pulse_low"
+# (False: bass pulses stay in the theme's octave), "pulse_share" and
+# "drone_share" override the defaults above for a world whose bass sample
+# is too boomy.
 PRESETS = {
     "world1": {"kick": 5, "hat": 4, "drone": 1},  # Bassdrum, Tambourin; Wave
     "world2": {"kick": 3, "hat": 10, "drone": 6},  # kick, Ting; Bass
     # No percussion in the theme: the low Bass as a heartbeat (cut after 4
     # ticks), the pitched-up "Bass short" as a tick.
     "world3": {"kick": 6, "kick_cut": 4, "hat": 7, "drone": 6, "keep_pulse": True},
-    "world4": {"kick": 6, "hat": 5, "drone": 1},  # Drums, Maracas; Guitar
+    # The Guitar's low notes hum: soft drone, pulses in the theme's octave.
+    "world4": {"kick": 6, "hat": 5, "drone": 1, "pulse_low": False,
+               "pulse_share": 0.3, "drone_share": 0.1},  # Drums, Maracas; Guitar
     "world5": {"hat": 4, "hat_cut": 3, "drone": 1},  # Noise, cut short as the theme does (EC3)
 }
 
@@ -206,9 +211,10 @@ def _add_drive(mod, pattern, layers, bass, preset, kick_note, hat_note):
         end = events[i + 1] if i + 1 < len(events) else len(rows)
         for r in range(r0 + 2, end - 1, 2):
             # An octave lower (world3's pitched-up tick stays as it is).
-            low = note.note > PULSE_FLOOR and not preset.get("keep_pulse")
+            low = (note.note > PULSE_FLOOR and preset.get("pulse_low", True)
+                   and not preset.get("keep_pulse"))
             rows[r][pulse_ch] = Note(
-                note.note - 12 if low else note.note, note.inst, _vol_column(mod, note.inst, PULSE_SHARE))
+                note.note - 12 if low else note.note, note.inst, _vol_column(mod, note.inst, preset.get("pulse_share", PULSE_SHARE)))
 
 
 def _root(rows, bass, ignore):
@@ -228,7 +234,8 @@ def _add_menace(mod, pattern, drone_ch, bass, preset, ignore, last):
         return
     note = DRONE_LOW + (root + 1 - DRONE_LOW) % 12  # the root in C-2 .. B-2
     rows = pattern.rows
-    rows[0][drone_ch] = Note(note, inst, _vol_column(mod, inst, DRONE_SHARE))
+    rows[0][drone_ch] = Note(
+        note, inst, _vol_column(mod, inst, preset.get("drone_share", DRONE_SHARE)))
     if last:
         rows[len(rows) * 3 // 4][drone_ch] = Note(
             note + 6, inst, _vol_column(mod, inst, STAB_SHARE))
