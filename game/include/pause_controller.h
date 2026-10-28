@@ -39,6 +39,9 @@ class PauseController {
         Count = 5
     };
 
+    // The steps of pause_flow.h (when the overlay's sprites exist).
+    struct FlowOps;
+
     void _init_pause_menu();
     // Creates the 'Paused' title (only while the game is paused).
     void _show_title();
