@@ -8,7 +8,8 @@
 namespace replay_data {
 
 struct Entry {
-    const char* name;
+    const char* name;  // LEVEL, or LEVEL@deaths
+    int level;         // index in main.cpp's levels[]
     const replay::Run* runs;
     int run_count;
     int steps;
@@ -134,7 +135,7 @@ constexpr replay::Run LEVEL_WORLD4_SCROLL_RUNS[] = {
     {10, 10}, {2, 21}, {0, 8},   {1, 4},   {0, 6},   {14, 1},  {10, 19},
     {0, 8},   {2, 5},  {0, 6},   {1, 1},   {0, 1},   {14, 1},  {10, 34},
     {0, 8},   {1, 3},  {0, 4},   {14, 1},  {10, 33}, {0, 10}};
-constexpr replay::Run LEVEL_WORLD4_SCROLL_2_RUNS[] = {
+constexpr replay::Run LEVEL_WORLD4_SCROLL_2_AT3_RUNS[] = {
     {0, 30}, {2, 7},   {14, 1}, {10, 20}, {2, 1},  {1, 4},   {0, 19}, {2, 6},
     {14, 1}, {10, 12}, {9, 4},  {8, 4},   {0, 16}, {2, 7},   {14, 1}, {10, 12},
     {9, 4},  {8, 4},   {0, 27}, {2, 15},  {14, 1}, {10, 16}, {9, 1},  {0, 10}};
@@ -229,36 +230,51 @@ constexpr replay::Run LEVEL_WORLD5_BOSS_RUNS[] = {
     {0, 4},   {2, 11}, {14, 1},  {10, 28}, {2, 11}, {0, 10}};
 constexpr replay::Run LEVEL_WORLD5_FINALE_RUNS[] = {{2, 400}};
 
-// One entry per level, in play order (main.cpp's levels[]).
+// One entry per recording (a level without one: one entry without runs),
+// in play order (main.cpp's levels[]), a level's death states by deaths.
 inline constexpr Entry ENTRIES[] = {
-    {"LEVEL_0", LEVEL_0_RUNS, 32, 239, false, 0, 0, 0},
-    {"LEVEL_1", LEVEL_1_RUNS, 29, 245, false, 0, 0, 0},
-    {"LEVEL_WORLD1_SCROLL", LEVEL_WORLD1_SCROLL_RUNS, 61, 448, false, 0, 0, 0},
-    {"LEVEL_WORLD1_TRICK", LEVEL_WORLD1_TRICK_RUNS, 17, 209, false, 0, 0, 0},
-    {"LEVEL_WORLD1_BOSS", LEVEL_WORLD1_BOSS_RUNS, 24, 264, true, 173, 16, 0},
-    {"LEVEL_2", LEVEL_2_RUNS, 28, 228, false, 0, 0, 0},
-    {"LEVEL_WORLD2_SCROLL", LEVEL_WORLD2_SCROLL_RUNS, 66, 446, false, 0, 0, 0},
-    {"LEVEL_WORLD2_TRICK", LEVEL_WORLD2_TRICK_RUNS, 14, 240, false, 0, 0, 0},
-    {"LEVEL_WORLD2_BOSS", LEVEL_WORLD2_BOSS_RUNS, 25, 264, true, 175, 17, 0},
-    {"LEVEL_3", LEVEL_3_RUNS, 107, 703, false, 0, 0, 0},
-    {"LEVEL_WORLD3_SCROLL", LEVEL_WORLD3_SCROLL_RUNS, 75, 567, false, 0, 0, 0},
-    {"LEVEL_WORLD3_TRICK", LEVEL_WORLD3_TRICK_RUNS, 41, 365, false, 0, 0, 0},
-    {"LEVEL_WORLD3_BOSS", LEVEL_WORLD3_BOSS_RUNS, 26, 460, true, 194, 16, 0},
-    {"LEVEL_WORLD4_POGO", LEVEL_WORLD4_POGO_RUNS, 143, 262, false, 0, 0, 0},
-    {"LEVEL_WORLD4_SCROLL", LEVEL_WORLD4_SCROLL_RUNS, 48, 422, false, 0, 0, 0},
-    {"LEVEL_WORLD4_SCROLL_2", LEVEL_WORLD4_SCROLL_2_RUNS, 24, 223, false, 0, 0,
-     3},
-    {"LEVEL_WORLD4_TRICK", LEVEL_WORLD4_TRICK_RUNS, 149, 323, false, 0, 0, 0},
-    {"LEVEL_WORLD4_BOSS", LEVEL_WORLD4_BOSS_RUNS, 26, 460, true, 155, 12, 0},
-    {"LEVEL_WORLD5_SCROLL", LEVEL_WORLD5_SCROLL_RUNS, 51, 466, false, 0, 0, 0},
-    {"LEVEL_WORLD5_SCROLL_2", LEVEL_WORLD5_SCROLL_2_RUNS, 41, 276, false, 0, 0,
+    {"LEVEL_0", 0, LEVEL_0_RUNS, 32, 239, false, 0, 0, 0},
+    {"LEVEL_1", 1, LEVEL_1_RUNS, 29, 245, false, 0, 0, 0},
+    {"LEVEL_WORLD1_SCROLL", 2, LEVEL_WORLD1_SCROLL_RUNS, 61, 448, false, 0, 0,
      0},
-    {"LEVEL_WORLD5_DASH", LEVEL_WORLD5_DASH_RUNS, 70, 454, false, 0, 0, 0},
-    {"LEVEL_WORLD5_LEVERS", LEVEL_WORLD5_LEVERS_RUNS, 74, 483, false, 0, 0, 0},
-    {"LEVEL_WORLD5_CLIMB", LEVEL_WORLD5_CLIMB_RUNS, 26, 251, false, 0, 0, 0},
-    {"LEVEL_WORLD5_TRICK", LEVEL_WORLD5_TRICK_RUNS, 107, 536, false, 0, 0, 0},
-    {"LEVEL_WORLD5_BOSS", LEVEL_WORLD5_BOSS_RUNS, 46, 594, true, 231, 12, 0},
-    {"LEVEL_WORLD5_FINALE", LEVEL_WORLD5_FINALE_RUNS, 1, 400, false, 0, 0, 0}};
+    {"LEVEL_WORLD1_TRICK", 3, LEVEL_WORLD1_TRICK_RUNS, 17, 209, false, 0, 0, 0},
+    {"LEVEL_WORLD1_BOSS", 4, LEVEL_WORLD1_BOSS_RUNS, 24, 264, true, 173, 16, 0},
+    {"LEVEL_2", 5, LEVEL_2_RUNS, 28, 228, false, 0, 0, 0},
+    {"LEVEL_WORLD2_SCROLL", 6, LEVEL_WORLD2_SCROLL_RUNS, 66, 446, false, 0, 0,
+     0},
+    {"LEVEL_WORLD2_TRICK", 7, LEVEL_WORLD2_TRICK_RUNS, 14, 240, false, 0, 0, 0},
+    {"LEVEL_WORLD2_BOSS", 8, LEVEL_WORLD2_BOSS_RUNS, 25, 264, true, 175, 17, 0},
+    {"LEVEL_3", 9, LEVEL_3_RUNS, 107, 703, false, 0, 0, 0},
+    {"LEVEL_WORLD3_SCROLL", 10, LEVEL_WORLD3_SCROLL_RUNS, 75, 567, false, 0, 0,
+     0},
+    {"LEVEL_WORLD3_TRICK", 11, LEVEL_WORLD3_TRICK_RUNS, 41, 365, false, 0, 0,
+     0},
+    {"LEVEL_WORLD3_BOSS", 12, LEVEL_WORLD3_BOSS_RUNS, 26, 460, true, 194, 16,
+     0},
+    {"LEVEL_WORLD4_POGO", 13, LEVEL_WORLD4_POGO_RUNS, 143, 262, false, 0, 0, 0},
+    {"LEVEL_WORLD4_SCROLL", 14, LEVEL_WORLD4_SCROLL_RUNS, 48, 422, false, 0, 0,
+     0},
+    {"LEVEL_WORLD4_SCROLL_2@3", 15, LEVEL_WORLD4_SCROLL_2_AT3_RUNS, 24, 223,
+     false, 0, 0, 3},
+    {"LEVEL_WORLD4_TRICK", 16, LEVEL_WORLD4_TRICK_RUNS, 149, 323, false, 0, 0,
+     0},
+    {"LEVEL_WORLD4_BOSS", 17, LEVEL_WORLD4_BOSS_RUNS, 26, 460, true, 155, 12,
+     0},
+    {"LEVEL_WORLD5_SCROLL", 18, LEVEL_WORLD5_SCROLL_RUNS, 51, 466, false, 0, 0,
+     0},
+    {"LEVEL_WORLD5_SCROLL_2", 19, LEVEL_WORLD5_SCROLL_2_RUNS, 41, 276, false, 0,
+     0, 0},
+    {"LEVEL_WORLD5_DASH", 20, LEVEL_WORLD5_DASH_RUNS, 70, 454, false, 0, 0, 0},
+    {"LEVEL_WORLD5_LEVERS", 21, LEVEL_WORLD5_LEVERS_RUNS, 74, 483, false, 0, 0,
+     0},
+    {"LEVEL_WORLD5_CLIMB", 22, LEVEL_WORLD5_CLIMB_RUNS, 26, 251, false, 0, 0,
+     0},
+    {"LEVEL_WORLD5_TRICK", 23, LEVEL_WORLD5_TRICK_RUNS, 107, 536, false, 0, 0,
+     0},
+    {"LEVEL_WORLD5_BOSS", 24, LEVEL_WORLD5_BOSS_RUNS, 46, 594, true, 231, 12,
+     0},
+    {"LEVEL_WORLD5_FINALE", 25, LEVEL_WORLD5_FINALE_RUNS, 1, 400, false, 0, 0,
+     0}};
 
 inline constexpr int ENTRY_COUNT = sizeof(ENTRIES) / sizeof(ENTRIES[0]);
 

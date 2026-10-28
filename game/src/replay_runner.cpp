@@ -36,8 +36,8 @@ void run_replays(
     player.set_visible(true);
     player.set_hud_visible(true);
 
-    for (int index = 0; index < levels.size(); ++index) {
-        const replay_data::Entry& entry = replay_data::ENTRIES[index];
+    for (const replay_data::Entry& entry : replay_data::ENTRIES) {
+        const int index = entry.level;
         if (entry.runs == nullptr) {
             BN_LOG("REPLAY ", index, " ", entry.name, " none");
             ++missing;
