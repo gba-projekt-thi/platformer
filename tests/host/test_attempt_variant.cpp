@@ -15,7 +15,7 @@ TEST_CASE(attempt_deaths_in_level_count_from_the_level_entry) {
 }
 
 TEST_CASE(attempt_window_zero_zero_is_always_there) {
-    // The default of every trap and platform so far.
+    // The default: no death window.
     for (unsigned deaths : {0u, 1u, 3u, 100u}) {
         CHECK(active_for_deaths(deaths, 0, 0));
     }
