@@ -79,7 +79,6 @@ class LevelScene : public core::Scene {
     // expired). Kept so the sprites can be drawn again after a pause: they
     // are released while the pause overlay is open.
     const char* _hint_text = nullptr;
-    // A boss level's hint waits for the arena (hint::should_start()).
-    bool _hint_waits_for_arena = false;
-    hint::Timer _hint_timer{Cfg::Hint::FRAMES};
+    // Its countdown and sprite life (hint::Display).
+    hint::Display _hint{Cfg::Hint::FRAMES};
 };

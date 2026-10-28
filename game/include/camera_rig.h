@@ -166,3 +166,20 @@ class CameraRig {
     int _look_held = 0;
     int _look_hold_frames = 0;
 };
+
+namespace camera_rig {
+
+// One frame from the duck and the D-Pad (LevelManager::_update_camera()):
+// the run speed feeds the look-ahead, up / down the look.
+template <typename T>
+void aim(
+    CameraRig<T>& rig,
+    T duck_x,
+    T duck_y,
+    T duck_vel_x,
+    bool up_held,
+    bool down_held) {
+    rig.update(duck_x, duck_y, duck_vel_x, look(up_held, down_held));
+}
+
+}  // namespace camera_rig

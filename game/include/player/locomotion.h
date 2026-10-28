@@ -410,4 +410,74 @@ class Core {
         Cfg::Dash::DURATION_FRAMES, Cfg::Dash::COOLDOWN_FRAMES};
 };
 
+// -----------------------------------------------------------------------------
+// One frame of the adapter (PlayerLocomotion::update() runs exactly this)
+//
+// The buttons go into the core, what the frame did goes out as sounds and
+// events. Written against a `Keypad` (one function per button) and an `Out`
+// so the host tests can press buttons and listen, see
+// tests/host/test_locomotion_frame.cpp:
+//
+//   Out::begin_frame()      the events of the previous frame are over
+//   Out::sound(Sound)       a sound effect
+//   Out::note_dash() / note_jump()   a dash / jump for the triggers
+// -----------------------------------------------------------------------------
+
+enum class Sound { Dash, Step, Pogo, TrapHit, Jump };
+
+template <typename Keypad>
+auto read_input(const Keypad& keypad) -> InputState {
+    InputState input;
+    input.left_held = keypad.left_held();
+    input.right_held = keypad.right_held();
+    input.a_pressed = keypad.a_pressed();
+    input.a_held = keypad.a_held();
+    input.b_pressed = keypad.b_pressed();
+    input.r_pressed = keypad.r_pressed();
+    return input;
+}
+
+template <typename Out>
+void announce(const Effects& effects, Out& out) {
+    if (effects.dash_started) {
+        out.sound(Sound::Dash);
+        out.note_dash();
+    }
+    if (effects.step_sound) {
+        out.sound(Sound::Step);
+    }
+    if (effects.pogo_started) {
+        out.sound(Sound::Pogo);
+    }
+    if (effects.pogo_bounced) {
+        // The strike rings off the trap, and it is a jump for triggers.
+        out.sound(Sound::TrapHit);
+        out.note_jump();
+    }
+    if (effects.jumped) {
+        out.sound(Sound::Jump);
+        out.note_jump();
+    }
+}
+
+// `hook` (may be nullptr) sees the buttons before the core does, see
+// PlayerLocomotion::set_input_hook().
+template <typename Body, typename Keypad, typename World, typename Out>
+auto run_frame(
+    Core& core,
+    Body& body,
+    const Keypad& keypad,
+    void (*hook)(InputState&),
+    World& world,
+    Out& out) -> Effects {
+    out.begin_frame();
+    InputState input = read_input(keypad);
+    if (hook != nullptr) {
+        hook(input);
+    }
+    const Effects effects = core.step(body, input, world);
+    announce(effects, out);
+    return effects;
+}
+
 }  // namespace locomotion
