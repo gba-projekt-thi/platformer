@@ -63,9 +63,7 @@ void LevelScene::_show_hint_if_needed() {
 
     _hint_text = text;
     // A boss level's hint is about the arena: it starts there (_update_hint).
-    _hint_waits_for_arena = _level_manager.has_boss();
-    if (!_hint_waits_for_arena) {
-        _hint_timer.start();
+    if (_hint.show(_level_manager.has_boss())) {
         _draw_hint();
     }
 }
@@ -85,39 +83,23 @@ void LevelScene::_update_hint() {
     if (_hint_text == nullptr) {
         return;
     }
-
-    // The countdown only runs while the game does, and B only dismisses the
-    // hint in play (in the pause menu B means 'back').
-    const bool paused = _level_manager.paused();
-    if (_hint_waits_for_arena &&
-        hint::should_start(true, _level_manager.boss_fighting())) {
-        _hint_waits_for_arena = false;
-        _hint_timer.start();
-    }
-    if (_hint_waits_for_arena) {
-        return;
-    }
-    if (!paused) {
-        // Pressing B (the player has tried the dash) dismisses it at once.
-        if (bn::keypad::b_pressed()) {
-            _hint_timer.dismiss();
-        }
-        _hint_timer.tick();
-    }
-
-    if (!_hint_timer.visible()) {
-        _hint_sprites.clear();
-        _hint_text_gen.reset();
-        _hint_text = nullptr;
-        return;
-    }
-
-    if (hint::should_draw(_hint_timer.visible(), paused)) {
-        if (_hint_sprites.empty()) {
+    switch (_hint.update(
+        _level_manager.paused(), _level_manager.boss_fighting(),
+        bn::keypad::b_pressed(), !_hint_sprites.empty())) {
+        case hint::Sprites::Draw:
             _draw_hint();
-        }
-    } else {
-        _hint_sprites.clear();
+            break;
+        case hint::Sprites::Release:
+            _hint_sprites.clear();
+            break;
+        case hint::Sprites::Finish:
+            _hint_sprites.clear();
+            _hint_text_gen.reset();
+            _hint_text = nullptr;
+            break;
+        case hint::Sprites::Keep:
+        default:
+            break;
     }
 }
 
@@ -154,14 +136,15 @@ void LevelScene::update() {
         return;
     }
 
-    // Start toggles the pause, and the pause overlay allocates its sprites
-    // inside the next update() call: free the hint's first, so the two are
-    // never alive at once (they are drawn again once the game runs).
-    if (bn::keypad::start_pressed()) {
-        _hint_sprites.clear();
-    }
-
-    const LevelManager::UpdateResult result = _level_manager.update();
+    // The hint's sprites are freed before the pause overlay allocates its own
+    // (hint::step_level); they are drawn again once the game runs.
+    struct Step {
+        LevelScene& scene;
+        static bool start_pressed() { return bn::keypad::start_pressed(); }
+        void release_hint_sprites() { scene._hint_sprites.clear(); }
+        auto update_level() { return scene._level_manager.update(); }
+    } step{*this};
+    const LevelManager::UpdateResult result = hint::step_level(step);
     if (result == LevelManager::UpdateResult::None) {
         return;
     }
