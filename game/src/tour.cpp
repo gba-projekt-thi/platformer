@@ -68,7 +68,15 @@ void boss_music(int order) {
 }
 
 void level_started(Player& player, unsigned level_index) {
-    const replay_data::Entry& entry = replay_data::ENTRIES[level_index];
+    // The level's first entry (its plain recording when it has one).
+    const replay_data::Entry* found = nullptr;
+    for (const replay_data::Entry& candidate : replay_data::ENTRIES) {
+        if (candidate.level == int(level_index)) {
+            found = &candidate;
+            break;
+        }
+    }
+    const replay_data::Entry& entry = *found;
     if (entry.runs == nullptr) {
         player.set_input_hook(nullptr);
         return;

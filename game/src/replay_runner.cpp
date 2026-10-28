@@ -90,8 +90,8 @@ void run_replays(
     player.set_visible(true);
     player.set_hud_visible(true);
 
-    for (int index = 0; index < levels.size(); ++index) {
-        const replay_data::Entry& entry = replay_data::ENTRIES[index];
+    for (const replay_data::Entry& entry : replay_data::ENTRIES) {
+        const int index = entry.level;
         if (entry.runs == nullptr) {
             BN_LOG("REPLAY ", index, " ", entry.name, " none");
             ++missing;
@@ -103,13 +103,10 @@ void run_replays(
     }
 
     // The counter-checks: doors that must stay shut.
-    for (int index = 0; index < levels.size(); ++index) {
-        const replay_data::Entry& entry = replay_data::COUNTER_ENTRIES[index];
-        if (entry.runs == nullptr) {
-            continue;
-        }
+    for (const replay_data::Entry& entry : replay_data::COUNTER_ENTRIES) {
         const bool ok = play_entry(
-            index, entry, false, player, levels, data_manager, level_manager);
+            entry.level, entry, false, player, levels, data_manager,
+            level_manager);
         ok ? ++passed : ++failed;
     }
 
