@@ -53,6 +53,8 @@ struct DeviceOut {
             case locomotion::Sound::Jump:
                 audio.play_sfx(bn::sound_items::jump);
                 break;
+            default:
+                break;
         }
     }
 };
