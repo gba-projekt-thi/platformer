@@ -1,223 +1,61 @@
 # Game Documentation
 
-This document describes the `game/` project inside this repository, including the folder layout, gameplay systems, and how to build or extend the GBA platformer.
+A map of the `game/` project: where things live and how to build, run and
+extend it. What the game *is* (controls, abilities, traps, worlds) is in
+[Game Concepts](game-concepts.md); how the code fits together is in
+[Project Architecture](architecture.md) and [Components](components.md). The
+full set starts at [`docs/index.md`](index.md).
 
-## Overview
-
-This repository contains a small Game Boy Advance platformer built with the Butano engine. The playable game lives in `game/` and uses global engine support from `extern/engine/`.
-
-The game includes:
-- A start/save selection scene with three save slots (level, deaths, and run timer persist to SRAM), each showing "New" or its furthest-reached world before you even pick it
-- A world-select scene and a level-select scene for jumping directly to any already-reached world or level (reachable from the start screen by pressing B)
-- A world-select stats line ("Deaths: N  Cleared: X/Y") aggregated from the loaded save slot's existing death total and best-time records
-- Level-select also shows each unlocked level's personal-best clear time (mm:ss.cc), once one has been set, marked with a trailing `*` if that level has ever been cleared without a single death (a no-death clear)
-- A sequence of themed worlds (bathtub, sewers, forest, village, castle), each with at least two regular levels plus one boss level, defined in code (26 levels total). World 1 adds "Second Chances" before its boss, a kind first taste of Level Devil: a delayed falling bubble, a stepping stone that appears after three deaths and a door that comes closer. World 2 adds "Rigged Yard": grates that drop a moment after a hidden plate, a falling can and a stabbing nail bed in a delayed chain, and a doormat that turns the door into a trap if the duck dawdles on it. World 3 adds "Trickwood" before its boss: a vanishing floor, arms lurking below a gap, a floor that sags away and a fake door, each cleared with a plain jump once known. World 4 opens with "Bramble Hop", whose pits only pogo bounces off thorn bushes cross; its second scrolling level has a false exit (a lever that turns the door into a trap, and a door that moves after three deaths). Before its boss it adds "Hedge Your Bets": the pogo over a pit lands on an island whose hidden plate sets off a delayed chain (a falling brick, then a bush sprouting at the far edge) - hold still, then bounce twice over the second pit. World 5 has two levels built on the dash and the switch mechanic ("Cloak Corridor", "Lever Hall") one on the wall jump ("Barrel Tower", with a door that runs away and a trapdoor) and "Liar's Keep", where nothing works twice (a trapdoor that stays after two deaths and stabs jumpers instead, a pogo pit, a two-step chain, a lurking bar, a lever that arms the door and a door that moves) before its boss, and an extra trap-free finale level after it.
-- Six trap categories: static (base), trigger-activated moving, path-following patrol, player-chasing, proximity-triggered ambush, and self-timed cycling hazards (spikes out of the floor)
-- Trigger zones that activate hazards - latching by default, or as toggling switches and hold-down pressure plates (optionally with a visible sprite) that can also open and close platforms
-- A door that advances the player to the next level, ending in a celebratory kiss scene (the door itself can be reskinned as a different, non-animated sprite for narrative moments - see World 5's finale)
-- A "New Best!" banner that holds the level-complete transition until acknowledged, whenever a level is cleared faster than its previous best time
-- A run-complete summary screen after the kiss scene (total time, deaths, no-death clears), acknowledged with A/Start before the save slot resets
-- Music and tilemap backgrounds
-- A death counter and run timer HUD
-- A pause menu with Continue / Restart Level / Options / Title Screen; Options lets the player adjust music and SFX volume (0-4), persisted per save slot, plus - once unlocked by completing the game - toggle Hard Mode, which speeds up Moving/Chase/Ambush trap velocities and Path trap patrols for a tougher replay, and an always-available Assist Mode (halved Moving/Chase/Ambush/Path trap speeds plus longer coyote/jump-buffer windows) for a gentler run - the two modes are mutually exclusive, and no best times or no-death clears are recorded while Assist Mode is on
-- A dash (B button) from World 3 onward: a short horizontal burst with gravity suspended, a cooldown, and one use per air time; no invincibility, adds horizontal reach only, so no existing layout becomes unreachable; a dedicated sound and a flickering afterimage trail give feedback
-- A boss at the end of every boss level (`TrapType::BOSS`, `boss_logic.h`): beaten only by pogo strikes, faster each phase, door shut until it falls
-- A pogo strike (R) from World 4 onward: striking a trap from above bounces the duck off it, the trap stays (`Cfg::Pogo`, `locomotion::Core`)
-- A wall slide and wall jump from World 5 onward: holding toward a wall slows the fall, A jumps off it, away from the wall (`Cfg::WallJump`, `locomotion::Core`)
-- A controls overview screen, reachable from the start screen (a "Controls" entry below the save slots) and from the pause menu
-- One-time level hints (`LevelData::intro_hint`) that teach the dash and the levers at the moment they matter, shown until the level is first cleared
- - A camera that follows the player across wider, scrolling worlds (smoothed, with a look-ahead and a cut to the respawn point; single-screen worlds stay fixed)
-
-> This page is a quick map of the `game/` folder and its key files. For the
-> full conceptual documentation — architecture, gameplay, level design,
-> components, assets, workflow, system internals, extensibility, and a glossary —
-> see [`docs/index.md`](index.md).
-
-## Build and Run
-
-Build the game from the repository root inside the devcontainer:
+## Build and run
 
 ```bash
-make
+make                              # in the dev container: produces platformer.gba
+mgba-qt platformer.gba            # on the host
+./test-rom.sh platformer.gba      # headless boot check, as in CI
 ```
 
-This produces the ROM file:
+`TARGET := platformer` in the root `Makefile` names the ROM. Tests and checks:
+see [Development Workflow](development-workflow.md).
 
-```bash
-platformer.gba
-```
+## Folder structure
 
-Run the ROM with mGBA on your host machine:
+| Path | Contents |
+|------|----------|
+| `game/src/`, `game/include/` | game logic; subfolders `player/`, `traps/`, `scene/`, `level/` |
+| `game/levels/world1..5.json` | level data: platforms, triggers, traps, doors, checkpoints, hints |
+| `game/include/level/levels_world*.h` | **generated** from the JSON by `tools/Generate_levels.py` - never edit by hand |
+| `game/graphics/`, `game/audio/`, `game/dmg_audio/` | assets, see [Asset Management](asset-management.md) |
+| `game/replays/` | recorded solutions (and `counter/` checks) played by `make replay` |
+| `tests/host/` | host unit tests for the Butano-free rule headers |
+| `tools/` | level generator, checkers, replay and tour scripts, with their tests |
+| `docs/audio/` | WAV previews of the boss music (see `docs/audio/README.md`) |
+| `extern/engine/` | the shared engine layer (scene manager, save system, `IResettable`, `AudioSettings`) on top of Butano |
 
-```bash
-mgba-qt platformer.gba
-```
+## Where to look
 
-For headless or CI testing, use:
+The headers carry their own explanation in a header comment; the files worth
+knowing first:
 
-```bash
-./test-rom.sh platformer.gba
-```
+- `game/src/main.cpp` - engine setup, the flat `levels[]` list, the scene loop.
+- `game/include/level/level_structure.h` - the data structs (`LevelData`,
+  `TrapData`, `TriggerData`, ...) every field of which is commented.
+- `game/include/level/level_manager.h` and `game/src/level_manager.cpp` - level
+  load, per-frame update, death and respawn; it delegates the decisions to the
+  pure headers (`*_logic.h`, `level_flow.h`, `pause_flow.h`, `hint_logic.h`,
+  `locomotion.h`).
+- `game/include/cfg*.h` - every tuning constant (physics, dash, pogo, wall
+  jump, camera, boss, death feedback).
+- `game/include/game_state.h` and `game_state_migration.h` - the save record and
+  how old saves are upgraded.
+- `game/include/world_index.h` - how `levels[]` is grouped into worlds for the
+  select scenes; `tools/Check_world_index.py` keeps it in sync.
 
-## Folder Structure
+## Extending the game
 
-`game/`
-- `audio/` — maxmod audio assets used by the game (one track per world,
-  e.g. `world1.xm`–`world5.xm`, plus dedicated menu/start/end themes)
-- `dmg_audio/` — DMG audio assets for older sound support
-- `graphics/` — sprite and background graphics source files (organized as
-  a `global/` folder shared across worlds, plus one `world1/`–`world5/`
-  folder per themed world — see
-  [`docs/asset-management.md`](asset-management.md))
-- `include/` — game headers, level definitions, and shared data structures
-- `src/` — game logic implementation files
-
-### Important files
-
-- `game/src/main.cpp`
-  - Initializes the Butano engine
-  - Configures fade and global settings
-  - Creates the player entity
-  - Starts the initial `StartScene`
-  - Runs the main game loop
-
-- `game/include/levels.h`
-  - Contains the level definitions, platform placement, trigger zones, and trap layout
-  - Defines the tilemap background and music for each level
-  - Defines player spawn points and door positions
-
-- `game/include/level_manager.h` / `game/src/level_manager.cpp`
-  - Controls level transitions and scene switching
-  - Manages game state across levels and save data
-  - Exposes `trap_speed_multiplier()`, read by the trap factory when constructing Moving/Chase/Ambush traps
-
-- `game/include/start_scene.h` / `game/src/start_scene.cpp`
-  - Implements the first scene shown to the player
-  - Presents save slot / start selection logic
-  - Pressing B (instead of A) after picking a save slot opens the world-select scene
-  - Peeks all three slots once via `DataManager::peek_state()` (no SRAM writes, doesn't touch the active slot) and shows each as "New" or its furthest-reached world (`WorldIndex::world_for_level()`) before the player picks one
-
-- `game/include/world_select_scene.h` / `game/src/world_select_scene.cpp`
-  - Lists the worlds and lets the player jump directly to any world they have already reached (based on the loaded save slot's furthest level)
-  - Locked worlds are shown but cannot be entered; A opens the level-select scene for an unlocked world, B returns to `StartScene`
-  - Also renders the save slot's stats line (total deaths, levels cleared), computed from `GameState` at menu-build time
-
-- `game/include/level_select_scene.h` / `game/src/level_select_scene.cpp`
-  - Lists the individual levels belonging to the world chosen in `WorldSelectScene`
-  - Lets the player jump straight to any unlocked level (writing the chosen level to the save slot); B returns to `WorldSelectScene`
-  - Appends each unlocked level's best time and, if earned, a trailing `*` no-death-clear indicator
-
-- `game/include/world_index.h`
-  - Declares how the flat `levels[]` array in `game/src/main.cpp` is grouped into worlds for the world/level-select scenes
-  - This table is maintained by hand and must be kept in sync whenever the `levels[]` array changes
-  - Also declares `world_for_level()`, mapping a `furthest_level` back to its containing world index - shared by `WorldSelectScene`'s unlock check and `StartScene`'s slot preview
-
-- `game/include/level_scene.h` / `game/src/level_scene.cpp`
-  - Implements actual level gameplay
-  - Handles player movement, collision, traps, and level completion
-  - Records new best-clear-times and no-death clears on reaching the door, and shows the "New Best!" banner (holding the scene transition) when a record is beaten
-
-- `game/include/kissing_scene.h` / `game/src/kissing_scene.cpp`
-  - The celebratory scene shown after the final level's door - holds on the kiss background for `Cfg::Sleep::KISSING_SCENE` frames, then hands off to `SummaryScene`
-  - No longer calls `DataManager::reset()` itself - that now happens in `SummaryScene`, once the player has seen the run's final numbers
-
-- `game/include/summary_scene.h` / `game/src/summary_scene.cpp`
-  - Shown once, between `KissingScene` and `StartScene`: sums every level's `best_time_frames` for a total-time readout, plus the slot's total deaths and a `has_no_death_clear()` count - all read from state that's about to be reset
-  - Waits for A/Start, then calls `DataManager::reset()` and transitions to `StartScene` - the same reset `KissingScene` used to perform directly
-
-- `game/include/controls_scene.h` / `game/src/controls_scene.cpp`
-  - The start-screen controls overview (A/B/Start returns to `StartScene`); the pause menu has its own in-place view because leaving a level would destroy it
-  - Both draw `controls_text.h`'s `ControlsText::LINES`, so they always agree
-
-- `game/include/game_modes.h`, `dash_controller.h`, `menu_nav.h`, `controls_text.h`, `cfg_dash.h`, `camera_rig.h`, `cfg_camera.h`, `death_fx.h`, `cfg_death_fx.h`, `trigger_logic.h`, `switch_logic.h`, `hint_logic.h`, `dash_trail.h`, `game_state_migration.h`, `checkpoint_logic.h`
-  - Butano-free helpers holding the testable decision logic: Hard/Assist Mode toggles and Options row indices, the dash rules (`DashController`) and constants, wrap-around list-menu cursors, the trigger mode state logic (delay, timer, jump / dash actions) and switched-platform rules, the one-frame player events, the trap frame scaling and cycle timeline, the crumbling-platform state machine, and the controls text. `LevelManager`, `PlayerLocomotion`, `PauseController` and `StartScene` call them and apply the results; covered by `tests/host/`
-
-- `game/include/player.h` / `game/src/player.cpp`
-  - Implements player movement, jump behavior, gravity, and input handling
-
-- `game/include/trap_factory.h` and `game/src/traps/`
-  - Define trap creation and trap behaviors
-  - Support base traps, moving traps, path-following traps, chaser traps, and ambush traps
-  - Scales Moving/Chase/Ambush trap velocities by `LevelManager::trap_speed_multiplier()` at construction time; Path traps are left unscaled
-
-- `game/include/level_structure.h`
-  - `TriggerData::name` / `TrapData::trigger_name` bind a MovingTrap/PathTrap
-    to a trigger by stable identifier, resolved via
-    `LevelManager::get_trigger_by_name()`. This is the only binding
-    mechanism now - the legacy `trigger_index` (raw array-position) field
-    has been removed from `TrapData`, since every level had already
-    migrated to named binding and the field was never read
-  - Because binding is by name rather than position, one trigger can drive
-    several traps at once (a **trigger chain**) - see `level0_traps` in
-    `game/levels/world1.json` for an existing example
-
-- `checkpoint.h` / `checkpoint.cpp` (next to the trigger) and `checkpoint_logic.h`
-  - `Checkpoint` is the flag a level's `checkpoints` data creates; `LevelManager` makes the furthest touched flag the respawn point and re-arms the triggers that were on (see [`docs/level-design.md`](level-design.md#checkpoints)). `checkpoint_logic.h` holds the Butano-free rules (`CheckpointTracker`, trigger snapshot masks)
-
-- `game/include/save_sync_controller.h` / `game/src/save_sync_controller.cpp`
-  - Implements `SaveSyncController`, which owns the runtime persistence policy for a level
-  - Watches the player's death counter and writes deaths/timer to SRAM via `DataManager` when it changes, or on demand via `force_save()`
-  - Tracks whether the death count has changed since the level's baseline (`no_deaths_this_attempt()`), which `LevelScene` reads to award a no-death clear badge on completion
-
-- `extern/engine/core/include/i_resettable.h`
-  - Declares `IResettable`, a minimal interface with a single `reset()` method
-  - Used by `LevelManager` to reset subsystems (such as traps) back to their level-start state after the player dies or the level restarts
-
-- `extern/engine/core/include/audio_settings.h`
-  - Declares `AudioSettings`, an engine-level singleton holding the player's music/SFX volume levels (0..4)
-  - Lives in the engine layer (not `game/include/`) because `core_scene_manager.cpp` reads it during fade transitions and the engine must not depend on game-side types
-  - Game code persists the chosen levels into `GameState::music_volume`/`sfx_volume` and restores them via `LevelManager::restoreHUD()`
-
- - `game/include/pause_controller.h` / `game/src/pause_controller.cpp`
-  - Handles pause toggling and the pause menu (Continue / Restart Level / Options / Controls / Title Screen)
-  - Owns an embedded Options sub-menu (Up/Down selects Music/SFX/Hard Mode, Left/Right adjusts the level or flips the toggle, B returns and commits to SRAM once)
-  - The Hard Mode row only appears once `GameState::hard_mode_unlocked` is set for the loaded slot
-
-- `game/include/timer.h` / `game/src/timer.cpp`
-  - Also declares `frames_to_time()`, a plain-division frame→mm:ss.cc converter used only when building level-select and new-best-banner text (not in the per-frame HUD path, which keeps using `Timer`'s lookup tables)
-
-- `game/include/game_state.h`
-  - Declares `GameState`, the fixed-width per-save-slot record: level, deaths, timer, `furthest_level`, audio levels, per-level `best_time_frames`, the `no_death_clears` bitmask, and `hard_mode_unlocked`/`hard_mode_enabled`
-  - Also declares `set_no_death_clear()`/`has_no_death_clear()`, the small bit-flag helpers `LevelScene` and `LevelSelectScene` use to set/read a level's no-death badge
-
-## Game Data and Assets
-
-### Graphics
-
-Graphics are stored and imported from `game/graphics/`.
-The build system processes graphics assets through the Butano toolchain.
-
-### Audio
-
-Music and sound assets are stored in `game/audio/`.
-
-### Save Data
-
-`game/src/main.cpp` references `DataManager` and save state handling via `data_manager.reset()` and save slot selection. Best times, no-death-clear badges, and the Hard Mode unlock flag are deliberately preserved across `DataManager::reset()` (the full-game-completion reset), while the current run's level/deaths/timer and the Hard Mode on/off toggle are cleared, matching how audio volume settings reset.
-
-## Extending the Game
-
-To add or modify a level:
-1. Open `game/include/levels.h`
-2. Add or update `PlatformData`, `TriggerData`, and `TrapData`
-3. Set the level background and music items
-4. Update the `levels[]` array in `game/src/main.cpp` if you add new levels
-5. Update the `WorldIndex::WORLDS` table in `game/include/world_index.h` if you add, remove, or reorder levels, so the world/level-select scenes stay in sync with the flat `levels[]` array
-
-New levels automatically participate in Hard Mode, best-time tracking, and no-death clears without any extra authoring - these are runtime/save-state systems, not per-level data.
-
-To add a new gameplay object:
-1. Define its interface in `game/include/`
-2. Implement it in `game/src/`
-3. Register it with the appropriate scene or factory class
-
-## Notes
-
-- `game/` is the game-specific project code. It depends on Butano and shared engine code in `extern/engine/`.
-- The root `Makefile` points `TARGET := platformer`, so the generated ROM is `platformer.gba`.
-- `tests/host/` holds host-buildable unit tests (no ARM toolchain needed) for the Butano-free pure-logic files (`save_integrity`, `save_buffer`, `game_state`, `frame_time`, `world_index`, `game_modes`, `dash_controller`/`cfg_dash`, `menu_nav`, `controls_text`, `trigger_logic`, `switch_logic`, `hint_logic`, `dash_trail`, `save_migration`, `checkpoint_logic`, `level_limits`, `camera_rig`, `death_fx`); the `tools/test_*.py` files cover the level-data, reachability, world-index, hint and sprite-budget checkers; `.github/workflows/ci.yml` runs them plus a full devcontainer build + headless boot on every push/PR - see [`docs/development-workflow.md`](development-workflow.md#testing-methodology).
-
-## Related Docs
-
-- See the repository README for devcontainer, build, and run instructions.
-- See `docs/game.md` for details about the game project.
+To add a level, edit the world's JSON (see [Level Design](level-design.md)),
+run `python3 tools/Generate_levels.py`, add the `LEVEL_*` name to `levels[]` in
+`main.cpp` and the world's row in `WorldIndex::WORLDS`. Inserting a level
+anywhere but at the end shifts the save indices: see
+`game_state_migration.h`. New levels take part in Hard Mode, best times and
+no-death clears without extra authoring. For new traps or systems see the
+[Extensibility Guide](extensibility.md).
