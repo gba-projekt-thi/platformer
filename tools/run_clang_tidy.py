@@ -66,8 +66,8 @@ def main(files):
     # a database built in this checkout already has its paths
     old_root = root if source == candidates[0] else main_root
     text = rewrite_root(source.read_text(), old_root, root)
-    if not Path(root, "build").is_dir():
-        # generated headers (bn_*_items.h) only exist where the game was built
+    if not any(Path(root, "build").glob("bn_*.h")):
+        # generated headers (bn_*_items.h) only exist where the game was built (not in a fresh worktree)
         text = text.replace(f"-I{root}/build", f"-I{main_root}/build")
     db = json.loads(text)
     for entry in db:  # the build dir may not exist here (nothing is built)
