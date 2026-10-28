@@ -19,8 +19,7 @@
 
 namespace attempt_objects {
 
-// from 0, until 0 = always there, as every object before the fields existed:
-// LevelManager never touches those, so old levels behave exactly as before.
+// from 0, until 0 = always there: LevelManager never touches such objects.
 inline auto has_window(unsigned from, unsigned until) -> bool {
     return from != 0 || until != 0;
 }

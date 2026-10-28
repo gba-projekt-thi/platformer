@@ -26,10 +26,9 @@ class LevelManager;
 // clear already records (GameState::best_time_frames / no_death_clears /
 // deaths) - no new persistent field.
 //
-// DataManager::reset() - previously called at the end of KissingScene -
-// happens here instead, once the player dismisses this screen with
-// A/Start, so the numbers below are still the just-finished run's live
-// state when this scene reads them, not whatever reset() leaves behind.
+// DataManager::reset() happens here, once the player dismisses this screen
+// with A/Start, so the numbers below are still the just-finished run's live
+// state when this scene reads them.
 // -----------------------------------------------------------------------------
 class SummaryScene : public core::Scene {
    public:

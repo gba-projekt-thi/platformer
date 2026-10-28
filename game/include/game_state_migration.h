@@ -10,7 +10,7 @@
 // -----------------------------------------------------------------------------
 // GameState save migration
 //
-// A new GameState field no longer wipes every save. SaveManager::load() takes
+// A new GameState field does not wipe saves. SaveManager::load() takes
 // game_state_valid_bytes() and, for a payload written by an older schema
 // version, copies only the bytes that existed then; fields added later keep
 // their default member initializers.
@@ -35,7 +35,7 @@
 //
 // Saves older than MIN_VERSION (schema 1-4) have layouts that are not a prefix
 // of the current one (fields were inserted in the middle back then); they stay
-// incompatible and fall back to a fresh state, as before.
+// incompatible and fall back to a fresh state.
 //
 // Butano-free, so it is unit-tested on the host.
 // -----------------------------------------------------------------------------
@@ -45,7 +45,7 @@ namespace game_state_migration {
 inline constexpr uint16_t MIN_VERSION = 5;
 
 // Schema 5-8 held 24 best times (120 bytes in all); schema 9 holds 32, so
-// what came after them sits further back now (see widen_level_records()).
+// what came after them sits further back (see widen_level_records()).
 inline constexpr int V8_LEVELS = 24;
 inline constexpr int V8_SIZE = 120;
 

@@ -13,8 +13,7 @@
 // know about SRAM write timing/cost directly.
 //
 // NOTE:
-// SRAM writes are relatively expensive. Consider batching saves later
-// (see project backlog).
+// SRAM writes are relatively expensive.
 // -----------------------------------------------------------------------------
 class SaveSyncController {
    public:

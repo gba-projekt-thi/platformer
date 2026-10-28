@@ -4,13 +4,11 @@
 // GameSession
 //
 // Tracks whether the current playthrough has reached the end of the level
-// list (all levels cleared). Replaces the previous file-scope mutable
-// `game_finished` bool that was shared via `extern` between main.cpp and
-// LevelScene with no ownership or encapsulation.
+// list (all levels cleared), instead of a global shared between main.cpp and
+// LevelScene.
 //
-// Scope is deliberately a single flag today. If more cross-scene signals
-// show up later (e.g. "return to title requested"), fold them into this
-// class rather than reaching for another global.
+// Deliberately a single flag. Further cross-scene signals belong in this
+// class rather than in another global.
 // -----------------------------------------------------------------------------
 class GameSession {
    public:

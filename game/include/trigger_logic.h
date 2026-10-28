@@ -99,7 +99,7 @@ class TriggerState {
         if (_mode == TriggerMode::Toggle) {
             _set_pressed(!_pressed);
         } else {
-            // Latch and Hold: same entry behavior as the legacy Trigger.
+            // Latch and Hold: entering sets !default_on.
             _set_pressed(!_default_on);
         }
     }

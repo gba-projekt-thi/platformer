@@ -6,9 +6,7 @@
 // PlayerStateMachine
 //
 // Tracks the player's coarse movement state (Idle/Run/Jump/Fall), derived
-// purely from ground state and vertical velocity. Extracted out of Player
-// as the third step of the Player decomposition (after PlayerHud,
-// PlayerAnimator).
+// purely from ground state and vertical velocity.
 // -----------------------------------------------------------------------------
 class PlayerStateMachine {
    public:

@@ -35,9 +35,7 @@ void PathTrap::update() {
     pos.y = _start_y + current.y() + (next.y() - current.y()) * ratio;
 
     // Direct position writes bypass PhysicsBody::move(), so sync the
-    // collision shape and sprite manually (was previously missing - the
-    // trap's collision box and visible sprite never actually followed
-    // the path, only its internal `pos` moved).
+    // collision shape and sprite manually.
     shape_pos.move(pos.x, pos.y);
     if (sprite) {
         sprite->pos.move(pos.x, pos.y);

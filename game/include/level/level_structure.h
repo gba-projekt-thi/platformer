@@ -57,9 +57,7 @@ struct PlatformData {
     int sprite_index;
 
     // Optional: binds the platform to a trigger (TriggerData::name) so a
-    // switch can open or close it. nullptr = always solid and visible, as
-    // every platform before this field existed. Appended last so existing
-    // aggregate-init literals keep compiling unchanged.
+    // switch can open or close it. nullptr = always solid and visible.
     const char* trigger_name = nullptr;
     // With trigger_name set: true = the platform is solid and visible while
     // the trigger is on (appears when switched on); false = it is solid and
@@ -70,7 +68,7 @@ struct PlatformData {
     // Crumbling platform: > 0 makes it give way that many frames after the
     // duck first stands on it (it shakes meanwhile and stays solid), see
     // crumble_logic.h. 0 = an ordinary platform. Cannot be combined with
-    // trigger_name. Appended last so existing literals compile unchanged.
+    // trigger_name.
     unsigned crumble_frames = 0;
     // Frames after which a crumbled platform comes back (once the duck is not
     // in its box); 0 = it stays gone until a death or restart.
@@ -88,10 +86,9 @@ struct PlatformData {
     // Level Devil: the platform is only there while the duck has died
     // [from_death, until_death) times in this visit of the level
     // (attempt_variant::active_for_deaths(); until_death 0 = no end). Outside
-    // that window it has no collision and no picture. 0, 0 = always there, as
-    // every platform before these fields existed. Two copies split at the same
-    // death (until 3 / from 3) make a platform move after the 3rd death.
-    // Appended last so existing literals keep compiling unchanged.
+    // that window it has no collision and no picture. 0, 0 = always there.
+    // Two copies split at the same death (until 3 / from 3) make a platform
+    // move after the 3rd death.
     unsigned from_death = 0;
     unsigned until_death = 0;
 };
@@ -113,23 +110,18 @@ struct TriggerData {
     // Optional stable trigger identifier. When set, TrapFactory resolves
     // the trigger via LevelManager::get_trigger_by_name() instead of a raw
     // array index, so reordering the level's trigger array never breaks a
-    // trap's binding. Every MOVING/PATH trap in every level sets this - see
-    // TrapData::trigger_name below. Note this is NOT the struct's last
-    // field (AmbushTrap's fields below were appended after it) - it just
-    // needs a default so positional literals that stop before it, i.e.
-    // every one today, keep compiling unchanged.
+    // trap's binding. Every MOVING/PATH trap sets this - see
+    // TrapData::trigger_name below.
     const char* name = nullptr;
 
     // How entering/leaving the zone changes the trigger's state - see
-    // TriggerMode in trigger_logic.h. Latch (the default) is the original
-    // behavior every existing trigger keeps. Appended after `name` so
-    // positional literals that stop earlier keep compiling unchanged.
+    // TriggerMode in trigger_logic.h.
     TriggerMode mode = TriggerMode::Latch;
 
     // Optional visible switch/plate: a sprite item drawn at the trigger's
     // position, showing tile `sprite_index_off` while the trigger is off and
     // `sprite_index_on` while it is on. nullptr = invisible (the default,
-    // like every trigger so far). Points at a constexpr sprite item, e.g.
+    // the default). Points at a constexpr sprite item, e.g.
     // &bn::sprite_items::flower1.
     const bn::sprite_item* sprite = nullptr;
     int sprite_index_off = 0;
@@ -138,13 +130,11 @@ struct TriggerData {
     // Frames between the player's action and the effect on traps/platforms
     // (every mode except Timer), or the timer length of a Timer trigger: it
     // switches on by itself this many frames after the level (re)starts. 0 =
-    // immediate, as every trigger so far. Appended last so positional
-    // literals that stop earlier keep compiling unchanged.
+    // immediate.
     unsigned delay_frames = 0;
 
     // What counts as "entering" the zone: the duck stepping in (Enter, the
-    // default) or jumping / dashing while inside it (Jump, Dash). Appended
-    // after delay_frames.
+    // default) or jumping / dashing while inside it (Jump, Dash).
     TriggerAction action = TriggerAction::Enter;
 
     // Delayed trap chains: the name of another trigger of the same level.
@@ -153,8 +143,7 @@ struct TriggerData {
     // state turns on, back when it turns off - one frame plus delay_frames
     // later (see TriggerChains in trigger_logic.h). A follower can be the
     // source of the next one: plate -> floor drops -> spikes shoot out.
-    // nullptr = an ordinary trigger. Appended last so positional literals
-    // that stop earlier keep compiling unchanged.
+    // nullptr = an ordinary trigger.
     const char* follows = nullptr;
 };
 
@@ -229,9 +218,7 @@ struct TrapData {
     // MOVING/PATH trap in every level sets - TrapFactory always resolves
     // it via LevelManager::get_trigger_by_name(), by identity rather than
     // array position, so reordering a level's trigger array can never
-    // silently rebind a trap. Note this is NOT the struct's last field
-    // (AmbushTrap's fields below were appended after it) - it still needs
-    // a default for BASE/CHASE/AMBUSH literals, which never set it.
+    // silently rebind a trap. Defaults to nullptr for BASE/CHASE/AMBUSH.
     const char* trigger_name = nullptr;
 
     // -------------------------------------------------------------------------
@@ -275,8 +262,8 @@ struct TrapData {
     // Any trap
     // -------------------------------------------------------------------------
 
-    // Draw order of the trap's sprite (smaller = in front). 0 = the default of
-    // every trap so far, level with the duck. A trap that imitates something
+    // Draw order of the trap's sprite (smaller = in front). 0 = level with
+    // the duck. A trap that imitates something
     // that stands behind the duck uses Cfg::ZOrder::DOOR / CHECKPOINT (1): a
     // fake door or fake checkpoint then looks exactly like the real one.
     int sprite_z_order = 0;
@@ -319,11 +306,10 @@ struct TrapData {
     // Level Devil: the trap is only there while the duck has died
     // [from_death, until_death) times in this visit of the level
     // (attempt_variant::active_for_deaths(); until_death 0 = no end). Outside
-    // that window it has no collision and no picture. 0, 0 = always there, as
-    // every trap before these fields existed. "After the 3rd death the trap
-    // sits somewhere else": one copy with until_death 3, one with
-    // from_death 3. Not for a BOSS (its fight shows and hides it itself).
-    // Appended last so existing literals keep compiling unchanged.
+    // that window it has no collision and no picture. 0, 0 = always there.
+    // "After the 3rd death the trap sits somewhere else": one copy with
+    // until_death 3, one with from_death 3. Not for a BOSS (its fight shows
+    // and hides it itself).
     unsigned from_death = 0;
     unsigned until_death = 0;
 };
@@ -355,9 +341,8 @@ struct DoorData {
     bn::fixed y;
 
     // Optional: overrides the default door32x32 sprite/animation/facing.
-    // Appended last so every existing level's aggregate-init
-    // `.door = {x, y}` keeps compiling unchanged. Used for narrative
-    // "goal" markers, e.g. the World 5 finale's reunion with Susanne.
+    // Used for narrative "goal" markers, e.g. the World 5 finale's reunion
+    // with Susanne.
     bn::sprite_item sprite = bn::sprite_items::door32x32;
     // Empty span = static/non-animated (same convention as TrapData's
     // graphics_indexes / BaseTrap).
@@ -454,8 +439,7 @@ struct LevelData {
     // -------------------------------------------------------------------------
 
     // Full extents of the playable world, centered at (0,0). Values <= the
-    // screen size keep the camera effectively static (current behavior for
-    // the non-scrolling levels); larger values enable real scrolling.
+    // screen size keep the camera static; larger values enable scrolling.
     bn::fixed world_width = Cfg::Screen::WIDTH;
     bn::fixed world_height = Cfg::Screen::HEIGHT;
 
@@ -465,13 +449,10 @@ struct LevelData {
 
     // Multiplier on the duck's ground braking (Cfg::Player::DECELERATION),
     // applied via Player::set_ground_friction() when the level loads.
-    // 1 = normal stopping (default, matches every level before this field
-    // existed). A value < 1 makes the level's floor slippery - the duck
-    // skids further before stopping - for level-to-level feel variation
-    // (e.g. a mossy World 3 forest floor) without touching acceleration,
-    // gravity, or jump speed, so it can never affect whether a platform or
-    // gap is reachable. Appended last so every existing level literal
-    // keeps compiling unchanged.
+    // 1 = normal stopping. A value < 1 makes the level's floor slippery -
+    // the duck skids further before stopping - for feel variation (e.g. a
+    // mossy World 3 forest floor) without touching acceleration, gravity,
+    // or jump speed, so it can never affect whether a gap is reachable.
     bn::fixed ground_friction = 1;
 
     // -------------------------------------------------------------------------
@@ -482,9 +463,7 @@ struct LevelData {
     // starts, for hint::MAX_CHARS characters at most (checked by
     // tools/Check_level_hints.py). It stays until the level has been cleared
     // once (no personal best yet), is hidden after Cfg::Hint::FRAMES or as
-    // soon as B is pressed, and never blocks play. nullptr = no hint, as for
-    // every level before this field existed. Appended last so existing
-    // literals keep compiling unchanged.
+    // soon as B is pressed, and never blocks play. nullptr = no hint.
     const char* intro_hint = nullptr;
 
     // -------------------------------------------------------------------------
@@ -492,9 +471,7 @@ struct LevelData {
     // -------------------------------------------------------------------------
 
     // Optional checkpoints, in play order, at most
-    // Cfg::Level::Limits::CHECKPOINTS. nullptr / 0 = none, as for every
-    // level before this field existed. Appended last so existing literals
-    // keep compiling unchanged.
+    // Cfg::Level::Limits::CHECKPOINTS. nullptr / 0 = none.
     const CheckpointData* checkpoints = nullptr;
     int checkpoint_count = 0;
 
@@ -504,6 +481,6 @@ struct LevelData {
 
     // Song order of the boss section inside `music`'s module (played while
     // the boss fights, see tools/Make_boss_music.py); 0 = the level has no
-    // boss music. Appended last so existing literals keep compiling unchanged.
+    // boss music.
     int boss_music_order = 0;
 };
