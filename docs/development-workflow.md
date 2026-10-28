@@ -60,257 +60,122 @@ Pick whichever fits your flow; they all produce the same ROM.
 
 ## Testing methodology
 
-Testing splits into an automated layer (host-side unit tests + CI) covering
-pure logic, and manual/behavioral testing covering everything that actually
-needs the emulator - gameplay feel, timing, and rendering can't be unit
+Testing has four layers. Gameplay feel, timing and rendering cannot be unit
 tested, so they stay manual on purpose.
 
-### Automated: host-side unit tests (`tests/host/`)
+| Layer | Command | What it covers |
+|-------|---------|----------------|
+| Host unit tests | `make test` | pure game rules, the Python tools, the level data checks |
+| Level data checks | `make checks` | levels, hitboxes, budgets, generated files (part of `make test`) |
+| Replays | `make replay` | every level played to its door in the emulator |
+| Photographed tour | `make tour` | what only shows on screen |
 
-A small, dependency-free test suite (`tests/host/test_framework.h` - no
-GoogleTest/Catch2 to install or vendor) covers the handful of files with
-**zero Butano/GBA dependency**: `save_integrity.h/.cpp` (CRC32, header/
-checksum validation - including a known external CRC-32 test vector, not
-just internal self-consistency), `save_buffer.h` (`SaveBuffer` read/write
-round-trips), `game_state.h` (`set_no_death_clear()`/`has_no_death_clear()`
-bit-flag helpers), and `frame_time.h` (`frames_to_time()`, including the
->99-minute case `SummaryScene`'s total-time readout can hit).
+### Host unit tests (`tests/host/`)
 
-These build with the **host's own g++/clang++**, not the ARM cross-compiler
-- no devkitARM, no container needed. They may use Butano's header-only types
-(`bn::fixed`), so movement rules are tested with the game's own fixed-point
-arithmetic (it rounds: `0.3 * 1` is 0.297), but nothing that needs the GBA:
+The tests build with the **host's own g++/clang++**, not the ARM compiler: no
+devkitARM and no container needed. The framework is a single header
+(`test_framework.h`). The game's rules live in headers without Butano
+dependency (`*_logic.h`, `locomotion.h`, `level_flow.h`, `pause_flow.h`,
+`hint_logic.h`, ...), so the tests drive them directly; they may use Butano's
+header-only types such as `bn::fixed`, so movement is tested with the game's
+own fixed-point arithmetic (it rounds: `0.3 * 1` is 0.297). Each header names
+its test file in its header comment; `ls tests/host` is the list.
 
 ```bash
 make test                          # host tests + tools/ tests + level data checks
-make -C tests/host                 # builds and runs; non-zero exit on any failure
+make -C tests/host                 # only the host tests; non-zero exit on any failure
 make -C tests/host FILTER=crumble  # only tests whose name contains "crumble"
 make coverage                      # line coverage of game/ per file
 ```
 
-Every test file compiles to its own object in `build/host-tests/` with header
-dependencies, so after a change only the affected files rebuild (about 1-2
-seconds - fast enough for a test-first red/green loop). A failing `CHECK_EQ`
-prints both values; a filter that matches no test fails, so a typo cannot pass.
+Every test file compiles to its own object in `build/host-tests/`, so after a
+change only the affected files rebuild (about 1-2 seconds). A failing
+`CHECK_EQ` prints both values; a filter that matches no test fails, so a typo
+cannot pass.
 
-The same extraction pattern covers the later features: the pure decision
-logic of Assist/Hard Mode (`game_modes.h`: `modes::trap_speed_mode()`,
-mutually exclusive toggles, Options row indices), the dash (`dash_controller.h`
-`DashController`: start/duration/cooldown/air-charge/cancel rules, plus the
-`Cfg::Dash` invariants in `cfg_dash.h`), list-menu cursor wrapping
-(`menu_nav.h`), the dash afterimage pool (`dash_trail.h`: spawn cadence, slots,
-lifetime, flicker), save migration (`save_migration.h` / `game_state_migration.h`:
-prefix copy, defaults for new fields, padding safety, a `GameState` layout lock), the checkpoint rules (`checkpoint_logic.h`: furthest flag wins, trigger snapshot masks, `TriggerState::restore()`), trigger modes (`trigger_logic.h`: latch/toggle/hold,
-including a check that Latch matches the original behavior) and the
-switched-platform rules (`switch_logic.h`), the one-time level hint rules (`hint_logic.h`: when it
-shows, how long it stays), and the controls overview text (`controls_text.h`: line
-count, length, ASCII and sprite-budget limits, and that the dash line names
-the world `Cfg::Dash::UNLOCK_WORLD` unlocks) and the entity-limit rule
-(`level_limits.h`: a level with exactly `Cfg::Level::Limits` entries fits, one
-more does not) and the camera rig (`camera_rig.h`: smoothing never overshoots,
-look-ahead direction, look up / down hold, world-edge bounds, also with
-truncating fixed-point numbers) and the death feedback (`death_fx.h`: freeze
-length, the end of the freeze reported once, shake fading out, flicker
-pattern), the trap frame scaling (`trap_timing.h`) and the one-frame player
-events with the jump / dash trigger rule (`player_events.h`,
-`trigger_logic.h`) and the crumbling-platform state machine
-(`crumble_logic.h`), the duck's movement (`locomotion.h`: `locomotion::Core`
-with running, braking, gravity, jump buffer, coyote time, variable jump, dash,
-world-edge bounce and fall death, driven by an `InputState` value and a fake
-world for the collision probes), menu text (`text_buffer.h`) and what a level
-clear records (`level_records.h`). `PlayerLocomotion`,
-`LevelManager`, `PauseController` and the scenes only feed these helpers
-and apply their results, so what is left in the Butano-dependent files is
-glue that still needs the manual checks below.
+When adding a rule (no hardware access, at most header-only `bn::` types),
+write its test first and put the rule in such a header rather than in a
+Butano-dependent file where it becomes untestable on the host. Hardware input
+reaches a rule as a value (`InputState` in `locomotion.h`), collision queries
+through a small interface the test can fake. `PlayerLocomotion`, `LevelManager`,
+`PauseController` and the scenes only feed these helpers and apply their
+results; that glue is covered by the replays and the manual checks below.
 
-`frame_time.h` is `FrameTime`/`frames_to_time()` extracted out of `timer.h`
-specifically so it has no Butano include chain to drag along - `timer.h`
-includes it, so every existing `#include "timer.h"` call site is
-unaffected.
-
-When adding a new rule (no hardware access, at most header-only `bn::`
-types such as `bn::fixed`), write its test in `tests/host/` first and put the
-rule in a header like the ones above, rather than into a Butano-dependent
-file where it becomes untestable on the host. Hardware input reaches a rule
-as a value (see `InputState` in `locomotion.h`), collision queries through a
-small interface the test can fake.
-
-### Automated: replays in the emulator (`make replay`)
+### Replays in the emulator (`make replay`)
 
 The host tests check rules; whether a level can really be played to its door
 with the real game, traps and all, is checked by **replays**: recorded buttons
-of a finished attempt, one file per level in `game/replays/`.
+of a finished attempt, one file per level in `game/replays/`. The commands,
+the file format and the recording workflow are documented at the top of
+`tools/replays.py`. In short:
 
-- `make replay` (dev container) generates `game/include/replay_data.h` from
-  the recordings, builds `platformer.replay/platformer.gba` (the game with
-  `PLATFORMER_REPLAY`: no title screen, it plays every recorded level and logs
-  the result) and runs it in mGBA without a frame limit. It fails unless every
-  recorded level reaches its door; levels without a recording are listed. CI
-  runs it in the `gba-build` job.
-- To record: `make record` builds `platformer.record/platformer.gba`. Play the
-  level(s) to the door in mGBA (Restart Level starts a level's recording over;
-  deaths, pauses and checkpoints are fine), quit, then
-  `python3 tools/replays.py import platformer.record/platformer.sav`. Each
-  finished level's last attempt is stored in SRAM behind the save slots
-  (`game/include/replay.h`), so any mGBA frontend works.
-- Buttons are recorded per movement step, not per frame, so the death freeze
-  and pauses do not shift them. A change to movement, physics, traps or level
-  data that breaks a recorded solution fails the replay: re-record that level
-  if the change is intended.
-- A level can change with the deaths in it (death windows, a door with
-  `attempt_positions`), and Restart Level is one of them. A recording keeps
-  the deaths in the level it began with (`"deaths": N` in its JSON, left out
-  for 0); the replay ROM sets the level up as after that many deaths before
-  the first step, so a recording made after three restarts plays the layout
-  it was made on.
+- `make replay` builds the game with `PLATFORMER_REPLAY` (no title screen), plays
+  every recording in mGBA without a frame limit and fails unless each reaches
+  its door. Levels without a recording are listed. CI runs it in `gba-build`.
+- `make record` builds a recording ROM; the last finished attempt of each
+  level is stored in SRAM and imported with `tools/replays.py import`.
+- **Counter-checks** (`game/replays/counter/`) must *not* finish their level:
+  the duck walks into a door that has to stay shut, e.g. a boss door while the
+  boss lives.
+- Buttons are recorded per movement step, so the death freeze and pauses do
+  not shift them. A change to movement, physics, traps or level data that
+  breaks a recording fails the replay: re-record that level if the change is
+  intended. A recording keeps the deaths it began with (`"deaths"`), so a
+  level with death windows replays on the layout it was recorded on.
 
-### Semi-automated: the photographed tour (`make tour`)
+### Photographed tour (`make tour`)
 
-What only shows on screen - story pages, menus, the pause overlay, banners,
-the bosses, the ending - is checked by looking. `make tour` (dev container,
-about 4 minutes) does the playing:
+`tools/tour.py` walks through the real game (menus, story pages, the pause
+overlay, bosses, ending, summary) in mGBA and keeps a screenshot at each
+step; see its docstring and `game/src/tour.cpp`. Results are in
+`platformer.tour/shots/` with a `report.html` saying what to look for.
+`python3 tools/tour.py compare OLD NEW` lists shots that changed between two
+runs. It takes about 4 minutes and is a manual review aid, not a pass/fail
+test.
 
-- `tools/tour.py` describes a walk through the real game: start screen,
-  controls, a new game's intro, the pause menu, every boss fight and the
-  story page behind it, the finale, the ending, the reunion, the summary, the
-  level selects, "Bramble Hop" and "Barrel Tower". It builds
-  `platformer.tour/platformer.gba` (`PLATFORMER_TOUR`, `game/src/tour.cpp`):
-  Butano replays the menu buttons, the recordings in `game/replays/` play the
-  levels, and slot 1 gets a fitting save each time the start screen opens.
-- mgba-qt runs without a window (Qt's VNC platform, its own save file); the
-  ROM logs `TOUR SHOT <n>` at the frame of every shot and the script keeps the
-  screen then. Results in `platformer.tour/shots/`: one PNG per shot,
-  `report.html` (each picture with what to look for), `contact.png` (all on
-  one sheet) and `shots.json`.
-- `python3 tools/tour.py compare OLD NEW` lists the shots whose picture
-  changed between two runs of the same tour: copy `shots/` away, change
-  something, run `make tour` again. Menus and story pages compare pixel for
-  pixel; action shots move a little with capture timing.
+### CI
 
-### Automated: CI (`.github/workflows/ci.yml`)
+- **`host-tests`** (`.github/workflows/ci.yml`): host unit tests plus line
+  coverage. No Docker, no ARM toolchain.
+- **`gba-build`** (`ci.yml`): builds the dev container image from
+  `docker/Dockerfile` (cached by that file's hash), builds the ROM, runs
+  `./test-rom.sh` and `make replay`. See the comment in `ci.yml` for why it is
+  `continue-on-error`.
+- **`python-tools.yml`**: every `tools/test_*.py` plus `make checks`, and
+  renders the level previews as an artifact. Needs no Docker or ARM toolchain.
 
-Two independent jobs, so the fast check isn't blocked by the slow one:
+### Level data checks (`make checks`)
 
-- **`host-tests`** - checks out the submodules recursively (the host tests
-  use Butano's header-only `bn::fixed`, so movement rules are tested with the
-  game's own arithmetic), runs
-  `make -C tests/host` and prints the line coverage (`make coverage`). No
-  Docker, no ARM toolchain - this is the fast, cheap check.
-- **`gba-build`** - checks out recursively, builds the dev container image
-  from `docker/Dockerfile` (the same image the devcontainer uses), runs
-  `make` inside it to produce the ROM, then runs `./test-rom.sh` headlessly
-  inside the same container - confirms the ROM actually boots. Marked
-  `continue-on-error: true` for now (see the comment in `ci.yml` for why);
-  it still runs and reports its real status, just doesn't block the rest
-  of the workflow.
+Pure Python, no C++. Each script's docstring says what it verifies and why;
+the ones that matter when you edit a level:
 
-A separate workflow, `.github/workflows/python-tools.yml`, runs the Python
-side on its own: every `tools/test_*.py` (the checkers, the reachability
-simulator, the sprite and sound generators) and the level-data checks via
-`make checks` (`Check_trigger_references.py`, `Check_level_hints.py`,
-`Check_world_index.py`, `Check_checkpoints.py`, `Check_sprite_budget.py`,
-`Check_hitboxes.py`, `Check_level_reachability.py --all`).
-It needs no Docker or ARM toolchain and only the first-level `extern/engine`
-submodule (not its nested Butano), so it is fast and independent of the slower
-`gba-build` job.
+- `Generate_levels.py --check` - `levels_world*.h` match `game/levels/*.json`
+  (edit the JSON, never the header).
+- `Check_trigger_references.py` - every `trigger_name` resolves to a trigger of
+  the same level, as `LevelManager::get_trigger_by_name()` does at runtime.
+- `Check_level_reachability.py FILE LEVEL...` / `--all` - a jump/dash
+  reachability model of the duck's movement; a gap meant to need the dash must
+  fail the no-dash run (see [Level Design](level-design.md#dash-and-switch-levels)).
+- `Check_hitboxes.py` - every platform, trap, boss and checkpoint box against
+  the opaque pixels of every animation frame of its sprite. To fix a height,
+  move the picture (`x`/`y`) and keep the hitbox (`x + offset_x`,
+  `y + offset_y`), so jumps stay the same; a width can only be fixed in the
+  hitbox.
+- `Check_checkpoints.py`, `Check_level_hints.py`, `Check_world_index.py`,
+  `Check_sprite_budget.py` (see
+  [System Internals](system-internals.md#sprite-and-entity-budgets)).
+- `Make_boss_music.py --check` and `replays.py generate --check` - the
+  generated boss music and `replay_data.h` are current.
+- `Preview_level.py` draws levels as SVG (see
+  [Level Design](level-design.md#previewing-levels)).
 
-The image `gba-build` builds depends only on `docker/Dockerfile` (repo
-source is bind-mounted at `docker run` time, never baked into the image),
-so it's cached as one unit keyed by that file's hash via `actions/cache` -
-`docker save`/`docker load` around the build step. A run where the
-Dockerfile hasn't changed skips the devkitPro/mGBA/LLVM install entirely
-and just restores the saved image.
-
-### Level data checks (`tools/Check_trigger_references.py`)
-
-Statically validates every `TrapData::trigger_name` a `MOVING`/`PATH` trap
-references against the `TriggerData::name` entries actually defined for
-that same level - the same per-level lookup
-`LevelManager::get_trigger_by_name()` performs at runtime, checked here
-without compiling or running the game. Also warns (non-fatal) about
-triggers that are defined but never referenced by any trap in their level.
-
-It also validates `PlatformData::trigger_name` (a platform bound to a switch)
-the same way, and counts a platform reference as "used" so a trigger that only
-drives platforms is not reported as unreferenced. The checker itself has unit
-tests (`tools/test_check_trigger_references.py`), run with:
-
-```bash
-python3 -m unittest discover -s tools -p 'test_*.py'
-```
-
-Pure Python, no C++ involved:
-
-```bash
-python3 tools/Check_trigger_references.py
-```
-
-Runs both as a CI job and as a local pre-commit hook (triggered only when
-level data or the script itself changes), so a dangling trigger reference
-gets caught before it reaches a PR, not just at commit time in CI.
-
-### Level geometry and roster checks
-
-Static checkers keep level content honest (pure Python, no C++):
-
-- `tools/Check_level_reachability.py FILE LEVEL...` - a jump/dash reachability
-  check driven by a small re-implementation of the duck's per-frame movement.
-  It reports the reachable platforms and door, with and without the dash, for a
-  conservative and an optimistic start, over every lever configuration the duck
-  can set. Use it when placing platforms: a gap meant to need the dash must
-  fail the no-dash optimistic run (see [Level Design](level-design.md#dash-and-switch-levels)).
-  Its tests calibrate the model against the documented jump/dash envelope and
-  check the two World 5 levels' design intent. `--all` checks the whole
-  roster in play order (the dash only from `Cfg::Dash::UNLOCK_WORLD` on) and
-  fails if any door cannot be reached; it runs in CI and as a pre-commit hook
-  and takes about 20 seconds.
-- `tools/Check_hitboxes.py` - compares every platform and trap collision box
-  with the opaque pixels of the sprite frame the game shows for it. On a
-  platform the duck must stand on the picture (no sinking in or floating, no
-  standing in the air beside it, no dropping off a visible edge); a trap must
-  not kill before the pictures touch. Tolerance 3 px for platforms, 2 px for
-  traps. To fix a height, move the picture (`x`/`y`) and keep the hitbox
-  (`x + offset_x`, `y + offset_y`), so jumps stay the same; a width can only be
-  fixed in the hitbox. Runs in CI and as a pre-commit hook.
-- `tools/Check_world_index.py` - confirms `WorldIndex::WORLDS` still describes
-  main.cpp's `levels[]` (no gaps or overlaps, same total, no duplicates; warns
-  about levels defined but not listed). It also runs as a pre-commit hook.
-- `tools/Check_level_hints.py` - validates `LevelData::intro_hint` strings:
-  28 characters at most (the limit comes from `hint_logic.h`), printable ASCII
-  only, never empty. Also a pre-commit hook.
-- `tools/Check_checkpoints.py` - validates `LevelData::checkpoints`: the flag
-  stands on a platform that is not switched, the respawn box overlaps no
-  platform, trap start box or anywhere on a trap's path (the whole PATH route,
-  the MOVING track, the CHASE row, the AMBUSH lunge), the platform is reachable
-  from the spawn (jump + dash model), count within
-  `Cfg::Level::Limits::CHECKPOINTS` (one per level), plus warnings for an ambush
-  range, order and spacing. Runs in the Python CI job.
-- `tools/Check_sprite_budget.py` - checks every level against the entity limits
-  (`Cfg::Level::Limits`), the `SpriteRegistry` capacity and the 128 hardware
-  sprites, in a worst-case model (see
-  [System Internals](system-internals.md#sprite-and-entity-budgets)), and the
-  `CollisionRegistry` capacities against the limits. Runs in the Python CI job
-  and as a pre-commit hook. The engine headers it reads live in the
-  `extern/engine` submodule (the Python CI job checks it out); where it is not
-  checked out, e.g. in a plain clone, the script uses built-in defaults and
-  prints a `NOTE`.
-
-- `tools/Preview_level.py [FILE.h] [LEVEL ...]` - draws levels as SVG pictures
-  (see [Level Design](level-design.md#previewing-levels)). The Python CI job
-  renders every level and uploads the pictures as the `level-previews`
-  artifact, so a layout change can be reviewed without building the ROM.
-
-Run all Python tests with:
-
-```bash
-python3 -m unittest discover -s tools -p 'test_*.py'
-```
+The relevant ones also run as pre-commit hooks (`.pre-commit-config.yaml`). Run
+the Python tests alone with `python3 -m unittest discover -s tools -p 'test_*.py'`.
 
 Because `GameState::best_time_frames`, `no_death_clears`, `level` and
 `furthest_level` are indexed by position in `levels[]`, inserting a level
-shifts every later level's records. Insert as late as the design allows - the
-two World 5 levels went in before the boss, so only the boss and the finale
-moved - and mention the shift in the commit.
+shifts every later level's records: bump the save version and add an
+`insert_level()` line (see `game_state_migration.h`).
 
 ### Manual (still required - nothing above replaces this)
 
