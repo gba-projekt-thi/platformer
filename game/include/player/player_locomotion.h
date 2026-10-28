@@ -50,6 +50,8 @@ class PlayerLocomotion {
     bool wall_sliding() const { return _core.wall_sliding(); }
     // True while a pogo strike reaches below the duck (Player shows it).
     bool pogo_striking() const { return _core.pogo_striking(); }
+    // The strike's picture is up (also briefly after an instant bounce).
+    bool pogo_visible() const { return _core.pogo_visible(); }
 
     // See locomotion::Core. Called by LevelManager::load() for every level.
     void set_horizontal_bound(bn::fixed bound) {
