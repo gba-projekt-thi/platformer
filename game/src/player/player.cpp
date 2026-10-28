@@ -11,7 +11,7 @@ namespace {
 // The pogo graphic's frames (swoosh, then impact star) and how many ticks
 // each shows.
 constexpr int POGO_FRAMES = 3;
-constexpr int POGO_FRAME_TICKS = 4;
+constexpr int POGO_FRAME_TICKS = 2;
 }  // namespace
 
 Player::Player(
@@ -207,7 +207,7 @@ void Player::set_pogo_enabled(bool enabled) {
 }
 
 void Player::_update_pogo_slash() {
-    if (!_locomotion.pogo_striking() || !_player_sprite.is_enabled()) {
+    if (!_locomotion.pogo_visible() || !_player_sprite.is_enabled()) {
         _pogo_slash.reset();
         _pogo_age = 0;
         return;

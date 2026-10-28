@@ -295,3 +295,25 @@ TEST_CASE(camera_rig_look_is_up_down_or_none) {
     CHECK_EQ(camera_rig::look(false, false), 0);
     CHECK_EQ(camera_rig::look(true, true), 0);  // both held cancel out
 }
+
+TEST_CASE(camera_rig_aim_feeds_the_run_speed_and_the_dpad_into_the_rig) {
+    // Running right frames room ahead; holding up (long enough) looks up,
+    // holding down looks down; both cancel.
+    Rig run;
+    for (int i = 0; i < 40; ++i) {
+        camera_rig::aim(run, 0.0, 0.0, 2.0, false, false);
+    }
+    CHECK(run.look_x() > 0.0);
+
+    Rig up;
+    Rig down;
+    Rig both;
+    for (int i = 0; i < 60; ++i) {
+        camera_rig::aim(up, 0.0, 0.0, 0.0, true, false);
+        camera_rig::aim(down, 0.0, 0.0, 0.0, false, true);
+        camera_rig::aim(both, 0.0, 0.0, 0.0, true, true);
+    }
+    CHECK(up.look_y() < 0.0);
+    CHECK(down.look_y() > 0.0);
+    CHECK_EQ(both.look_y(), 0.0);
+}

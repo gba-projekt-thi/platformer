@@ -13,12 +13,51 @@
 #include "game_modes.h"
 #include "level_manager.h"
 #include "menu_nav.h"
+#include "pause_flow.h"
 #include "text_buffer.h"
 
 namespace {
 constexpr const char* MENU_LABELS[5] = {
     "Continue", "Restart Level", "Options", "Controls", "Title Screen"};
 }  // namespace
+
+// The steps pause_flow.h puts in order.
+struct PauseController::FlowOps {
+    PauseController& p;
+
+    void select_first_option() { p._selected_index = 0; }
+    void leave_submenus() {
+        p._showing_options = false;
+        p._showing_controls = false;
+    }
+    void rebuild_menu() { p._rebuild_menu(); }
+    void show_title() { p._show_title(); }
+    static void pause_music() { bn::music::pause(); }
+    static void resume_music() { bn::music::resume(); }
+    static void sfx_menu() {
+        AudioSettings::instance().play_sfx(bn::sound_items::menu);
+    }
+    static void sfx_cancel() {
+        AudioSettings::instance().play_sfx(bn::sound_items::cancel);
+    }
+    void release_sprites() { p._release_sprites(); }
+    void set_showing_controls() { p._showing_controls = true; }
+    void release_title() { p._title_sprites.clear(); }
+    void rebuild_controls_view() { p._rebuild_controls_view(); }
+    void set_unpaused() {
+        p._paused = false;
+        p._prev_paused = false;
+    }
+    void init_text_generator() { p._init_pause_menu(); }
+    void reset_state() {
+        p._paused = false;
+        p._prev_paused = false;
+        p._selected_index = 0;
+        p._showing_options = false;
+        p._showing_controls = false;
+        p._option_row = 0;
+    }
+};
 
 PauseController::PauseController(DataManager& data_manager)
     : _data_manager(data_manager) {}
@@ -156,10 +195,10 @@ void PauseController::_rebuild_options_menu() {
 }
 
 void PauseController::_rebuild_controls_view() {
-    // The menu rows make way for the controls list. Sprite budget:
-    // the overview is drawn on top of a running level, so ControlsText keeps
-    // its lines short (see controls_text.h).
-    _title_sprites.clear();
+    // The menu rows make way for the controls list (the title is already
+    // gone, see pause_flow::open_controls). Sprite budget: the overview is
+    // drawn on top of a running level, so ControlsText keeps its lines short
+    // (see controls_text.h).
     for (bn::sprite_ptr& sprite : _menu_sprites) {
         sprite.set_visible(false);
     }
@@ -231,14 +270,8 @@ void PauseController::_change_option_level(int delta) {
 }
 
 void PauseController::reset() {
-    _init_pause_menu();
-    _paused = false;
-    _prev_paused = false;
-    _selected_index = 0;
-    _showing_options = false;
-    _showing_controls = false;
-    _option_row = 0;
-    _release_sprites();
+    FlowOps ops{*this};
+    pause_flow::reset(ops);
 }
 
 PauseController::Action PauseController::update() {
@@ -249,18 +282,11 @@ PauseController::Action PauseController::update() {
     if (_prev_paused != _paused) {
         _prev_paused = _paused;
 
+        FlowOps ops{*this};
         if (_paused) {
-            _selected_index = 0;
-            _showing_options = false;
-            _showing_controls = false;
-            _rebuild_menu();
-            _show_title();
-            bn::music::pause();
-            AudioSettings::instance().play_sfx(bn::sound_items::menu);
+            pause_flow::open(ops);
         } else {
-            _release_sprites();
-            AudioSettings::instance().play_sfx(bn::sound_items::cancel);
-            bn::music::resume();
+            pause_flow::close(ops);
         }
     }
 
@@ -268,9 +294,8 @@ PauseController::Action PauseController::update() {
         if (_showing_controls) {
             if (bn::keypad::a_pressed() || bn::keypad::b_pressed()) {
                 _showing_controls = false;
-                _show_title();
-                _rebuild_menu();
-                AudioSettings::instance().play_sfx(bn::sound_items::cancel);
+                FlowOps ops{*this};
+                pause_flow::leave_controls(ops);
             }
 
             bn::core::update();
@@ -352,8 +377,8 @@ PauseController::Action PauseController::update() {
                 // Stay paused, show the overview in place of the menu - no
                 // Action returned, no scene transition (leaving the level
                 // would destroy it).
-                _showing_controls = true;
-                _rebuild_controls_view();
+                FlowOps ops{*this};
+                pause_flow::open_controls(ops);
                 bn::core::update();
                 return Action::None;
             }
@@ -362,10 +387,8 @@ PauseController::Action PauseController::update() {
             // same frame the action is confirmed, regardless of what the
             // caller does with the returned action afterwards (e.g. a
             // scene transition that destroys this controller).
-            _paused = false;
-            _prev_paused = false;
-            _release_sprites();
-            bn::music::resume();
+            FlowOps ops{*this};
+            pause_flow::leave_for_action(ops);
 
             switch (option) {
                 case MenuOption::Continue:

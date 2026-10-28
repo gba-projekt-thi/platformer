@@ -357,12 +357,17 @@ _GAME_DIRS = ("game/include", "game/include/level", "game/src", ".")
 def find_game_file(root, name):
     """The game file `name` under `root`: looked up in the game's own folders
     first, searched recursively only if it is not there (a recursive search
-    walks extern/ and build/ too and takes seconds). None if missing."""
+    walks extern/ and build/ too and takes seconds). Hidden folders are skipped:
+    .claude/worktrees/ holds other checkouts of the repository. None if
+    missing."""
     root = Path(root)
     for folder in _GAME_DIRS:
         if (root / folder / name).is_file():
             return root / folder / name
-    matches = sorted(root.glob(f"**/{name}"))
+    matches = sorted(
+        p for p in root.glob(f"**/{name}")
+        if not any(part.startswith(".") for part in p.relative_to(root).parts)
+    )
     return matches[0] if matches else None
 
 

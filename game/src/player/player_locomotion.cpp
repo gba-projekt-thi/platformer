@@ -15,50 +15,62 @@ PlayerLocomotion::PlayerLocomotion(
       _block_mask(block_mask),
       _death_handler(death_handler) {}
 
-void PlayerLocomotion::update() {
-    // Events of the previous frame are over (see PlayerEvents).
-    PlayerEvents& events = PlayerEvents::instance();
-    events.begin_frame();
+namespace {
 
-    InputState input;
-    input.left_held = bn::keypad::left_held();
-    input.right_held = bn::keypad::right_held();
-    input.a_pressed = bn::keypad::a_pressed();
-    input.a_held = bn::keypad::a_held();
-    input.b_pressed = bn::keypad::b_pressed();
-    input.r_pressed = bn::keypad::r_pressed();
-    if (_input_hook != nullptr) {
-        _input_hook(input);
+// The buttons of the real keypad, for locomotion::run_frame().
+struct DeviceKeypad {
+    static bool left_held() { return bn::keypad::left_held(); }
+    static bool right_held() { return bn::keypad::right_held(); }
+    static bool a_pressed() { return bn::keypad::a_pressed(); }
+    static bool a_held() { return bn::keypad::a_held(); }
+    static bool b_pressed() { return bn::keypad::b_pressed(); }
+    static bool r_pressed() { return bn::keypad::r_pressed(); }
+};
+
+// Sounds and PlayerEvents of the real game, for locomotion::run_frame().
+struct DeviceOut {
+    void begin_frame() {
+        // Events of the previous frame are over (see PlayerEvents).
+        PlayerEvents::instance().begin_frame();
     }
+    void note_dash() { PlayerEvents::instance().note_dash(); }
+    void note_jump() { PlayerEvents::instance().note_jump(); }
+    void sound(locomotion::Sound sound) {
+        AudioSettings& audio = AudioSettings::instance();
+        switch (sound) {
+            case locomotion::Sound::Dash:
+                audio.play_sfx(bn::sound_items::dash);
+                break;
+            case locomotion::Sound::Step:
+                audio.play_sfx(bn::sound_items::duck_step);
+                break;
+            case locomotion::Sound::Pogo:
+                audio.play_sfx(bn::sound_items::pogo);
+                break;
+            case locomotion::Sound::TrapHit:
+                audio.play_sfx(bn::sound_items::trap_hit);
+                break;
+            case locomotion::Sound::Jump:
+                audio.play_sfx(bn::sound_items::jump);
+                break;
+            default:
+                break;
+        }
+    }
+};
 
+}  // namespace
+
+void PlayerLocomotion::update() {
     World world{_body, _block_mask, _death_handler};
-    const locomotion::Effects effects = _core.step(_body, input, world);
+    DeviceOut out;
+    locomotion::run_frame(
+        _core, _body, DeviceKeypad{}, _input_hook, world, out);
 
     // The picture faces the way the duck runs or dashes.
     if (_core.facing() == locomotion::Facing::Left) {
         _sprite.sprite().set_horizontal_flip(true);
     } else if (_core.facing() == locomotion::Facing::Right) {
         _sprite.sprite().set_horizontal_flip(false);
-    }
-
-    AudioSettings& audio = AudioSettings::instance();
-    if (effects.dash_started) {
-        audio.play_sfx(bn::sound_items::dash);
-        events.note_dash();
-    }
-    if (effects.step_sound) {
-        audio.play_sfx(bn::sound_items::duck_step);
-    }
-    if (effects.pogo_started) {
-        audio.play_sfx(bn::sound_items::pogo);
-    }
-    if (effects.pogo_bounced) {
-        // The strike rings off the trap, and it is a jump for triggers.
-        audio.play_sfx(bn::sound_items::trap_hit);
-        events.note_jump();
-    }
-    if (effects.jumped) {
-        audio.play_sfx(bn::sound_items::jump);
-        events.note_jump();
     }
 }

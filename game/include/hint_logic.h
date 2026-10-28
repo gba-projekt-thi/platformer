@@ -71,4 +71,77 @@ class Timer {
     int _remaining = 0;
 };
 
+// What the scene does with the hint's sprites this frame.
+enum class Sprites : uint8_t { Keep, Draw, Release, Finish };
+
+// The life of one hint: shown (or waiting for the arena), counting down only
+// while the game runs, dismissed by B in play, its sprites released while
+// paused and drawn again afterwards, finished when the countdown is over.
+// LevelScene::_update_hint() does what update() says.
+class Display {
+   public:
+    explicit Display(int frames) : _timer(frames) {}
+
+    // The hint should be shown on this level. Returns whether to draw now
+    // (a boss level's hint waits for the arena).
+    auto show(bool waits_for_arena) -> bool {
+        _active = true;
+        _waits = waits_for_arena;
+        if (!_waits) {
+            _timer.start();
+        }
+        return !_waits;
+    }
+
+    [[nodiscard]] auto active() const -> bool { return _active; }
+
+    // Once per frame, `sprites_alive`: the hint's sprites exist right now.
+    auto
+    update(bool paused, bool arena_reached, bool b_pressed, bool sprites_alive)
+        -> Sprites {
+        if (!_active) {
+            return Sprites::Keep;
+        }
+        if (_waits && should_start(true, arena_reached)) {
+            _waits = false;
+            _timer.start();
+        }
+        if (_waits) {
+            return Sprites::Keep;
+        }
+        // The countdown only runs while the game does, and B only dismisses
+        // the hint in play (in the pause menu B means 'back').
+        if (!paused) {
+            if (b_pressed) {
+                _timer.dismiss();
+            }
+            _timer.tick();
+        }
+        if (!_timer.visible()) {
+            _active = false;
+            return Sprites::Finish;
+        }
+        if (should_draw(_timer.visible(), paused)) {
+            return sprites_alive ? Sprites::Keep : Sprites::Draw;
+        }
+        return Sprites::Release;
+    }
+
+   private:
+    Timer _timer;
+    bool _active = false;
+    bool _waits = false;
+};
+
+// One frame of the scene around the level: Start toggles the pause, and the
+// pause overlay allocates its ~57 sprites inside the level update, so the
+// hint's sprites go first.
+template <typename Host>
+auto step_level(Host& h) {
+    if (h.start_pressed()) {
+        h.release_hint_sprites();
+    }
+    return h.update_level();
+}
+
 }  // namespace hint

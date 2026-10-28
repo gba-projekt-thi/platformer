@@ -270,6 +270,26 @@ constexpr replay::Run LEVEL_WORLD5_BOSS_RUNS[] = {
     {1, 9},   {2, 32}, {0, 10},  {13, 1},  {9, 10}, {1, 12}, {33, 1}, {1, 27},
     {0, 4},   {2, 11}, {14, 1},  {10, 28}, {2, 11}, {0, 10}};
 constexpr replay::Run LEVEL_WORLD5_FINALE_RUNS[] = {{2, 400}};
+constexpr replay::Run LEVEL_WORLD1_BOSS_COUNTER_RUNS[] = {
+    {0, 10},
+    {2, 60},
+    {0, 10}};
+constexpr replay::Run LEVEL_WORLD2_BOSS_COUNTER_RUNS[] = {
+    {0, 10},
+    {2, 60},
+    {0, 10}};
+constexpr replay::Run LEVEL_WORLD3_BOSS_COUNTER_RUNS[] = {
+    {0, 10},
+    {2, 60},
+    {0, 10}};
+constexpr replay::Run LEVEL_WORLD4_BOSS_COUNTER_RUNS[] = {
+    {0, 10},
+    {2, 60},
+    {0, 10}};
+constexpr replay::Run LEVEL_WORLD5_BOSS_COUNTER_RUNS[] = {
+    {0, 10},
+    {2, 60},
+    {0, 10}};
 
 // One entry per recording (a level without one: one entry without runs),
 // in play order (main.cpp's levels[]), a level's death states by deaths.
@@ -326,6 +346,20 @@ inline constexpr Entry ENTRIES[] = {
      0},
     {"LEVEL_WORLD5_FINALE", 25, LEVEL_WORLD5_FINALE_RUNS, 1, 400, false, 0, 0,
      0}};
+
+// The counter-checks (game/replays/counter/), same layout: these
+// must NOT complete their level.
+inline constexpr Entry COUNTER_ENTRIES[] = {
+    {"LEVEL_WORLD1_BOSS", 4, LEVEL_WORLD1_BOSS_COUNTER_RUNS, 3, 80, true, 309,
+     12, 0},
+    {"LEVEL_WORLD2_BOSS", 8, LEVEL_WORLD2_BOSS_COUNTER_RUNS, 3, 80, true, 311,
+     13, 0},
+    {"LEVEL_WORLD3_BOSS", 12, LEVEL_WORLD3_BOSS_COUNTER_RUNS, 3, 80, true, 354,
+     12, 0},
+    {"LEVEL_WORLD4_BOSS", 17, LEVEL_WORLD4_BOSS_COUNTER_RUNS, 3, 80, true, 315,
+     12, 0},
+    {"LEVEL_WORLD5_BOSS", 24, LEVEL_WORLD5_BOSS_COUNTER_RUNS, 3, 80, true, 398,
+     12, 0}};
 
 inline constexpr int ENTRY_COUNT = sizeof(ENTRIES) / sizeof(ENTRIES[0]);
 

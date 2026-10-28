@@ -26,6 +26,7 @@
 #include "game_modes.h"
 #include "game_state.h"
 #include "i_resettable.h"
+#include "level_flow.h"
 #include "level_structure.h"
 #include "log.h"
 #include "pause_controller.h"
@@ -157,22 +158,13 @@ class LevelManager {
     // up / down - see CameraRig) and hands the result to Camera::follow().
     void _update_camera();
 
-    // Death feedback (see death_fx.h): the world freezes for a few frames and
-    // the screen shakes. _check_player_died() starts it, _render_frame() draws
-    // a frame with the shake applied and _advance_death_fx() ends the freeze.
-    void _check_player_died();
-    void _render_frame();
-    void _advance_death_fx();
-    // A death or Restart Level: sets up the next attempt now or when the
-    // death freeze ends (respawn_logic.h).
-    void _respawn(respawn::Cause cause);
-    // After a death: re-arms traps and triggers, cuts the camera to the duck.
-    void _finish_respawn();
+    // The steps of load(), unload(), update() and a respawn, in the order
+    // level_flow.h gives them (death feedback: death_fx.h).
+    struct FlowOps;
     // Level Devil: the respawn brought a different layout
     // (attempt_objects::layout_changes()) - a sound and a short shake.
     void _cue_layout_change();
 
-    void _clear_runtime_state();
     static void _validate_level(const LevelData& level);
     void _load_platforms(const LevelData& level);
     void _load_triggers(const LevelData& level);
@@ -187,7 +179,7 @@ class LevelManager {
     // platforms to _dynamic_platforms and the running ones (flee_path) to
     // _fleeing_platforms, after the platforms and triggers are loaded - only
     // those that are there on this attempt (_present()). Starts both over, so
-    // _finish_respawn() calls it again after every death.
+    // a respawn calls it again after every death.
     void _load_dynamic_platforms(const LevelData& level);
 
     // Level Devil: deaths of this visit of the level (the run's total since
@@ -255,22 +247,14 @@ class LevelManager {
     // Where the camera aims. Cut to the duck on level load and on respawn.
     CameraRig<bn::fixed> _camera_rig;
 
-    // Death feedback state. _deaths_seen is the death count the level manager
-    // has reacted to (Restart Level takes its own death at once, so it gets
-    // no feedback); _pending_respawn defers the trap reset until the freeze
-    // ends, so the trap that killed the duck stays where it is while the
-    // world is frozen.
+    // Death feedback and Level Devil counts (see level_flow::Attempt);
+    // _pending_respawn defers the trap reset until the freeze ends, so the
+    // trap that killed the duck stays where it is while the world is frozen.
     death_fx::Sequence _death_fx;
-    unsigned _deaths_seen = 0;
-    // The run's death total when the level was loaded: what
-    // _deaths_in_level() counts from (Level Devil death windows).
-    unsigned _deaths_at_entry = 0;
+    level_flow::Attempt _attempt;
     // The loaded level (ROM data), for the per-attempt work after a death;
     // nullptr after unload().
     const LevelData* _level = nullptr;
-    // Deaths in the level the current layout (death windows, door spot) was
-    // set up for: a respawn compares the next one with it.
-    unsigned _layout_deaths = 0;
     respawn::Pending _pending_respawn;
     bn::optional<Door> _door;
     // The level's boss (TrapType::BOSS, owned by _traps) or nullptr. While
@@ -282,7 +266,6 @@ class LevelManager {
     // trap (DoorData::trap_trigger_name, nullptr = none) and the door's spot
     // for this attempt (DoorData::attempt_positions).
     Trigger* _door_trap = nullptr;
-    void _check_door_trap();
     void _place_door();
     // A boss hit freezes the world for a moment and shakes the picture.
     int _boss_hits_seen = 0;

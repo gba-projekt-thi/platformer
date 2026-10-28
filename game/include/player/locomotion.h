@@ -139,6 +139,11 @@ class Core {
     [[nodiscard]] auto pogo_striking() const -> bool {
         return _pogo_frames > 0;
     }
+    // The strike's picture: while it reaches, and for at least
+    // Cfg::Pogo::MIN_SHOW_FRAMES after R (a bounce ends the reach at once).
+    [[nodiscard]] auto pogo_visible() const -> bool {
+        return _pogo_frames > 0 || _pogo_show > 0;
+    }
 
     // The world-edge bounce (world_width / 2 - Cfg::Screen::EDGE_MARGIN).
     void set_horizontal_bound(bn::fixed bound) { _horizontal_bound = bound; }
@@ -232,9 +237,15 @@ class Core {
         if (in.r_pressed && _pogo_enabled && !_on_ground && _pogo_frames == 0 &&
             _pogo_cooldown == 0) {
             _pogo_frames = Cfg::Pogo::STRIKE_FRAMES;
+            _pogo_show = Cfg::Pogo::MIN_SHOW_FRAMES;
             effects.pogo_started = true;
-        } else if (_pogo_cooldown > 0) {
-            --_pogo_cooldown;
+        } else {
+            if (_pogo_cooldown > 0) {
+                --_pogo_cooldown;
+            }
+            if (_pogo_show > 0) {
+                --_pogo_show;
+            }
         }
         if (_pogo_frames == 0) {
             return;
@@ -252,6 +263,7 @@ class Core {
 
     void _reset_pogo() {
         _pogo_frames = 0;
+        _pogo_show = 0;
         _pogo_cooldown = 0;
         _pogo_rise = false;
     }
@@ -383,6 +395,7 @@ class Core {
 
     bool _pogo_enabled = false;
     int _pogo_frames = 0;     // > 0 while a strike reaches
+    int _pogo_show = 0;       // frames the picture stays up after R
     int _pogo_cooldown = 0;   // frames until the next strike after a miss
     bool _pogo_rise = false;  // a bounce's rise, not cut by letting go of A
 
@@ -396,5 +409,75 @@ class Core {
     DashController _dash{
         Cfg::Dash::DURATION_FRAMES, Cfg::Dash::COOLDOWN_FRAMES};
 };
+
+// -----------------------------------------------------------------------------
+// One frame of the adapter (PlayerLocomotion::update() runs exactly this)
+//
+// The buttons go into the core, what the frame did goes out as sounds and
+// events. Written against a `Keypad` (one function per button) and an `Out`
+// so the host tests can press buttons and listen, see
+// tests/host/test_locomotion_frame.cpp:
+//
+//   Out::begin_frame()      the events of the previous frame are over
+//   Out::sound(Sound)       a sound effect
+//   Out::note_dash() / note_jump()   a dash / jump for the triggers
+// -----------------------------------------------------------------------------
+
+enum class Sound { Dash, Step, Pogo, TrapHit, Jump };
+
+template <typename Keypad>
+auto read_input(const Keypad& keypad) -> InputState {
+    InputState input;
+    input.left_held = keypad.left_held();
+    input.right_held = keypad.right_held();
+    input.a_pressed = keypad.a_pressed();
+    input.a_held = keypad.a_held();
+    input.b_pressed = keypad.b_pressed();
+    input.r_pressed = keypad.r_pressed();
+    return input;
+}
+
+template <typename Out>
+void announce(const Effects& effects, Out& out) {
+    if (effects.dash_started) {
+        out.sound(Sound::Dash);
+        out.note_dash();
+    }
+    if (effects.step_sound) {
+        out.sound(Sound::Step);
+    }
+    if (effects.pogo_started) {
+        out.sound(Sound::Pogo);
+    }
+    if (effects.pogo_bounced) {
+        // The strike rings off the trap, and it is a jump for triggers.
+        out.sound(Sound::TrapHit);
+        out.note_jump();
+    }
+    if (effects.jumped) {
+        out.sound(Sound::Jump);
+        out.note_jump();
+    }
+}
+
+// `hook` (may be nullptr) sees the buttons before the core does, see
+// PlayerLocomotion::set_input_hook().
+template <typename Body, typename Keypad, typename World, typename Out>
+auto run_frame(
+    Core& core,
+    Body& body,
+    const Keypad& keypad,
+    void (*hook)(InputState&),
+    World& world,
+    Out& out) -> Effects {
+    out.begin_frame();
+    InputState input = read_input(keypad);
+    if (hook != nullptr) {
+        hook(input);
+    }
+    const Effects effects = core.step(body, input, world);
+    announce(effects, out);
+    return effects;
+}
 
 }  // namespace locomotion
