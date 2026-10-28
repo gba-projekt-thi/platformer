@@ -144,6 +144,28 @@ class BuildTest(unittest.TestCase):
         stab = [n.note for row in last for n in row[4:5] if n.note]
         self.assertEqual(stab[1] - stab[0], 6)
 
+    def test_a_world_can_soften_its_bass(self):
+        theme = synthetic()
+        for pat in theme.patterns:
+            for row in pat.rows:
+                if row[0].note:
+                    row[0].note = 49  # above PULSE_FLOOR: normally pulsed an octave lower
+
+        def layers(preset):
+            boss = mbm.build(theme, dict(PRESET, drone=1, **preset))
+            rows = boss.patterns[boss.order[6]].rows
+            pulse = [n for row in rows for n in row[5:6] if n.note]
+            drone = [n for row in rows for n in row[4:5] if n.note]
+            return pulse[0], drone[0]
+
+        pulse, drone = layers({})
+        soft_pulse, soft_drone = layers(
+            {"pulse_low": False, "pulse_share": 0.3, "drone_share": 0.1})
+        self.assertEqual(pulse.note, 49 - 12)
+        self.assertEqual(soft_pulse.note, 49)
+        self.assertLess(soft_pulse.vol, pulse.vol)
+        self.assertLess(soft_drone.vol, drone.vol)
+
     def test_no_boss_section_in_a_plain_module(self):
         self.assertIsNone(mbm.boss_start(self.theme))
 
