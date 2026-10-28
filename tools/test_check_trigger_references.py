@@ -389,6 +389,13 @@ class FindFilesTests(unittest.TestCase):
             self.tree(tmp, "other/deep/cfg.h")
             self.assertEqual(checker.find_game_file(tmp, "cfg.h"), Path(tmp) / "other/deep/cfg.h")
 
+    def test_the_fallback_search_skips_hidden_folders(self):
+        # .claude/worktrees/ holds whole copies of the repository; sorted, they
+        # come before game/ and the checkers read another checkout's file.
+        with tempfile.TemporaryDirectory() as tmp:
+            self.tree(tmp, ".claude/worktrees/a/game/src/player/p.cpp", "game/src/player/p.cpp")
+            self.assertEqual(checker.find_game_file(tmp, "p.cpp"), Path(tmp) / "game/src/player/p.cpp")
+
     def test_missing_game_file_is_none(self):
         with tempfile.TemporaryDirectory() as tmp:
             self.assertIsNone(checker.find_game_file(tmp, "cfg.h"))
