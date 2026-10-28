@@ -24,8 +24,21 @@
 // CHASE  -> Trails behind the player, closing in as they move right
 // AMBUSH -> Dormant until the player is horizontally close, then lunges
 //           once in one direction and returns to its start position
+// CYCLE  -> Moves out by (cycle_dx, cycle_dy), stays, moves back and waits,
+//           again and again on its own clock (spikes out of the floor)
+// BOSS   -> The one enemy the duck can beat: follows `path` like PATH (faster
+//           every phase), kills on touch, and loses one of its boss_hits to
+//           every pogo strike from above (see BossTrap / boss_logic.h)
 // -----------------------------------------------------------------------------
-enum class TrapType : uint8_t { BASE, MOVING, PATH, CHASE, AMBUSH };
+enum class TrapType : uint8_t {
+    BASE,
+    MOVING,
+    PATH,
+    CHASE,
+    AMBUSH,
+    CYCLE,
+    BOSS
+};
 
 // -----------------------------------------------------------------------------
 // PlatformData
@@ -53,6 +66,34 @@ struct PlatformData {
     // visible while the trigger is off (vanishes when switched on). See
     // switch_logic::platform_active().
     bool active_when_on = true;
+
+    // Crumbling platform: > 0 makes it give way that many frames after the
+    // duck first stands on it (it shakes meanwhile and stays solid), see
+    // crumble_logic.h. 0 = an ordinary platform. Cannot be combined with
+    // trigger_name. Appended last so existing literals compile unchanged.
+    unsigned crumble_frames = 0;
+    // Frames after which a crumbled platform comes back (once the duck is not
+    // in its box); 0 = it stays gone until a death or restart.
+    unsigned crumble_respawn_frames = 0;
+
+    // Level Devil: a platform that runs away (fleeing_platforms.h), like the
+    // door's flee_path: whenever the duck comes within flee_range px it slides
+    // to the next point of flee_path (offsets from (x, y)) in flee_frames
+    // frames. In the JSON a list of [x, y] pairs. Not combined with
+    // trigger_name or crumbling. Empty = it stays put.
+    bn::span<const bn::fixed_point> flee_path = {};
+    int flee_range = 0;
+    int flee_frames = 0;
+
+    // Level Devil: the platform is only there while the duck has died
+    // [from_death, until_death) times in this visit of the level
+    // (attempt_variant::active_for_deaths(); until_death 0 = no end). Outside
+    // that window it has no collision and no picture. 0, 0 = always there, as
+    // every platform before these fields existed. Two copies split at the same
+    // death (until 3 / from 3) make a platform move after the 3rd death.
+    // Appended last so existing literals keep compiling unchanged.
+    unsigned from_death = 0;
+    unsigned until_death = 0;
 };
 
 // -----------------------------------------------------------------------------
@@ -93,6 +134,28 @@ struct TriggerData {
     const bn::sprite_item* sprite = nullptr;
     int sprite_index_off = 0;
     int sprite_index_on = 1;
+
+    // Frames between the player's action and the effect on traps/platforms
+    // (every mode except Timer), or the timer length of a Timer trigger: it
+    // switches on by itself this many frames after the level (re)starts. 0 =
+    // immediate, as every trigger so far. Appended last so positional
+    // literals that stop earlier keep compiling unchanged.
+    unsigned delay_frames = 0;
+
+    // What counts as "entering" the zone: the duck stepping in (Enter, the
+    // default) or jumping / dashing while inside it (Jump, Dash). Appended
+    // after delay_frames.
+    TriggerAction action = TriggerAction::Enter;
+
+    // Delayed trap chains: the name of another trigger of the same level.
+    // This trigger then ignores the duck (and its own mode/action) and is
+    // switched by that trigger instead - on (!default_on) when the source's
+    // state turns on, back when it turns off - one frame plus delay_frames
+    // later (see TriggerChains in trigger_logic.h). A follower can be the
+    // source of the next one: plate -> floor drops -> spikes shoot out.
+    // nullptr = an ordinary trigger. Appended last so positional literals
+    // that stop earlier keep compiling unchanged.
+    const char* follows = nullptr;
 };
 
 // -----------------------------------------------------------------------------
@@ -185,6 +248,84 @@ struct TrapData {
 
     // Frames spent lunging before switching to the return phase.
     unsigned ambush_duration = 0;
+
+    // -------------------------------------------------------------------------
+    // CycleTrap
+    // -------------------------------------------------------------------------
+
+    // How far the trap moves out from its start position (px). Spikes that
+    // rise out of the floor: cycle_dx 0, cycle_dy negative.
+    bn::fixed cycle_dx = 0;
+    bn::fixed cycle_dy = 0;
+
+    // One round in frames: out, stay out, back, rest (see
+    // trap_timing::CycleTiming). The four must not all be 0.
+    unsigned cycle_extend_frames = 0;
+    unsigned cycle_hold_frames = 0;
+    unsigned cycle_retract_frames = 0;
+    unsigned cycle_wait_frames = 0;
+
+    // Where in the round the trap starts (frames), so two traps with the same
+    // timing can alternate. trigger_name (above) is optional for a CYCLE
+    // trap: with one it only cycles while that trigger is on, without it it
+    // cycles from the start of the level.
+    unsigned cycle_phase_frames = 0;
+
+    // -------------------------------------------------------------------------
+    // Any trap
+    // -------------------------------------------------------------------------
+
+    // Draw order of the trap's sprite (smaller = in front). 0 = the default of
+    // every trap so far, level with the duck. A trap that imitates something
+    // that stands behind the duck uses Cfg::ZOrder::DOOR / CHECKPOINT (1): a
+    // fake door or fake checkpoint then looks exactly like the real one.
+    int sprite_z_order = 0;
+
+    // Draws the sprite this many times larger (up to 2, the GBA's affine
+    // double size); width / height are the scaled hitbox. 1 = as drawn.
+    bn::fixed sprite_scale = 1;
+
+    // -------------------------------------------------------------------------
+    // Boss
+    // -------------------------------------------------------------------------
+
+    // Pogo strikes it takes (= phases, at most Cfg::Boss::MAX_PHASES). It
+    // moves along `path` with `path_waits` frames per segment in phase 1,
+    // faster in every later one (boss::phase_frames()). trigger_name is the
+    // arena: the fight starts when it is on (nullptr = at once), and phase n
+    // >= 2 switches on the trigger "<trigger_name>_p<n>" so more traps
+    // attack; the last hit switches on "<trigger_name>_won" (both optional).
+    // While a level's boss lives, its door stays shut.
+    unsigned boss_hits = 0;
+
+    // CHASE: how far right of its start the chaser flies at most (it stays
+    // out of a boss arena); 0 = no limit (trap_timing::chase_target()).
+    bn::fixed chase_limit = 0;
+
+    // AMBUSH: lunge along y instead of x (ambush_speed < 0 = up) - arms or
+    // spikes shooting out of the ground the moment the duck is above them.
+    // The trigger stays the duck's horizontal distance (ambush_range).
+    bool ambush_vertical = false;
+
+    // AMBUSH: frames it stays down after sinking back, even with the duck
+    // in range (0 = it springs again at once). Lets a duck lured to the edge
+    // jump the gap in the calm after the lunge.
+    unsigned ambush_rest = 0;
+
+    // -------------------------------------------------------------------------
+    // Any trap except BOSS
+    // -------------------------------------------------------------------------
+
+    // Level Devil: the trap is only there while the duck has died
+    // [from_death, until_death) times in this visit of the level
+    // (attempt_variant::active_for_deaths(); until_death 0 = no end). Outside
+    // that window it has no collision and no picture. 0, 0 = always there, as
+    // every trap before these fields existed. "After the 3rd death the trap
+    // sits somewhere else": one copy with until_death 3, one with
+    // from_death 3. Not for a BOSS (its fight shows and hides it itself).
+    // Appended last so existing literals keep compiling unchanged.
+    unsigned from_death = 0;
+    unsigned until_death = 0;
 };
 
 // -----------------------------------------------------------------------------
@@ -224,6 +365,31 @@ struct DoorData {
         DOOR32X32_GRAPHICS_INDEXES;
     int sprite_animation_wait = 8;
     bool sprite_flip_horizontal = false;
+
+    // Level Devil: a door that runs away (door_flee.h). Whenever the duck
+    // comes within flee_range px of it, it slides on to the next point of
+    // flee_path (offsets from (x, y), like TrapData::path) in flee_frames
+    // frames; at the last one it stays. A death puts it back. In the JSON
+    // the path is a list of [x, y] pairs. Empty = an ordinary door.
+    bn::span<const bn::fixed_point> flee_path = {};
+    int flee_range = 0;
+    int flee_frames = 0;
+
+    // Level Devil: the door that turns into a trap (door_logic.h). While the
+    // trigger of this name (TriggerData::name) is on, touching the door kills
+    // the duck instead of finishing the level; it is a door again once the
+    // trigger is off (a Hold zone, a death resetting it). No tell: it looks
+    // the same either way. nullptr = always a door.
+    const char* trap_trigger_name = nullptr;
+
+    // Level Devil: the door that stands somewhere else after deaths. Its
+    // origin is (x, y) + attempt_positions[attempt_variant::
+    // variant_for_attempt(deaths in the level, attempt_every, size)] - a new
+    // spot every attempt_every deaths, the last one stays. In the JSON a list
+    // of [x, y] pairs; the first is usually [0, 0] (the door as authored).
+    // Empty = it stays at (x, y). flee_path is relative to that origin.
+    bn::span<const bn::fixed_point> attempt_positions = {};
+    unsigned attempt_every = 0;
 };
 
 // -----------------------------------------------------------------------------
@@ -331,4 +497,13 @@ struct LevelData {
     // keep compiling unchanged.
     const CheckpointData* checkpoints = nullptr;
     int checkpoint_count = 0;
+
+    // -------------------------------------------------------------------------
+    // Boss music
+    // -------------------------------------------------------------------------
+
+    // Song order of the boss section inside `music`'s module (played while
+    // the boss fights, see tools/Make_boss_music.py); 0 = the level has no
+    // boss music. Appended last so existing literals keep compiling unchanged.
+    int boss_music_order = 0;
 };

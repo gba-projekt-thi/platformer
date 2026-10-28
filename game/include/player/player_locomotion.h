@@ -2,15 +2,16 @@
 
 #include "bn_fixed.h"
 
-#include "cfg.h"
-#include "dash_controller.h"
+#include "collision_registry.h"
+#include "locomotion.h"
 #include "physics_body.h"
 #include "sprite.h"
+#include "strike_targets.h"
 
 // -----------------------------------------------------------------------------
 // PlayerDeathHandler
 //
-// Callback interface so PlayerLocomotion can trigger a death exactly at the
+// Callback interface so the movement rules can trigger a death exactly at the
 // point in the frame the original Player::update() did (before ground state
 // / jump handling run), without owning respawn/HUD/sound logic itself.
 // -----------------------------------------------------------------------------
@@ -25,127 +26,85 @@ class PlayerDeathHandler {
 // -----------------------------------------------------------------------------
 // PlayerLocomotion
 //
-// Owns horizontal/vertical movement, jump buffering + coyote time, ground
-// detection, screen-bounds bouncing, and the fall-death check. Extracted out
-// of Player as the fourth (final) step of the Player decomposition (after
-// PlayerHud, PlayerAnimator, PlayerStateMachine).
+// Connects the movement rules (locomotion::Core, host-tested) to the game:
+// reads the buttons once per frame, lets the core move the PhysicsBody with
+// its collision probes, then plays the sounds, records the jump / dash for
+// triggers (PlayerEvents) and turns the sprite the way the duck faces.
 // -----------------------------------------------------------------------------
 class PlayerLocomotion {
    public:
-    enum class Facing { Forward, Back, Left, Right };
-
     PlayerLocomotion(
         PhysicsBody& body,
         Sprite& sprite,
         uint16_t block_mask,
         PlayerDeathHandler& death_handler);
 
-    // Full per-frame physics/input step, in the same order the original
-    // Player::update() ran it (including the mid-sequence death check).
+    // One frame of movement.
     void update();
 
-    bool on_ground() const { return _on_ground; }
-    Facing facing() const { return _facing; }
-
-    // Updates the horizontal screen-bounce boundary to match the current
-    // level's world width (world_width/2 - Cfg::Screen::EDGE_MARGIN).
-    // Called by LevelManager::load() whenever a new level starts.
-    void set_horizontal_bound(bn::fixed bound) { _horizontal_bound = bound; }
-
-    // Scales braking-only deceleration for the current level (1 = normal
-    // stopping, <1 = a slippery/icy floor that skids further before
-    // stopping). Called by LevelManager::load() with that level's
-    // LevelData::ground_friction. Leaves acceleration, gravity, and jump
-    // speed untouched, so it never changes how far a jump can reach.
-    void set_ground_friction(bn::fixed scale) {
-        _ground_friction_scale = scale;
-    }
-
-    // Assist Mode: swaps coyote time and jump buffer to the wider
-    // Cfg::AssistMode windows. Only forgiveness timing changes - jump
-    // speed, gravity and acceleration stay untouched, so the jump
-    // envelope level layouts are authored against is unaffected. Called
-    // by LevelManager::load() on every level load.
-    // Dash (B): enabled per level by LevelManager::load(). Changing the
-    // flag also cancels a running dash and refills the air dash.
-    void set_dash_enabled(bool enabled) { _dash.set_enabled(enabled); }
-
-    // Cancels a running dash and clears its cooldown/air-use (called on
-    // death and on level load so a dash never carries over a respawn).
-    void reset_dash() { _dash.reset(); }
+    bool on_ground() const { return _core.on_ground(); }
 
     // True while a dash is in progress (read by Player for animation).
-    bool dashing() const { return _dash.dashing(); }
+    bool dashing() const { return _core.dashing(); }
+    // Holding toward a wall while falling along it (Player shows the slide).
+    bool wall_sliding() const { return _core.wall_sliding(); }
+    // True while a pogo strike reaches below the duck (Player shows it).
+    bool pogo_striking() const { return _core.pogo_striking(); }
 
-    void set_assist_mode(bool enabled) {
-        _coyote_frames = enabled ? Cfg::AssistMode::COYOTE_FRAMES
-                                 : Cfg::Player::COYOTE_FRAMES;
-        _jump_buffer_frames = enabled ? Cfg::AssistMode::JUMP_BUFFER_FRAMES
-                                      : Cfg::Player::JUMP_BUFFER_FRAMES;
+    // See locomotion::Core. Called by LevelManager::load() for every level.
+    void set_horizontal_bound(bn::fixed bound) {
+        _core.set_horizontal_bound(bound);
     }
+    void set_ground_friction(bn::fixed scale) {
+        _core.set_ground_friction(scale);
+    }
+    void set_assist_mode(bool enabled) { _core.set_assist_mode(enabled); }
+    void set_dash_enabled(bool enabled) { _core.set_dash_enabled(enabled); }
+    void set_wall_jump_enabled(bool enabled) {
+        _core.set_wall_jump_enabled(enabled);
+    }
+    void set_pogo_enabled(bool enabled) { _core.set_pogo_enabled(enabled); }
+
+    // Cancels a running dash (death, level load).
+    void reset_dash() { _core.reset_dash(); }
+
+    // Emulator tests (replay.h): called with the buttons read from the
+    // keypad every movement step; may record them or replace them.
+    // nullptr (the default) = the keypad as it is.
+    using InputHook = void (*)(InputState& input);
+    void set_input_hook(InputHook hook) { _input_hook = hook; }
 
    private:
-    void handle_horizontal_input();
-    void handle_jump();
-    void apply_gravity();
-    void apply_variable_jump();
-    void clamp_velocity();
-    void check_bounds();
-    void update_ground_state();
-    void check_death();
-    // Per-frame dash step: feeds DashController and applies its result.
-    // Returns true when a dash owns this frame (the normal movement path
-    // must then be skipped); false otherwise, also on the frame a dash ends
-    // so normal movement resumes immediately.
-    bool update_dash();
+    // The collision probes and the death of the real body, for Core::step().
+    struct World {
+        PhysicsBody& body;
+        uint16_t block_mask;
+        PlayerDeathHandler& death_handler;
+
+        bool probe_ground() { return body.probe_bottom(block_mask).any(); }
+        bool probe_ceiling() { return body.probe_top(block_mask).any(); }
+        bool probe_left() { return body.probe_left(block_mask).any(); }
+        bool probe_right() { return body.probe_right(block_mask).any(); }
+        // A trap in the pogo strike's box (Cfg::Pogo) below the body; a
+        // boss among them is told it was struck (StrikeTargets).
+        bool probe_pogo() {
+            const bn::fixed below = body.pos.y + body.pos.height / 2 +
+                                    bn::fixed(Cfg::Pogo::REACH) / 2;
+            const CollisionResult hits = CollisionRegistry::check_rect(
+                body.pos.x, below, Cfg::Pogo::WIDTH, Cfg::Pogo::REACH,
+                Cfg::Layer::TRAP, &body);
+            for (int i = 0; i < hits.count; ++i) {
+                StrikeTargets::instance().strike(hits.hits[i].body);
+            }
+            return hits.any();
+        }
+        void die() { death_handler.on_locomotion_death(); }
+    };
 
     PhysicsBody& _body;
     Sprite& _sprite;
     uint16_t _block_mask;
     PlayerDeathHandler& _death_handler;
-
-    // Physics parameters
-    bn::fixed _acceleration = Cfg::Player::ACCELERATION;
-    // Braking constant, separate from _acceleration - see the comment on
-    // Cfg::Player::DECELERATION. Scaled per level by _ground_friction_scale.
-    bn::fixed _deceleration = Cfg::Player::DECELERATION;
-    bn::fixed _max_speed = Cfg::Player::MAX_SPEED;
-    bn::fixed _jump_speed = Cfg::Player::JUMP_SPEED;
-    bn::fixed _gravity = Cfg::Player::GRAVITY;
-    bn::fixed _max_fall_speed = Cfg::Player::MAX_FALL_SPEED;
-    int _death_height = Cfg::Player::DEATH_HEIGHT;
-
-    // Ground state
-    bool _on_ground = true;
-
-    // Facing direction
-    Facing _facing = Facing::Forward;
-
-    // Jump helpers
-    int _coyote_timer = 0;
-    int _jump_buffer_timer = 0;
-    // Window lengths (frames) - Cfg::Player defaults, widened by
-    // set_assist_mode().
-    int _coyote_frames = Cfg::Player::COYOTE_FRAMES;
-    int _jump_buffer_frames = Cfg::Player::JUMP_BUFFER_FRAMES;
-
-    // Walk sound helper
-    int _walk_sound_counter = 0;
-
-    // Horizontal screen-bounce boundary; updated per level by LevelManager
-    // to match that level's world_width (defaults to the legacy 240-wide
-    // screen bound so a freshly-constructed Player behaves as before).
-    bn::fixed _horizontal_bound = Cfg::Screen::HORIZONTAL_EDGE;
-
-    // Multiplier applied to _deceleration only (braking while grounded);
-    // never touches _acceleration, gravity, or jump speed, so it cannot
-    // shrink the jump envelope levels are authored against - only how far
-    // the duck skids after releasing input. Updated per level by
-    // LevelManager to match that level's LevelData::ground_friction
-    // (defaults to 1 = today's stopping feel, unchanged).
-    bn::fixed _ground_friction_scale = 1;
-
-    // Dash decision logic (host-tested, see dash_controller.h).
-    DashController _dash{
-        Cfg::Dash::DURATION_FRAMES, Cfg::Dash::COOLDOWN_FRAMES};
+    InputHook _input_hook = nullptr;
+    locomotion::Core _core;
 };

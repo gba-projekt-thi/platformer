@@ -1,42 +1,25 @@
 #include "chaser_trap.h"
 
+#include "trap_timing.h"
+
 ChaserTrap::ChaserTrap(
-    bn::fixed t_start_x,
-    bn::fixed t_start_y,
-    bn::fixed t_width,
-    bn::fixed t_height,
-    bn::fixed t_offset_x,
-    bn::fixed t_offset_y,
-    const bn::sprite_item& t_sprite_item,
-    int t_sprite_waits,
-    bn::span<const uint16_t> t_graphics_indexes,
-    uint16_t t_blocking_layers,
-    bn::fixed t_follow_distance,
-    bn::fixed t_chase_speed,
-    Player& t_player)
-    : BaseTrap(
-          t_start_x,
-          t_start_y,
-          t_width,
-          t_height,
-          t_offset_x,
-          t_offset_y,
-          t_sprite_item,
-          t_sprite_waits,
-          t_graphics_indexes,
-          t_blocking_layers,
-          // ChaserTrap uses direct positional movement, not velocity.
-          Cfg::Physics::NO_MAX_VELOCITY),
-      _start_x(t_start_x),
-      _start_y(t_start_y),
-      _follow_distance(t_follow_distance),
-      _chase_speed(t_chase_speed),
-      _player(t_player) {}
+    const TrapData& data,
+    bn::fixed chase_speed,
+    Player& player)
+    // ChaserTrap uses direct positional movement, not velocity.
+    : BaseTrap(data, Cfg::Physics::NO_MAX_VELOCITY),
+      _start_x(data.x),
+      _start_y(data.y),
+      _follow_distance(data.chase_follow_distance),
+      _chase_speed(chase_speed),
+      _limit(data.chase_limit),
+      _player(player) {}
 
 void ChaserTrap::update() {
     BaseTrap::update();
 
-    const bn::fixed target_x = _player.pos.x - _follow_distance;
+    const bn::fixed target_x = trap_timing::chase_target(
+        _player.pos.x, _follow_distance, _start_x, _limit);
 
     // Only ever flies right, chasing the player - never retreats left, so
     // standing still or moving left just widens the gap instead of the

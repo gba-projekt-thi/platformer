@@ -4,7 +4,7 @@
 
 namespace {
 constexpr int TOUCH_WIDTH = 16;
-constexpr int TOUCH_HEIGHT = 32;
+constexpr int TOUCH_HEIGHT = 16;
 constexpr int FRAME_OFF = 0;
 constexpr int FRAME_ON = 1;
 }  // namespace

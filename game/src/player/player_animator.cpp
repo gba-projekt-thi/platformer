@@ -26,9 +26,21 @@ PlayerAnimator::PlayerAnimator(
     }
 }
 
-void PlayerAnimator::update(bool onGround) {
+void PlayerAnimator::update(bool onGround, bool sliding) {
     bool moving = bn::keypad::left_held() || bn::keypad::right_held();
     bool jumping = !onGround;
+
+    // WALL SLIDE: its own two frames; the jump animation starts over after.
+    if (sliding) {
+        const int picture = (_slide_frame++ / Cfg::Player::SLIDE_WAIT) % 2;
+        _sprite.sprite().set_tiles(
+            _cached_tiles[Cfg::Player::SLIDE_FRAMES[picture]]);
+        _jump_action.reset();
+        _was_moving = moving;
+        _was_jumping = false;
+        return;
+    }
+    _slide_frame = 0;
 
     // Moving -> start walk animation instantly
     if (moving && !_was_moving) {

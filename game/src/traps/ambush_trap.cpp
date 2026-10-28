@@ -1,105 +1,37 @@
 #include "ambush_trap.h"
 
-AmbushTrap::AmbushTrap(
-    bn::fixed t_start_x,
-    bn::fixed t_start_y,
-    bn::fixed t_width,
-    bn::fixed t_height,
-    bn::fixed t_offset_x,
-    bn::fixed t_offset_y,
-    const bn::sprite_item& t_sprite_item,
-    int t_sprite_waits,
-    bn::span<const uint16_t> t_graphics_indexes,
-    uint16_t t_blocking_layers,
-    bn::fixed t_range,
-    bn::fixed t_speed,
-    unsigned t_duration,
-    Player& t_player)
-    : BaseTrap(
-          t_start_x,
-          t_start_y,
-          t_width,
-          t_height,
-          t_offset_x,
-          t_offset_y,
-          t_sprite_item,
-          t_sprite_waits,
-          t_graphics_indexes,
-          t_blocking_layers,
-          // AmbushTrap uses direct positional movement, not velocity.
-          Cfg::Physics::NO_MAX_VELOCITY),
-      _start_x(t_start_x),
-      _start_y(t_start_y),
-      _range(t_range),
-      _speed(t_speed),
-      _duration(t_duration),
-      _player(t_player) {}
+AmbushTrap::AmbushTrap(const TrapData& data, bn::fixed speed, Player& player)
+    // AmbushTrap uses direct positional movement, not velocity.
+    : BaseTrap(data, Cfg::Physics::NO_MAX_VELOCITY),
+      _start_x(pos.x),
+      _start_y(pos.y),
+      _vertical(data.ambush_vertical),
+      _motion(data.ambush_range, speed, data.ambush_duration, data.ambush_rest),
+      _player(player) {}
 
 void AmbushTrap::update() {
     BaseTrap::update();
-
-    switch (_state) {
-        case State::Dormant: {
-            bn::fixed dx = _player.pos.x - pos.x;
-            if (dx < 0) {
-                dx = -dx;
-            }
-            if (dx <= _range) {
-                _state = State::Lunging;
-                _elapsed_frames = 0;
-            }
-            return;  // No movement this frame while still dormant.
-        }
-
-        case State::Lunging: {
-            pos.x += _speed;
-            ++_elapsed_frames;
-            if (_elapsed_frames >= _duration) {
-                _state = State::Returning;
-                _elapsed_frames = 0;
-            }
-            break;
-        }
-
-        case State::Returning: {
-            bn::fixed step = _speed < 0 ? -_speed : _speed;
-            if (pos.x < _start_x) {
-                pos.x += step;
-                if (pos.x > _start_x) {
-                    pos.x = _start_x;
-                }
-            } else {
-                pos.x -= step;
-                if (pos.x < _start_x) {
-                    pos.x = _start_x;
-                }
-            }
-            if (pos.x == _start_x) {
-                _state = State::Dormant;
-            }
-            break;
-        }
-
-        default:
-            BN_LOG_ERROR(
-                LogCategory::Trap, "Not a defined state of AmbushTrap.");
+    bn::fixed distance = _player.pos.x - _start_x;
+    if (distance < 0) {
+        distance = -distance;
     }
-
-    // Direct position writes bypass PhysicsBody::move(), so sync the
-    // collision shape and sprite manually - same pattern as
-    // ChaserTrap/PathTrap.
-    shape_pos.move(pos.x, pos.y);
-    if (sprite) {
-        sprite->pos.move(pos.x, pos.y);
+    const bool was_dormant = _motion.state() == ambush::State::Dormant;
+    _motion.update(distance);
+    if (!was_dormant) {
+        _place();
     }
 }
 
 void AmbushTrap::reset() {
-    pos.x = _start_x;
-    pos.y = _start_y;
-    _state = State::Dormant;
-    _elapsed_frames = 0;
+    _motion.reset();
+    _place();
+}
 
+// Direct position writes bypass PhysicsBody::move(), so the collision shape
+// and the sprite follow by hand - same pattern as ChaserTrap/PathTrap.
+void AmbushTrap::_place() {
+    pos.x = _vertical ? _start_x : _start_x + _motion.offset();
+    pos.y = _vertical ? _start_y + _motion.offset() : _start_y;
     shape_pos.move(pos.x, pos.y);
     if (sprite) {
         sprite->pos.move(pos.x, pos.y);

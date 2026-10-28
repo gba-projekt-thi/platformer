@@ -1,7 +1,17 @@
 #include "level_manager.h"
+
+#include "attempt_objects.h"
+#include "attempt_variant.h"
 #include "audio_settings.h"
+#include "background.h"
+#include "bn_keypad.h"
+#include "boss_trap.h"
 #include "level_limits.h"
+#include "player_events.h"
+#include "replay_capture.h"
+#include "respawn_logic.h"
 #include "switch_logic.h"
+#include "tour.h"
 #include "trap_factory.h"
 #include "world_index.h"
 
@@ -33,6 +43,20 @@ void LevelManager::restoreHUD() {
     // this constructor and StartScene's post-load_from_save() call.
     AudioSettings::instance().set_music_level(game_state.music_volume);
     AudioSettings::instance().set_sfx_level(game_state.sfx_volume);
+}
+
+Trigger* LevelManager::find_trigger(const char* name) {
+    if (name == nullptr) {
+        return nullptr;
+    }
+    for (Trigger& trigger : _triggers) {
+        const char* candidate = trigger.name();
+        if (candidate != nullptr &&
+            bn::string_view(candidate) == bn::string_view(name)) {
+            return &trigger;
+        }
+    }
+    return nullptr;
 }
 
 Trigger& LevelManager::get_trigger_by_name(const char* name) {
@@ -75,21 +99,116 @@ void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.set_dash_enabled(
         _data_manager.state().level >=
         WorldIndex::WORLDS[Cfg::Dash::UNLOCK_WORLD].start_index);
+    // The pogo and wall jumps likewise from their own UNLOCK_WORLD onward -
+    // the pogo also in every level with a boss, the one weapon against it.
+    bool has_boss = false;
+    for (int i = 0; i < level.trap_count; ++i) {
+        has_boss |= level.traps[i].type == TrapType::BOSS;
+    }
+    _player.set_pogo_enabled(
+        has_boss ||
+        _data_manager.state().level >=
+            WorldIndex::WORLDS[Cfg::Pogo::UNLOCK_WORLD].start_index);
+    _player.set_wall_jump_enabled(
+        _data_manager.state().level >=
+        WorldIndex::WORLDS[Cfg::WallJump::UNLOCK_WORLD].start_index);
     _save_sync.reset_baseline();
     _level_frame_count = 0;
+
+    // A jump or dash of the previous level must not fire a trigger here.
+    PlayerEvents::instance().clear();
+
+    // Nothing of an earlier level's death feedback carries over.
+    _death_fx.clear();
+    _player.cancel_death_fx();
+    Camera::instance().set_shake(0, 0);
+    _deaths_seen = _player.get_deaths();
+    // Back in the level the save was in (Title -> Continue): it carries on
+    // with its deaths, so its death windows and door spot stay where they
+    // were. Saved with the next death.
+    GameState& state = _data_manager.state();
+    _deaths_at_entry = attempt_variant::entry_deaths(
+        state.entry_level, state.entry_deaths, state.level,
+        _player.get_deaths());
+    state.entry_level = state.level;
+    state.entry_deaths = uint16_t(_deaths_at_entry);
+    _layout_deaths = _deaths_in_level();
+    _pending_respawn.cancel();
 }
 
 void LevelManager::_load_door(const LevelData& level) {
-    _door.emplace(
-        level.door.x, level.door.y, level.door.sprite,
-        level.door.sprite_graphics_indexes, level.door.sprite_animation_wait,
-        level.door.sprite_flip_horizontal);
+    _door.emplace(level.door);
+}
+
+unsigned LevelManager::_deaths_in_level() const {
+    return attempt_variant::deaths_in_level(
+        _player.get_deaths(), _deaths_at_entry);
+}
+
+void LevelManager::set_deaths_in_level(unsigned deaths) {
+    _player.set_deaths(_deaths_at_entry + deaths);
+    _deaths_seen = _player.get_deaths();
+    // The replay starts in that layout: no cue for it.
+    _layout_deaths = deaths;
+    _finish_respawn();
+}
+
+// The door that moves between attempts stands where the deaths in this level
+// put it (on load, and after every death, checkpoint respawn and Restart
+// Level - they all end in _finish_respawn()).
+void LevelManager::_place_door() {
+    if (_door) {
+        _door->place_for_attempt(_deaths_in_level());
+    }
+}
+
+// The door that turns into a trap: touched while its trigger is on, it kills
+// like a trap does - right after the collision update, so this frame's death
+// starts the death feedback as usual. No tell: the door looks the same.
+void LevelManager::_check_door_trap() {
+    if (!_door) {
+        return;
+    }
+    // _check_player_died() has not seen this frame's deaths yet: a trap that
+    // caught the duck on the trapped door is its only death.
+    const bool trapped = door_logic::trapped(_door_trap);
+    const bool died = _player.get_deaths() != _deaths_seen;
+    const door_logic::Touch touch =
+        door_logic::on_touch(_door->reached(), _door_locked, trapped, died);
+    if (touch == door_logic::Touch::Kill || (trapped && died)) {
+        _door->clear_reached();
+    }
+    if (touch == door_logic::Touch::Kill) {
+        _player.death();
+    }
 }
 
 void LevelManager::_load_music(const LevelData& level) {
     if (!_music.has_value() || *_music != level.music) {
         _music.emplace(level.music);
         bn::music::play(*_music);
+        _boss_music = false;
+    }
+}
+
+// The world theme plays until the boss fight starts (the duck is in the
+// arena), then the module's boss section: the same instruments and tune, but
+// faster and driving (tools/Make_boss_music.py). A cut at the moment the
+// arena is entered. When the fight ends - the boss is beaten, or a death
+// starts it over - the theme begins again from its soft start, which is also
+// the relief after the last hit. Only the song position changes, so the
+// music volume (AudioSettings) stays as it is.
+void LevelManager::_update_boss_music() {
+    if (_level == nullptr || _level->boss_music_order <= 0 ||
+        !bn::music::playing()) {
+        return;
+    }
+    const bool fighting = boss_fighting();
+    if (fighting != _boss_music) {
+        _boss_music = fighting;
+        const int order = fighting ? _level->boss_music_order : 0;
+        bn::music::set_position(order);
+        tour::boss_music(order);
     }
 }
 
@@ -121,17 +240,24 @@ void LevelManager::_load_background(const LevelData& level) {
     // observed as a level's background using stale palette colors from a
     // previously loaded level's background (but only when reached via normal
     // progression, not when loaded fresh from a save, where no prior
-    // background was ever allocated).
+    // background was ever allocated). The backdrop color (palette index 0,
+    // the dark parts of every background) had the same cause and is now set
+    // explicitly by create_background().
     bn::core::update();
 
-    _background.emplace(level.back_ground.create_bg(0, 0));
+    _background.emplace(create_background(level.back_ground));
     _background->set_priority(3);
     _background->set_blending_enabled(true);
 }
 
 void LevelManager::_setup_camera(const LevelData& level) {
     Camera::instance().init(level.world_width, level.world_height);
-    Camera::instance().follow(_player.pos.x, _player.pos.y);
+    // The rig keeps its aim inside the same limits Camera::follow() clamps to.
+    _camera_rig.place(
+        camera_rig::max_offset(level.world_width, Cfg::Screen::WIDTH),
+        camera_rig::max_offset(level.world_height, Cfg::Screen::HEIGHT),
+        _player.pos.x, _player.pos.y);
+    Camera::instance().follow(_camera_rig.x(), _camera_rig.y());
 
     // Bounce boundary must match this level's world width, not the fixed
     // 240px screen default.
@@ -139,15 +265,109 @@ void LevelManager::_setup_camera(const LevelData& level) {
         level.world_width / 2 - Cfg::Screen::EDGE_MARGIN);
 }
 
+void LevelManager::_update_camera() {
+    // D-Pad up / down looks up / down once held for a moment; it only shows
+    // in levels taller than the screen (the camera cannot move vertically in
+    // a 160px world).
+    const int look =
+        camera_rig::look(bn::keypad::up_held(), bn::keypad::down_held());
+    _camera_rig.update(_player.pos.x, _player.pos.y, _player.vel_x, look);
+    Camera::instance().follow(_camera_rig.x(), _camera_rig.y());
+}
+
+void LevelManager::_check_player_died() {
+    const unsigned deaths = _player.get_deaths();
+    if (deaths == _deaths_seen) {
+        return;
+    }
+    _deaths_seen = deaths;
+
+    // Restart Level takes its own death right away (update()), so every death
+    // seen here is one the world caused: freeze, shake, ghost.
+    _death_fx.start(Cfg::DeathFx::HITSTOP_FRAMES, Cfg::DeathFx::SHAKE_FRAMES);
+    _player.begin_death_fx();
+}
+
+void LevelManager::_render_frame() {
+    // The shake moves what is registered with SpriteRegistry (the duck's
+    // ghost, platforms, traps, door); the HUD and the background stay put.
+    const death_fx::Offset shake =
+        _death_fx.shake_offset(Cfg::DeathFx::SHAKE_AMPLITUDE);
+    Camera::instance().set_shake(shake.x, shake.y);
+    SpriteRegistry::instance().sync_all(Camera::instance());
+    bn::core::update();
+}
+
+void LevelManager::_advance_death_fx() {
+    if (_death_fx.advance() != death_fx::Event::FreezeEnded) {
+        return;
+    }
+    _player.end_death_fx();
+    if (_pending_respawn.freeze_ended()) {
+        _finish_respawn();
+    }
+}
+
+// A death the world caused waits for the end of its freeze; Restart Level
+// sets up the next attempt at once (respawn_logic.h).
+void LevelManager::_respawn(respawn::Cause cause) {
+    // If it has to wait, the traps stay as they are until the freeze ends.
+    if (_pending_respawn.request(cause, _death_fx.frozen())) {
+        _finish_respawn();
+    }
+}
+
+void LevelManager::_finish_respawn() {
+    _reset_entities();
+    _place_door();
+    // Level Devil: this attempt's traps and platforms, then the dynamic
+    // platforms that are there start over (the resets below put them back).
+    // Compared with the layout that was there, not with deaths - 1: Restart
+    // Level during a death freeze skips an attempt.
+    bool layout_changed = false;
+    if (_level != nullptr) {
+        const unsigned deaths = _deaths_in_level();
+        layout_changed =
+            attempt_objects::layout_changes(*_level, _layout_deaths, deaths);
+        _layout_deaths = deaths;
+        _apply_attempt(*_level);
+        _load_dynamic_platforms(*_level);
+    }
+    if (layout_changed) {
+        _cue_layout_change();
+    }
+    _dynamic_platforms.reset_crumbling();
+    _fleeing_platforms.reset();
+    // Nothing from before the death may reach a follower: the chain starts
+    // from the reset (or checkpoint-restored) triggers.
+    _trigger_chains.respawn(_triggers, [this](auto& triggers) {
+        _checkpoint_run.restore(triggers);
+    });
+    // The duck is back at the spawn point or a checkpoint, possibly far from
+    // where it died: cut there instead of gliding across the level.
+    _camera_rig.snap(_player.pos.x, _player.pos.y);
+    Camera::instance().follow(_camera_rig.x(), _camera_rig.y());
+}
+
+// The level is not the one of the last attempt: a low rustle and a short
+// shake as the new layout appears (after the death freeze - _finish_respawn()
+// runs when it ends).
+void LevelManager::_cue_layout_change() {
+    _death_fx.shake(Cfg::DeathFx::LAYOUT_SHAKE_FRAMES);
+    AudioSettings::instance().play_sfx(bn::sound_items::layout_shift);
+}
+
 void LevelManager::_clear_runtime_state() {
-    _switched_platforms.clear();
+    _boss = nullptr;
+    _door_trap = nullptr;
+    _dynamic_platforms.clear();
+    _fleeing_platforms.clear();
     _platforms.clear();
     _platform_bodies.clear();
     _triggers.clear();
     _traps.clear();
     _checkpoints.clear();
-    _checkpoint_tracker.reset();
-    _checkpoint_triggers = 0;
+    _checkpoint_run = CheckpointRun();
     _resettables.clear();
 }
 
@@ -208,13 +428,31 @@ void LevelManager::_load_triggers(const LevelData& level) {
         _triggers.emplace_back(
             trigger.x, trigger.y, trigger.width, trigger.height,
             trigger.default_on, trigger.name, trigger.mode, trigger.sprite,
-            trigger.sprite_index_off, trigger.sprite_index_on);
+            trigger.sprite_index_off, trigger.sprite_index_on,
+            trigger.delay_frames, trigger.action, trigger.follows != nullptr);
     }
 
     // Fallback trigger prevents invalid references.
     if (_triggers.empty()) {
         _triggers.emplace_back(1000, 1000, 0, 0, true, nullptr);
     }
+
+    // Delayed trap chains: every follower is linked to its source by name
+    // once all triggers exist (a source may come later in the array).
+    _trigger_chains.clear();
+    for (int i = 0; i < level.trigger_count; ++i) {
+        const char* follows = level.triggers[i].follows;
+        if (follows == nullptr) {
+            continue;
+        }
+        const Trigger* source = find_trigger(follows);
+        if (source == nullptr) {
+            BN_LOG_ERROR(LogCategory::Level, "follows: trigger name not found");
+            continue;
+        }
+        _trigger_chains.link(i, source - _triggers.data());
+    }
+    _trigger_chains.capture(_triggers);
 
     // Triggers reset themselves on death/restart, so one that drives only
     // platforms (no trap to reset it) still returns to its default state.
@@ -223,52 +461,148 @@ void LevelManager::_load_triggers(const LevelData& level) {
     }
 }
 
-void LevelManager::_bind_switched_platforms(const LevelData& level) {
+void LevelManager::_load_dynamic_platforms(const LevelData& level) {
+    _dynamic_platforms.clear();
+    _fleeing_platforms.clear();
     // _platforms / _platform_bodies hold exactly one entry per platform, in
     // the same order as level.platforms (see _load_platforms()).
     for (int i = 0; i < level.platform_count; ++i) {
         const PlatformData& platform = level.platforms[i];
-        if (platform.trigger_name == nullptr) {
+        // One that is not there this attempt stays hidden (_apply_attempt()):
+        // no switch, crumble or flee may bring it back.
+        if (!_present(platform.from_death, platform.until_death)) {
             continue;
         }
-        _switched_platforms.push_back(SwitchedPlatform{
-            &get_trigger_by_name(platform.trigger_name), &_platform_bodies[i],
-            _platforms[i].get(), platform.active_when_on});
+        if (!platform.flee_path.empty()) {
+            _fleeing_platforms.add(
+                _platform_bodies[i], *_platforms[i], platform.x, platform.y,
+                platform.flee_path.data(), platform.flee_path.size(),
+                platform.flee_range, platform.flee_frames);
+        }
+        if (platform.trigger_name != nullptr) {
+            BN_ASSERT(
+                platform.crumble_frames == 0,
+                "A platform cannot be switched and crumbling");
+            _dynamic_platforms.add_switched(
+                get_trigger_by_name(platform.trigger_name), _platform_bodies[i],
+                *_platforms[i], platform.active_when_on);
+        } else if (platform.crumble_frames > 0) {
+            _dynamic_platforms.add_crumbling(
+                _platform_bodies[i], *_platforms[i], platform.crumble_frames,
+                platform.crumble_respawn_frames);
+        }
     }
 }
 
-void LevelManager::_sync_switched_platforms() {
-    for (SwitchedPlatform& switched : _switched_platforms) {
-        const bool want = switch_logic::platform_active(
-            switched.trigger->is_triggered(), switched.active_when_on);
-        if (want == switched.body->is_enabled()) {
+void LevelManager::_sync_crumble_platforms() {
+    if (!_dynamic_platforms.has_crumbling()) {
+        return;
+    }
+    // What the duck stands on right now (1px probe below its feet).
+    const CollisionResult below = _player.probe_bottom(Cfg::Layer::PLATFORM);
+    _dynamic_platforms.sync_crumbling(
+        _player.pos, [&below](const StaticBody& body) {
+            for (int hit = 0; hit < below.count; ++hit) {
+                if (below.hits[hit].body == &body) {
+                    return true;
+                }
+            }
+            return false;
+        });
+}
+
+bool LevelManager::_present(unsigned from_death, unsigned until_death) const {
+    return attempt_variant::active_for_deaths(
+        _deaths_in_level(), from_death, until_death);
+}
+
+void LevelManager::_apply_attempt(const LevelData& level) {
+    // Objects without a window are never touched: every level without one
+    // plays exactly as before.
+    for (int i = 0; i < level.platform_count; ++i) {
+        const PlatformData& platform = level.platforms[i];
+        if (!attempt_objects::has_window(
+                platform.from_death, platform.until_death)) {
             continue;
         }
-
-        if (want) {
-            // A platform re-appearing on top of the duck would trap it (every
-            // move into an overlapping body is blocked), so hold it back
-            // until the duck has stepped clear.
-            if (switch_logic::boxes_overlap(
-                    _player.pos.get_x(), _player.pos.get_y(), _player.pos.width,
-                    _player.pos.height, switched.body->pos.get_x(),
-                    switched.body->pos.get_y(), switched.body->pos.width,
-                    switched.body->pos.height)) {
-                continue;
-            }
-            switched.body->enable();
-            switched.sprite->enable();
-        } else {
-            switched.body->disable();
-            switched.sprite->disable();
+        switch (attempt_objects::platform_action(
+            _present(platform.from_death, platform.until_death),
+            platform.trigger_name != nullptr)) {
+            case attempt_objects::PlatformAction::Show:
+                _platform_bodies[i].enable();
+                _platforms[i]->enable();
+                break;
+            case attempt_objects::PlatformAction::Hide:
+                _platform_bodies[i].disable();
+                _platforms[i]->disable();
+                break;
+            case attempt_objects::PlatformAction::LeaveToSwitch:
+            default:
+                break;
+        }
+    }
+    // _traps holds one trap per level.traps entry, in order (_load_traps()).
+    for (int i = 0; i < level.trap_count; ++i) {
+        const TrapData& trap = level.traps[i];
+        if (attempt_objects::has_window(trap.from_death, trap.until_death)) {
+            _traps[i]->set_present(_present(trap.from_death, trap.until_death));
         }
     }
 }
 
 void LevelManager::_load_traps(const LevelData& level) {
     for (int i = 0; i < level.trap_count; ++i) {
+        BN_ASSERT(
+            level.traps[i].type != TrapType::BOSS ||
+                !attempt_objects::has_window(
+                    level.traps[i].from_death, level.traps[i].until_death),
+            "A boss cannot have from_death / until_death");
         _traps.push_back(TrapFactory::create(level.traps[i], *this));
         _resettables.push_back(_traps.back().get());
+        if (level.traps[i].type == TrapType::BOSS) {
+            _boss = static_cast<BossTrap*>(_traps.back().get());
+        }
+    }
+    _door_locked = false;
+    _sync_boss_door();
+    _boss_hits_seen = _boss != nullptr ? _boss->hits_left() : 0;
+}
+
+void LevelManager::_feel_boss_hits() {
+    if (_boss == nullptr) {
+        return;
+    }
+    const int left = _boss->hits_left();
+    if (boss::was_hit(_boss_hits_seen, left)) {
+        _death_fx.start(Cfg::Boss::HITSTOP_FRAMES, Cfg::Boss::SHAKE_FRAMES);
+    }
+    _boss_hits_seen = left;
+}
+
+// The door opens once the level's boss is beaten (and shuts again when a
+// death starts the fight over).
+void LevelManager::_sync_boss_door() {
+    const bool locked = _boss != nullptr && !_boss->defeated();
+    if (locked == _door_locked || !_door) {
+        return;
+    }
+    if (_door_locked && !locked) {
+        AudioSettings::instance().play_sfx(bn::sound_items::confirm);
+    }
+    _door_locked = locked;
+    _door->set_locked(locked);
+    if (!locked) {
+        _door->unlock_glow();
+    }
+}
+
+auto LevelManager::boss_fighting() const -> bool {
+    return _boss != nullptr && _boss->fighting();
+}
+
+void LevelManager::flash_door(bool lit) {
+    if (_door) {
+        _door->set_flash(lit);
     }
 }
 
@@ -281,44 +615,18 @@ void LevelManager::_load_checkpoints(const LevelData& level) {
 }
 
 void LevelManager::_sync_checkpoints() {
-    for (int i = 0; i < _checkpoints.size(); ++i) {
-        if (!_checkpoints[i].take_hit() || !_checkpoint_tracker.reach(i)) {
-            continue;
-        }
-
-        _player.set_spawn_point(_checkpoints[i].pos.x, _checkpoints[i].pos.y);
-
-        bool on[Cfg::Level::Limits::TRIGGERS] = {};
-        for (int t = 0; t < _triggers.size(); ++t) {
-            on[t] = _triggers[t].is_triggered();
-        }
-        _checkpoint_triggers = pack_flags(on, int(_triggers.size()));
-
-        for (int c = 0; c < _checkpoints.size(); ++c) {
-            _checkpoints[c].set_active(c == _checkpoint_tracker.active());
-        }
-        AudioSettings::instance().play_sfx(bn::sound_items::confirm);
-    }
-}
-
-void LevelManager::_restore_checkpoint_triggers() {
-    if (!_checkpoint_tracker.has_active()) {
+    const int reached = _checkpoint_run.sync(_checkpoints, _triggers);
+    if (reached < 0) {
         return;
     }
-    for (int t = 0; t < _triggers.size(); ++t) {
-        if (flag_at(_checkpoint_triggers, t)) {
-            _triggers[t].restore(true);
-        }
-    }
+    _player.set_spawn_point(
+        _checkpoints[reached].pos.x, _checkpoints[reached].pos.y);
+    AudioSettings::instance().play_sfx(bn::sound_items::confirm);
 }
 
 void LevelManager::_clear_checkpoint() {
-    _checkpoint_tracker.reset();
-    _checkpoint_triggers = 0;
+    _checkpoint_run.clear(_checkpoints);
     _player.set_spawn_point(_spawn_x, _spawn_y);
-    for (Checkpoint& checkpoint : _checkpoints) {
-        checkpoint.set_active(false);
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -330,6 +638,7 @@ void LevelManager::load(const LevelData& level) {
 
     _load_player_spawn(level);
     _load_door(level);
+    _place_door();
     _load_music(level);
     _load_background(level);
     _setup_camera(level);
@@ -339,25 +648,28 @@ void LevelManager::load(const LevelData& level) {
 
     _load_platforms(level);
     _load_triggers(level);
-    _bind_switched_platforms(level);
+    _door_trap = find_trigger(level.door.trap_trigger_name);
+    _checkpoint_run.forget_trigger(
+        _door_trap != nullptr ? _door_trap - _triggers.data()
+                              : CheckpointRun::NO_TRIGGER);
+    _load_dynamic_platforms(level);
     _load_traps(level);
     _load_checkpoints(level);
-    _sync_switched_platforms();
+    _level = &level;
+    _apply_attempt(level);
+    _dynamic_platforms.sync_switched(_player.pos);
 }
 
 void LevelManager::unload() {
+    _death_fx.clear();
+    _pending_respawn.cancel();
+    _player.cancel_death_fx();
+    Camera::instance().set_shake(0, 0);
     _background.reset();
     _door.reset();
     _music.reset();
-    _switched_platforms.clear();
-    _platforms.clear();
-    _platform_bodies.clear();
-    _triggers.clear();
-    _traps.clear();
-    _checkpoints.clear();
-    _checkpoint_tracker.reset();
-    _checkpoint_triggers = 0;
-    _resettables.clear();
+    _clear_runtime_state();
+    _level = nullptr;
 }
 
 LevelManager::UpdateResult LevelManager::update() {
@@ -370,7 +682,19 @@ LevelManager::UpdateResult LevelManager::update() {
         // Restart Level starts over from the level's spawn point, not from a
         // checkpoint. Still counts as a death, as before.
         _clear_checkpoint();
+        replay_capture::level_restarted();
+        // Pausing during a death freeze and restarting must not leave the
+        // rest of that freeze (or its ghost) behind.
+        _death_fx.clear();
+        _player.cancel_death_fx();
+        _pending_respawn.cancel();
         _player.death();
+        // Exactly one death, without feedback: taken and saved here, and the
+        // next attempt's layout is there before the physics step below runs
+        // with the duck at the spawn (respawn_logic.h).
+        _deaths_seen = _player.get_deaths();
+        _save_sync.sync();
+        _respawn(respawn::Cause::Restart);
     } else if (
         pause_action == PauseController::Action::ReturnToTitleRequested) {
         // Persist progress before leaving to the title screen.
@@ -383,9 +707,24 @@ LevelManager::UpdateResult LevelManager::update() {
         return UpdateResult::None;
     }
 
+    // -------------------------------------------------------------------------
+    // Death freeze
+    //
+    // For a few frames after a death the world stands still: no physics, no
+    // traps, no camera movement, no level clock (the feedback must not cost
+    // the player record time). The duck's ghost, the trap that killed it and
+    // the shaking picture are all there is to see.
+    // -------------------------------------------------------------------------
+
+    if (_death_fx.frozen()) {
+        _render_frame();
+        _advance_death_fx();
+        return UpdateResult::None;
+    }
+
     // Level clock: counts frames the level has actually been playable
-    // (i.e. not paused), used to compute this attempt's clear time for
-    // the best-time record. Deliberately NOT reset on death - matches
+    // (i.e. not paused or frozen), used to compute this attempt's clear time
+    // for the best-time record. Deliberately NOT reset on death - matches
     // the existing overall run Timer, which also keeps counting through
     // deaths; a level's recorded time is its total time-to-clear
     // including any retries within that attempt, not a speedrun-style
@@ -397,8 +736,21 @@ LevelManager::UpdateResult LevelManager::update() {
     // -------------------------------------------------------------------------
 
     CollisionRegistry::instance().update_all();
+    // After every trigger ticked and the duck pressed its triggers: one hop
+    // of every delayed trap chain (trigger_logic.h).
+    _trigger_chains.propagate(_triggers);
     _sync_checkpoints();
-    _sync_switched_platforms();
+    _dynamic_platforms.sync_switched(_player.pos);
+    _sync_crumble_platforms();
+    _fleeing_platforms.update(_player.pos.x, _player.pos.y);
+    _sync_boss_door();
+    _feel_boss_hits();
+    _update_boss_music();
+    if (_door) {
+        _door->flee_from(_player.pos.x, _player.pos.y);
+    }
+    _check_door_trap();
+    _check_player_died();
 
     // -------------------------------------------------------------------------
     // Camera
@@ -408,20 +760,24 @@ LevelManager::UpdateResult LevelManager::update() {
     // see the note in _load_background().
     // -------------------------------------------------------------------------
 
-    Camera::instance().follow(_player.pos.x, _player.pos.y);
+    // On the death frame the camera stays where the duck died.
+    if (!_death_fx.frozen()) {
+        _update_camera();
+    }
 
     // -------------------------------------------------------------------------
     // Rendering
     // -------------------------------------------------------------------------
 
-    SpriteRegistry::instance().sync_all(Camera::instance());
-    bn::core::update();
+    _render_frame();
+    _advance_death_fx();
 
     // -------------------------------------------------------------------------
     // Door Completion
     // -------------------------------------------------------------------------
 
-    if (_door && _door->reached()) {
+    if (_door && door_logic::on_touch(_door->reached(), _door_locked, false) ==
+                     door_logic::Touch::Finish) {
         _player.clear_dash_trail();
         return UpdateResult::LevelComplete;
     }
@@ -431,8 +787,7 @@ LevelManager::UpdateResult LevelManager::update() {
     // -------------------------------------------------------------------------
 
     if (_save_sync.sync()) {
-        _reset_entities();
-        _restore_checkpoint_triggers();
+        _respawn(respawn::Cause::Death);
     }
     return UpdateResult::None;
 }

@@ -26,6 +26,22 @@ Every stage is described by a single declarative definition that contains:
 
 The same skeleton powers every world; only the contents and theme change.
 
+### Where the level data lives
+
+Each world's stages are a JSON file: `game/levels/world1.json` ...
+`world5.json`. Every platform, trigger, trap and checkpoint is one line with
+its fields by name (those of `PlatformData`, `TriggerData`, `TrapData`,
+`CheckpointData` in `level_structure.h`); a field left out keeps its default,
+and a `"note"` is the comment shown above the entry. Sprites are named by
+their item (`"bubbles"`), trap types and trigger modes by their name
+(`"MOVING"`, `"Toggle"`), shared paths and animation sequences by their
+constant in `levels_common.h` (`"FIGURE_8_PATH"`).
+
+`python3 tools/Generate_levels.py` turns the JSON into
+`game/include/level/levels_worldN.h`, which the game compiles - never edit
+those headers by hand. `make checks`, CI and a pre-commit hook fail when a
+header does not match its JSON. The examples below are JSON entries.
+
 ## Coordinate system & orientation
 
 Understanding the coordinate orientation is the key to placing anything:
@@ -201,7 +217,49 @@ Best used sparingly, among genuinely similar-looking static objects (a row
 of chests, a cluster of bushes), so the player learns to treat the whole
 group with caution rather than memorizing one exact tile.
 
-### 6. The gauntlet (Boss level)
+### 6. The cycle (Cycle trap)
+
+A hazard on its own clock: it moves out from its start position by
+`(cycle_dx, cycle_dy)`, stays out, moves back and rests, again and again -
+the classic spikes that rise out of the floor. A round is four frame counts
+(`cycle_extend_frames`, `cycle_hold_frames`, `cycle_retract_frames`,
+`cycle_wait_frames`); an extend or retract of 0 makes the spikes pop in or out
+at once. `cycle_phase_frames` starts the trap that far into its round, so a
+row of spikes with phases 0, 20, 40 ... forms a wave and two traps half a
+round apart alternate. The duck learns the rhythm instead of reacting to a
+trigger, which makes it the natural counterpart of the timed release.
+
+With a `trigger_name` the trap only cycles while that trigger is on and freezes
+where it is otherwise: a Timer trigger makes the cycle start a few seconds in,
+a lever switches the spikes off (or on). Without one it cycles from the first
+frame of the level. A death restarts every cycle from its phase.
+
+**One stab only.** A `cycle_wait_frames` longer than any attempt (e.g. 36000,
+ten minutes) turns the cycle into a one-shot: bound to a trigger it stabs once
+when the trigger turns on, sinks back and stays hidden until the next death
+restarts it. That is the end piece of a [delayed trap
+chain](#delayed-trap-chains); no separate trap type is needed. Start it below
+the screen or behind a platform (`sprite_z_order` 1) so it is not seen before.
+
+```json
+// spikes rise 12px out of the floor: 6 frames up, 30 up, 6 down, 60 resting;
+// the second one starts half a round (51 frames) later
+{"type": "CYCLE", "x": 40, "y": 66, "width": 16, "height": 12, "offset_x": 0, "offset_y": 0,
+ "sprite": "rostybar32x32", "cycle_dy": -12, "cycle_extend_frames": 6, "cycle_hold_frames": 30,
+ "cycle_retract_frames": 6, "cycle_wait_frames": 60},
+{"type": "CYCLE", "x": 72, "y": 66, "width": 16, "height": 12, "offset_x": 0, "offset_y": 0,
+ "sprite": "rostybar32x32", "cycle_dy": -12, "cycle_extend_frames": 6, "cycle_hold_frames": 30,
+ "cycle_retract_frames": 6, "cycle_wait_frames": 60, "cycle_phase_frames": 51}
+```
+
+Keep the **rest** long enough to cross: the duck needs roughly `wait +
+extend + retract` frames of safe time, and the hitbox of a rising trap is
+dangerous from the first frame of the extend. Hard Mode and Assist Mode scale
+all five numbers (a faster round in Hard Mode, a slower one in Assist Mode).
+`Preview_level.py` draws the stroke and prints the timing; the checkpoint check
+treats the whole stroke as the trap's path.
+
+### 7. The gauntlet (Boss level)
 
 A whole-level pattern, not a single trap: a flat, readable corridor with
 several of the above patterns layered in sequence - a patrol hazard
@@ -210,6 +268,26 @@ advances, a mid-arena ambush punishing lingering, and (in the later
 worlds) a chase hazard keeping forward momentum mandatory. Used for the
 one boss level that closes out each world; see
 [Game Concepts — Boss levels](game-concepts.md#boss-levels).
+
+### The boss arena
+
+Each boss level ends in an arena (data in the level JSON, built by the same
+pattern in every world):
+
+- A step 18 px up from the floor, the left ledge 36 px up (two pieces, the
+  checkpoint and the `arena` trigger on it), a pit of 112 px (128 px for
+  World 5), the right ledge with the door.
+- The `BOSS` trap: `path` `BOSS_PATH` / `BOSS_PATH_WIDE` across the pit,
+  `path_waits` frames per crossing in phase 1, `trigger_name` `arena`,
+  `boss_hits`, its hitbox top 6 px below the ledges (a strike from a ledge
+  jump reaches it) and `sprite_scale` 1.25 of a world trap's picture
+  (`tools/Upscale_sprite.py` made 2x versions of 16 px pictures).
+- Triggers `arena_p<n>` (out of reach, the boss switches them on) with
+  MOVING traps that fall through the pit, and `arena_won` with the stepping
+  stone platform it raises.
+- A `CHASE` trap of the corridor gets a `chase_limit` so it stays out.
+- `Check_level_reachability.py` counts `*_won` triggers as on (it assumes
+  the fight is won); the replays in `game/replays/` prove the fights.
 
 ### Dash and switch levels
 
@@ -253,30 +331,261 @@ past the edge with coyote time). For switch levels it explores every lever
 configuration the duck can set from the platforms it has reached. A gap meant
 to require the dash must fail the optimistic no-dash run and pass the
 conservative dash run. The check ignores hazards, so traps still need a manual
-look. All 19 current levels pass it conservatively, and 18 of them without the
-dash.
+look. All 25 current levels pass it conservatively with the abilities of
+their world; "Cloak Corridor" needs the dash, "Bramble Hop" the pogo and
+"Barrel Tower" the wall jump (each checked to fail without it). The pogo is
+simulated off the level's BASE traps (they never move), only for levels the
+check cannot finish without it. Wall jumps are simulated frame by frame
+with a few climb policies: up a shaft between two walls, up a single wall.
+
+### Fake doors and fake checkpoints
+
+A hazard that looks like the real thing needs no new trap type: a static BASE
+trap that wears the sprite of a door or a checkpoint kills on touch like any
+other. The one missing piece was the draw order - the real door and checkpoint
+stand behind the duck (`Cfg::ZOrder::DOOR` / `CHECKPOINT`, 1), a trap defaults
+to the duck's own layer - so `sprite_z_order` (0 = unchanged) sets it, for
+any trap type.
+
+```json
+// Fake door: the animation, the speed and the layer of the real one; the box
+// covers the doorway, not the whole 32x32 sprite.
+{"type": "BASE", "x": 140, "y": 40, "width": 10, "height": 20, "offset_x": 0, "offset_y": 0,
+ "sprite": "door32x32", "sprite_waits": 8, "graphic_indexes": "DOOR32X32_GRAPHICS_INDEXES",
+ "sprite_z_order": "Cfg::ZOrder::DOOR"},
+
+// Fake checkpoint: the grey (not reached) flag, standing on a platform.
+{"type": "BASE", "x": -60, "y": 44, "width": 10, "height": 16, "offset_x": 0, "offset_y": 0,
+ "sprite": "checkpoint16x16", "sprite_z_order": "Cfg::ZOrder::CHECKPOINT"}
+```
+
+- Leave `offset_x` / `offset_y` at 0: a trap's sprite follows its collision box.
+- The fake door is only convincing next to a level whose real door looks the
+  same (`door32x32` with the default animation).
+- Combine it with the other tools for the cruel version: a fake door in a
+  dead end with a real door above it, a fake checkpoint before a long
+  stretch, a CYCLE or MOVING trap bound to a trigger that fires when the duck
+  *reaches* the fake (a trap's trigger zone can sit on top of it).
+- Keep it fair: let the duck see the difference when it stops to look (a flag
+  of the wrong colour, no light behind the door), and never put the only way
+  forward behind an unmarked fake. `Check_checkpoints.py` only knows real
+  checkpoints, so a fake one is not subject to its placement rules.
+- The real door can lie too: see [False exits](#false-exits-the-door-that-turns-the-door-that-moves).
+
+### The door that runs away
+
+The Level Devil classic: the duck reaches the door and it slides away. Give
+the level's `door` a `flee_path` (offsets from the door, like a PATH trap's
+points), a `flee_range` and a `flee_frames`:
+
+```json
+"door": {"x": 96, "y": 30, "flee_path": [[0, -64], [-80, -64]],
+         "flee_range": 24, "flee_frames": 12}
+```
+
+- Whenever the duck comes within `flee_range` px of the door (both axes), it
+  slides to the next point in `flee_frames` frames. At the last point it stays
+  and is an ordinary door. Touching it while it moves still counts.
+- A death puts it back at its origin (`door_flee.h`, `Door::reset_flee()`).
+- `Check_level_reachability.py` checks the **last** stop, so the route has to
+  lead there. Every stop should be visible or reachable on the way - the joke
+  is the door running, not a door that hides.
+
+### False exits: the door that turns, the door that moves
+
+Two more ways for the real door to lie, both on the level's `door`
+(`door_logic.h`, host-tested in `tests/host/test_door_logic.cpp`):
+
+```json
+"door": {"x": 152, "y": 42,
+         "trap_trigger_name": "door_trap",
+         "attempt_positions": [[0, 0], [-96, -16]], "attempt_every": 3}
+```
+
+- **The door that turns into a trap.** `trap_trigger_name` names a trigger of
+  the level. While it is on, touching the door kills the duck instead of
+  finishing the level; while it is off the door is a door. Any trigger works:
+  a zone right in front of the door, a Hold plate somewhere else, a Timer
+  ("the door does not wait"), a delay. A death resets the trigger and with it
+  the door - behind a checkpoint too: the checkpoint's snapshot of the
+  triggers that were on never keeps this one. So the trap trigger must be the
+  door's alone and must not follow another trigger: `Check_trigger_references.py`
+  rejects one that also drives a trap, a platform or a follower (they would
+  lose their checkpoint state with it) and one with `follows` (its source is
+  restored and would re-arm the door after every respawn). **No tell:** the
+  door looks exactly the same either way - as in Level Devil, the joke is
+  that the safe door a moment ago is not safe now.
+  The tell belongs to the trigger: give it a visible sprite (a lever drops
+  the moment the duck steps on it) or make the rule learnable in one death.
+- **The door that moves between attempts.** `attempt_positions` (offsets
+  from `(x, y)`, a list of `[x, y]` pairs) and `attempt_every`: after every
+  `attempt_every` deaths in this level the door stands at the next spot, the
+  last one stays (`attempt_variant::variant_for_attempt()`). Make the first
+  spot `[0, 0]` so the first attempt - and a recorded replay - is unchanged.
+  A death, a checkpoint respawn and Restart Level all re-place it; the deaths
+  count from entering the level, not over the whole run. Leaving to the
+  title and continuing does not start the count over: the save keeps the
+  level the duck is in and its deaths at entry.
+  `Generate_levels.py` refuses `attempt_positions` without an
+  `attempt_every` >= 1.
+- Both combine with the rest of the door: a `flee_path` runs from whichever
+  spot the door stands on, a trapped door can run away, and a boss lock still
+  hides the door (a locked door neither finishes nor kills).
+- "Which door is real?": put [fake doors](#fake-doors-and-fake-checkpoints)
+  at the spots the real door is not. Fakes that should swap places with the
+  real door after deaths need `TrapData::from_death` / `until_death` (the
+  same death count, `attempt_variant::active_for_deaths()`); the door's spots
+  and the fakes' windows combine, so keep the same `attempt_every` rhythm.
+- `Check_level_reachability.py` checks **every** spot (each with its flee
+  path's last stop) and that none lies outside the play area;
+  `Check_trigger_references.py` checks `trap_trigger_name` like any other
+  trigger name and the rules above. For a Latch or Toggle trap trigger the
+  reachability check also wants a route to the door that never touches its
+  zone; a Hold or Timer trigger turns off by itself, so there make sure by
+  hand that the door can be reached while it is off. `Preview_level.py` draws the
+  later spots as dashed doors ("door after 3+").
+
+`LEVEL_WORLD4_SCROLL_2` shows both: a lever on the last beet is a pressure
+plate (Hold) with a 30-frame lag both ways. Hop across it and nothing
+happens; stand on it and the lever drops, and the door kills the duck that
+jumps over to it. After three deaths the door takes pity and waits one
+flower earlier, before the lever.
+
+### Lurking arms and runaway platforms
+
+Two more ways for the level itself to go after the duck:
+
+- **Lurking (vertical AMBUSH).** `"ambush_vertical": true` makes an AMBUSH
+  trap lunge along y: put arms or spikes below the screen or inside a tall
+  platform, `ambush_speed` negative (up), and they shoot out the moment the
+  duck is within `ambush_range` horizontally, then sink back
+  (`ambush_logic.h`). `ambush_rest` keeps them down that many frames after
+  sinking, even with the duck in range - without it a duck lured to the
+  edge sees them spring again at once. Fair only if the duck can see them coming or can keep
+  running: a range a little wider than the trap lets a running duck through.
+- **Runaway platform.** A platform with `flee_path` / `flee_range` /
+  `flee_frames` (like the runaway door) slides on when the duck comes close -
+  typically just as it jumps for it. `Check_level_reachability.py` checks
+  the platform at its last stop, so the route has to work from there.
+
+### Traps and platforms that change with every death
+
+"After the 3rd death the trap sits somewhere else." Any platform or trap
+(except a BOSS) can be limited to some attempts with `from_death` /
+`until_death`: it is only there while the duck has died at least `from_death`
+and fewer than `until_death` times in this visit of the level (`until_death`
+0 = no end). Both 0, the default, means always there - every level without
+them plays exactly as before.
+
+```json
+// the arms lurk under the first gap for the first three attempts ...
+{"type": "AMBUSH", "x": -72, "y": 112, ..., "until_death": 3},
+// ... and under the next one from the 3rd death on
+{"type": "AMBUSH", "x": 80, "y": 112, ..., "from_death": 3}
+```
+
+- An object that is not there has no collision and no picture. A moved trap or
+  platform is simply two entries that split at the same death (`until_death 3`
+  / `from_death 3`), so exactly one of them is there on every attempt.
+- The deaths count from the moment the level is loaded (`LevelManager::
+  _deaths_in_level()`): leaving the level, the title screen or a new visit via
+  Level Select start again at 0. Restart Level counts as a death, as it does
+  for the death counter.
+- The change happens when the duck respawns - after the death freeze, at the
+  spawn or at the checkpoint - never in the middle of an attempt. Restart
+  Level sets up the next attempt before the world moves again, so the old
+  layout never runs a frame around the duck at the spawn.
+- The player hears and sees it: a respawn into a layout that differs from the
+  attempt before (a window opens or closes, or the moving door has a new
+  spot) plays the low `layout_shift` rustle and shakes the picture briefly
+  (`Cfg::DeathFx::LAYOUT_SHAKE_FRAMES`). A respawn into the same layout, and
+  the level load, stay quiet.
+- It combines with the rest of the platform's behaviour: a switched platform
+  that is there still follows its trigger, a crumbling or runaway one starts
+  untouched. A platform that is not there stays gone whatever its trigger
+  does.
+- Not for a BOSS (its fight shows and hides it itself), and never empty
+  (`until_death` <= `from_death`): `Generate_levels.py` rejects both, the level
+  load asserts the first.
+- Keep the first attempts identical to what the recorded replay
+  (`game/replays/`) plays: a window that starts at 0 must not change the route
+  the replay takes.
+- The tools know about it: `Check_level_reachability.py` checks the door on
+  every distinct set of objects (one check per death at which a window opens
+  or closes), from the spawn and from a respawn at every checkpoint (with
+  any lever the duck could have left on when it touched the flag, as the
+  checkpoint's trigger snapshot keeps it); with a false exit whose
+  `trap_trigger_name` is a Latch or Toggle, also without touching that
+  trigger's zone. `Check_checkpoints.py` does not let a flag stand on a
+  platform with a window, wants its platform reachable on every attempt,
+  and keeps the level spawn (and the fall from it) clear of every platform
+  and trap on every attempt - a `from_death: 3` trap there would kill on
+  every respawn from the third death on,
+  `Check_sprite_budget.py` counts every copy (all of them are created at load,
+  the absent ones only hidden), and `Preview_level.py` labels them "deaths 3+"
+  / "deaths 0-2".
+- Fair play: the duck should be able to learn the new place from one death,
+  as with any Level Devil trick. Trickwood (`LEVEL_WORLD3_TRICK`) moves its
+  lurking arms one gap on after the 3rd death.
+
+### Crumbling platforms
+
+A platform reacts to the duck itself, without any trigger: set
+`PlatformData::crumble_frames` (after `active_when_on`) and the platform gives
+way that many frames after the duck first stands on it.
+
+| Field | Meaning |
+|-------|---------|
+| `crumble_frames` | Frames from the first step until the platform gives way (1 or more; 0 = an ordinary platform). It shakes meanwhile and stays solid. |
+| `crumble_respawn_frames` | Frames until it is back (0 = it stays gone until a death or Restart Level). |
+
+- Stepping off or jumping away does not save it: once it has been touched, it
+  falls. The crumble time is the margin the duck has to cross it.
+- It falls out of the picture for about a third of a second (a visual only: it
+  stops being solid the moment it starts to fall).
+- A platform that comes back waits until the duck is not inside its box, as
+  switched platforms do.
+- Death and Restart Level put every crumbling platform back.
+- A crumbling platform cannot also be switched by a trigger, and a checkpoint
+  must not stand on one (`Check_checkpoints.py` reports both; the level load
+  asserts the first).
+- `Check_level_reachability.py` treats a crumbling platform as a solid one:
+  the duck can always jump off before it falls, so reachability is unchanged.
+  With `crumble_respawn_frames` 0 a way that has to be taken twice (back and
+  forth) is gone the second time - check that by hand or give it a respawn.
+- `Preview_level.py` draws them dotted with a "crumbles Nf" label.
+
+```json
+// gives way 30 frames after the first step, is back after 2 seconds
+{"x": -48, "y": 60, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel",
+ "sprite_index": 0, "crumble_frames": 30, "crumble_respawn_frames": 120}
+// a single-use stepping stone (never comes back)
+{"x": 16, "y": 52, "width": 32, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "nebel",
+ "sprite_index": 0, "crumble_frames": 20}
+```
 
 ### Checkpoints
 
-A long level or a boss can carry a few **checkpoints**: flags the duck touches
-to respawn there instead of at the spawn point. They are plain level data:
+A long level or a boss can carry **one checkpoint**: a flag the duck touches
+to respawn there instead of at the spawn point. It is plain level data:
 
-```cpp
-constexpr CheckpointData world1_boss_checkpoints[] = {{-24, 48}};
-// ... at the end of the LevelData literal, after ground_friction and intro_hint:
-//     world1_boss_checkpoints, sizeof(world1_boss_checkpoints) / sizeof(...[0])
+```json
+"checkpoints": {"name": "world3_boss_checkpoints", "items": [{"x": -80, "y": 48}]}
 ```
 
 `(x, y)` is the center of the 16x16 flag AND the respawn position. Put the
 flag's bottom on a platform's top: `y = platform top - 8` (the preview shows
-each platform's top; `Preview_level.py` draws the flags in teal). List a level's
-checkpoints in the order it is played, at most `Cfg::Level::Limits::CHECKPOINTS`
-(4).
+each platform's top; `Preview_level.py` draws the flags in teal). A level has at
+most `Cfg::Level::Limits::CHECKPOINTS` of them, and that is 1: the middle of the
+level is the one place worth a retry point, more would turn the level into
+several short ones. The code itself handles several flags (the limit is a
+config value), so the rules below about order still hold if it is ever raised.
 
 What a respawn does, and what to keep in mind when placing one:
 
-- **Furthest one wins.** Touching an earlier flag again never moves the
-  respawn back. Skipping a flag by jumping past it is fine.
+- **Furthest one wins** (only matters with more than one flag). Touching an
+  earlier flag again never moves the respawn back. Skipping a flag by jumping
+  past it is fine.
 - **Traps and triggers still reset on a death**, exactly as before - with one
   addition: the triggers that were ON when the checkpoint was reached (Latch and
   Toggle, not Hold) are switched on again after the respawn. That keeps a boss
@@ -286,9 +595,18 @@ What a respawn does, and what to keep in mind when placing one:
 - **Chase traps start from their start position** (far behind a flag in the
   middle of a level), so the first seconds after a respawn are gentler than at
   the real spawn.
-- **Keep the respawn clear of ambush traps.** A flag inside an ambush trap's
-  range lunges the trap right after the respawn; inside its lunge it is a
-  guaranteed hit. The checker errors on the second and warns on the first.
+- **Keep the respawn clear of every trap and of its whole path.** The flag
+  never stands in a trap, and never anywhere a trap can go: the full route of a
+  PATH trap (the segments between its nodes, including the one that closes the
+  loop), the track a MOVING trap takes once its trigger fires (a falling
+  thwomp's column, a charging can's row), the row a CHASE trap sweeps to the
+  right, and the lunge of an AMBUSH trap. The triggers that were on at the flag
+  are re-armed after a respawn, so a trap on the flag's path would come for the
+  duck again. A flag inside an ambush trap's range also lunges the trap right
+  after the respawn; the checker errors on the lunge and warns on the range.
+- **Some levels get no checkpoint at all.** The World 1 and World 2 bosses
+  charge a pufferfish or a can along the whole floor, so there is no spot on
+  any of their platforms that is clear of a trap's path.
 - **No checkpoints in puzzle levels** like "Lever Hall": a death resets the
   levers, so a flag in the middle would only force the player to redo them.
 - **Restart Level** (pause menu) clears the checkpoint and restarts from the
@@ -297,9 +615,8 @@ What a respawn does, and what to keep in mind when placing one:
 
 `tools/Check_checkpoints.py` verifies all of this on the level data: the flag
 stands on a (non-switched) platform, the respawn box overlaps no platform or
-trap (including a PATH trap's route and an ambush lunge), the platform is
-reachable from the spawn, plus count, order and spacing. It runs in the Python CI
-job.
+trap or its path (see above), the platform is reachable from the spawn, plus
+count, order and spacing. It runs in the Python CI job.
 
 ### Previewing levels
 
@@ -342,9 +659,10 @@ Triggers are the stage's **director**: they decide *when* things happen.
 
 - Each moving/path trap references a trigger by its stable `name`. When the
   duck enters the trigger's rectangle, every trap bound to that name
-  activates - so one trigger can fire several traps at once (a **trigger
-  chain**), which is how several levels pair a falling hazard with a patrol
-  or a second hazard on the same cue.
+  activates - so one trigger can fire several traps at once, which is how
+  several levels pair a falling hazard with a patrol or a second hazard on
+  the same cue. For hazards that follow each other *in time* see
+  [Delayed trap chains](#delayed-trap-chains).
 - A trigger can start **already active**, so its hazards move from the moment
   the stage loads — useful for a constant patrol the duck must dodge from the
   start.
@@ -377,8 +695,120 @@ changes its state:
 | **Latch** (default) | Turns on at the first entry and stays on until the next death/restart. | Everything authored so far: releasing a falling hazard. |
 | **Toggle** | Every *entry* flips it; standing inside does not flip it again. | A switch the duck steps on and off again. |
 | **Hold** | On only while the duck is inside. | A pressure plate. |
+| **Timer** | Ignores the duck: turns on by itself `delay_frames` frames after the level (re)starts and stays on until the next death/restart. | A hazard that starts on its own clock, e.g. a patrol that wakes up after two seconds. |
 
 Existing levels do not set a mode and keep Latch, so none of them changes.
+
+### Jump and dash triggers
+
+`TriggerData::action` (after `delay_frames`) decides what counts as "entering"
+the zone:
+
+| Action | The trigger fires when ... |
+|--------|----------------------------|
+| **Enter** (default) | the duck steps into the zone, as before. |
+| **Jump** | the duck starts a jump while it is inside the zone. |
+| **Dash** | the duck starts a dash while it is inside the zone. |
+
+Everything else - the mode, the delay, the visible switch - works the same on
+top of it: a Toggle with `Jump` flips on every jump inside it, a Hold plate with
+`Jump` is pressed by a jump and released when the duck leaves. Walking through
+such a zone does nothing, so it is invisible to a careful player and punishes a
+reflexive one ("jumping here wakes the thwomp"). The Dash action only exists
+from World 3 onward, where the dash is enabled; in Worlds 1-2 it never fires.
+Place the zone so that the duck can only be inside it while it makes the
+intended move, and give it a visible sprite or a hint when the level is meant to
+be fair rather than cruel.
+
+```json
+// the brick above only falls when the duck jumps on this spot
+{"x": 40, "y": 44, "width": 24, "height": 16, "name": "hop", "action": "Jump"}
+```
+
+### Delayed triggers
+
+`TriggerData::delay_frames` (the last field, default 0) puts a lag between what
+the duck does and what the traps and platforms bound to the trigger do:
+
+- The delay applies in both directions: a Hold plate that is left keeps its
+  hazard running for `delay_frames` more frames.
+- A change that is undone before the delay has elapsed never shows (step on
+  a Hold plate and off again within the delay, and nothing happens).
+- A visible switch sprite flips at once - the duck sees its own action and
+  feels the consequence later. An invisible trigger gives no hint at all, so
+  use short delays (10-30 frames) for hazards the duck can still react to and
+  long ones (60+ frames) for "what did I do?" surprises.
+- For a **Timer** trigger the field is the timer length instead; it adds no
+  extra lag. `delay_frames` 0 on a Timer trigger turns it on at the first
+  frame.
+- Death resets the delay and the timer. After a respawn at a checkpoint a
+  trigger that was on when the flag was reached is on again at once (no
+  delay), and a Timer that had not fired yet starts counting again.
+
+```json
+// a patrol that wakes up 3 seconds after the level starts
+{"x": 600, "y": 0, "width": 8, "height": 8, "name": "wake", "mode": "Timer", "delay_frames": 180}
+// a lever whose falling brick only drops half a second after the flip
+{"x": -196, "y": 44, "width": 16, "height": 16, "name": "late", "mode": "Toggle",
+ "sprite": "lever16x16", "delay_frames": 30}
+```
+
+### Delayed trap chains
+
+One cue, several effects one after the other - the Level Devil classic: the duck
+steps on a plate, the floor drops at once, and 40 frames later spikes shoot out
+where it would land. `TriggerData::follows` (the last field, default none)
+names another trigger of the same level; this trigger then **follows** it
+instead of the duck:
+
+- A follower ignores the duck (its zone, `mode` and `action` do nothing). It
+  turns on when its source is **activated** - the source's state differs
+  from the source's own `default_on` - and back off when the source returns
+  to its default: a Toggle lever flipped back or a Hold plate left undoes the
+  chain step by step, a Latch plate keeps it on until the next death. A source
+  with `default_on: true` works the same way: its follower stays quiet at
+  load and fires when the duck switches the source off. A follower itself
+  must start off (`default_on: false`).
+- Each hop costs **1 frame plus the follower's own `delay_frames`**:
+  `plate -> drop (0) -> spikes (40)` fires the drop 1 frame after the plate and
+  the spikes 41 frames after the drop. The order of the trigger array does not
+  matter, and a follower can be the source of the next one (3, 4, ... hops).
+  Several followers may share one source.
+- Changes undone within a follower's delay never show, exactly as for the
+  duck's own triggers.
+- **Death** resets the whole chain. After a **checkpoint** respawn, every trigger
+  that was on when the flag was reached is on again: a chain that had fully
+  fired stays fired; a hop that was still counting starts again from the
+  respawn (its source is on, so it fires 1 + delay frames later).
+- `Check_trigger_references.py` fails on a `follows` that names no trigger of
+  the level, a trigger that follows itself, a cycle (`a` follows `b`, `b`
+  follows `a`) - nothing outside a cycle could ever start it - and a follower
+  with `default_on: true`: fired, it would be off, and the checkpoint's
+  snapshot only switches triggers back on, so it would fire again late after
+  every respawn. Every follower is checked, unnamed ones too.
+- Bind followers to **traps**, not to switched platforms:
+  `Check_level_reachability.py` takes a platform's trigger for a lever the duck
+  sets in its zone, which a follower never is, so `Check_trigger_references.py`
+  rejects a platform bound to a follower. To open or close a platform with a
+  chain, bind it to the chain's source.
+
+For spikes that shoot out **once**, bind a Cycle trap to the chain's last
+trigger and give it a rest longer than any attempt (see
+[The cycle](#6-the-cycle-cycle-trap)). Lever Hall (World 5) has a 3-step
+chain: an invisible plate on the gate stone, then a stab out of the landing
+barrel 21 frames later and one out of lever2's barrel 31 frames after that.
+
+```json
+// plate -> the landing barrel stabs 21 frames later -> the next one 31 after that
+{"x": -124, "y": 44, "width": 16, "height": 16, "name": "stone_plate"},
+{"x": -48, "y": 44, "width": 16, "height": 16, "name": "landing_stab",
+ "delay_frames": 20, "follows": "stone_plate"},
+{"x": -16, "y": 44, "width": 16, "height": 16, "name": "lever_stab",
+ "delay_frames": 30, "follows": "landing_stab"}
+```
+
+Two overlapping zones with different delays fake the same thing, but break as
+soon as the duck enters them in a different order; a chain cannot.
 
 A trigger can also have an optional **visible sprite** with an "off" and an
 "on" tile, so a switch reads as a switch. Without one it stays invisible,
@@ -416,14 +846,14 @@ Each world is a coherent theme that ties visuals and audio together:
 
 | World | Theme | Background | Themed hazards |
 |-------|-------|-----------|----------------|
-| 1 | Ocean | Underwater tilemap | Bubbles |
-| 2 | Factory | Industrial tilemap | Pipes, cans, rusty nails |
+| 1 | Bathtub | Bathroom tilemap | Bubbles |
+| 2 | Sewers | Sewer tilemap | Pipes, cans, rusty nails |
 | 3 | Forest | Misty forest tilemap | Mushrooms, slither arms, branches |
-| 4 | Garden | Bright garden tilemap | Nests, bushes, bugs, bricks |
-| 5 | Dungeon | Dark dungeon tilemap | Barrels, bars, chests, levers, mimics, axes, thwomps |
+| 4 | Village | Bright village tilemap | Nests, bushes, bugs, bricks |
+| 5 | Castle | Dark castle tilemap | Barrels, bars, chests, levers, mimics, axes, thwomps |
 
-When designing a stage, pick hazards that *belong* to the theme. A factory stage
-with ocean bubbles breaks immersion. The goal is that a player who sees a frame
+When designing a stage, pick hazards that *belong* to the theme. A sewer stage
+with bathtub bubbles breaks immersion. The goal is that a player who sees a frame
 can tell which world they are in — background, platform art, hazard art, and
 music all reinforcing one identity. See [Asset Management](asset-management.md)
 for how these assets are organized.
@@ -445,7 +875,7 @@ graph LR
    jumping a gap.
 4. **Test.** Later stages introduce new hazards and tighter spacing that test
    everything learned.
-5. **Mastery.** The final stage (dungeon) combines the full hazard vocabulary —
+5. **Mastery.** The final stage (castle) combines the full hazard vocabulary —
    static hazards, an animated mimic, a triggered thwomp, and a relentless
    chasing axe — into a climactic gauntlet.
 6. **Release.** After mastery, one last stage deliberately breaks the ramp:

@@ -14,12 +14,13 @@
 // - smaller save size
 // - consistent ABI behavior on ARM
 struct GameState {
-    // Headroom above the current 19-level roster (see levels[] in
-    // main.cpp / WorldIndex::WORLDS). Bump if the game ever grows past
-    // this many levels. Independent from Cfg::Level::Limits, which caps
-    // per-level entity counts (platforms/triggers/traps), not level
-    // count.
-    static constexpr int MAX_LEVELS = 24;
+    // Headroom above the current 26-level roster (see levels[] in
+    // main.cpp / WorldIndex::WORLDS). 32 since schema 9 (24 before, see
+    // game_state_migration::widen_level_records()): no_death_clears has one
+    // bit per level, so this cannot grow further without a wider field.
+    // Independent from Cfg::Level::Limits, which caps per-level entity
+    // counts (platforms/triggers/traps), not level count.
+    static constexpr int MAX_LEVELS = 32;
 
     int16_t level = 0;
     uint16_t deaths = 0;  // unsigned: matches Player::set_deaths(unsigned int)
@@ -58,8 +59,8 @@ struct GameState {
     // Bit i set = level i has been cleared at least once with zero
     // deaths during that clearing attempt (see SaveSyncController::
     // no_deaths_this_attempt()). Indexed the same as best_time_frames;
-    // a single uint32_t covers all MAX_LEVELS=24 bits with room to
-    // spare. Added in save schema version 3 - older saves fail to
+    // a single uint32_t covers exactly MAX_LEVELS=32 bits. Added in save
+    // schema version 3 - older saves fail to
     // deserialize cleanly (same SERIALIZE_ERROR/fresh-GameState{}
     // fallback as furthest_level's v2 addition, see above).
     uint32_t no_death_clears = 0;
@@ -88,6 +89,14 @@ struct GameState {
     // hard_mode_enabled and the audio volume settings. Added in save
     // schema version 5.
     bool assist_mode_enabled = false;
+
+    // The level the duck is in (-1: none yet) and the death total when it
+    // entered it, so a level that changes with the deaths in it
+    // (attempt_variant.h) is not set back to its first attempt by
+    // Title -> Continue. Written by LevelManager on every level load.
+    // Added in save schema version 10.
+    int16_t entry_level = -1;
+    uint16_t entry_deaths = 0;
 };
 
 inline void set_no_death_clear(GameState& state, unsigned level_index) {

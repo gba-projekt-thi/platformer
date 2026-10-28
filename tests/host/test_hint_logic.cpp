@@ -33,6 +33,27 @@ TEST_CASE(hint_stays_hidden_after_a_finished_run_reset_furthest_level) {
     CHECK(!hint::should_show("New: Dash with B", 1200, 0, 7));
 }
 
+TEST_CASE(hint_sprites_exist_only_while_visible_and_not_paused) {
+    CHECK(hint::should_draw(true, false));
+    CHECK(!hint::should_draw(true, true));    // released for the pause overlay
+    CHECK(!hint::should_draw(false, false));  // expired or dismissed
+    CHECK(!hint::should_draw(false, true));
+}
+
+TEST_CASE(hint_countdown_does_not_run_while_paused) {
+    // LevelScene only ticks the timer while the game runs, so a pause never
+    // eats the five seconds.
+    hint::Timer timer(3);
+    timer.start();
+    timer.tick();
+    CHECK(!hint::should_draw(timer.visible(), true));  // paused: no tick
+    CHECK(timer.visible());
+    CHECK(hint::should_draw(timer.visible(), false));
+    timer.tick();
+    timer.tick();
+    CHECK(!timer.visible());
+}
+
 TEST_CASE(hint_max_chars_fits_the_screen_at_the_widest_glyph) {
     CHECK(hint::MAX_CHARS * 8 <= 240);
 }
@@ -88,4 +109,13 @@ TEST_CASE(hint_timer_can_be_restarted) {
     CHECK(timer.visible());
     timer.tick();
     CHECK(!timer.visible());
+}
+
+TEST_CASE(hint_of_a_normal_level_starts_at_once) {
+    CHECK(hint::should_start(false, false));
+}
+
+TEST_CASE(hint_of_a_boss_level_waits_for_the_arena) {
+    CHECK(!hint::should_start(true, false));
+    CHECK(hint::should_start(true, true));
 }

@@ -6,6 +6,7 @@
 #include "bn_regular_bg_items_kissingscene.h"
 #include "bn_sound_items.h"
 
+#include "background.h"
 #include "cfg.h"
 #include "data_manager.h"
 #include "level_manager.h"
@@ -31,7 +32,7 @@ void KissingScene::init() {
 
     // Create the kiss background once and keep it alive for the duration of
     // the scene. The background releases automatically when the scene exits.
-    _bg.emplace(bn::regular_bg_items::kissingscene.create_bg(0, 0));
+    _bg.emplace(create_background(bn::regular_bg_items::kissingscene));
     _bg->set_priority(3);
 }
 

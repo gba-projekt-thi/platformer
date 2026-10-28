@@ -10,13 +10,19 @@
 #include "bn_vector.h"
 #include "common_variable_8x16_sprite_font.h"
 
+#include "attempt_variant.h"
 #include "base_trap.h"
 #include "camera.h"
+#include "camera_rig.h"
 #include "cfg.h"
 #include "checkpoint.h"
 #include "checkpoint_logic.h"
+#include "crumble_logic.h"
 #include "data_manager.h"
+#include "death_fx.h"
 #include "door.h"
+#include "dynamic_platforms.h"
+#include "fleeing_platforms.h"
 #include "game_modes.h"
 #include "game_state.h"
 #include "i_resettable.h"
@@ -24,6 +30,7 @@
 #include "log.h"
 #include "pause_controller.h"
 #include "player.h"
+#include "respawn_logic.h"
 #include "save_sync_controller.h"
 #include "sprite.h"
 #include "trigger.h"
@@ -40,6 +47,8 @@
 //
 // Uses fixed-capacity containers to avoid heap allocation and fragmentation.
 // -----------------------------------------------------------------------------
+class BossTrap;
+
 class LevelManager {
    public:
     // Result of a single update() call.
@@ -72,8 +81,29 @@ class LevelManager {
     // shouldn't happen now that every MOVING/PATH trap's trigger_name is
     // set (see level_structure.h), but stays defensive.
     Trigger& get_trigger_by_name(const char* name);
+    // Same, but nullptr when there is none (optional triggers, e.g. a boss's
+    // phase triggers).
+    Trigger* find_trigger(const char* name);
 
     auto player() -> Player& { return _player; }
+
+    // Replay ROM: right after load(), the level as it stands after `deaths`
+    // deaths in it, set up the way a respawn does.
+    void set_deaths_in_level(unsigned deaths);
+
+    // True while the pause menu is open. LevelScene reads it to release the
+    // level hint's sprites for the duration (see hint::should_draw()).
+    [[nodiscard]] auto paused() const -> bool {
+        return _pause_controller.paused();
+    }
+
+    // The level has a boss (its hint waits for the arena, see
+    // hint::should_start()) / the boss is fighting: the duck reached the arena.
+    [[nodiscard]] auto has_boss() const -> bool { return _boss != nullptr; }
+    [[nodiscard]] auto boss_fighting() const -> bool;
+
+    // The level-clear moment: the door blinks (lit) or not.
+    void flash_door(bool lit);
 
     // Frames elapsed since this level was loaded, excluding time spent
     // paused. Used by LevelScene to compute this attempt's clear time
@@ -120,8 +150,27 @@ class LevelManager {
     void _load_player_spawn(const LevelData& level);
     void _load_door(const LevelData& level);
     void _load_music(const LevelData& level);
+    void _update_boss_music();
     void _load_background(const LevelData& level);
     void _setup_camera(const LevelData& level);
+    // Aims the camera at the duck for this frame (smoothing, look-ahead, look
+    // up / down - see CameraRig) and hands the result to Camera::follow().
+    void _update_camera();
+
+    // Death feedback (see death_fx.h): the world freezes for a few frames and
+    // the screen shakes. _check_player_died() starts it, _render_frame() draws
+    // a frame with the shake applied and _advance_death_fx() ends the freeze.
+    void _check_player_died();
+    void _render_frame();
+    void _advance_death_fx();
+    // A death or Restart Level: sets up the next attempt now or when the
+    // death freeze ends (respawn_logic.h).
+    void _respawn(respawn::Cause cause);
+    // After a death: re-arms traps and triggers, cuts the camera to the duck.
+    void _finish_respawn();
+    // Level Devil: the respawn brought a different layout
+    // (attempt_objects::layout_changes()) - a sound and a short shake.
+    void _cue_layout_change();
 
     void _clear_runtime_state();
     static void _validate_level(const LevelData& level);
@@ -129,20 +178,30 @@ class LevelManager {
     void _load_triggers(const LevelData& level);
     void _load_traps(const LevelData& level);
     void _load_checkpoints(const LevelData& level);
-    // Takes this frame's checkpoint touches, makes the furthest one the
-    // respawn point and snapshots the triggers that are on.
+    // Takes this frame's checkpoint touches (CheckpointRun) and makes a newly
+    // reached flag the respawn point.
     void _sync_checkpoints();
-    // After a death reset: switches the triggers that were on when the active
-    // checkpoint was reached back on.
-    void _restore_checkpoint_triggers();
     // Restart Level / level load: no checkpoint, respawn at the level spawn.
     void _clear_checkpoint();
-    // Resolves every platform's trigger_name to its Trigger (after the
-    // triggers are loaded) and records the binding.
-    void _bind_switched_platforms(const LevelData& level);
-    // Enables/disables switched platforms to match their triggers. Called
-    // once at load and every frame after the collision update.
-    void _sync_switched_platforms();
+    // Hands the switched (trigger_name) and crumbling (crumble_frames)
+    // platforms to _dynamic_platforms and the running ones (flee_path) to
+    // _fleeing_platforms, after the platforms and triggers are loaded - only
+    // those that are there on this attempt (_present()). Starts both over, so
+    // _finish_respawn() calls it again after every death.
+    void _load_dynamic_platforms(const LevelData& level);
+
+    // Level Devil: deaths of this visit of the level (the run's total since
+    // load()), see attempt_variant.h.
+    unsigned _deaths_in_level() const;
+    // Whether an object with this death window (from_death / until_death) is
+    // there on the current attempt.
+    bool _present(unsigned from_death, unsigned until_death) const;
+    // Shows / hides every platform and trap with a death window for the
+    // current attempt (attempt_objects.h). At level load and after every
+    // death, the checkpoint respawn and Restart Level included.
+    void _apply_attempt(const LevelData& level);
+    // One frame of the crumbling platforms, after the collision update.
+    void _sync_crumble_platforms();
 
     // Resets all resettable entities (currently: traps) after player
     // death or a manual level restart. Iterates a generic list rather
@@ -159,26 +218,29 @@ class LevelManager {
         _traps;
     bn::vector<Checkpoint, Cfg::Level::Limits::CHECKPOINTS> _checkpoints;
 
-    // Active checkpoint (furthest touched) and the level's own spawn point
-    // to fall back to; _checkpoint_triggers is the snapshot taken when the
-    // active checkpoint was reached. See checkpoint_logic.h.
-    CheckpointTracker _checkpoint_tracker;
-    uint16_t _checkpoint_triggers = 0;
+    // Active checkpoint and the triggers that were on when it was reached
+    // (checkpoint_logic.h); the level's own spawn point to fall back to.
+    CheckpointRun _checkpoint_run;
+    // Which trigger follows which (TriggerData::follows) and the hand-over
+    // between them, once per frame.
+    TriggerChains _trigger_chains;
+    static_assert(
+        Cfg::Level::Limits::TRIGGERS <= TriggerChains::MAX_TRIGGERS,
+        "TriggerChains must cover every trigger of a level");
     bn::fixed _spawn_x = 0;
     bn::fixed _spawn_y = 0;
 
-    // Platforms bound to a trigger (PlatformData::trigger_name): the
-    // trigger decides whether the platform body and sprite are enabled.
-    // Non-owning - the platform bodies/sprites and triggers live in the
-    // containers above.
-    struct SwitchedPlatform {
-        Trigger* trigger;
-        StaticBody* body;
-        Sprite* sprite;
-        bool active_when_on;
-    };
-    bn::vector<SwitchedPlatform, Cfg::Level::Limits::PLATFORMS>
-        _switched_platforms;
+    // Switched and crumbling platforms (dynamic_platforms.h). Non-owning -
+    // the platform bodies/sprites and triggers live in the containers above.
+    DynamicPlatforms<StaticBody, Sprite, Trigger, Cfg::Level::Limits::PLATFORMS>
+        _dynamic_platforms;
+    // Platforms that run away from the duck (fleeing_platforms.h).
+    FleeingPlatforms<
+        StaticBody,
+        Sprite,
+        bn::fixed_point,
+        Cfg::Level::Limits::PLATFORMS>
+        _fleeing_platforms;
 
     // Non-owning view over every currently-loaded IResettable entity:
     // the triggers (registered in _load_triggers()) and the traps
@@ -190,7 +252,43 @@ class LevelManager {
 
     bn::optional<bn::regular_bg_ptr> _background;
     Player& _player;
+    // Where the camera aims. Cut to the duck on level load and on respawn.
+    CameraRig<bn::fixed> _camera_rig;
+
+    // Death feedback state. _deaths_seen is the death count the level manager
+    // has reacted to (Restart Level takes its own death at once, so it gets
+    // no feedback); _pending_respawn defers the trap reset until the freeze
+    // ends, so the trap that killed the duck stays where it is while the
+    // world is frozen.
+    death_fx::Sequence _death_fx;
+    unsigned _deaths_seen = 0;
+    // The run's death total when the level was loaded: what
+    // _deaths_in_level() counts from (Level Devil death windows).
+    unsigned _deaths_at_entry = 0;
+    // The loaded level (ROM data), for the per-attempt work after a death;
+    // nullptr after unload().
+    const LevelData* _level = nullptr;
+    // Deaths in the level the current layout (death windows, door spot) was
+    // set up for: a respawn compares the next one with it.
+    unsigned _layout_deaths = 0;
+    respawn::Pending _pending_respawn;
     bn::optional<Door> _door;
+    // The level's boss (TrapType::BOSS, owned by _traps) or nullptr. While
+    // it lives the door stays shut (_sync_boss_door()).
+    BossTrap* _boss = nullptr;
+    bool _door_locked = false;
+    void _sync_boss_door();
+    // False exits (door_logic.h): the trigger that turns the door into a
+    // trap (DoorData::trap_trigger_name, nullptr = none) and the door's spot
+    // for this attempt (DoorData::attempt_positions).
+    Trigger* _door_trap = nullptr;
+    void _check_door_trap();
+    void _place_door();
+    // A boss hit freezes the world for a moment and shakes the picture.
+    int _boss_hits_seen = 0;
+    // The boss section of the level's music plays (see _update_boss_music()).
+    bool _boss_music = false;
+    void _feel_boss_hits();
     bn::optional<bn::music_item> _music;
     PauseController _pause_controller;
     DataManager& _data_manager;

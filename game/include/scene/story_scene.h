@@ -1,0 +1,56 @@
+#pragma once
+
+#include "core_scene.h"
+#include "core_scene_manager.h"
+
+#include "bn_optional.h"
+#include "bn_span.h"
+#include "bn_sprite_ptr.h"
+#include "bn_sprite_text_generator.h"
+#include "bn_vector.h"
+
+#include "level_structure.h"
+#include "story.h"
+
+class Player;
+class DataManager;
+class LevelManager;
+
+// -----------------------------------------------------------------------------
+// StoryScene
+//
+// One page of Hildegard's story (story.h) on a black screen, centered, with
+// a prompt; A or Start goes on to the level (GameState::level) in a
+// LevelScene, or to the reunion (KissingScene) after the ending. Shown by
+// StartScene before a new game, by LevelScene when the door leads into a
+// world for the first time, and by main() when the game is finished.
+// -----------------------------------------------------------------------------
+class StoryScene : public core::Scene {
+   public:
+    enum class Then { Level, Reunion };
+
+    StoryScene(
+        const story::Page& page,
+        Player& player,
+        bn::span<const LevelData> levels,
+        DataManager& data_manager,
+        LevelManager& level_manager,
+        Then then = Then::Level);
+
+    void init() override;
+    void update() override;
+
+   private:
+    const story::Page& _page;
+    Then _then;
+    Player& _player;
+    bn::span<const LevelData> _levels;
+    DataManager& _data_manager;
+    LevelManager& _level_manager;
+
+    bool _transition_requested = false;
+
+    bn::optional<bn::sprite_text_generator> _text_gen;
+    // story::MAX_GLYPHS plus the prompt ("Press A", 6 glyphs).
+    bn::vector<bn::sprite_ptr, story::MAX_GLYPHS + 10> _sprites;
+};

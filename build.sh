@@ -5,6 +5,9 @@
 set -e
 
 BUILD_DIR="${1:-build}"
+if [ "$#" -gt 0 ]; then
+    shift
+fi
 
 # Create build directory
 mkdir -p "$BUILD_DIR"
@@ -18,4 +21,4 @@ echo "Building project..."
 cmake --build "$BUILD_DIR" "$@"
 
 echo "Build complete!"
-echo "Output files can be found in src/sprites/"
+echo "Output files: platformer.gba and platformer.elf"

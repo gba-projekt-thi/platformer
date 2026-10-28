@@ -51,6 +51,18 @@ Every graphics source comes as a **pair**:
 | **Image file** (`.bmp`) | The actual pixels — the sprite sheet or backdrop. |
 | **Metadata file** (`.json`) | Describes how to interpret the image: dimensions, tiling, transparent color, and similar import hints. |
 
+Palette index 0 means different things for the two kinds of art. In a sprite
+it is transparent. In a background the GBA also treats it as transparent and
+shows the backdrop color behind it - so `create_background()`
+(`game/include/background.h`) sets the backdrop to the background's own index-0
+color, and index 0 can be used as a normal (usually the darkest) color of the
+backdrop art. Always create full-screen backgrounds through it.
+
+The `height` in a sprite's `.json` is the height of one animation frame: the
+image is cut into frames of that height. A sheet that holds a single picture
+taller than `height` shows only its top part in the game (that is how
+`barrel32x32` used to show half a barrel).
+
 The build tooling reads the pair and produces the compact in-game representation
 (a sprite item, a background item, a palette, etc.). Designers and artists edit
 the image and its metadata; the game code never touches raw pixels — it refers

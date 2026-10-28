@@ -9,7 +9,8 @@ the jump arcs without building the ROM:
 
   * platforms, coloured by reachability: green = reachable with a plain jump,
     orange = only with the dash, red = not reachable at all; switched platforms
-    are dashed and labelled "+lever" (solid while it is on) / "-lever"
+    are dashed and labelled "+lever" (solid while it is on) / "-lever";
+    crumbling platforms are dotted and labelled "crumbles 30f"
   * triggers (Toggle / Hold marked), linked by a dotted line to the traps they
     release
   * traps by type: BASE (static), MOVING (ghost boxes every 12 frames after its
@@ -41,7 +42,6 @@ Traps are drawn, not simulated - this checks the picture, not fairness.
 """
 
 import argparse
-import glob
 import html
 import importlib.util
 import math
@@ -62,6 +62,7 @@ def _load(name, filename):
 _ctr = _load("check_trigger_references", "Check_trigger_references.py")
 sim = _load("check_level_reachability", "Check_level_reachability.py")
 
+DOOR_OX, DOOR_OY = sim.DOOR_BOXES[32][2:4]  # hitbox centre from the 32 px door sprite centre
 SCREEN_W = 240
 DEATH_Y = 100
 GHOST_EVERY = 12  # frames between the ghost boxes of a MOVING trap
@@ -71,7 +72,9 @@ TRACK_MARGIN = 24  # how far past the world a MOVING trap's track is drawn
 TRAP_FIELDS = (
     "type x y width height offset_x offset_y sprite sprite_waits graphic_indexes "
     "velocity_x velocity_y max_vel path path_waits chase_follow_distance chase_speed "
-    "trigger_name ambush_range ambush_speed ambush_duration"
+    "trigger_name ambush_range ambush_speed ambush_duration "
+    "cycle_dx cycle_dy cycle_extend cycle_hold cycle_retract cycle_wait cycle_phase "
+    "sprite_z_order sprite_scale boss_hits chase_limit ambush_vertical ambush_rest from_death until_death"
 ).split()
 
 
@@ -112,9 +115,13 @@ def parse_traps(array_body, paths):
             trap[key] = _num(fields.get(key, 0))
         for key in (
             "velocity_x velocity_y max_vel chase_follow_distance chase_speed "
-            "ambush_range ambush_speed ambush_duration path_waits"
+            "ambush_range ambush_speed ambush_duration path_waits "
+            "cycle_dx cycle_dy cycle_extend cycle_hold cycle_retract cycle_wait cycle_phase "
+            "sprite_z_order chase_limit"
         ).split():
             trap[key] = _num(fields.get(key, 0))
+        for key in ("from_death", "until_death"):
+            trap[key] = int(_num(fields.get(key, 0)))
         trap["trigger"] = _string(fields.get("trigger_name", "nullptr"))
         trap["path"] = paths.get(fields.get("path", "").strip(), [])
         traps.append(trap)
@@ -137,6 +144,10 @@ def parse_triggers(array_body):
                 "default_on": len(f) > 4 and f[4].strip() == "true",
                 "name": _string(f[5]) if len(f) > 5 else None,
                 "mode": mode,
+                # TriggerData::delay_frames (field 10): lag, or timer length
+                "delay": int(_num(f[10])) if len(f) > 10 else 0,
+                # TriggerData::action (field 11): Enter / Jump / Dash
+                "action": f[11].split("::")[-1].strip() if len(f) > 11 else "Enter",
                 # TriggerData::sprite (field 7): a visible switch uses a sprite slot.
                 "has_sprite": len(f) > 7 and f[7].strip() not in ("", "nullptr"),
             }
@@ -157,6 +168,8 @@ class Level:
         self.spawn = (0.0, 0.0)
         self.door = (0.0, 0.0)
         self.door_hit = (0.0, 0.0)
+        self.door_spots = []
+        self.door_every = 0
         self.hint = None
 
 
@@ -173,6 +186,7 @@ def load_level_file(path):
     path = Path(path)
     content = _ctr.strip_comments(path.read_text())
     base = sim.load_levels(path)
+    doors = sim.load_door_positions(path)
     paths = load_paths(path.parent)
     trap_arrays = _ctr.extract_named_arrays(content, "TrapData")
     trigger_arrays = _ctr.extract_named_arrays(content, "TriggerData")
@@ -191,7 +205,12 @@ def load_level_file(path):
         level.sim_triggers = sim_triggers
         level.spawn = spawn
         level.door_hit = door_hit
-        level.door = (door_hit[0], door_hit[1] - 6.0)
+        level.door = (door_hit[0] - DOOR_OX, door_hit[1] - DOOR_OY)
+        # A door that moves between attempts (DoorData::attempt_positions):
+        # every spot, a new one every attempt_every deaths.
+        level.door_spots = [(x - DOOR_OX, y - DOOR_OY) for x, y, *_ in doors[name]]
+        door = sim._fields_of(f[9])
+        level.door_every = int(_num(door[11], 0.0)) if len(door) > 11 else 0
         if f[2] != "nullptr" and f[2] in trigger_arrays:
             level.triggers = parse_triggers(trigger_arrays[f[2]])
         if f[4] != "nullptr" and f[4] in trap_arrays:
@@ -205,6 +224,17 @@ def load_level_file(path):
             level.checkpoints = parse_checkpoints(checkpoint_arrays[f[14]])
         levels[name] = level
     return levels
+
+
+def window_label(from_death, until_death):
+    """'deaths 3+' / 'deaths 0-2' for a Level Devil object that is only there
+    on some attempts (from_death / until_death), None for an ordinary one."""
+    if not from_death and not until_death:
+        return None
+    if not until_death:
+        return f"deaths {from_death}+"
+    last = until_death - 1
+    return f"deaths {from_death}" if last == from_death else f"deaths {from_death}-{last}"
 
 
 # ---------------------------------------------------------- geometry --
@@ -310,6 +340,8 @@ STYLE = """
   .platform.dash-only { fill: #f6b67a; stroke: #b5651d; }
   .platform.unreachable { fill: #ef9a9a; stroke: #b71c1c; }
   .platform.switched { stroke-dasharray: 2 1; }
+  .platform.crumble { stroke-dasharray: 1 1; }
+  .windowed { stroke-dasharray: 4 1 1 1; }
   .trigger { fill: #4aa3df; fill-opacity: 0.15; stroke: #1e78b4; stroke-width: 0.5; stroke-dasharray: 2 1; }
   .link { stroke: #1e78b4; stroke-width: 0.4; stroke-dasharray: 0.5 1.5; fill: none; }
   .trap { stroke-width: 0.6; fill-opacity: 0.35; }
@@ -318,6 +350,7 @@ STYLE = """
   .trap-path { fill: #8e24aa; stroke: #4a148c; }
   .trap-chase { fill: #d81b60; stroke: #880e4f; }
   .trap-ambush { fill: #795548; stroke: #3e2723; }
+  .trap-cycle { fill: #00897b; stroke: #004d40; }
   .ghost { fill: none; stroke: #e65100; stroke-width: 0.4; stroke-dasharray: 1.5 1.5; }
   .track { fill: none; stroke: #e65100; stroke-width: 0.5; }
   .route { fill: none; stroke: #8e24aa; stroke-width: 0.5; stroke-dasharray: 3 1.5; }
@@ -330,7 +363,8 @@ STYLE = """
   .arc-dash { stroke: #ef6c00; stroke-opacity: 0.8; stroke-dasharray: 2 1.2; }
   .spawn { fill: #2e7d32; stroke: #1b5e20; stroke-width: 0.5; }
   .door { fill: #ffd54f; fill-opacity: 0.45; stroke: #f9a825; stroke-width: 0.6; }
-  .doorhit { fill: #5d4037; }
+  .door.later { fill-opacity: 0.15; stroke-dasharray: 2 1.2; }
+  .doorhit { fill: #5d4037; fill-opacity: 0.5; }
   .checkpoint { fill: #26a69a; fill-opacity: 0.35; stroke: #00695c; stroke-width: 0.7; }
 """
 
@@ -437,7 +471,19 @@ def render(level, arcs="all", optimistic=False, show_traps=True, scale=2.0, reac
         if p.trigger is not None:
             cls += " switched"
             title += f" - {'solid' if p.active_when_on else 'gone'} while {p.trigger} is on"
+        if p.crumble:
+            cls += " crumble"
+            back = f"back after {p.respawn}f" if p.respawn else "never back"
+            title += f" - crumbles {p.crumble}f after the first step, {back}"
+        window = window_label(p.from_death, p.until_death)
+        if window:
+            cls += " windowed"
+            title += f" - only there after {window}"
         svg.rect(p.cx, p.cy, p.w, p.h, cls, title)
+        if window:
+            svg.text(p.cx, p.cy + p.h / 2 + 6, window, "small", "middle")
+        if p.crumble:
+            svg.text(p.cx, p.cy - p.h / 2 - 2, f"crumbles {p.crumble}f", "small", "middle")
         if p.trigger is not None:
             sign = "+" if p.active_when_on else "-"
             svg.text(p.cx, p.cy - p.h / 2 - 2, f"{sign}{p.trigger}", "small", "middle")
@@ -451,8 +497,13 @@ def render(level, arcs="all", optimistic=False, show_traps=True, scale=2.0, reac
     svg.rect(level.spawn[0], level.spawn[1], 8, 8, "spawn", "player spawn")
     svg.text(level.spawn[0], level.spawn[1] - 7, "spawn", "small", "middle")
     svg.rect(level.door[0], level.door[1], 32, 32, "door", "door sprite")
-    svg.rect(level.door_hit[0], level.door_hit[1], 3, 3, "doorhit", "door hit box")
+    svg.rect(level.door_hit[0], level.door_hit[1], *sim.door_size(level.door_hit), "doorhit", "door hit box")
     svg.text(level.door[0], level.door[1] - 18, "door", "small", "middle")
+    # a door that moves between attempts: where it stands after deaths
+    for i, (x, y) in enumerate(level.door_spots[1:], 1):
+        deaths = i * level.door_every
+        svg.rect(x, y, 32, 32, "door later", f"the door after {deaths} death(s)")
+        svg.text(x, y - 18, f"door after {deaths}+", "small", "middle")
     svg.add("</g>")
 
     svg.add('<g id="checkpoints">')
@@ -503,6 +554,7 @@ def render(level, arcs="all", optimistic=False, show_traps=True, scale=2.0, reac
         ("trap trap-path", "PATH"),
         ("trap trap-chase", "CHASE"),
         ("trap trap-ambush", "AMBUSH"),
+        ("trap trap-cycle", "CYCLE"),
     ]
     legend_y = max(svg.ys) + 12
     legend = ['<g id="legend">']
@@ -545,11 +597,24 @@ def render(level, arcs="all", optimistic=False, show_traps=True, scale=2.0, reac
     )
 
 
+def trigger_note(t):
+    """' [Toggle]', ' [Timer 120f]', ' +30f' ... - what sets a trigger apart
+    from the plain latching zone."""
+    delay = t.get("delay", 0)
+    if t["mode"] == "Timer":
+        return f" [Timer {delay}f]"
+    note = "" if t["mode"] == "Latch" else f" [{t['mode']}]"
+    action = t.get("action", "Enter")
+    if action != "Enter":
+        note += f" on {action.lower()}"
+    return note + (f" +{delay}f" if delay else "")
+
+
 def _draw_triggers_and_traps(svg, level):
     svg.add('<g id="triggers">')
     by_name = {}
     for t in level.triggers:
-        mode = "" if t["mode"] == "Latch" else f" [{t['mode']}]"
+        mode = trigger_note(t)
         title = f"trigger {t['name'] or '(unnamed)'}{mode}"
         svg.rect(t["x"], t["y"], t["width"], t["height"], "trigger", title)
         if t["name"]:
@@ -565,6 +630,11 @@ def _draw_triggers_and_traps(svg, level):
         x, y = trap_position(trap)
         cls = f"trap trap-{kind.lower()}"
         title = f"{kind} trap at ({x:g},{y:g}) {trap['width']:g}x{trap['height']:g}"
+        window = window_label(trap["from_death"], trap["until_death"])
+        if window:
+            cls += " windowed"
+            title += f" - only there after {window}"
+            svg.text(x, y + trap["height"] / 2 + 6, window, "small", "middle")
         if trap["trigger"]:
             title += f" - trigger {trap['trigger']}"
             t = by_name.get(trap["trigger"])
@@ -622,6 +692,20 @@ def _draw_triggers_and_traps(svg, level):
                 "small",
                 "middle",
             )
+        elif kind == "CYCLE":
+            end_x, end_y = x + trap["cycle_dx"], y + trap["cycle_dy"]
+            svg.line(x, y, end_x, end_y, "lunge")
+            svg.rect(end_x, end_y, trap["width"], trap["height"], "ghost")
+            svg.rect(x, y, trap["width"], trap["height"], cls, title)
+            svg.text(
+                x,
+                y - trap["height"] / 2 - 2,
+                f"CYCLE {trap['cycle_extend']:g}/{trap['cycle_hold']:g}/"
+                f"{trap['cycle_retract']:g}/{trap['cycle_wait']:g}f"
+                + (f" +{trap['cycle_phase']:g}" if trap["cycle_phase"] else ""),
+                "small",
+                "middle",
+            )
         elif kind == "CHASE":
             svg.rect(x, y, trap["width"], trap["height"], cls, title)
             svg.line(x, y, x + 24, y, "chase-arrow")
@@ -667,7 +751,7 @@ def main(argv):
     files = [Path(i) for i in args.items if i.endswith(".h")]
     wanted = [i for i in args.items if not i.endswith(".h")]
     if not files:
-        files = sorted(Path(p) for p in glob.glob("**/levels_world*.h", recursive=True))
+        files = _ctr.level_files()
     if not files:
         print("No levels_world*.h files found.", file=sys.stderr)
         return 1

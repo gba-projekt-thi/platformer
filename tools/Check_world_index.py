@@ -110,6 +110,9 @@ def discover(root):
     build/ - that actually contains the levels[] array. Returns None entries
     for anything not found.
     """
+    known = Path(root) / "game/src/main.cpp", Path(root) / "game/include/world_index.h"
+    if known[0].is_file() and known[1].is_file() and (Path(root) / "game/include/level").is_dir():
+        return known[0], known[1], Path(root) / "game/include/level"
     main_path = None
     for path in _candidates(root, "**/main.cpp"):
         if re.search(r"LevelData\s+levels\s*\[", path.read_text(errors="ignore")):

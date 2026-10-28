@@ -18,20 +18,8 @@
 // ----------------------------------------------------------------------------
 class PathTrap : public BaseTrap {
    public:
-    PathTrap(
-        bn::fixed t_start_x,
-        bn::fixed t_start_y,
-        bn::fixed t_width,
-        bn::fixed t_height,
-        bn::fixed t_offset_x,
-        bn::fixed t_offset_y,
-        const bn::sprite_item& t_sprite_item,
-        int t_sprite_waits,
-        bn::span<const uint16_t> t_graphics_indexes,
-        uint16_t t_blocking_layers,
-        bn::span<const bn::fixed_point> t_path,
-        unsigned t_path_waits,
-        Trigger& t_trigger);
+    // path_waits already scaled for Hard / Assist Mode.
+    PathTrap(const TrapData& data, unsigned path_waits, Trigger& trigger);
 
     void update() override;
 

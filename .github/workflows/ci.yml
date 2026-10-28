@@ -12,39 +12,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Only extern/engine itself is needed here (pure save-system
-          # headers) - not its own nested butano submodule, which the
-          # host tests never touch.
-          submodules: true
+          # extern/engine and its nested Butano: the host tests use
+          # Butano's header-only bn::fixed (no ARM toolchain needed).
+          submodules: recursive
 
       - name: Build and run tests/host
-        run: |
-          cd tests/host
-          make
+        run: make -C tests/host
 
-  level-data-checks:
-    name: Level data checks
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        # No submodules needed - this only reads game/include/level/.
-
-      - name: Validate trigger_name references
-        run: python3 tools/Check_trigger_references.py
+      - name: Line coverage of game/ by the host tests
+        run: make coverage
 
   gba-build:
     name: GBA build + headless boot
     runs-on: ubuntu-latest
-    # TEMPORARY: pkg.devkitpro.org has returned 403 on GitHub-hosted
-    # runners (see docker/Dockerfile's retry loop around dkp-pacman).
-    # continue-on-error keeps this job's failure from blocking the whole
-    # workflow/PR checks while that's investigated, without hiding it -
-    # the job still shows as failed (yellow "!"), just non-blocking.
-    # Remove this once a build has gone green on GitHub Actions, or once
-    # the fix (retry, or switching to devkitPro's prebuilt CI image) is
-    # confirmed to work reliably there.
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -94,3 +74,11 @@ jobs:
           docker run --rm --user "$(id -u):$(id -g)" \
             -v ${{ github.workspace }}:/workspace -w /workspace \
             projectgba bash -c "./test-rom.sh platformer.gba"
+
+      # Plays every recorded level (game/replays/) to its door in a test
+      # build of the ROM, headless - see tools/replays.py.
+      - name: Replays
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -v ${{ github.workspace }}:/workspace -w /workspace \
+            projectgba bash -c "make replay"

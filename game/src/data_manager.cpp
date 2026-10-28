@@ -5,8 +5,13 @@
 
 void DataManager::load_from_save() {
     if (_save_mgr.is_slot_used(_slot_index)) {
+        uint16_t version = 0;
         const engine::save::SaveResult result = _save_mgr.load(
-            _slot_index, _game_state, &game_state_migration::valid_bytes);
+            _slot_index, _game_state, &game_state_migration::valid_bytes,
+            &version);
+        if (engine::save::succeeded(result)) {
+            game_state_migration::upgrade(_game_state, version);
+        }
         if (result == engine::save::SaveResult::MIGRATED) {
             // Older schema: newer fields hold their defaults. Nothing is
             // written back here - the next progress save upgrades the slot.
@@ -71,8 +76,13 @@ void DataManager::reset() {
 }
 
 bool DataManager::peek_state(int slot_id, GameState& out) {
-    return engine::save::succeeded(
-        _save_mgr.load(slot_id, out, &game_state_migration::valid_bytes));
+    uint16_t version = 0;
+    if (!engine::save::succeeded(_save_mgr.load(
+            slot_id, out, &game_state_migration::valid_bytes, &version))) {
+        return false;
+    }
+    game_state_migration::upgrade(out, version);
+    return true;
 }
 
 void DataManager::set_slot_index(int index) {

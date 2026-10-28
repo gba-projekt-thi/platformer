@@ -8,6 +8,7 @@
 
 #include "cfg.h"
 #include "i_resettable.h"
+#include "level_structure.h"
 #include "physics_body.h"
 #include "sprite.h"
 
@@ -27,18 +28,11 @@
 // ----------------------------------------------------------------------------
 class BaseTrap : public PhysicsBody, public IResettable {
    public:
-    BaseTrap(
-        bn::fixed t_x,
-        bn::fixed t_y,
-        bn::fixed t_width,
-        bn::fixed t_height,
-        bn::fixed t_offset_x,
-        bn::fixed t_offset_y,
-        const bn::sprite_item& t_sprite_item,
-        int t_sprite_waits,
-        bn::span<const uint16_t> t_graphics_indexes,
-        uint16_t t_blocking_layers,
-        bn::fixed t_max_vel = 0);
+    // A trap at the position, size and look of `data` (the fields every
+    // TrapType shares). max_vel caps a trap moved by velocity (MovingTrap);
+    // traps that set their position directly pass
+    // Cfg::Physics::NO_MAX_VELOCITY.
+    explicit BaseTrap(const TrapData& data, bn::fixed max_vel = 0);
 
     virtual void update() override;
 
@@ -50,7 +44,21 @@ class BaseTrap : public PhysicsBody, public IResettable {
     // Reset trap state after player death or level restart.
     void reset() override {}
 
+    // Level Devil (TrapData::from_death / until_death): false takes the trap
+    // out of this attempt - no collision either way, no picture - true puts
+    // it back. LevelManager calls it after reset(), only for traps with a
+    // death window; never for a BOSS (its fight shows and hides it itself).
+    void set_present(bool present);
+
+    // Draw order of the trap's sprite (see TrapData::sprite_z_order).
+    void set_sprite_z_order(int z_order) {
+        _trap_sprite.sprite().set_z_order(z_order);
+    }
+
    protected:
+    // Same, but starting at (x, y) instead of (data.x, data.y).
+    BaseTrap(const TrapData& data, bn::fixed x, bn::fixed y, bn::fixed max_vel);
+
     // Sprite wrapper synchronized through SpriteRegistry.
     Sprite _trap_sprite;
 

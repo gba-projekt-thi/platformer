@@ -64,11 +64,27 @@ See [Getting Started](getting-started.md).
 and clamps to the edges for wider (scrolling) worlds. See
 [Components — Level Management](components.md).
 
+**Camera rig** — The Butano-free logic that decides where the camera aims each
+frame: a smoothed follow of the duck with a look-ahead in its direction of
+travel and an optional look up / down (`camera_rig.h`, tuned by
+`Cfg::CameraFollow`). `Camera::follow()` still clamps the result to the world.
+See [Components — Camera systems](components.md#camera-systems).
+
 **Checkpoint** — A flag (`LevelData::checkpoints`) the duck touches to respawn
 there instead of at the stage's spawn point, until the level is restarted or
-left. The furthest touched flag is the active one; the triggers that were on
-when it was reached fire again after a respawn. See
+left. A level has at most one; the triggers that were on when it was reached
+fire again after a respawn. It never stands in a trap or on its path. See
 [Level Design — Checkpoints](level-design.md#checkpoints).
+
+**Fake door / fake checkpoint** — A BASE trap dressed as a door or a checkpoint
+flag (same sprite, animation and draw order via `TrapData::sprite_z_order`) that
+kills on touch. See [Level Design — Fake doors and fake
+checkpoints](level-design.md#fake-doors-and-fake-checkpoints).
+
+**Cycle trap** — A hazard that moves out by a fixed offset, stays, moves back
+and rests, on repeat (spikes out of the floor). Its round is four frame counts
+plus a phase offset; an optional trigger gates it. Speeds up under Hard Mode.
+See [Level Design — The cycle](level-design.md#6-the-cycle-cycle-trap).
 
 **Chase trap** — A hazard that trails the player and closes in as they advance,
 but never retreats; punishes standing still. Speeds up under Hard Mode. See
@@ -77,6 +93,11 @@ but never retreats; punishes standing still. Speeds up under Hard Mode. See
 **Collision layer** — A bitflag category (player, trap, platform, trigger, door)
 a body belongs to and reacts to, letting the collision system route interactions
 without testing every pair. See [Project Architecture](architecture.md).
+
+**Crumbling platform** — A platform with `PlatformData::crumble_frames` > 0: it
+shakes and then gives way that many frames after the duck first stands on it,
+and optionally comes back after `crumble_respawn_frames`. Needs no trigger. See
+[Level Design — Crumbling platforms](level-design.md#crumbling-platforms).
 
 **Controls overview** — A short list of every button, shown by the start
 screen's "Controls" entry (`ControlsScene`) and by the pause menu's Controls
@@ -106,14 +127,31 @@ slot, and load/save/reset operations. See [Architecture](architecture.md).
 triggers, traps, spawn, door, world size, background, music) rather than
 hard-coded logic. See [Level Design](level-design.md).
 
+**Delayed trap chain** — Triggers that fire one after the other: a trigger
+with `TriggerData::follows` ignores the duck and switches on when the named
+trigger of the same level is activated (and off when it returns to its
+default), one frame plus its own `delay_frames` later; it can be the source of
+the next one. Plate -> floor drops -> spikes shoot out. See
+[Level Design — Delayed trap chains](level-design.md#delayed-trap-chains).
+
 **Death height** — The vertical threshold below which the duck is considered
 dead (fell off the world). See [Components — Player System](components.md).
+
+**Death window** — `from_death` / `until_death` on a platform or trap: it is
+only there while the duck has died at least `from_death` and fewer than
+`until_death` times since entering the level (0 = no end; both 0 = always
+there). Two copies split at the same death make a trap or platform move after
+that death - the Level Devil "after the 3rd death the trap sits somewhere
+else". Applied on every respawn by `LevelManager::_apply_attempt()`. See
+[Level Design — Traps and platforms that change with every death](level-design.md#traps-and-platforms-that-change-with-every-death)
+and [Components — Death windows](components.md#death-windows-level-devil).
 
 **Door** — The exit object that, when the duck reaches it, advances the game to
 the next stage. Normally the animated door32x32 sprite, but the underlying
 collision/completion logic accepts any sprite and animation sequence,
 including a static one - used in World 5's finale, where the "door" is
-Susanne. See [Components — Level Management](components.md).
+Susanne. It can also run away (`flee_path`), turn into a trap or move between
+attempts - see *False exit*. See [Components — Level Management](components.md).
 
 ## E
 
@@ -129,6 +167,12 @@ See [Architecture](architecture.md).
 
 **Facing** — The direction the duck is oriented (forward, back, left, right),
 feeding animation selection. See [Components — Player System](components.md).
+
+**False exit** — The real door lying: with `DoorData::trap_trigger_name` it
+kills on touch while that trigger is on (it looks the same either way), and
+with `DoorData::attempt_positions` / `attempt_every` it stands somewhere else
+after every few deaths in the level. Decided in `door_logic.h`. See [Level
+Design — False exits](level-design.md#false-exits-the-door-that-turns-the-door-that-moves).
 
 **Fixed-capacity container** — A collection with a compile-time maximum size,
 used for per-level objects to avoid heap fragmentation on a memory-constrained
@@ -153,11 +197,17 @@ gravity, or jump speed, so it can't make a platform unreachable. See
 
 ## H
 
+**Hitstop** — The short freeze of the whole world on the frame the duck dies
+(6 frames, ~0.1s): physics, traps, camera, level clock and run timer stand
+still while the shake plays and a copy of the duck stays where it died. Part
+of the death feedback (`death_fx.h`, `Cfg::DeathFx`). See
+[Components — Death feedback](components.md#death-feedback).
+
 **Hard Mode** — An unlockable, per-save-slot difficulty toggle: completing the
 game once permanently unlocks it, after which it can be switched on/off from
 the pause menu's Options sub-menu. While enabled, Moving, Chase, and Ambush
-trap speeds are scaled up via a multiplier applied at trap-construction time;
-Path traps are unaffected. The unlock persists across a full-game reset; the
+trap speeds are scaled up via a multiplier applied at trap-construction time
+(Path traps by dividing their frames per node). The unlock persists across a full-game reset; the
 On/Off toggle itself resets to off, like the audio volume settings. See
 [Game Concepts — Hard Mode](game-concepts.md#hard-mode) and
 [Components — Trap System](components.md#hard-mode-speed-scaling).
@@ -207,7 +257,7 @@ resets entities, unloads it, and reports outcomes to the scene. See
 **Mailmap** — A Git file normalizing commit authorship identities across
 contributors. See [Development Workflow](development-workflow.md).
 
-**Mimic** — An animated disguised-hazard enemy (dungeon theme) that stays
+**Mimic** — An animated disguised-hazard enemy (castle theme) that stays
 motionless while cycling animation frames. See
 [Components — Trap System](components.md).
 
@@ -239,7 +289,8 @@ leaving gameplay. See [Components — Audio System](components.md).
 ## P
 
 **Path trap** — A hazard that interpolates along a defined route of relative
-waypoints; used for patrols and figure-8 motion. Unaffected by Hard Mode. See
+waypoints; used for patrols and figure-8 motion. Speeds up under Hard Mode (fewer frames
+per node). See
 [Components — Trap System](components.md).
 
 **Pause controller** — Handles pause toggling and the pause menu (continue /
@@ -323,9 +374,22 @@ by the handheld audio hardware. See [Asset Management](asset-management.md).
 the duck enters it; may start active or inactive. See
 [Level Design](level-design.md).
 
+**Trigger follower** — A trigger with `TriggerData::follows`, a link in a
+[delayed trap chain](#d).
+
+**Trigger action** — `TriggerData::action`: what counts as entering a trigger's
+zone - the duck stepping in (Enter, default) or jumping / dashing while inside
+(Jump, Dash). See [Level Design — Jump and dash triggers](level-design.md#jump-and-dash-triggers).
+
+**Trigger delay** — `TriggerData::delay_frames`: the frames between the duck's
+action and the effect on the traps and platforms bound to the trigger, in both
+directions; a visible switch flips at once. For a Timer trigger it is the timer
+length. See [Level Design — Delayed triggers](level-design.md#delayed-triggers).
+
 **Trigger mode** — How a [trigger](#t) reacts to the duck: **Latch** (default;
-on at the first entry until death/restart), **Toggle** (every entry flips it)
-or **Hold** (on only while the duck is inside). See
+on at the first entry until death/restart), **Toggle** (every entry flips it),
+**Hold** (on only while the duck is inside) or **Timer** (turns on by itself
+`delay_frames` frames after the level starts, ignoring the duck). See
 [Level Design — Trigger modes](level-design.md#trigger-modes-and-switched-platforms).
 
 **Trap factory** — The mechanism that constructs the correct trap subtype from a
@@ -342,7 +406,7 @@ A forgiving-control mechanic. See [Game Concepts](game-concepts.md).
 
 ## W
 
-**World** — A themed group of stages (ocean, factory, forest, garden, dungeon).
+**World** — A themed group of stages (bathtub, sewers, forest, village, castle).
 See [Game Concepts](game-concepts.md).
 
 **World size** — The extents of a stage's playable area; larger than the screen

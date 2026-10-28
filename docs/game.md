@@ -11,19 +11,22 @@ The game includes:
 - A world-select scene and a level-select scene for jumping directly to any already-reached world or level (reachable from the start screen by pressing B)
 - A world-select stats line ("Deaths: N  Cleared: X/Y") aggregated from the loaded save slot's existing death total and best-time records
 - Level-select also shows each unlocked level's personal-best clear time (mm:ss.cc), once one has been set, marked with a trailing `*` if that level has ever been cleared without a single death (a no-death clear)
-- A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each with at least two regular levels plus one boss level, defined in code (19 levels total). World 5 has two levels built on the dash and the switch mechanic ("Cloak Corridor", "Lever Hall") before its boss, and an extra trap-free finale level after it.
-- Five trap categories: static (base), trigger-activated moving, path-following patrol, player-chasing, and proximity-triggered ambush hazards
+- A sequence of themed worlds (bathtub, sewers, forest, village, castle), each with at least two regular levels plus one boss level, defined in code (26 levels total). World 1 adds "Second Chances" before its boss, a kind first taste of Level Devil: a delayed falling bubble, a stepping stone that appears after three deaths and a door that comes closer. World 2 adds "Rigged Yard": grates that drop a moment after a hidden plate, a falling can and a stabbing nail bed in a delayed chain, and a doormat that turns the door into a trap if the duck dawdles on it. World 3 adds "Trickwood" before its boss: a vanishing floor, arms lurking below a gap, a floor that sags away and a fake door, each cleared with a plain jump once known. World 4 opens with "Bramble Hop", whose pits only pogo bounces off thorn bushes cross; its second scrolling level has a false exit (a lever that turns the door into a trap, and a door that moves after three deaths). Before its boss it adds "Hedge Your Bets": the pogo over a pit lands on an island whose hidden plate sets off a delayed chain (a falling brick, then a bush sprouting at the far edge) - hold still, then bounce twice over the second pit. World 5 has two levels built on the dash and the switch mechanic ("Cloak Corridor", "Lever Hall") one on the wall jump ("Barrel Tower", with a door that runs away and a trapdoor) and "Liar's Keep", where nothing works twice (a trapdoor that stays after two deaths and stabs jumpers instead, a pogo pit, a two-step chain, a lurking bar, a lever that arms the door and a door that moves) before its boss, and an extra trap-free finale level after it.
+- Six trap categories: static (base), trigger-activated moving, path-following patrol, player-chasing, proximity-triggered ambush, and self-timed cycling hazards (spikes out of the floor)
 - Trigger zones that activate hazards - latching by default, or as toggling switches and hold-down pressure plates (optionally with a visible sprite) that can also open and close platforms
 - A door that advances the player to the next level, ending in a celebratory kiss scene (the door itself can be reskinned as a different, non-animated sprite for narrative moments - see World 5's finale)
 - A "New Best!" banner that holds the level-complete transition until acknowledged, whenever a level is cleared faster than its previous best time
 - A run-complete summary screen after the kiss scene (total time, deaths, no-death clears), acknowledged with A/Start before the save slot resets
 - Music and tilemap backgrounds
 - A death counter and run timer HUD
-- A pause menu with Continue / Restart Level / Options / Title Screen; Options lets the player adjust music and SFX volume (0-4), persisted per save slot, plus - once unlocked by completing the game - toggle Hard Mode, which speeds up Moving/Chase/Ambush trap velocities for a tougher replay, and an always-available Assist Mode (halved Moving/Chase/Ambush trap speeds plus longer coyote/jump-buffer windows) for a gentler run - the two modes are mutually exclusive, and no best times or no-death clears are recorded while Assist Mode is on
+- A pause menu with Continue / Restart Level / Options / Title Screen; Options lets the player adjust music and SFX volume (0-4), persisted per save slot, plus - once unlocked by completing the game - toggle Hard Mode, which speeds up Moving/Chase/Ambush trap velocities and Path trap patrols for a tougher replay, and an always-available Assist Mode (halved Moving/Chase/Ambush/Path trap speeds plus longer coyote/jump-buffer windows) for a gentler run - the two modes are mutually exclusive, and no best times or no-death clears are recorded while Assist Mode is on
 - A dash (B button) from World 3 onward: a short horizontal burst with gravity suspended, a cooldown, and one use per air time; no invincibility, adds horizontal reach only, so no existing layout becomes unreachable; a dedicated sound and a flickering afterimage trail give feedback
+- A boss at the end of every boss level (`TrapType::BOSS`, `boss_logic.h`): beaten only by pogo strikes, faster each phase, door shut until it falls
+- A pogo strike (R) from World 4 onward: striking a trap from above bounces the duck off it, the trap stays (`Cfg::Pogo`, `locomotion::Core`)
+- A wall slide and wall jump from World 5 onward: holding toward a wall slows the fall, A jumps off it, away from the wall (`Cfg::WallJump`, `locomotion::Core`)
 - A controls overview screen, reachable from the start screen (a "Controls" entry below the save slots) and from the pause menu
 - One-time level hints (`LevelData::intro_hint`) that teach the dash and the levers at the moment they matter, shown until the level is first cleared
- - A camera that follows the player across wider, scrolling worlds (single-screen worlds stay fixed)
+ - A camera that follows the player across wider, scrolling worlds (smoothed, with a look-ahead and a cut to the respawn point; single-screen worlds stay fixed)
 
 > This page is a quick map of the `game/` folder and its key files. For the
 > full conceptual documentation — architecture, gameplay, level design,
@@ -126,8 +129,8 @@ For headless or CI testing, use:
   - The start-screen controls overview (A/B/Start returns to `StartScene`); the pause menu has its own in-place view because leaving a level would destroy it
   - Both draw `controls_text.h`'s `ControlsText::LINES`, so they always agree
 
-- `game/include/game_modes.h`, `dash_controller.h`, `menu_nav.h`, `controls_text.h`, `cfg_dash.h`, `trigger_logic.h`, `switch_logic.h`, `hint_logic.h`, `dash_trail.h`, `game_state_migration.h`, `checkpoint_logic.h`
-  - Butano-free helpers holding the testable decision logic: Hard/Assist Mode toggles and Options row indices, the dash rules (`DashController`) and constants, wrap-around list-menu cursors, the trigger mode state logic and switched-platform rules, and the controls text. `LevelManager`, `PlayerLocomotion`, `PauseController` and `StartScene` call them and apply the results; covered by `tests/host/`
+- `game/include/game_modes.h`, `dash_controller.h`, `menu_nav.h`, `controls_text.h`, `cfg_dash.h`, `camera_rig.h`, `cfg_camera.h`, `death_fx.h`, `cfg_death_fx.h`, `trigger_logic.h`, `switch_logic.h`, `hint_logic.h`, `dash_trail.h`, `game_state_migration.h`, `checkpoint_logic.h`
+  - Butano-free helpers holding the testable decision logic: Hard/Assist Mode toggles and Options row indices, the dash rules (`DashController`) and constants, wrap-around list-menu cursors, the trigger mode state logic (delay, timer, jump / dash actions) and switched-platform rules, the one-frame player events, the trap frame scaling and cycle timeline, the crumbling-platform state machine, and the controls text. `LevelManager`, `PlayerLocomotion`, `PauseController` and `StartScene` call them and apply the results; covered by `tests/host/`
 
 - `game/include/player.h` / `game/src/player.cpp`
   - Implements player movement, jump behavior, gravity, and input handling
@@ -146,7 +149,7 @@ For headless or CI testing, use:
     migrated to named binding and the field was never read
   - Because binding is by name rather than position, one trigger can drive
     several traps at once (a **trigger chain**) - see `level0_traps` in
-    `levels_world1.h` for an existing example
+    `game/levels/world1.json` for an existing example
 
 - `checkpoint.h` / `checkpoint.cpp` (next to the trigger) and `checkpoint_logic.h`
   - `Checkpoint` is the flag a level's `checkpoints` data creates; `LevelManager` makes the furthest touched flag the respawn point and re-arms the triggers that were on (see [`docs/level-design.md`](level-design.md#checkpoints)). `checkpoint_logic.h` holds the Butano-free rules (`CheckpointTracker`, trigger snapshot masks)
@@ -212,7 +215,7 @@ To add a new gameplay object:
 
 - `game/` is the game-specific project code. It depends on Butano and shared engine code in `extern/engine/`.
 - The root `Makefile` points `TARGET := platformer`, so the generated ROM is `platformer.gba`.
-- `tests/host/` holds host-buildable unit tests (no ARM toolchain needed) for the Butano-free pure-logic files (`save_integrity`, `save_buffer`, `game_state`, `frame_time`, `world_index`, `game_modes`, `dash_controller`/`cfg_dash`, `menu_nav`, `controls_text`, `trigger_logic`, `switch_logic`, `hint_logic`, `dash_trail`, `save_migration`, `checkpoint_logic`, `level_limits`); the `tools/test_*.py` files cover the level-data, reachability, world-index, hint and sprite-budget checkers; `.github/workflows/ci.yml` runs them plus a full devcontainer build + headless boot on every push/PR - see [`docs/development-workflow.md`](development-workflow.md#testing-methodology).
+- `tests/host/` holds host-buildable unit tests (no ARM toolchain needed) for the Butano-free pure-logic files (`save_integrity`, `save_buffer`, `game_state`, `frame_time`, `world_index`, `game_modes`, `dash_controller`/`cfg_dash`, `menu_nav`, `controls_text`, `trigger_logic`, `switch_logic`, `hint_logic`, `dash_trail`, `save_migration`, `checkpoint_logic`, `level_limits`, `camera_rig`, `death_fx`); the `tools/test_*.py` files cover the level-data, reachability, world-index, hint and sprite-budget checkers; `.github/workflows/ci.yml` runs them plus a full devcontainer build + headless boot on every push/PR - see [`docs/development-workflow.md`](development-workflow.md#testing-methodology).
 
 ## Related Docs
 

@@ -1,0 +1,254 @@
+{
+  "levels": [
+    {
+      "name": "LEVEL_2",
+      "note": "=============================================================================\nLEVEL 2 (World 2) - unchanged\n=============================================================================",
+      "platforms": {
+        "name": "level2_platforms",
+        "items": [
+          {"blank_before": true, "x": -96, "y": -16, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -72, "y": 40, "width": 16, "height": 18, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 2},
+          {"x": -24, "y": 36, "width": 16, "height": 11, "offset_x": 0, "offset_y": 4, "sprite": "platforms_world2", "sprite_index": 0},
+          {"x": 24, "y": 36, "width": 16, "height": 11, "offset_x": 0, "offset_y": 4, "sprite": "platforms_world2", "sprite_index": 0},
+          {"x": 64, "y": 24, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 96, "y": 16, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 112, "y": 16, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1}
+        ]
+      },
+      "triggers": {
+        "name": "level2_triggers",
+        "items": [
+          {"x": -48, "y": 16, "width": 32, "height": 40, "name": "can_release"}
+        ]
+      },
+      "traps": {
+        "name": "level2_traps",
+        "items": [
+          {"blank_before": true, "type": "BASE", "x": -112, "y": -16, "width": 12, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "pipe16x16", "sprite_waits": 26},
+          {"blank_before": true, "type": "MOVING", "x": -48, "y": 88, "width": 28, "height": 28, "offset_x": 0, "offset_y": 0, "sprite": "can32x32", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "velocity_x": 0.0, "velocity_y": -3, "max_vel": 3, "trigger_name": "can_release"},
+          {"blank_before": true, "type": "BASE", "x": 0, "y": 40, "width": 28, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rustynails32x16", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3"},
+          {"blank_before": true, "type": "BASE", "x": 80, "y": 24, "width": 12, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "pipe16x16", "sprite_waits": 26}
+        ]
+      },
+      "background": "world2",
+      "music": "world2",
+      "spawn": [-96, -32],
+      "door": {
+        "x": 104,
+        "y": 0
+      },
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "Door position"
+      }
+    },
+    {
+      "name": "LEVEL_WORLD2_SCROLL",
+      "note": "=============================================================================\nWORLD 2 SCROLL - new, uses the scrolling camera (world_width=432)\n=============================================================================",
+      "platforms": {
+        "name": "world2_scroll_platforms",
+        "items": [
+          {"blank_before": true, "x": -208, "y": -16, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -184, "y": -16, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -160, "y": -16, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -136, "y": -16, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"blank_before": true, "x": -96, "y": -16, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -72, "y": 40, "width": 16, "height": 18, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 2},
+          {"x": -24, "y": 36, "width": 16, "height": 11, "offset_x": 0, "offset_y": 4, "sprite": "platforms_world2", "sprite_index": 0},
+          {"x": 24, "y": 36, "width": 16, "height": 11, "offset_x": 0, "offset_y": 4, "sprite": "platforms_world2", "sprite_index": 0},
+          {"x": 64, "y": 24, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 96, "y": 16, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 112, "y": 16, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"blank_before": true, "x": 144, "y": 16, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 176, "y": 0, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 0},
+          {"x": 200, "y": 0, "width": 16, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 0}
+        ]
+      },
+      "triggers": {
+        "name": "world2_scroll_triggers",
+        "items": [
+          {"x": -48, "y": 16, "width": 32, "height": 40, "name": "can_release1"},
+          {"x": 160, "y": 8, "width": 32, "height": 24, "name": "can_release2"}
+        ]
+      },
+      "traps": {
+        "name": "world2_scroll_traps",
+        "items": [
+          {"blank_before": true, "type": "BASE", "x": -224, "y": -16, "width": 12, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "pipe16x16", "sprite_waits": 26},
+          {"blank_before": true, "type": "MOVING", "x": -48, "y": 88, "width": 28, "height": 28, "offset_x": 0, "offset_y": 0, "sprite": "can32x32", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "velocity_x": 0.0, "velocity_y": -3, "max_vel": 3, "trigger_name": "can_release1"},
+          {"blank_before": true, "type": "BASE", "x": 0, "y": 40, "width": 28, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rustynails32x16", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3"},
+          {"blank_before": true, "type": "BASE", "x": 80, "y": 24, "width": 12, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "pipe16x16", "sprite_waits": 26},
+          {"blank_before": true, "note": "Same can, same trigger pattern as can_release1 above, retuned 20%\nfaster (3 -> 3.6px/frame) now that the player has already met the\nslower version once in this level - reuses the existing sprite and\nMOVING behavior for a felt escalation from pure data, no new art.", "type": "MOVING", "x": 160, "y": -32, "width": 28, "height": 28, "offset_x": 0, "offset_y": 0, "sprite": "can32x32", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "velocity_x": 0.0, "velocity_y": -3.6, "max_vel": 3.6, "trigger_name": "can_release2"}
+        ]
+      },
+      "background": "world2",
+      "music": "world2",
+      "spawn": [-200, -32],
+      "door": {
+        "x": 200,
+        "y": -16
+      },
+      "world_width": 432,
+      "world_height": 160,
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "Door position",
+        "world_width": "World size (enables scrolling)"
+      }
+    },
+    {
+      "name": "LEVEL_WORLD2_TRICK",
+      "note": "=============================================================================\nWORLD 2 TRICK - \"Rigged Yard\", a Level Devil level (world_width=480)\nThe scrapyard is rigged, and the grates tell where (pipes hold, grates lie):\n  Yard 1: a warm-up gap over rusty nails.\n  Yard 2: a delayed trap chain (TriggerData::follows). An invisible plate on\n          the third pipe; 7 frames later the two grates ahead drop away\n          (nails show beneath them), 21 frames after that a can falls on the\n          edge where a startled duck stops, and 25 frames after that a nail\n          bed stabs once out of the landing pipe beyond the hole. Jump the\n          hole at once and all of it misses; hop over the plate and nothing\n          happens at all.\n  Yard 3: a false exit (DoorData::trap_trigger_name). The grate doormat is a\n          pressure plate (Hold, 20 frames both ways): walk across it and the\n          door kills, it does not wait for a dawdler. Jump over the mat onto\n          the door.\nEverything resets on death. Jump only (World 2).\n=============================================================================",
+      "platforms": {
+        "name": "world2_trick_platforms",
+        "items": [
+          {"x": -216, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1, "blank_before": true, "note": "Yard 1: spawn floor, then a 32px gap."},
+          {"x": -200, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -184, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -168, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -120, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1, "blank_before": true, "note": "Yard 2: pipes, the plate on the third one (x -88)."},
+          {"x": -104, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -88, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -72, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -56, "y": 63, "width": 16, "height": 6, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world2", "sprite_index": 0, "note": "The rigged grates: gone 7 frames after the plate (bound to the\nchain's source, not to a follower).", "trigger_name": "plate", "active_when_on": false},
+          {"x": -40, "y": 63, "width": 16, "height": 6, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world2", "sprite_index": 0, "trigger_name": "plate", "active_when_on": false},
+          {"x": -24, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1, "note": "Landing pipes beyond the hole; the nail bed hides under -24."},
+          {"x": -8, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 8, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 24, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 72, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1, "blank_before": true, "note": "Yard 3: pipes, the grate doormat, the door's pipe."},
+          {"x": 88, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 104, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 120, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 136, "y": 63, "width": 16, "height": 6, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world2", "sprite_index": 0, "note": "The doormat (door_wait lies on it)."},
+          {"x": 152, "y": 63, "width": 16, "height": 6, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world2", "sprite_index": 0},
+          {"x": 168, "y": 63, "width": 16, "height": 6, "offset_x": 0, "offset_y": 1, "sprite": "platforms_world2", "sprite_index": 0},
+          {"x": 184, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1, "note": "The door's pipe."},
+          {"x": 200, "y": 64, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1}
+        ]
+      },
+      "triggers": {
+        "name": "world2_trick_triggers",
+        "items": [
+          {"blank_before": true, "note": "The chain: an invisible plate on the third pipe, 6 frames of lag ...", "x": -88, "y": 56, "width": 16, "height": 8, "name": "plate", "delay_frames": 6},
+          {"note": "... the can falls 1 + 20 frames after the grates drop ...", "x": -72, "y": -120, "width": 8, "height": 8, "name": "can_drop", "delay_frames": 20, "follows": "plate"},
+          {"note": "... and the nail bed stabs 1 + 24 frames after that.", "x": -24, "y": 100, "width": 8, "height": 8, "name": "stab", "delay_frames": 24, "follows": "can_drop"},
+          {"blank_before": true, "note": "False exit: the doormat is a pressure plate. On 20 frames after the\nduck steps on it, off 20 frames after it leaves; the door's alone.", "x": 152, "y": 56, "width": 48, "height": 8, "name": "door_wait", "mode": "Hold", "delay_frames": 20}
+        ]
+      },
+      "traps": {
+        "name": "world2_trick_traps",
+        "items": [
+          {"type": "BASE", "x": -144, "y": 80, "width": 24, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "rustynails32x16", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "blank_before": true, "note": "Rusty nails in every pit: the holes read as lethal."},
+          {"type": "BASE", "x": -48, "y": 80, "width": 24, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "rustynails32x16", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "note": "Under the rigged grates - a tell for the duck that looks."},
+          {"type": "BASE", "x": 48, "y": 80, "width": 24, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "rustynails32x16", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3"},
+          {"blank_before": true, "note": "The chain's can: falls from above the screen onto the hole's edge.", "type": "MOVING", "x": -72, "y": -120, "width": 28, "height": 28, "offset_x": 0, "offset_y": 0, "sprite": "can32x32", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4, "trigger_name": "can_drop"},
+          {"note": "The chain's end: a nail bed hidden below the landing pipe stabs once\n(out over 4 frames, up for 20, back over 8, then a rest longer than\nany attempt).", "type": "CYCLE", "x": -24, "y": 100, "width": 28, "height": 12, "offset_x": 0, "offset_y": 0, "sprite": "rustynails32x16", "trigger_name": "stab", "cycle_dy": -48, "cycle_extend_frames": 4, "cycle_hold_frames": 20, "cycle_retract_frames": 8, "cycle_wait_frames": 36000, "sprite_z_order": 1}
+        ]
+      },
+      "background": "world2",
+      "music": "world2",
+      "spawn": [-216, 42],
+      "door": {
+        "x": 184,
+        "y": 51,
+        "trap_trigger_name": "door_wait"
+      },
+      "world_width": 480,
+      "world_height": 160,
+      "intro_hint": "Watch your step.",
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "The real door - a trap while the doormat is pressed (door_wait).",
+        "world_width": "World size (enables scrolling)",
+        "intro_hint": "Pipes hold, grates lie; say so gently."
+      }
+    },
+    {
+      "name": "LEVEL_WORLD2_BOSS",
+      "note": "=============================================================================\nWORLD 2 BOSS - \"The Rusty Behemoth\" (world_width=480)\n=============================================================================",
+      "platforms": {
+        "name": "world2_boss_platforms",
+        "items": [
+          {"blank_before": true, "x": -335, "y": 60, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -303, "y": 60, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -271, "y": 60, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -239, "y": 60, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -207, "y": 60, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -175, "y": 60, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -143, "y": 60, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -111, "y": 60, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -79, "y": 60, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -47, "y": 60, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": -15, "y": 60, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 17, "y": 60, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 49, "y": 60, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 81, "y": 60, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 113, "y": 60, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 141, "y": 42, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1, "blank_before": true, "note": "Boss arena: the Rusty Can. A step up to the left ledge, a pit the boss\nfloats in (only pogo strikes on its back cross it), the right ledge with\nthe door - shut until the boss is beaten, when a bridge spans the pit."},
+          {"x": 167, "y": 24, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 183, "y": 24, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 311, "y": 24, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 327, "y": 24, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1},
+          {"x": 247, "y": 24, "width": 16, "height": 6, "offset_x": 0, "offset_y": 0, "sprite": "platforms_world2", "sprite_index": 1, "trigger_name": "arena_won", "note": "The stepping stone the boss's defeat raises (arena_won)."}
+        ]
+      },
+      "triggers": {
+        "name": "world2_boss_triggers",
+        "items": [
+          {"x": -261, "y": 40, "width": 32, "height": 40, "name": "wave1"},
+          {"x": -161, "y": 40, "width": 32, "height": 40, "name": "wave2"},
+          {"x": -61, "y": 40, "width": 32, "height": 40, "name": "wave3"},
+          {"x": 39, "y": 40, "width": 32, "height": 40, "name": "wave4"},
+          {"blank_before": true, "note": "The arena: the boss starts when the duck reaches the left ledge.", "x": 175, "y": 9, "width": 32, "height": 24, "name": "arena"},
+          {"note": "Switched on by the boss (BossTrap), never by the duck.", "x": 247, "y": -200, "width": 8, "height": 8, "name": "arena_won"},
+          {"x": 247, "y": -200, "width": 8, "height": 8, "name": "arena_p2"},
+          {"x": 247, "y": -200, "width": 8, "height": 8, "name": "arena_p3"}
+        ]
+      },
+      "traps": {
+        "name": "world2_boss_traps",
+        "items": [
+          {"blank_before": true, "note": "Idle patrol: a rusty pipe swept back and forth across the corridor.\nShares \"wave1\" with Attack 1 below - starts once the fight begins.", "type": "PATH", "x": -291, "y": 20, "width": 12, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "pipe16x16", "sprite_waits": 10, "path": "LEVEL3_BRANCH_PATH", "path_waits": 15, "trigger_name": "wave1"},
+          {"blank_before": true, "note": "Second pipe, further into the corridor, sweeping the identical\nroute exactly out of phase with the one above - reuses the same\nLEVEL3_BRANCH_PATH_PHASE2 World 3 already defines (same shape,\nsame path_waits, same trigger), no new path data needed. Lands\nnear Attack 3 and the rusty-nails hazard, so the mid-to-late\narena isn't just attack waves with no patrol pressure.", "type": "PATH", "x": -11, "y": 20, "width": 12, "height": 8, "offset_x": 0, "offset_y": 0, "sprite": "pipe16x16", "sprite_waits": 10, "path": "LEVEL3_BRANCH_PATH_PHASE2", "path_waits": 15, "trigger_name": "wave1"},
+          {"blank_before": true, "note": "Attack 1: a can slams down from above, triggered by wave1.", "type": "MOVING", "x": -256, "y": -40, "width": 28, "height": 26, "offset_x": 0, "offset_y": 1, "sprite": "can32x32", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4, "trigger_name": "wave1"},
+          {"blank_before": true, "note": "Attack 2: a second can charges in sideways, triggered by wave2.", "type": "MOVING", "x": 89, "y": 64, "width": 28, "height": 26, "offset_x": 0, "offset_y": 1, "sprite": "can32x32", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_x": -2.0, "max_vel": 3, "trigger_name": "wave2"},
+          {"blank_before": true, "note": "A crate disguised as scenery - punishes lingering mid-arena.", "type": "AMBUSH", "x": -56, "y": 65, "width": 26, "height": 26, "offset_x": 0, "offset_y": 1, "sprite": "box32x32", "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "ambush_range": 20, "ambush_speed": 2.0, "ambush_duration": 18},
+          {"blank_before": true, "note": "Attack 3: second slam, triggered by wave3.", "type": "MOVING", "x": -11, "y": -40, "width": 28, "height": 26, "offset_x": 0, "offset_y": 1, "sprite": "can32x32", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4, "trigger_name": "wave3"},
+          {"blank_before": true, "note": "A row of rusty nails, always dangerous - forces a precise landing\nright before the final attack.", "type": "BASE", "x": 69, "y": 65, "width": 28, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "rustynails32x16", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8"},
+          {"blank_before": true, "note": "Attack 4: final charge before the door, triggered by wave4.", "type": "MOVING", "x": 149, "y": 60, "width": 28, "height": 26, "offset_x": 0, "offset_y": 1, "sprite": "can32x32", "sprite_waits": 26, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_x": -2.4, "max_vel": 3.4, "trigger_name": "wave4"},
+          {"blank_before": true, "note": "The Rusty Can: 3 pogo strikes; every hit is a new phase\n(faster, and the arena_p<n> traps attack).", "type": "BOSS", "x": 211, "y": 37, "width": 32, "height": 24, "offset_x": 0, "offset_y": 2, "sprite": "can32x32", "sprite_waits": 10, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "path": "BOSS_PATH", "path_waits": 80, "trigger_name": "arena", "sprite_scale": 1.25, "boss_hits": 3},
+          {"note": "Phase attacks: dropped through the pit when arena_p<n> switches on\n(in sight after ~37 frames), across the bounces on the boss.", "type": "MOVING", "x": 228, "y": -180, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "box32x32", "sprite_waits": 12, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_x": 0.0, "velocity_y": 3, "max_vel": 3, "trigger_name": "arena_p2"},
+          {"type": "MOVING", "x": 265, "y": -180, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "box32x32", "sprite_waits": 12, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_8", "velocity_x": 0.0, "velocity_y": 3, "max_vel": 3, "trigger_name": "arena_p3"}
+        ]
+      },
+      "background": "world2",
+      "music": "world2",
+      "boss_music_order": 6,
+      "spawn": [-335, 42],
+      "door": {
+        "x": 323,
+        "y": 11
+      },
+      "world_width": 702,
+      "world_height": 160,
+      "intro_hint": "Land on it. Press R midair",
+      "intro_hint": "Land on it. Press R midair",
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "Door position",
+        "world_width": "World size (enables scrolling)",
+        "intro_hint": "Shown once the duck reaches the arena (a boss level waits for it).",
+        "intro_hint": "Shown once the duck reaches the arena (a boss level waits for it)."
+      },
+      "data_note": "No checkpoint: the cans charge sideways (wave2, wave4) along the whole\ncorridor, so no flag could stand clear of a trap's path\n(tools/Check_checkpoints.py).",
+      "checkpoints": {
+        "name": "world2_boss_checkpoints",
+        "note": "One checkpoint, on the arena's left ledge: a lost boss fight starts there.",
+        "items": [
+          {"x": 167, "y": 13}
+        ]
+      }
+    }
+  ]
+}

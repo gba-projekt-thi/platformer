@@ -116,22 +116,27 @@ This repository includes a small GBA platformer built with the Butano engine. Yo
 - Level-select shows each unlocked level's personal-best clear time once one has been recorded, marked with a `*` if that level has ever been cleared without a single death (a "no-death clear")
 - A "New Best!" banner shown on finishing a level faster than its stored personal-best time, held until the player presses A/Start to continue
 - A run-complete summary screen shown once after the kiss scene (total time across every level's best, total deaths, and how many levels were cleared without dying), before the save slot resets for a fresh playthrough
-A sequence of themed worlds (bathtub, sewerage, forest, village, dungeon), each culminating in a Hollow-Knight-style boss gauntlet level, defined across `game/include/level/levels_world1.h`-`levels_world5.h` (19 levels total). World 5 adds a dash level and a lever-puzzle level before its boss, and one more after it: a quiet, trap-free finale ending in a reunion with Susanne.
+A sequence of themed worlds (bathtub, sewers, forest, village, castle), each culminating in a Hollow-Knight-style boss gauntlet level, defined across `game/include/level/levels_world1.h`-`levels_world5.h` (26 levels total). Every world has a level made of Level Devil tricks before its boss ("Second Chances", "Rigged Yard", "Trickwood", "Hedge Your Bets", "Liar's Keep"), World 4 opens with a pogo level, World 5 adds a dash level, a lever-puzzle level and a wall-jump tower with a runaway door before its boss, and one more after it: a quiet, trap-free finale ending in a reunion with Susanne.
+- A story told in short pages: Hildegard is flushed out of the bathtub and travels through the worlds to reach her beloved Susanne (an intro for a new game, one page on first reaching each world)
 - Level progression through a door at the end of each stage (occasionally a narrative stand-in for the door, like Susanne in World 5's finale), ending in a celebratory kiss scene
-- Platform placement and collision defined by level data
+- Platform placement and collision defined by level data, including crumbling platforms that give way under the duck (and optionally come back)
 - Trigger zones that activate hazards when the player enters them
-- Five trap categories: static (base), trigger-activated moving, path-following patrol, player-chasing, and proximity-triggered ambush hazards
+- Fake doors and fake checkpoints (static traps with the real sprite and draw order) for devilish levels
+- Six trap categories: static (base), trigger-activated moving, path-following patrol, player-chasing, proximity-triggered ambush, and self-timed cycling hazards (spikes out of the floor)
 - Animated sprites (duck, door, mimics) and decorative tiles using Butano sprite items
 - Background music per world and tilemap backgrounds
 - A death counter and run timer HUD
 - Adjustable music/SFX volume via a pause-menu Options sub-menu, persisted per save slot
 - Checkpoints in the long levels and bosses: touching a flag makes the duck respawn there (the furthest flag wins; Restart Level clears it), and the triggers that had fired are re-armed so a boss keeps its patrols
-- A Hard Mode toggle in the same Options sub-menu: unlocked the first time the game is completed, it speeds up Moving/Chase/Ambush trap velocities for a tougher replay (Path traps are unaffected). The unlock is a permanent, per-save achievement; the toggle itself resets to off like the audio settings
+- A Hard Mode toggle in the same Options sub-menu: unlocked the first time the game is completed, it speeds up Moving/Chase/Ambush trap velocities and Path trap patrols for a tougher replay. The unlock is a permanent, per-save achievement; the toggle itself resets to off like the audio settings
 - An Assist Mode toggle in the same Options sub-menu, available from the start: the mirror image of Hard Mode, it halves Moving/Chase/Ambush trap speeds and doubles the coyote-time and jump-buffer windows. Mutually exclusive with Hard Mode; no best times or no-death clears are recorded while it is on; the toggle resets to off like the audio settings
 - A Hollow-Knight-style dash on B, available from World 3 onward: a short horizontal burst with gravity suspended, a cooldown, and one use per air time (refilled on landing). It grants no invincibility and only adds horizontal reach, so every existing layout stays clearable; a dedicated sound and a flickering afterimage trail give feedback
+- Bosses, the one enemy the duck can beat: four mini bosses and a big one in World 5 float over a pit at the end of each boss level; pogo strikes from above take their hits, every hit starts a faster phase with new traps, and the door opens once the boss falls
+- A pogo strike on R from World 4 onward (Hollow Knight's down slash): traps cannot be destroyed, but striking one from above bounces the duck off it
+- A wall slide and wall jump from World 5 onward (Hollow Knight's Mantis Claw): holding toward a wall slows the fall, A pushes off it; it never refills the air dash
 - A controls overview screen, reachable from the start screen (a "Controls" entry below the save slots) and from the pause menu
 - One-time level hints that teach the dash and the levers when a level is first played (until it is cleared once)
-- Switch mechanics: triggers can be latching (default), toggling switches or hold-down pressure plates, optionally drawn as a two-state sprite, and platforms can be bound to a trigger so a switch opens one path and closes another; everything resets on death
+- Switch mechanics: triggers can be latching (default), toggling switches, hold-down pressure plates or self-starting timers, can act after a delay (`delay_frames`), can fire on a jump or dash inside the zone instead of on entering it, and are optionally drawn as a two-state sprite, and platforms can be bound to a trigger so a switch opens one path and closes another; everything resets on death
 - Player movement with acceleration, maximum speed, gravity, and fall speed clamping
 - Jump mechanics with jump buffering and coyote time for more forgiving platforming
 - Variable jump height based on how long the jump button is held
@@ -234,11 +239,18 @@ This is only possible in the devcontainer or if you have [pre-commit](https://pr
 Pure-logic code (save integrity, game-state bit flags, frame-time formatting, Hard/Assist Mode toggles, dash rules, menu cursor wrapping, controls text, trigger modes, switched-platform rules, level hints, checkpoint rules, entity limits) has a small host-side unit test suite under `tests/host/` - no ARM toolchain or devcontainer needed, just your system's own `g++`/`clang++`:
 
 ```bash
-cd tests/host
-make
+make test                          # everything: host tests, tools/ tests, level data checks
+make -C tests/host                 # host tests only (incremental, ~1-2 s after a change)
+make -C tests/host FILTER=crumble  # only tests whose name contains "crumble"
+make checks                        # level data checks only
+make coverage                      # line coverage of game/ by the host tests
 ```
 
-CI (`.github/workflows/ci.yml`) runs this on every push/PR, plus a separate job that builds the actual ROM in the devcontainer image and boots it headlessly. See [`docs/development-workflow.md`](docs/development-workflow.md#testing-methodology) for what's covered and what still has to be tested manually in the emulator.
+In the dev container, `make replay` also plays every recorded level to its door
+in a test build of the ROM (headless mGBA, a few seconds), and `make record`
+builds the game that records new solutions - see `tools/replays.py`.
+
+None of these need the ARM toolchain. CI (`.github/workflows/ci.yml`) runs this on every push/PR, plus a separate job that builds the actual ROM in the devcontainer image and boots it headlessly. See [`docs/development-workflow.md`](docs/development-workflow.md#testing-methodology) for what's covered and what still has to be tested manually in the emulator.
 
 ## Links
 

@@ -3,3 +3,4 @@ platformer.*
 compile_commands.json
 .vscode/c_cpp_properties.json
 tools/__pycache__/
+tests/host/host_tests

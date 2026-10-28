@@ -13,6 +13,7 @@
 #include "game_modes.h"
 #include "level_manager.h"
 #include "menu_nav.h"
+#include "text_buffer.h"
 
 namespace {
 constexpr const char* MENU_LABELS[5] = {
@@ -31,23 +32,26 @@ void PauseController::_init_pause_menu() {
     _text_gen->set_z_order(Cfg::ZOrder::PAUSE_MENU);
     _text_gen->set_blending_enabled(true);
 
-    _text_gen->generate(
-        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_TITLE, "Paused", _title_sprites);
-    for (bn::sprite_ptr& sprite : _title_sprites) {
-        sprite.set_visible(false);
-        sprite.set_blending_enabled(true);
-    }
-
+    // Only the generator: it owns no sprites. The title and the menu rows are
+    // created when the game is paused and released when it resumes.
     _pause_menu_initialized = true;
 }
 
-void PauseController::_set_visible(bool visible) {
+void PauseController::_show_title() {
+    _title_sprites.clear();
+    _text_gen->generate(
+        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_TITLE, "Paused", _title_sprites);
     for (bn::sprite_ptr& sprite : _title_sprites) {
-        sprite.set_visible(visible);
+        sprite.set_blending_enabled(true);
     }
-    for (bn::sprite_ptr& sprite : _menu_sprites) {
-        sprite.set_visible(visible);
-    }
+}
+
+void PauseController::_release_sprites() {
+    // Butano counts a hidden sprite like a visible one, so the overlay is
+    // released, not hidden: it needs up to ~63 of the 128 sprites while it is
+    // open and must not keep any of them while the level runs.
+    _title_sprites.clear();
+    _menu_sprites.clear();
 }
 
 void PauseController::_rebuild_menu() {
@@ -60,19 +64,13 @@ void PauseController::_rebuild_menu() {
     _menu_sprites.clear();
 
     for (int i = 0; i < int(MenuOption::Count); ++i) {
-        char buf[24];
-        int pos = 0;
-        buf[pos++] = (i == _selected_index) ? '>' : ' ';
-        buf[pos++] = ' ';
-        for (const char* p = MENU_LABELS[i]; *p; ++p) {
-            buf[pos++] = *p;
-        }
-        buf[pos] = '\0';
+        TextBuffer<24> line;
+        line.append(i == _selected_index ? "> " : "  ").append(MENU_LABELS[i]);
 
         _text_gen->generate(
             Cfg::PauseMenu::X,
             Cfg::PauseMenu::Y_OPTION_0 + i * Cfg::PauseMenu::OPTION_SPACING,
-            buf, _menu_sprites);
+            line.c_str(), _menu_sprites);
     }
 
     for (bn::sprite_ptr& sprite : _menu_sprites) {
@@ -86,23 +84,15 @@ int PauseController::_assist_row() const {
 }
 
 void PauseController::_append_toggle_row(int row, const char* label, bool on) {
-    char buf[24];
-    int pos = 0;
-    buf[pos++] = (_option_row == row) ? '>' : ' ';
-    buf[pos++] = ' ';
-    for (const char* p = label; *p; ++p) {
-        buf[pos++] = *p;
-    }
-    const char* value = on ? "On >" : "Off >";
-    for (const char* p = value; *p; ++p) {
-        buf[pos++] = *p;
-    }
-    buf[pos] = '\0';
+    TextBuffer<24> line;
+    line.append(_option_row == row ? "> " : "  ")
+        .append(label)
+        .append(on ? "On >" : "Off >");
 
     _text_gen->generate(
         Cfg::PauseMenu::X,
-        Cfg::PauseMenu::Y_OPTION_0 + row * Cfg::PauseMenu::OPTION_SPACING, buf,
-        _menu_sprites);
+        Cfg::PauseMenu::Y_OPTION_0 + row * Cfg::PauseMenu::OPTION_SPACING,
+        line.c_str(), _menu_sprites);
 }
 
 void PauseController::_rebuild_options_menu() {
@@ -116,27 +106,19 @@ void PauseController::_rebuild_options_menu() {
     const char* labels[2] = {"Music", "SFX"};
 
     for (int i = 0; i < 2; ++i) {
-        char buf[24];
-        int pos = 0;
-        buf[pos++] = (i == _option_row) ? '>' : ' ';
-        buf[pos++] = ' ';
-        for (const char* p = labels[i]; *p; ++p) {
-            buf[pos++] = *p;
-        }
-        buf[pos++] = ' ';
-        buf[pos++] = '<';
-        buf[pos++] = ' ';
-        buf[pos++] = char('0' + levels[i]);
-        buf[pos++] = '/';
-        buf[pos++] = char('0' + AudioSettings::MAX_LEVEL);
-        buf[pos++] = ' ';
-        buf[pos++] = '>';
-        buf[pos] = '\0';
+        TextBuffer<24> line;
+        line.append(i == _option_row ? "> " : "  ")
+            .append(labels[i])
+            .append(" < ")
+            .append_uint(levels[i])
+            .append('/')
+            .append_uint(AudioSettings::MAX_LEVEL)
+            .append(" >");
 
         _text_gen->generate(
             Cfg::PauseMenu::X,
             Cfg::PauseMenu::Y_OPTION_0 + i * Cfg::PauseMenu::OPTION_SPACING,
-            buf, _menu_sprites);
+            line.c_str(), _menu_sprites);
     }
 
     // Toggle rows (not 0-4 levels): Hard Mode - only shown once unlocked
@@ -174,19 +156,17 @@ void PauseController::_rebuild_options_menu() {
 }
 
 void PauseController::_rebuild_controls_view() {
-    // Title and menu rows make way for the controls list. Sprite budget:
+    // The menu rows make way for the controls list. Sprite budget:
     // the overview is drawn on top of a running level, so ControlsText keeps
     // its lines short (see controls_text.h).
-    for (bn::sprite_ptr& sprite : _title_sprites) {
-        sprite.set_visible(false);
-    }
+    _title_sprites.clear();
     for (bn::sprite_ptr& sprite : _menu_sprites) {
         sprite.set_visible(false);
     }
     _menu_sprites.clear();
 
-    _text_gen->generate(
-        Cfg::PauseMenu::X, Cfg::PauseMenu::Y_TITLE, "Controls", _menu_sprites);
+    // No "Controls" title: the menu row just chosen says it, and every glyph
+    // is a sprite on top of a running level (tools/Check_sprite_budget.py).
     for (int i = 0; i < ControlsText::LINE_COUNT; ++i) {
         _text_gen->generate(
             Cfg::PauseMenu::X,
@@ -258,7 +238,7 @@ void PauseController::reset() {
     _showing_options = false;
     _showing_controls = false;
     _option_row = 0;
-    _set_visible(false);
+    _release_sprites();
 }
 
 PauseController::Action PauseController::update() {
@@ -268,18 +248,17 @@ PauseController::Action PauseController::update() {
 
     if (_prev_paused != _paused) {
         _prev_paused = _paused;
-        _set_visible(_paused);
 
         if (_paused) {
             _selected_index = 0;
             _showing_options = false;
             _showing_controls = false;
             _rebuild_menu();
-            _set_visible(true);
+            _show_title();
             bn::music::pause();
             AudioSettings::instance().play_sfx(bn::sound_items::menu);
         } else {
-            _set_visible(false);
+            _release_sprites();
             AudioSettings::instance().play_sfx(bn::sound_items::cancel);
             bn::music::resume();
         }
@@ -289,9 +268,7 @@ PauseController::Action PauseController::update() {
         if (_showing_controls) {
             if (bn::keypad::a_pressed() || bn::keypad::b_pressed()) {
                 _showing_controls = false;
-                for (bn::sprite_ptr& sprite : _title_sprites) {
-                    sprite.set_visible(true);
-                }
+                _show_title();
                 _rebuild_menu();
                 AudioSettings::instance().play_sfx(bn::sound_items::cancel);
             }
@@ -387,7 +364,7 @@ PauseController::Action PauseController::update() {
             // scene transition that destroys this controller).
             _paused = false;
             _prev_paused = false;
-            _set_visible(false);
+            _release_sprites();
             bn::music::resume();
 
             switch (option) {

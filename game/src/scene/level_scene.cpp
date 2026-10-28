@@ -2,15 +2,23 @@
 
 #include "bn_core.h"
 #include "bn_keypad.h"
+#include "bn_sound_items.h"
 #include "bn_unique_ptr.h"
 
+#include "audio_settings.h"
 #include "cfg.h"
 #include "data_manager.h"
 #include "game_session.h"
 #include "level_manager.h"
+#include "level_records.h"
 #include "player.h"
+#include "replay_capture.h"
 #include "start_scene.h"
+#include "story.h"
+#include "story_scene.h"
+#include "text_buffer.h"
 #include "timer.h"
+#include "tour.h"
 
 LevelScene::LevelScene(
     Player& player,
@@ -34,7 +42,9 @@ LevelScene::~LevelScene() {
 }
 
 void LevelScene::init() {
+    replay_capture::level_started(_player, _level_index);
     _level_manager.load(_levels[_level_index]);
+    tour::level_started(_player, _level_index);
     _player.set_visible(true);
     _player.set_hud_visible(true);
     _show_hint_if_needed();
@@ -51,34 +61,79 @@ void LevelScene::_show_hint_if_needed() {
         return;
     }
 
+    _hint_text = text;
+    // A boss level's hint is about the arena: it starts there (_update_hint).
+    _hint_waits_for_arena = _level_manager.has_boss();
+    if (!_hint_waits_for_arena) {
+        _hint_timer.start();
+        _draw_hint();
+    }
+}
+
+void LevelScene::_draw_hint() {
     _hint_text_gen.emplace(common::variable_8x16_sprite_font);
     _hint_text_gen->set_z_order(Cfg::ZOrder::PAUSE_MENU);
     _hint_text_gen->set_blending_enabled(true);
     _hint_text_gen->set_center_alignment();
-    _hint_text_gen->generate(0, Cfg::Hint::Y, text, _hint_sprites);
+    _hint_text_gen->generate(0, Cfg::Hint::Y, _hint_text, _hint_sprites);
     for (bn::sprite_ptr& sprite : _hint_sprites) {
         sprite.set_blending_enabled(true);
     }
-    _hint_timer.start();
 }
 
 void LevelScene::_update_hint() {
-    if (_hint_sprites.empty()) {
+    if (_hint_text == nullptr) {
         return;
     }
-    // Pressing B (the player has tried the dash) dismisses it at once.
-    if (bn::keypad::b_pressed()) {
-        _hint_timer.dismiss();
+
+    // The countdown only runs while the game does, and B only dismisses the
+    // hint in play (in the pause menu B means 'back').
+    const bool paused = _level_manager.paused();
+    if (_hint_waits_for_arena &&
+        hint::should_start(true, _level_manager.boss_fighting())) {
+        _hint_waits_for_arena = false;
+        _hint_timer.start();
     }
-    _hint_timer.tick();
+    if (_hint_waits_for_arena) {
+        return;
+    }
+    if (!paused) {
+        // Pressing B (the player has tried the dash) dismisses it at once.
+        if (bn::keypad::b_pressed()) {
+            _hint_timer.dismiss();
+        }
+        _hint_timer.tick();
+    }
+
     if (!_hint_timer.visible()) {
         _hint_sprites.clear();
         _hint_text_gen.reset();
+        _hint_text = nullptr;
+        return;
+    }
+
+    if (hint::should_draw(_hint_timer.visible(), paused)) {
+        if (_hint_sprites.empty()) {
+            _draw_hint();
+        }
+    } else {
+        _hint_sprites.clear();
     }
 }
 
 void LevelScene::update() {
     _update_hint();
+
+    // The clear moment: only the picture's blink and the sound go on.
+    if (_clear_moment.running()) {
+        _clear_moment.tick();
+        _level_manager.flash_door(_clear_moment.lit());
+        if (!_clear_moment.running()) {
+            _end_clear_moment();
+        }
+        bn::core::update();
+        return;
+    }
 
     // Waiting for the player to acknowledge a new best-time banner before
     // actually committing the level transition (see _new_best_pending's
@@ -87,12 +142,7 @@ void LevelScene::update() {
         if (bn::keypad::a_pressed() || bn::keypad::start_pressed()) {
             _hide_new_best_banner();
             _new_best_pending = false;
-
-            if (_next_is_game_completion) {
-                _finalize_completion();
-            } else {
-                _finalize_advance(_pending_next_level_index);
-            }
+            _leave_level();
         }
         bn::core::update();
         return;
@@ -102,6 +152,13 @@ void LevelScene::update() {
     if (_transition_requested) {
         bn::core::update();
         return;
+    }
+
+    // Start toggles the pause, and the pause overlay allocates its sprites
+    // inside the next update() call: free the hint's first, so the two are
+    // never alive at once (they are drawn again once the game runs).
+    if (bn::keypad::start_pressed()) {
+        _hint_sprites.clear();
     }
 
     const LevelManager::UpdateResult result = _level_manager.update();
@@ -125,46 +182,64 @@ void LevelScene::update() {
     // Door reached: advance to the next level (or finish the game).
     // -------------------------------------------------------------------------
 
-    // Record a new best-clear-time for the level just finished, before
-    // anything else touches game_state - covers both the "advance to
-    // next level" and "game completed" paths below, since both start
-    // from having reached this level's door.
-    // Not while Assist Mode is on (see LevelManager::records_allowed()): no
-    // best time, no no-death clear, no "New Best!" banner. The level still
-    // counts as cleared for progress and unlocks below.
-    bool new_best = false;
-    if (_level_index < unsigned(GameState::MAX_LEVELS) &&
-        _level_manager.records_allowed()) {
-        auto& game_state = _data_manager.state();
-        const unsigned frames = _level_manager.level_frame_count();
-        uint32_t& best = game_state.best_time_frames[_level_index];
-        if (best == 0 || frames < best) {
-            best = frames;
-            new_best = true;
-        }
+    replay_capture::level_finished();
 
-        if (_level_manager.no_deaths_this_attempt()) {
-            set_no_death_clear(game_state, _level_index);
-        }
-    }
+    // Record the clear (best time, no-death mark) before anything else
+    // touches game_state - covers both the "advance to next level" and "game
+    // completed" paths below. Nothing is recorded in Assist Mode; the level
+    // still counts as cleared for progress and unlocks below.
+    const bool new_best = record_clear(
+        _data_manager.state(), _level_index, _level_manager.level_frame_count(),
+        _level_manager.no_deaths_this_attempt(),
+        _level_manager.records_allowed());
 
     const unsigned int next_level_index = _level_index + 1u;
     const bool completes_game =
         next_level_index >= static_cast<unsigned int>(_levels.size());
 
-    if (new_best) {
-        // Hold here - _finalize_advance()/_finalize_completion() run once
-        // the player acknowledges the banner (see top of this function).
-        _next_is_game_completion = completes_game;
-        _pending_next_level_index = next_level_index;
+    // Hold here - _finalize_advance()/_finalize_completion() run once the
+    // clear moment is over and, for a new best, the player acknowledged the
+    // banner (see top of this function).
+    _next_is_game_completion = completes_game;
+    _pending_next_level_index = next_level_index;
+    _clear_new_best = new_best;
+    _start_clear_moment();
+}
+
+void LevelScene::_start_clear_moment() {
+    // The level is done: the hint has nothing left to say.
+    _hint_sprites.clear();
+    _hint_text = nullptr;
+    _hint_text_gen.reset();
+
+    AudioSettings::instance().play_sfx(bn::sound_items::confirm);
+    _banner_text_gen.emplace(common::variable_8x16_sprite_font);
+    _banner_text_gen->set_z_order(Cfg::ZOrder::PAUSE_MENU);
+    _banner_text_gen->set_center_alignment();
+    _banner_text_gen->generate(
+        0, Cfg::ClearMoment::Y, "Clear!", _clear_sprites);
+    _clear_moment.start();
+    _level_manager.flash_door(true);
+    bn::core::update();
+}
+
+void LevelScene::_end_clear_moment() {
+    _level_manager.flash_door(false);
+    _clear_sprites.clear();
+    _banner_text_gen.reset();
+    if (_clear_new_best) {
         _new_best_pending = true;
         _show_new_best_banner();
         return;
-    };
-    if (completes_game) {
+    }
+    _leave_level();
+}
+
+void LevelScene::_leave_level() {
+    if (_next_is_game_completion) {
         _finalize_completion();
     } else {
-        _finalize_advance(next_level_index);
+        _finalize_advance(_pending_next_level_index);
     }
 }
 
@@ -185,6 +260,9 @@ void LevelScene::_finalize_advance(unsigned int next_level_index) {
 
     auto& timer = _player.get_timer();
     auto& game_state = _data_manager.state();
+    // The first arrival in a world tells its part of the story.
+    const story::Page* page = story::page_on_advance(
+        game_state.furthest_level, int(next_level_index));
     game_state.level = next_level_index;
     if (next_level_index >
         static_cast<unsigned int>(game_state.furthest_level)) {
@@ -205,10 +283,17 @@ void LevelScene::_finalize_advance(unsigned int next_level_index) {
         !(_levels[_level_index].back_ground ==
           _levels[next_level_index].back_ground);
 
-    auto next_scene = bn::make_unique<LevelScene>(
-        _player, _levels, _data_manager, _level_manager);
     core::AudioTransitionOptions audio_options;
     audio_options.fade_music = changes_world;
+    if (page != nullptr) {
+        auto next_scene = bn::make_unique<StoryScene>(
+            *page, _player, _levels, _data_manager, _level_manager);
+        core::SceneManager::instance().set_next_scene(
+            bn::move(next_scene), audio_options);
+        return;
+    }
+    auto next_scene = bn::make_unique<LevelScene>(
+        _player, _levels, _data_manager, _level_manager);
     core::SceneManager::instance().set_next_scene(
         bn::move(next_scene), audio_options);
 }
@@ -221,26 +306,14 @@ void LevelScene::_show_new_best_banner() {
         Cfg::NewBestBanner::X, Cfg::NewBestBanner::Y, "New Best!",
         _banner_sprites);
 
-    // Level-specific best time, e.g. "01:23.45" - same digit-formatting
-    // pattern as LevelSelectScene::_rebuild_menu().
+    // Level-specific best time, e.g. "01:23.45" (same format as
+    // LevelSelectScene).
     if (_level_index < unsigned(GameState::MAX_LEVELS)) {
-        const FrameTime t = frames_to_time(
-            _data_manager.state().best_time_frames[_level_index]);
-
-        char time_buf[9];
-        int pos = 0;
-        time_buf[pos++] = char('0' + (t.minutes / 10) % 10);
-        time_buf[pos++] = char('0' + t.minutes % 10);
-        time_buf[pos++] = ':';
-        time_buf[pos++] = char('0' + (t.seconds / 10) % 10);
-        time_buf[pos++] = char('0' + t.seconds % 10);
-        time_buf[pos++] = '.';
-        time_buf[pos++] = char('0' + (t.centis / 10) % 10);
-        time_buf[pos++] = char('0' + t.centis % 10);
-        time_buf[pos] = '\0';
-
+        TextBuffer<9> time;
+        time.append_time(frames_to_time(
+            _data_manager.state().best_time_frames[_level_index]));
         _banner_text_gen->generate(
-            Cfg::NewBestBanner::X, Cfg::NewBestBanner::Y + 16, time_buf,
+            Cfg::NewBestBanner::X, Cfg::NewBestBanner::Y + 16, time.c_str(),
             _banner_sprites);
     }
 

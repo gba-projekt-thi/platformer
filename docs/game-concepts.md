@@ -39,14 +39,19 @@ The duck can:
   survivable and predictable.
 - **Dash** (B, from World 3 onward) in a short horizontal burst - see
   [Dash](#dash).
+- **Pogo** (R in the air, from World 4 onward) - strike down and bounce off
+  a trap; see [Pogo](#pogo).
+- **Wall slide and wall jump** (from World 5 onward) - see
+  [Wall jump](#wall-jump).
 
 The control scheme is intentionally simple:
 
 | Input | Effect |
 |-------|--------|
 | D-Pad left / right | Move horizontally |
-| A button | Jump |
+| A button | Jump (off a wall from World 5 onward) |
 | B button | Dash (from World 3 onward) |
+| R button | Pogo strike in the air (from World 4 onward) |
 | Start button | Pause (opens the pause menu) |
 | Select button | Show / hide the run timer |
 
@@ -58,7 +63,8 @@ controls for consistency.
 A level can carry a short one-time hint (`LevelData::intro_hint`, at most 28
 characters) that appears at the top of the screen when it starts: it teaches
 the dash, and "Lever Hall" says levers flip when stepped on. It never blocks
-play and goes away after five seconds or as soon as B is pressed. It is shown
+play and goes away after five seconds or as soon as B is pressed. It is hidden
+while the game is paused and the five seconds stand still meanwhile. It is shown
 only while the level has not been cleared yet - no personal best and progress
 has not moved past it - so it disappears for good with the first clear, also an
 Assist Mode clear, and needs no extra save data.
@@ -94,6 +100,12 @@ Several mechanics exist purely to make the duck *feel* responsive:
   the D-Pad is its own tuning knob, separate from how quickly it speeds up.
   Every world uses the same, snappy default - except Forest's mossy floor
   (see below), which trades some of that precision for a distinct feel.
+
+- **Calm camera.** On scrolling levels the camera ignores small steps (a dead
+  zone around the duck), then moves exactly with it, looks ahead once the duck
+  really runs in one direction and cuts
+  (not glides) to the respawn point after a death. Holding up or down looks
+  that way once a level is taller than the screen.
 
 Together, these create a "tight but forgiving" feel that the [Level Design](level-design.md)
 spacing rules then respect. Braking is the one exception a level can opt
@@ -134,6 +146,65 @@ The duck's one learned ability, in the spirit of Hollow Knight's cloak dash:
   only the dash crosses, and "Lever Hall" offers a dash shortcut in two of
   its rooms - see [Dash and switch levels](level-design.md#dash-and-switch-levels).
 
+### Pogo
+
+Hollow Knight's down slash, turned to the game's rule that the environment is
+the enemy: traps cannot be destroyed, but they can be used. Tuned in
+`Cfg::Pogo` (`cfg_pogo.h`), rules in `locomotion::Core`, tests in
+`tests/host/test_locomotion.cpp`:
+
+- **Strike.** R in the air strikes down for 10 frames: a 16 px wide box
+  reaching 12 px below the duck (more than one frame of falling, so the strike
+  meets a trap before the body does). A slash is drawn there (placeholder
+  art, `pogo16x16.bmp`) and a short swish plays.
+- **Bounce.** A trap in the box bounces the duck up at jump speed (not cut by
+  letting go of A), rings (`trap_hit`), refills the air dash and allows the
+  next strike at once - spike, spike, spike. The trap is unharmed. A bounce
+  counts as a jump for jump triggers.
+- **Miss.** A strike that meets nothing is followed by 8 frames without one.
+- **Death stays instant.** Touching a trap any other way still kills.
+- **Availability.** From World 4 onward (`Cfg::Pogo::UNLOCK_WORLD`), like the
+  dash, and in every boss level. World 4 opens with "Bramble Hop", which
+  teaches it: two pits wider than jump + dash, crossed only by bouncing off
+  thorn bushes - once, then twice in a row.
+- **Reachability.** `tools/Check_level_reachability.py` lets the duck bounce
+  off a level's BASE traps (they never move), only where a level cannot be
+  finished without it.
+
+### Wall jump
+
+Hollow Knight's Mantis Claw, tuned in `Cfg::WallJump` (`cfg_wall_jump.h`),
+rules in `locomotion::Core`, tests in `tests/host/test_locomotion.cpp`:
+
+- **Slide.** Falling while holding toward a wall the duck touches caps the
+  fall speed at 1 px/frame. Rising is never slowed. The duck turns its back
+  to the wall and dust drifts up along it (`ente.bmp` frames 10-11).
+- **Jump.** A in the air at a wall jumps at full jump speed and pushes the
+  duck 2 px/frame away from the wall. For 8 frames (or until it lands) the D-pad is ignored, so
+  the duck really leaves the wall. The jump buffer works as on the ground; on
+  the ground a normal jump always wins.
+- **No refill.** A wall does not refill the air dash, only real ground does.
+- **Availability.** From World 5 onward (`Cfg::WallJump::UNLOCK_WORLD`),
+  like the dash. Earlier worlds play as authored. Walls are platform sides
+  only (the collision layer the duck stands on), never traps or the world
+  edge.
+- **Reachability.** `tools/Check_level_reachability.py` simulates wall jumps
+  frame by frame (`Duck`) with a few climb policies: up a shaft between two
+  walls and up a single wall.
+
+## Story
+
+Hildegard, the duck, is flushed out of the bathtub and travels through the
+worlds to reach her beloved Susanne, who waits at the end of World 5's
+finale. The story is told in short pages (`story.h`, shown by
+`StoryScene`): the intro when a new game starts, one page the first time
+the duck reaches each later world (not again when the world is replayed,
+not via Level Select), and the ending after the finale, before the reunion
+scene. A or Start goes on. A world that unlocks an ability (dash, pogo,
+wall jump) teaches it on its page. Each page has at most 5 lines of 28
+characters; `tests/host/test_story.cpp` checks that, which page shows when,
+and that the ability pages follow the `Cfg` unlock worlds.
+
 ## Game progression
 
 ### World sequence
@@ -151,7 +222,7 @@ The current world themes, in order, are:
 | Sewerage (World 2, 3 levels incl. boss) | Industrial hazards | Pipes, cans, rusty nails |
 | Forest (World 3, 3 levels incl. boss) | Misty climb | Trees, fog, mushrooms, slither arms |
 | Village (World 4, 3 levels incl. boss) | Bright open spaces | Flowers, baskets, bugs, nests, an ambush bug |
-| Dungeon (World 5, 6 levels incl. boss and finale) | Final gauntlet | Barrels, bars, chests, levers, an ambush mimic, axes, thwomps |
+| Castle (World 5, 6 levels incl. boss and finale) | Final gauntlet | Barrels, bars, chests, levers, an ambush mimic, axes, thwomps |
 
 Each theme pairs a tilemap background, a music track, a set of themed trap
 sprites, and a platform tileset. This pairing is what gives each world its
@@ -208,9 +279,9 @@ value once a save has already finished the game once:
   While it's on, a short "Traps x1.35" line underneath shows the actual
   speed multiplier - informational only, not a selectable row.
 - **Effect.** While enabled, Moving, Chase, and Ambush traps move faster
-  (their velocities are scaled up). Path traps are deliberately unaffected,
-  since a patrol's speed is authored as a frame count between waypoints
-  rather than a velocity.
+  (their velocities are scaled up). Path traps patrol faster too: their speed
+  is authored as a frame count between waypoints, so the count is divided by
+  the multiplier instead (15 frames per node become 11 at x1.35).
 - **Persistence.** The On/Off toggle itself resets to Off on a fresh
   run/reset, the same way the audio volume settings do - only the *unlock*
   is a permanent record.
@@ -227,9 +298,9 @@ the levels without a high skill bar:
 
 - **Availability.** Always available - no unlock. It is the last row of
   the pause menu's Options sub-menu (below Hard Mode once that is unlocked).
-- **Effect.** Moving, Chase, and Ambush traps move at half speed (x0.5;
-  Path traps are unaffected, as in Hard Mode). Coyote time grows from 4 to
-  8 frames and the jump buffer from 6 to 12. Jump height, gravity, and
+- **Effect.** Moving, Chase, and Ambush traps move at half speed (x0.5),
+  and Path traps patrol at half speed as well (twice the frames per node).
+  Coyote time grows from 4 to 8 frames and the jump buffer from 6 to 12. Jump height, gravity, and
   acceleration are untouched, so every platform stays reachable exactly as
   authored.
 - **Exclusive with Hard Mode.** Switching one on switches the other off.
@@ -272,9 +343,14 @@ From a player's perspective, traps come in a few recognizable kinds:
   like a chest among other chests) until the duck gets close, then lunge
   once and retreat. They punish approaching without care rather than
   punishing hesitation.
+- **Cycling hazards** rise and sink on their own clock - spikes out of the
+  floor that come, stay, go and wait, again and again. The duck learns the
+  rhythm and crosses in the gap; neighbouring spikes can run a step apart so
+  they form a wave. They can start on their own after a few seconds (a timer
+  trigger) or be switched off by a lever.
 
-Moving, Chase, and Ambush hazards all move faster when Hard Mode is enabled -
-see [Hard Mode](#hard-mode) above.
+Moving, Chase, Ambush, Path, and Cycle hazards all move faster when Hard Mode is
+enabled (and slower in Assist Mode) - see [Hard Mode](#hard-mode) above.
 
 For the internal behavior of each, see [Components — Trap System](components.md).
 
@@ -292,6 +368,44 @@ mid-jump, a hazard that rises as the duck climbs, a flying pest released later
 in the run. Without triggers, every moving hazard would be permanently active,
 which would be hard to design around and visually chaotic.
 
+### Fakes
+
+Not every door is a door. A **fake door** or **fake checkpoint** looks exactly
+like the real one - same sprite, same animation, standing behind the duck - and
+kills on touch like any static hazard. They exist for the levels that want to
+be mean on purpose; the real checkpoint's flag turns green when it is reached,
+which is the one thing a fake never does.
+
+The real door can lie as well. A **false exit** is the level's own door,
+turned into a trap while some trigger is on - step on the wrong lever, wait
+too long, walk instead of jump - and then it kills like a fake, without
+looking any different. And a door can **move between attempts**: after a
+few deaths in the level it stands somewhere else, so the route learnt by
+dying leads to the wrong place (or, in a kind level, to a nearer one).
+Death puts the trigger back, so every attempt starts with an honest door;
+only the death count decides where it stands.
+
+### Crumbling platforms
+
+Some platforms do not wait for a trigger: they react to the duck itself. A
+crumbling platform shakes when the duck lands on it and gives way a moment
+later - the duck must keep moving, and stepping off does not save it. Some come
+back after a while, some are single-use stepping stones. Death puts them all
+back.
+
+### Levels that learn
+
+Death usually puts a level back exactly as it was - which is what makes it
+learnable. A Level Devil level can break that promise on purpose: a trap or a
+platform can be there only for the first few attempts, or only from a certain
+death on. "After the 3rd death the trap sits somewhere else": the player who
+has finally learned where the arms lurk finds them one gap further on. The
+change only ever happens when the duck respawns, never in the middle of an
+attempt, and the count starts again whenever the level is entered anew, so the
+first attempt of every visit is the level as authored. Trickwood in World 3
+is the first level that does it. See
+[Level Design — Traps and platforms that change with every death](level-design.md#traps-and-platforms-that-change-with-every-death).
+
 ### Switches
 
 Beyond the invisible latching zones, a trigger can behave as a **switch**
@@ -304,11 +418,27 @@ always the helpful one - without any new trap type. Death resets every
 switch, so a puzzle always starts from the same state, and a platform that
 would appear on top of the duck waits until the duck has moved clear.
 
+A trigger can also act **late**: with a delay the hazard it releases only
+starts a moment after the duck stepped on the zone or flipped the lever, and a
+**timer** trigger needs no duck at all - it starts its hazards on its own a few
+seconds after the level begins. Both keep a death cheap, because a respawn
+restarts the clock.
+
+Triggers can also be **chained**: one trigger sets off the next a moment later,
+which can set off a third - the duck steps on a plate, the floor drops at once,
+and a breath later spikes shoot out exactly where it would have landed. A chain
+plays the same way every time, whatever the duck does in between, so the
+player can learn it: the first time it is a Level Devil surprise, the second
+time a rhythm to wait out. A death resets the whole chain; a checkpoint keeps
+what had already happened before it was reached. Lever Hall in World 5 hides
+one behind its first lever.
+
 ## Boss levels
 
-Every world's gameplay culminates in a **boss level**: a single, mostly flat corridor
-where the challenge is entirely about reading and dodging a sequence of
-attacks rather than platforming, the way a Hollow Knight boss arena plays.
+Every world's gameplay culminates in a **boss level**: a mostly flat corridor
+where the challenge is reading and dodging a sequence of attacks, the way a
+Hollow Knight boss arena plays, and at its end the one enemy the duck can
+beat - a **boss** (see [Bosses](#bosses)).
 
 - **Attack waves.** Invisible trigger zones fire hazards in sequence as
   the duck advances - falling slams, charging dashes, or rising arms,
@@ -322,15 +452,42 @@ attacks rather than platforming, the way a Hollow Knight boss arena plays.
 - **Punish lingering, not hesitating.** A mid-arena `AMBUSH` hazard,
   disguised as scenery, lunges only if the duck stays close - it rewards
   pressing on rather than camping a safe spot.
-- **An enrage pursuer (Worlds 4-5).** A `CHASE` hazard trails the duck for
-  the whole fight, closing the gap whenever the duck advances. It keeps
-  forward momentum mandatory in the two hardest boss fights. World 4's
+- **An enrage pursuer (Worlds 4-5).** A `CHASE` hazard trails the duck
+  through the corridor, closing the gap whenever the duck advances. It keeps
+  forward momentum mandatory in the two hardest boss levels and stops before
+  the boss arena (`chase_limit`). World 4's
   second scroll level gives it a gentler non-boss preview - paired with an
   `AMBUSH` bug there, so pursuit pressure and dodge timing aren't both new
   at once when the boss tightens both.
-- **The door is the win condition.** There is no health bar or hit
-  count - reaching the door at the far end of the arena is "defeating"
-  the boss.
+- **The door is the win condition** - but it stays shut until the boss is
+  beaten.
+
+### Bosses
+
+The game's rule is that nothing can be killed: the environment is the enemy.
+The one exception is a boss at the end of each boss level - four mini bosses
+(Worlds 1-4: the Kugelfisch King, the Rusty Can, the Toadstool, the Beetle)
+and a big one in World 5 (the Iron Thwomp). `TrapType::BOSS`,
+`boss_logic.h`, `BossTrap`:
+
+- **The arena.** A step up to a left ledge (with the level's checkpoint), a
+  pit, a right ledge with the door. The boss floats back and forth in the
+  pit; falling in is death, touching the boss is death.
+- **Pogo only.** A pogo strike from above costs it a hit (3 for the mini
+  bosses, 5 for the big one) and bounces the duck - across the pit, too.
+  The pogo is always available in a boss level, even before World 4.
+- **Phases.** Every hit starts a new phase: the boss gets faster
+  (`boss::phase_frames()`) and switches on the trigger `arena_p<n>`, which
+  drops the world's traps through the pit - across the bounces, while the
+  ledges stay safe. After a hit it blinks and takes no further hit for 45
+  frames.
+- **Feel.** A hit freezes the world for 4 frames and shakes the picture for
+  10 (`Cfg::Boss::HITSTOP_FRAMES` / `SHAKE_FRAMES`, the death's freeze and
+  shake, shorter).
+- **Victory.** The last hit removes it, raises a stepping stone in the pit
+  (`arena_won`) and opens the door. A death starts the fight over.
+- **Tested.** An emulator replay per boss starts on the arena ledge and wins
+  the fight (`make replay`); without its R presses each one fails.
 
 ### World 5's coda: the finale
 
@@ -422,13 +579,19 @@ and fast retries, which suits short stages. The difficulty therefore comes from
 trap timing and platform layout (and, once unlocked, Hard Mode's speed
 multiplier), not from limited attempts.
 
+A death is felt rather than just counted: the world freezes for a tenth of a
+second with a copy of the duck frozen where it died and the trap that got it
+still in place, the screen shakes, and the duck flickers for a moment when it
+reappears at the respawn point. The flicker is only a visual cue - there is no
+invulnerability. Restart Level from the pause menu skips the effect.
+
 ### Checkpoints
 
-The long levels and the bosses have **checkpoints**: small flags. Touching one
-(the grey flag turns green and raises) makes the duck respawn there instead of
-at the start of the stage - until the level is restarted from the pause menu or
-left. Later flags replace earlier ones; walking back to an earlier flag does
-not undo progress. The death counter still counts every death, so a no-death
+Some long levels and bosses have a **checkpoint**: a small flag, at most one per
+level. Touching it (the grey flag turns green and raises) makes the duck
+respawn there instead of at the start of the stage - until the level is
+restarted from the pause menu or left. The flag never stands in a trap or on its
+path. The death counter still counts every death, so a no-death
 clear and the best time are unaffected. Which triggers had fired when the flag
 was reached fire again after the respawn, so a boss fight keeps its patrols
 instead of going quiet behind the flag. See
