@@ -9,9 +9,9 @@
 // class so it can be unit-tested on the host (see
 // tests/host/test_trigger_logic.cpp).
 //
-//   Latch  - the original behavior and the default for every existing level:
-//            entering the zone sets the state to !default_on and it stays
-//            there until reset() (death/restart). Leaving does nothing.
+//   Latch  - the default: entering the zone sets the state to !default_on
+//            and it stays there until reset() (death/restart). Leaving does
+//            nothing.
 //   Toggle - every ENTRY into the zone flips the state (a switch). Standing
 //            inside does not flip it again; leaving does nothing.
 //   Hold   - on only while the player is inside: entering sets !default_on,
@@ -29,7 +29,7 @@
 // triggers - it is their timer length.
 //
 // Action: what makes the duck's presence count as an "entry". Enter (default)
-// is the original behavior; Jump and Dash fire while the duck is inside the
+// is the default; Jump and Dash fire while the duck is inside the
 // zone and jumps or dashes (see action_fires()). Everything above (modes,
 // delay) works the same on top of it; a Hold plate with Jump is pressed by a
 // jump inside it and released when the duck leaves.
@@ -99,7 +99,7 @@ class TriggerState {
         if (_mode == TriggerMode::Toggle) {
             _set_pressed(!_pressed);
         } else {
-            // Latch and Hold: same entry behavior as the legacy Trigger.
+            // Latch and Hold: entering sets !default_on.
             _set_pressed(!_default_on);
         }
     }

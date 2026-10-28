@@ -8,9 +8,7 @@
 // and can be unit-tested on the host (see tests/host/test_level_limits.cpp).
 //
 // The limits are CAPACITIES of fixed-size containers, so a level with exactly
-// `limit` entries is valid and one more is not. (The load-time assertions used
-// a strict `<` before, which silently allowed one entry less than the
-// containers hold and was inconsistent with the checkpoint assertion.)
+// `limit` entries is valid and one more is not.
 // -----------------------------------------------------------------------------
 
 namespace level_limits {

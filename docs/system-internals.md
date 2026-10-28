@@ -152,22 +152,21 @@ number:
 The entity limits alone do not keep a stage inside the other two: a stage that
 filled every limit would need 87 registered sprites. In practice the stages are
 far below that, but the pause overlay is large (up to ~57 glyph sprites in the
-Options sub-menu with Hard Mode on). The level hint is therefore released while
-the game is paused (`hint::should_draw()`; the countdown stops with it and the
-sprites are drawn again on resume), so the two never take slots at once. The
-pause overlay allocates its sprites in the very `update()` call in which Start
-is pressed, so `LevelScene` frees the hint before that call. The overlay itself
-exists only while the game is paused: `PauseController` creates the 'Paused'
-title and the rows when the game pauses and releases them on resume (the title
-also goes while the Controls view is open). Hiding them is not enough, because
-a hidden sprite keeps its slot: until this was fixed, the first pause left the
-last menu (up to ~57 sprites) allocated for the rest of the level.
+Options sub-menu with Hard Mode on). Two rules keep the slots free:
+
+- The level hint is released while the game is paused (`hint::should_draw()`;
+  the countdown stops with it). The pause overlay allocates its sprites in the
+  very `update()` call in which Start is pressed, so `LevelScene` frees the hint
+  before that call.
+- The overlay exists only while paused: `PauseController` creates the title and
+  rows on pause and releases them on resume. Hiding them would not do, because
+  a hidden sprite keeps its slot.
+
 `tools/Check_sprite_budget.py` counts this worst case per stage (spaces draw no
 sprite), fails on an overflow and warns when fewer than 8 slots are left. Its
 text constants mirror `pause_controller.cpp`, `level_scene.cpp` and
 `death_counter.h` - update them when those strings change. It also checks that
-the `CollisionRegistry` capacities cover the limits (static bodies, physics
-bodies and shapes, including checkpoints, triggers, the door and the duck).
+the `CollisionRegistry` capacities cover the limits.
 
 ## How to keep internals healthy
 

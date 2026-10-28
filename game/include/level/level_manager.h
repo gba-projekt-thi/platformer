@@ -78,9 +78,8 @@ class LevelManager {
     // Returns the trigger whose TriggerData::name matches (linear scan -
     // trivially cheap given Cfg::Level::Limits::TRIGGERS <= 16 and this is
     // only ever called once per trap at level load, never per-frame).
-    // Falls back to trigger[0] with a BN_LOG_ERROR if no match is found -
-    // shouldn't happen now that every MOVING/PATH trap's trigger_name is
-    // set (see level_structure.h), but stays defensive.
+    // Falls back to trigger[0] with a BN_LOG_ERROR if no match is found
+    // (defensive; every MOVING/PATH trap sets trigger_name).
     Trigger& get_trigger_by_name(const char* name);
     // Same, but nullptr when there is none (optional triggers, e.g. a boss's
     // phase triggers).

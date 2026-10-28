@@ -552,8 +552,7 @@ bool LevelManager::_present(unsigned from_death, unsigned until_death) const {
 }
 
 void LevelManager::_apply_attempt(const LevelData& level) {
-    // Objects without a window are never touched: every level without one
-    // plays exactly as before.
+    // Objects without a window are never touched.
     for (int i = 0; i < level.platform_count; ++i) {
         const PlatformData& platform = level.platforms[i];
         if (!attempt_objects::has_window(

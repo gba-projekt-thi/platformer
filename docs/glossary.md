@@ -303,8 +303,9 @@ and the door. See [Architecture](architecture.md).
 **Player entity** — The duck, composed of locomotion, animator, state machine,
 HUD, and sprite. See [Components — Player System](components.md).
 
-**Pre-commit hooks** — Automated style (clang-format) and lint (clang-tidy)
-checks run before each commit. See
+**Pre-commit hooks** — Automated style (clang-format), lint (clang-tidy via
+`tools/run_clang_tidy.py`), level data checks and host unit tests run before
+each commit. See
 [Development Workflow](development-workflow.md).
 
 ## R
@@ -328,7 +329,7 @@ also when the save slot actually resets. See
 
 **Save migration** — Loading a save written by an older schema version: the
 bytes that existed then are copied and fields added later keep their defaults,
-so a new `GameState` field no longer wipes saves. Driven by a version table
+so a new `GameState` field does not wipe saves. Driven by a version table
 (`game_state_migration.h`); fields may only be appended. See
 [Architecture](architecture.md#save-migration).
 

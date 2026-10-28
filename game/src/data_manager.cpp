@@ -28,7 +28,7 @@ void DataManager::load_from_save() {
     }
 
     // Defensive: furthest_level must never trail the resume point.
-    // Guards against any legacy or otherwise inconsistent save data.
+    // Guards against inconsistent save data.
     if (_game_state.furthest_level < _game_state.level) {
         _game_state.furthest_level = _game_state.level;
     }

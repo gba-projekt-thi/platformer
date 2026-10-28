@@ -52,9 +52,8 @@ void KissingScene::update() {
     _transition_requested = true;
 
     // Show the run summary (total time, deaths, no-death clears) before
-    // returning to the title. DataManager::reset() moved to SummaryScene
-    // - it now runs once the player dismisses that screen, not here, so
-    // the numbers it reads are still this run's live state.
+    // returning to the title. DataManager::reset() runs in SummaryScene once
+    // the player dismisses it, so the numbers it reads are still live.
     auto summary_scene = bn::make_unique<SummaryScene>(
         _player, _levels, _data_manager, _level_manager);
     core::SceneManager::instance().set_next_scene(bn::move(summary_scene));

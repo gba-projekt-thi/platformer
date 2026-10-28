@@ -51,8 +51,7 @@ class WorldSelectScene : public core::Scene {
     bool _transition_requested = false;
 
     bn::optional<bn::sprite_text_generator> _text_gen;
-    // Bumped from 64: the added stats line (see _rebuild_menu()) pushes
-    // the worst-case combined sprite count (all worlds locked + stats
-    // line) closer to the old capacity's ceiling.
+    // Sized for the worst case: all worlds locked plus the stats line (see
+    // _rebuild_menu()).
     bn::vector<bn::sprite_ptr, 96> _menu_sprites;
 };

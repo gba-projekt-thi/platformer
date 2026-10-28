@@ -73,5 +73,4 @@ class TimerHUD {
     bool _visible = true;
 };
 
-// FrameTime / frames_to_time() now live in frame_time.h (included above) -
-// kept dependency-free so they can be unit-tested on the host.
+// FrameTime / frames_to_time() live in frame_time.h (Butano-free, host-tested).

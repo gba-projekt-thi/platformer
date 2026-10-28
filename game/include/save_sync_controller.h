@@ -9,12 +9,11 @@
 //
 // Owns the runtime persistence policy for a level: watches the player's
 // death counter, writes deaths/timer into the save state, and commits to
-// SRAM. Extracted out of LevelManager so gameplay systems don't need to
-// know about SRAM write timing/cost directly.
+// SRAM, so gameplay systems don't need to know about SRAM write
+// timing/cost directly.
 //
 // NOTE:
-// SRAM writes are relatively expensive. Consider batching saves later
-// (see project backlog).
+// SRAM writes are relatively expensive.
 // -----------------------------------------------------------------------------
 class SaveSyncController {
    public:

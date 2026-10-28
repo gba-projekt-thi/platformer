@@ -84,17 +84,16 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
     // Sprite
     Sprite _player_sprite;
 
-    // Physics/input, extracted into its own component.
+    // Physics/input.
     PlayerLocomotion _locomotion;
 
-    // Walk/jump animation, extracted into its own component.
+    // Walk/jump animation.
     PlayerAnimator _animator;
 
-    // HUD (death counter + timer), extracted into its own component.
+    // HUD (death counter + timer).
     PlayerHud _hud;
 
-    // Coarse movement state (Idle/Run/Jump/Fall), extracted into its own
-    // component.
+    // Coarse movement state (Idle/Run/Jump/Fall).
     PlayerStateMachine _state_machine;
 
     // Respawn position

@@ -12,7 +12,6 @@
 // Bundles the player's on-screen HUD elements (death counter + timer).
 // Owns no gameplay logic - just forwards updates/visibility to its two
 // sub-widgets and exposes the small read/write surface Player needs.
-// Extracted out of Player as the first step of the Player decomposition.
 // -----------------------------------------------------------------------------
 class PlayerHud {
    public:

@@ -21,9 +21,8 @@ TEST_CASE(trigger_starts_in_its_default_state_in_every_mode) {
 }
 
 TEST_CASE(trigger_latch_matches_the_legacy_behavior) {
-    // Backward compatibility: every existing level uses Latch (the default),
-    // so entering must give exactly what the old `_triggered = !_default_on`
-    // gave, for both default states, and leaving must change nothing.
+    // Latch is the default mode: entering sets !default_on, for both default
+    // states, and leaving changes nothing.
     for (bool default_on : {false, true}) {
         TriggerState state(default_on, TriggerMode::Latch);
         state.on_enter();

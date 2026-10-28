@@ -39,7 +39,7 @@ inline auto entry_deaths(
     return saved_entry;
 }
 
-// until 0 = no end. from 0, until 0 = always there (every object so far).
+// until 0 = no end. from 0, until 0 = always there.
 inline auto active_for_deaths(unsigned deaths, unsigned from, unsigned until)
     -> bool {
     return deaths >= from && (until == 0 || deaths < until);

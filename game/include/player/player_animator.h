@@ -12,8 +12,7 @@
 // PlayerAnimator
 //
 // Owns the player's walk/jump sprite animations and picks the right frame
-// each frame based on movement/ground state and keypad input. Extracted out
-// of Player as the second step of the Player decomposition (after PlayerHud).
+// each frame based on movement/ground state and keypad input.
 // -----------------------------------------------------------------------------
 class PlayerAnimator {
    public:
