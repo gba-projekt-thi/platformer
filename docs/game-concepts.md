@@ -155,8 +155,8 @@ the enemy: traps cannot be destroyed, but they can be used. Tuned in
 
 - **Strike.** R in the air strikes down for 10 frames: a 16 px wide box
   reaching 12 px below the duck (more than one frame of falling, so the strike
-  meets a trap before the body does). A slash is drawn there (placeholder
-  art, `pogo16x16.bmp`) and a short swish plays.
+  meets a trap before the body does). The duck's beak dive is drawn there (three frames,
+  `pogo16x16.bmp`, made by `tools/Generate_pogo_sprite.py`) and a short swish plays.
 - **Bounce.** A trap in the box bounces the duck up at jump speed (not cut by
   letting go of A), rings (`trap_hit`), refills the air dash and allows the
   next strike at once - spike, spike, spike. The trap is unharmed. A bounce
