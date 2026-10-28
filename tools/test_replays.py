@@ -92,6 +92,27 @@ class GenerateTests(unittest.TestCase):
         self.assertIn("unsigned deaths;", text)
         self.assertIn('{"LEVEL_1", LEVEL_1_RUNS, 1, 30, false, 0, 0, 2}', text)
 
+    def test_counter_checks_get_their_own_table(self):
+        # Runs that must NOT reach the door: same layout, separate arrays.
+        text = replays.generate(
+            ["LEVEL_0", "LEVEL_1"], {"LEVEL_1": [[2, 30]]}, None, None,
+            counter=({"LEVEL_1": [[2, 5], [0, 3]]}, {"LEVEL_1": [8, 16]}, {}))
+        self.assertIn("constexpr replay::Run LEVEL_1_COUNTER_RUNS[] = {{2, 5}, {0, 3}};", text)
+        table = text[text.index("COUNTER_ENTRIES[]"):]
+        self.assertIn('{"LEVEL_1", LEVEL_1_COUNTER_RUNS, 2, 8, true, 8, 16, 0}', table)
+        self.assertIn('{"LEVEL_0", nullptr, 0, 0, false, 0, 0, 0}', table)
+        self.assertIn('{"LEVEL_1", LEVEL_1_RUNS, 1, 30, false, 0, 0, 0}', text[:text.index("COUNTER_ENTRIES[]")])
+
+    def test_every_boss_level_has_a_counter_check(self):
+        levels = replays._campaign_levels()
+        counter, starts, _ = replays.load_replays(replays.COUNTER_DIR)
+        for world in range(1, 6):
+            name = f"LEVEL_WORLD{world}_BOSS"
+            self.assertIn(name, levels)
+            self.assertIn(name, counter)
+            self.assertIn(name, starts)
+            self.assertFalse(any(b & 32 for b, _ in counter[name]), "no R: the boss must live")
+
     def test_header_without_any_replay_still_compiles_to_a_table(self):
         text = replays.generate(["LEVEL_0"], {})
         self.assertIn('{"LEVEL_0", nullptr, 0, 0, false, 0, 0, 0}', text)
@@ -158,6 +179,13 @@ GBA Debug: REPLAY DONE 1 1 1
             results,
             [("LEVEL_0", "pass"), ("LEVEL_1", "none"), ("LEVEL_WORLD1_SCROLL", "FAIL")],
         )
+
+    def test_counter_checks_are_listed_apart(self):
+        results, _ = replays.parse_log(
+            "GBA Debug: REPLAY 4 LEVEL_WORLD1_BOSS counter pass 80 205\n"
+            "GBA Debug: REPLAY 8 LEVEL_WORLD2_BOSS counter FAIL 80 90\n")
+        self.assertEqual(
+            results, [("LEVEL_WORLD1_BOSS/counter", "pass"), ("LEVEL_WORLD2_BOSS/counter", "FAIL")])
 
     def test_a_run_that_never_finished_is_not_done(self):
         _, done = replays.parse_log("GBA Debug: REPLAY 0 LEVEL_0 pass 812 900\n")

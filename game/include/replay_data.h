@@ -228,6 +228,26 @@ constexpr replay::Run LEVEL_WORLD5_BOSS_RUNS[] = {
     {1, 9},   {2, 32}, {0, 10},  {13, 1},  {9, 10}, {1, 12}, {33, 1}, {1, 27},
     {0, 4},   {2, 11}, {14, 1},  {10, 28}, {2, 11}, {0, 10}};
 constexpr replay::Run LEVEL_WORLD5_FINALE_RUNS[] = {{2, 400}};
+constexpr replay::Run LEVEL_WORLD1_BOSS_COUNTER_RUNS[] = {
+    {0, 10},
+    {2, 60},
+    {0, 10}};
+constexpr replay::Run LEVEL_WORLD2_BOSS_COUNTER_RUNS[] = {
+    {0, 10},
+    {2, 60},
+    {0, 10}};
+constexpr replay::Run LEVEL_WORLD3_BOSS_COUNTER_RUNS[] = {
+    {0, 10},
+    {2, 60},
+    {0, 10}};
+constexpr replay::Run LEVEL_WORLD4_BOSS_COUNTER_RUNS[] = {
+    {0, 10},
+    {2, 60},
+    {0, 10}};
+constexpr replay::Run LEVEL_WORLD5_BOSS_COUNTER_RUNS[] = {
+    {0, 10},
+    {2, 60},
+    {0, 10}};
 
 // One entry per level, in play order (main.cpp's levels[]).
 inline constexpr Entry ENTRIES[] = {
@@ -259,6 +279,41 @@ inline constexpr Entry ENTRIES[] = {
     {"LEVEL_WORLD5_TRICK", LEVEL_WORLD5_TRICK_RUNS, 107, 536, false, 0, 0, 0},
     {"LEVEL_WORLD5_BOSS", LEVEL_WORLD5_BOSS_RUNS, 46, 594, true, 231, 12, 0},
     {"LEVEL_WORLD5_FINALE", LEVEL_WORLD5_FINALE_RUNS, 1, 400, false, 0, 0, 0}};
+
+// The counter-checks (game/replays/counter/), same layout: these
+// must NOT complete their level.
+inline constexpr Entry COUNTER_ENTRIES[] = {
+    {"LEVEL_0", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_1", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD1_SCROLL", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD1_TRICK", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD1_BOSS", LEVEL_WORLD1_BOSS_COUNTER_RUNS, 3, 80, true, 309, 12,
+     0},
+    {"LEVEL_2", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD2_SCROLL", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD2_TRICK", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD2_BOSS", LEVEL_WORLD2_BOSS_COUNTER_RUNS, 3, 80, true, 311, 13,
+     0},
+    {"LEVEL_3", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD3_SCROLL", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD3_TRICK", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD3_BOSS", LEVEL_WORLD3_BOSS_COUNTER_RUNS, 3, 80, true, 354, 12,
+     0},
+    {"LEVEL_WORLD4_POGO", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD4_SCROLL", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD4_SCROLL_2", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD4_TRICK", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD4_BOSS", LEVEL_WORLD4_BOSS_COUNTER_RUNS, 3, 80, true, 315, 12,
+     0},
+    {"LEVEL_WORLD5_SCROLL", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD5_SCROLL_2", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD5_DASH", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD5_LEVERS", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD5_CLIMB", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD5_TRICK", nullptr, 0, 0, false, 0, 0, 0},
+    {"LEVEL_WORLD5_BOSS", LEVEL_WORLD5_BOSS_COUNTER_RUNS, 3, 80, true, 398, 12,
+     0},
+    {"LEVEL_WORLD5_FINALE", nullptr, 0, 0, false, 0, 0, 0}};
 
 inline constexpr int ENTRY_COUNT = sizeof(ENTRIES) / sizeof(ENTRIES[0]);
 
