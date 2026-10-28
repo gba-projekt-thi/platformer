@@ -70,10 +70,15 @@ void Door::flee_from(bn::fixed duck_x, bn::fixed duck_y) {
 }
 
 void Door::set_locked(bool locked) {
+    // The door's own shape still detects the duck when only the body is
+    // disabled (that hides it from OTHER shapes): switch the shape too.
     if (locked) {
         disable();
+        shape_disable();
+        _reached = false;
     } else {
         enable();
+        shape_enable();
     }
     _locked = locked;
     _glow = clear_logic::Glow();

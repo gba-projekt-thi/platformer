@@ -776,7 +776,8 @@ LevelManager::UpdateResult LevelManager::update() {
     // Door Completion
     // -------------------------------------------------------------------------
 
-    if (_door && _door->reached()) {
+    if (_door && door_logic::on_touch(_door->reached(), _door_locked, false) ==
+                     door_logic::Touch::Finish) {
         _player.clear_dash_trail();
         return UpdateResult::LevelComplete;
     }
