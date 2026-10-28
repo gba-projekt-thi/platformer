@@ -36,6 +36,21 @@ inline auto should_show(
     return text != nullptr && text[0] != '\0' && !cleared;
 }
 
+// Whether the hint's sprites exist this frame. While the game is paused they
+// are released: Butano counts hidden sprites too, and the pause overlay needs
+// up to ~57 glyph sprites (see tools/Check_sprite_budget.py), so a hint that
+// merely hid would still take its slots.
+inline auto should_draw(bool timer_visible, bool paused) -> bool {
+    return timer_visible && !paused;
+}
+
+// When the countdown starts. A hint of a boss level is about the arena, which
+// comes at the end of the level: it waits until the fight has begun (the duck
+// reached the arena) instead of running out unseen at the level start.
+inline auto should_start(bool waits_for_arena, bool arena_reached) -> bool {
+    return !waits_for_arena || arena_reached;
+}
+
 // Frame countdown for a visible hint. Not started = not visible.
 class Timer {
    public:

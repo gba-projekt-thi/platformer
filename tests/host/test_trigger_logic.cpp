@@ -144,3 +144,291 @@ TEST_CASE(trigger_toggle_continues_from_a_restored_state) {
     state.on_enter();  // flips the restored "on" to off
     CHECK(!state.triggered());
 }
+
+// --- delay_frames and Timer triggers ---------------------------------------
+
+namespace {
+
+void run(TriggerState& state, int frames) {
+    for (int i = 0; i < frames; ++i) {
+        state.tick();
+    }
+}
+
+}  // namespace
+
+TEST_CASE(trigger_without_delay_follows_at_once_and_tick_changes_nothing) {
+    for (TriggerMode mode :
+         {TriggerMode::Latch, TriggerMode::Toggle, TriggerMode::Hold}) {
+        TriggerState state(false, mode);
+        state.on_enter();
+        CHECK(state.triggered());
+        CHECK(state.pressed());
+        CHECK(!state.pending());
+        run(state, 10);
+        CHECK(state.triggered());
+    }
+}
+
+TEST_CASE(trigger_delay_shows_the_press_at_once_but_the_effect_later) {
+    TriggerState state(false, TriggerMode::Latch, 30);
+    state.on_enter();
+    CHECK(state.pressed());
+    CHECK(!state.triggered());
+    CHECK(state.pending());
+    run(state, 29);
+    CHECK(!state.triggered());
+    state.tick();
+    CHECK(state.triggered());
+    CHECK(!state.pending());
+}
+
+TEST_CASE(trigger_delay_of_one_frame_takes_one_tick) {
+    TriggerState state(false, TriggerMode::Latch, 1);
+    state.on_enter();
+    CHECK(!state.triggered());
+    state.tick();
+    CHECK(state.triggered());
+}
+
+TEST_CASE(trigger_delay_is_the_same_in_both_directions_for_a_hold_plate) {
+    TriggerState state(false, TriggerMode::Hold, 5);
+    state.on_enter();
+    run(state, 5);
+    CHECK(state.triggered());
+    state.on_exit();
+    CHECK(!state.pressed());
+    CHECK(state.triggered());  // the trap still runs for 5 more frames
+    run(state, 4);
+    CHECK(state.triggered());
+    state.tick();
+    CHECK(!state.triggered());
+}
+
+TEST_CASE(trigger_delay_a_change_undone_in_time_never_shows) {
+    TriggerState state(false, TriggerMode::Hold, 10);
+    state.on_enter();
+    run(state, 4);
+    state.on_exit();  // left the plate before the delay was over
+    CHECK(!state.pending());
+    run(state, 20);
+    CHECK(!state.triggered());
+}
+
+TEST_CASE(trigger_delay_toggle_flipped_twice_quickly_ends_where_it_began) {
+    TriggerState state(false, TriggerMode::Toggle, 10);
+    state.on_enter();
+    run(state, 3);
+    state.on_enter();
+    run(state, 30);
+    CHECK(!state.pressed());
+    CHECK(!state.triggered());
+}
+
+TEST_CASE(trigger_delay_toggle_follows_each_press_with_the_delay) {
+    TriggerState state(false, TriggerMode::Toggle, 4);
+    state.on_enter();
+    run(state, 4);
+    CHECK(state.triggered());
+    state.on_enter();
+    CHECK(state.triggered());
+    run(state, 4);
+    CHECK(!state.triggered());
+}
+
+TEST_CASE(trigger_delay_with_default_on_counts_down_to_off) {
+    TriggerState state(true, TriggerMode::Latch, 3);
+    state.on_enter();
+    CHECK(state.triggered());
+    run(state, 3);
+    CHECK(!state.triggered());
+}
+
+TEST_CASE(trigger_delay_reset_cancels_a_pending_change) {
+    TriggerState state(false, TriggerMode::Latch, 30);
+    state.on_enter();
+    state.reset();
+    CHECK(!state.pending());
+    run(state, 60);
+    CHECK(!state.triggered());
+    CHECK(!state.pressed());
+}
+
+TEST_CASE(trigger_delay_restore_is_immediate_and_cancels_the_pending_change) {
+    TriggerState state(false, TriggerMode::Latch, 30);
+    state.restore(true);
+    CHECK(state.triggered());
+    CHECK(state.pressed());
+    CHECK(!state.pending());
+
+    TriggerState other(false, TriggerMode::Latch, 30);
+    other.on_enter();
+    other.restore(false);
+    run(other, 60);
+    CHECK(!other.triggered());
+}
+
+TEST_CASE(trigger_timer_fires_after_exactly_delay_frames) {
+    TriggerState state(false, TriggerMode::Timer, 60);
+    run(state, 59);
+    CHECK(!state.triggered());
+    state.tick();
+    CHECK(state.triggered());
+    CHECK(state.pressed());
+}
+
+TEST_CASE(trigger_timer_with_zero_delay_fires_on_the_first_tick) {
+    TriggerState state(false, TriggerMode::Timer, 0);
+    CHECK(!state.triggered());
+    state.tick();
+    CHECK(state.triggered());
+}
+
+TEST_CASE(trigger_timer_ignores_the_player) {
+    TriggerState state(false, TriggerMode::Timer, 10);
+    state.on_enter();
+    state.on_exit();
+    CHECK(!state.triggered());
+    CHECK(!state.pressed());
+}
+
+TEST_CASE(trigger_timer_stays_on_until_reset_and_then_starts_over) {
+    TriggerState state(false, TriggerMode::Timer, 5);
+    run(state, 5);
+    CHECK(state.triggered());
+    run(state, 100);
+    CHECK(state.triggered());
+    state.reset();
+    CHECK(!state.triggered());
+    run(state, 4);
+    CHECK(!state.triggered());
+    state.tick();
+    CHECK(state.triggered());
+}
+
+TEST_CASE(trigger_timer_with_default_on_switches_off) {
+    TriggerState state(true, TriggerMode::Timer, 3);
+    CHECK(state.triggered());
+    run(state, 3);
+    CHECK(!state.triggered());
+}
+
+TEST_CASE(trigger_timer_restore_keeps_a_fired_timer_fired) {
+    TriggerState state(false, TriggerMode::Timer, 50);
+    state.reset();
+    state.restore(true);  // checkpoint reached after the timer had fired
+    CHECK(state.triggered());
+    run(state, 100);
+    CHECK(state.triggered());
+}
+
+TEST_CASE(trigger_timer_restore_of_an_unfired_timer_counts_again) {
+    TriggerState state(false, TriggerMode::Timer, 5);
+    state.restore(false);
+    run(state, 4);
+    CHECK(!state.triggered());
+    state.tick();
+    CHECK(state.triggered());
+}
+
+// --- TriggerZone: the duck's presence and actions in a Trigger's zone -------
+
+TEST_CASE(zone_enter_trigger_fires_when_the_duck_steps_in) {
+    TriggerZone zone(false, TriggerMode::Latch, 0, TriggerAction::Enter);
+    CHECK(!zone.triggered());
+    zone.enter();
+    CHECK(zone.triggered());
+}
+
+TEST_CASE(zone_enter_trigger_ignores_jumps_and_dashes_outside_and_inside) {
+    TriggerZone zone(false, TriggerMode::Latch, 0, TriggerAction::Enter);
+    zone.update(true, true);
+    CHECK(!zone.triggered());
+}
+
+TEST_CASE(zone_jump_trigger_is_not_set_off_by_walking_in) {
+    TriggerZone zone(false, TriggerMode::Latch, 0, TriggerAction::Jump);
+    zone.enter();
+    CHECK(!zone.triggered());
+    zone.update(false, true);  // a dash is not a jump
+    CHECK(!zone.triggered());
+    zone.update(true, false);
+    CHECK(zone.triggered());
+}
+
+TEST_CASE(zone_dash_trigger_needs_a_dash_inside) {
+    TriggerZone zone(false, TriggerMode::Latch, 0, TriggerAction::Dash);
+    zone.enter();
+    zone.update(true, false);
+    CHECK(!zone.triggered());
+    zone.update(false, true);
+    CHECK(zone.triggered());
+}
+
+TEST_CASE(zone_action_outside_the_zone_does_nothing) {
+    TriggerZone zone(false, TriggerMode::Latch, 0, TriggerAction::Jump);
+    zone.update(true, true);
+    CHECK(!zone.triggered());
+    zone.enter();
+    zone.exit();
+    zone.update(true, true);  // the duck left again before it jumped
+    CHECK(!zone.triggered());
+}
+
+TEST_CASE(zone_hold_plate_with_a_jump_is_pressed_by_it_and_freed_on_exit) {
+    TriggerZone zone(false, TriggerMode::Hold, 0, TriggerAction::Jump);
+    zone.enter();
+    CHECK(!zone.triggered());
+    zone.update(true, false);
+    CHECK(zone.triggered());
+    zone.exit();
+    CHECK(!zone.triggered());
+}
+
+TEST_CASE(zone_toggle_with_a_jump_flips_on_every_jump) {
+    TriggerZone zone(false, TriggerMode::Toggle, 0, TriggerAction::Jump);
+    zone.enter();
+    zone.update(true, false);
+    CHECK(zone.triggered());
+    zone.update(true, false);
+    CHECK(!zone.triggered());
+}
+
+TEST_CASE(zone_update_runs_the_delay_of_the_state) {
+    TriggerZone zone(false, TriggerMode::Latch, 2, TriggerAction::Enter);
+    zone.enter();
+    CHECK(zone.pressed());
+    CHECK(!zone.triggered());
+    zone.update(false, false);
+    CHECK(!zone.triggered());
+    zone.update(false, false);
+    CHECK(zone.triggered());
+}
+
+TEST_CASE(zone_update_runs_a_timer_trigger_without_the_duck) {
+    TriggerZone zone(false, TriggerMode::Timer, 3, TriggerAction::Enter);
+    zone.update(false, false);
+    zone.update(false, false);
+    CHECK(!zone.triggered());
+    zone.update(false, false);
+    CHECK(zone.triggered());
+}
+
+TEST_CASE(zone_follower_is_pressed_by_follow_and_not_by_the_duck) {
+    TriggerZone zone(false, TriggerMode::Latch, 0, TriggerAction::Enter, true);
+    zone.enter();
+    CHECK(!zone.triggered());
+    zone.follow(true);
+    CHECK(zone.triggered());
+    zone.follow(false);
+    CHECK(!zone.triggered());
+}
+
+TEST_CASE(zone_reset_and_restore_go_through_to_the_state) {
+    TriggerZone zone(false, TriggerMode::Latch, 0, TriggerAction::Enter);
+    zone.enter();
+    zone.reset();
+    CHECK(!zone.triggered());
+    zone.restore(true);
+    CHECK(zone.triggered());
+}

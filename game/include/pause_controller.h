@@ -40,7 +40,10 @@ class PauseController {
     };
 
     void _init_pause_menu();
-    void _set_visible(bool visible);
+    // Creates the 'Paused' title (only while the game is paused).
+    void _show_title();
+    // Frees the title and the menu rows. Called whenever the game resumes.
+    void _release_sprites();
     void _rebuild_menu();
     void _rebuild_options_menu();
     // Replaces the menu with the controls overview (see ControlsText).

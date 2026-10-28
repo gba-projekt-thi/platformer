@@ -1,0 +1,282 @@
+{
+  "levels": [
+    {
+      "name": "LEVEL_WORLD4_POGO",
+      "note": "=============================================================================\nWORLD 4 POGO - \"Bramble Hop\", the pogo level (world_width=460)\nThree baskets with pits between them that neither a jump nor a dash\ncrosses (120 and 152 px). Thorn bushes float in them: strike down with R\nand bounce off - once over the first pit, twice in a row over the second.\n=============================================================================",
+      "platforms": {
+        "name": "world4_pogo_platforms",
+        "items": [
+          {"x": -200, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "blank_before": true, "note": "Start: two baskets, top at y=52."},
+          {"x": -168, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": -16, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "note": "The middle island, 120 px past the first."},
+          {"x": 16, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 200, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "note": "The door's basket, 152 px past the middle island."}
+        ]
+      },
+      "traps": {
+        "name": "world4_pogo_traps",
+        "items": [
+          {"type": "BASE", "x": -108, "y": 60, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16, "blank_before": true, "note": "One bush in the first pit, 44 px out: a jump reaches it from above."},
+          {"type": "BASE", "x": 60, "y": 60, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16, "note": "Two bushes in the second pit, a bounce apart."},
+          {"type": "BASE", "x": 108, "y": 60, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16}
+        ]
+      },
+      "background": "world4",
+      "music": "world4",
+      "spawn": [-200, 40],
+      "door": {
+        "x": 200,
+        "y": 42
+      },
+      "world_width": 460,
+      "world_height": 160,
+      "ground_friction": 1,
+      "intro_hint": "New: strike down with R",
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "Door position",
+        "intro_hint": "First level built on the pogo (Cfg::Pogo::UNLOCK_WORLD = World 4)."
+      }
+    },
+    {
+      "name": "LEVEL_WORLD4_SCROLL",
+      "note": "=============================================================================\nWORLD 4 SCROLL - garden theme (world_width=528)\n=============================================================================",
+      "platforms": {
+        "name": "world4_scroll_platforms",
+        "items": [
+          {"blank_before": true, "x": -248, "y": 64, "width": 16, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "beet", "sprite_index": 0},
+          {"x": -192, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower1", "sprite_index": 0},
+          {"x": -160, "y": 44, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower2", "sprite_index": 0},
+          {"x": -120, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": -64, "y": 44, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower3", "sprite_index": 0},
+          {"x": -32, "y": 28, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower1", "sprite_index": 0},
+          {"x": 8, "y": 48, "width": 16, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "beet", "sprite_index": 0},
+          {"x": 64, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower2", "sprite_index": 0},
+          {"x": 104, "y": 48, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 152, "y": 28, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower3", "sprite_index": 0},
+          {"x": 192, "y": 48, "width": 16, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "beet", "sprite_index": 0},
+          {"x": 240, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower1", "sprite_index": 0},
+          {"x": 264, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0}
+        ]
+      },
+      "triggers": {
+        "name": "world4_scroll_triggers",
+        "items": [
+          {"x": 8, "y": 44, "width": 32, "height": 16, "name": "brick_release"},
+          {"x": 176, "y": 44, "width": 32, "height": 24, "name": "bug_release"}
+        ]
+      },
+      "traps": {
+        "name": "world4_scroll_traps",
+        "items": [
+          {"blank_before": true, "note": "Static ground hazard sitting in the gap after the start platform -\nclear of any platform, forces a full jump over the gap.", "type": "BASE", "x": -216, "y": 60, "width": 24, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "nest32x16", "sprite_waits": 16},
+          {"blank_before": true, "note": "Static bush hazard in a later gap.", "type": "BASE", "x": -88, "y": 56, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16},
+          {"blank_before": true, "note": "Falling brick, released when \"brick_release\" fires.", "type": "MOVING", "x": 52, "y": 60, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4, "trigger_name": "brick_release"},
+          {"blank_before": true, "note": "Flying pest, drifts right once \"bug_release\" fires.", "type": "MOVING", "x": 192, "y": 50, "width": 12, "height": 12, "offset_x": 0, "offset_y": 4, "sprite": "bug16x16", "velocity_x": 1.2, "max_vel": 2, "trigger_name": "bug_release"}
+        ]
+      },
+      "checkpoints": {
+        "name": "world4_scroll_checkpoints",
+        "note": "Checkpoint on the middle korb platform of the long garden level.",
+        "items": [
+          {"x": 104, "y": 28}
+        ]
+      },
+      "background": "world4",
+      "music": "world4",
+      "spawn": [-248, 42],
+      "door": {
+        "x": 254,
+        "y": 42
+      },
+      "world_width": 528,
+      "world_height": 160,
+      "ground_friction": 1,
+      "intro_hint": null,
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "Door position",
+        "world_width": "World size (enables scrolling)",
+        "ground_friction": "Ground friction: default",
+        "intro_hint": "No intro hint",
+        "checkpoints": "Checkpoints, in play order"
+      }
+    },
+    {
+      "name": "LEVEL_WORLD4_SCROLL_2",
+      "note": "=============================================================================\nWORLD 4 SCROLL 2 - garden theme, second level (world_width=320)\nIntroduces AmbushTrap: a bug lurking in the gap between the korb\nplatforms that darts out once the duck gets close. Also gives the\nCHASE mechanic its first appearance outside a boss fight - a second,\ngentler bug trails the duck the whole level - so the Hive Queen's\nrelentless pursuit in the World 4 boss isn't the player's first time\nreading a chaser's pressure alongside a lunging ambush.\n=============================================================================",
+      "platforms": {
+        "name": "world4b_scroll_platforms",
+        "items": [
+          {"blank_before": true, "x": -144, "y": 64, "width": 16, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "beet", "sprite_index": 0},
+          {"x": -88, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower1", "sprite_index": 0},
+          {"x": -48, "y": 44, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower2", "sprite_index": 0},
+          {"x": 0, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 56, "y": 44, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower3", "sprite_index": 0},
+          {"x": 104, "y": 64, "width": 16, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "beet", "sprite_index": 0},
+          {"x": 152, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower1", "sprite_index": 0}
+        ]
+      },
+      "triggers": {
+        "name": "world4b_scroll_triggers",
+        "items": [
+          {"note": "False exit: a lever on the last beet, a pressure plate (Hold) with a\nhalf-second lag both ways. Hop across and nothing happens; stand on it\nand the lever drops, and the door turns into a trap until half a second\nafter the duck has left - it kills the duck that jumps over to it.", "x": 104, "y": 44, "width": 16, "height": 16, "default_on": false, "name": "door_trap", "mode": "Hold", "sprite": "lever16x16", "delay_frames": 30}
+        ]
+      },
+      "traps": {
+        "name": "world4b_scroll_traps",
+        "items": [
+          {"blank_before": true, "note": "Trailing bug, introducing CHASE outside a boss fight: eases toward\n65px behind the duck at a gentle 1.3px/frame - slower and with more\nslack than the Hive Queen's 50px/1.8px/frame in the World 4 boss.\nCombined with the ambush bug below, standing still to plan the\nambush dodge lets the chaser close the gap - the level's first\ntaste of \"pursuer pressure plus dodge timing\" at once.", "type": "CHASE", "x": -180, "y": 24, "width": 12, "height": 12, "offset_x": 0, "offset_y": 4, "sprite": "bug16x16", "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "chase_follow_distance": 65, "chase_speed": 1.3},
+          {"blank_before": true, "note": "Static bush hazard right after the first platform.", "type": "BASE", "x": -104, "y": 56, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16},
+          {"blank_before": true, "note": "Ambush bug lurking near the korb platform - lunges right once the\nduck comes within 40px, for 20 frames, then retreats and re-arms.", "type": "AMBUSH", "x": 12, "y": 50, "width": 12, "height": 12, "offset_x": 0, "offset_y": 4, "sprite": "bug16x16", "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "ambush_range": 110, "ambush_speed": 1.5, "ambush_duration": 30}
+        ]
+      },
+      "background": "world4",
+      "music": "world4",
+      "spawn": [-144, 42],
+      "door": {
+        "x": 152,
+        "y": 42,
+        "trap_trigger_name": "door_trap",
+        "attempt_positions": [[0, 0], [-96, -16]],
+        "attempt_every": 3
+      },
+      "world_width": 320,
+      "world_height": 160,
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "Door position. A trap while the lever is down (door_trap); after\nthree deaths in the level it takes pity and waits on flower3 (56, 26),\nbefore the lever (attempt_positions).",
+        "world_width": "World size (enables scrolling)"
+      }
+    },
+    {
+      "name": "LEVEL_WORLD4_TRICK",
+      "note": "=============================================================================\nWORLD 4 TRICK - \"Hedge Your Bets\", a Level Devil level (world_width=480)\nBramble Hop's pogo, with a garden that bites back on a timer:\n  1 Pit one: 120px, a bush in the middle - strike it (R) and bounce across.\n  2 The island beyond is a delayed trap chain (TriggerData::follows). Landing\n    on its first baskets presses an invisible plate; at once a brick falls\n    on the baskets at the far edge, where a duck that runs on stands, and\n    well after that a bush sprouts beside its spot. Hold still on the\n    first basket until both are gone, then walk on.\n  3 Pit two: 152px, two bushes a bounce apart - bounce twice in a row.\nEverything resets on death. No checkpoint: a short level, every attempt\nmeets all of it.\n=============================================================================",
+      "platforms": {
+        "name": "world4_trick_platforms",
+        "items": [
+          {"x": -216, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "blank_before": true, "note": "Start: two baskets, top at y=52."},
+          {"x": -184, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": -32, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "blank_before": true, "note": "The chain island, 120 px past the start: the first two baskets carry\nthe plate, the far one takes the brick and the sprouting bush."},
+          {"x": 0, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 32, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 216, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "blank_before": true, "note": "The door's basket, 152 px past the island."}
+        ]
+      },
+      "triggers": {
+        "name": "world4_trick_triggers",
+        "items": [
+          {"blank_before": true, "note": "The chain: an invisible plate over the first two baskets of the island ...", "x": -16, "y": 46, "width": 64, "height": 12, "name": "plate"},
+          {"note": "... the brick falls at once onto the island's far edge ...", "x": 40, "y": -120, "width": 8, "height": 8, "name": "brick_drop", "delay_frames": 0, "follows": "plate"},
+          {"note": "... and 40 frames after that a bush sprouts beside the brick's spot.", "x": 36, "y": 100, "width": 8, "height": 8, "name": "sprout", "delay_frames": 40, "follows": "brick_drop"}
+        ]
+      },
+      "traps": {
+        "name": "world4_trick_traps",
+        "items": [
+          {"type": "BASE", "x": -124, "y": 60, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16, "blank_before": true, "note": "Pit one: one bush, 44 px out - a jump reaches it from above."},
+          {"blank_before": true, "note": "The chain's brick: falls from above the screen onto the far edge.", "type": "MOVING", "x": 40, "y": -120, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4, "trigger_name": "brick_drop"},
+          {"note": "The chain's end: a bush sprouts once through the far basket (out over 6 frames, up for 24, back over 10, then a rest longer than any attempt).", "type": "CYCLE", "x": 36, "y": 100, "width": 16, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16, "trigger_name": "sprout", "cycle_dy": -64, "cycle_extend_frames": 6, "cycle_hold_frames": 24, "cycle_retract_frames": 10, "cycle_wait_frames": 36000, "sprite_z_order": 1},
+          {"type": "BASE", "x": 76, "y": 60, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16, "blank_before": true, "note": "Pit two: two bushes a bounce apart."},
+          {"type": "BASE", "x": 124, "y": 60, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16}
+        ]
+      },
+      "background": "world4",
+      "music": "world4",
+      "spawn": [-216, 40],
+      "door": {
+        "x": 216,
+        "y": 42
+      },
+      "world_width": 480,
+      "world_height": 160,
+      "ground_friction": 1,
+      "intro_hint": "Bounce now, panic later.",
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "Door position",
+        "intro_hint": "A Level Devil level: say once that it is not all about the bounce."
+      }
+    },
+    {
+      "name": "LEVEL_WORLD4_BOSS",
+      "note": "=============================================================================\nWORLD 4 BOSS - \"The Hive Queen\" (world_width=480)\n=============================================================================",
+      "platforms": {
+        "name": "world4_boss_platforms",
+        "items": [
+          {"blank_before": true, "x": -363, "y": 64, "width": 16, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "beet", "sprite_index": 0},
+          {"x": -307, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower1", "sprite_index": 0},
+          {"x": -267, "y": 44, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower2", "sprite_index": 0},
+          {"x": -227, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": -195, "y": 44, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower3", "sprite_index": 0},
+          {"x": -131, "y": 64, "width": 16, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "beet", "sprite_index": 0},
+          {"x": -75, "y": 44, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower1", "sprite_index": 0},
+          {"x": -35, "y": 64, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 13, "y": 60, "width": 16, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "flower2", "sprite_index": 0},
+          {"x": 61, "y": 64, "width": 16, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "beet", "sprite_index": 0},
+          {"x": 97, "y": 46, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "blank_before": true, "note": "Boss arena: the Beetle. A step up to the left ledge, a pit the boss\nfloats in (only pogo strikes on its back cross it), the right ledge with\nthe door - shut until the boss is beaten, when a bridge spans the pit."},
+          {"x": 139, "y": 28, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 171, "y": 28, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 315, "y": 28, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 347, "y": 28, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0},
+          {"x": 243, "y": 28, "width": 32, "height": 16, "offset_x": 0, "offset_y": -4, "sprite": "korb", "sprite_index": 0, "trigger_name": "arena_won", "note": "The stepping stone the boss's defeat raises (arena_won)."}
+        ]
+      },
+      "triggers": {
+        "name": "world4_boss_triggers",
+        "items": [
+          {"x": -279, "y": 40, "width": 32, "height": 40, "name": "wave1"},
+          {"x": -159, "y": 40, "width": 32, "height": 40, "name": "wave2"},
+          {"x": -49, "y": 40, "width": 32, "height": 40, "name": "wave3"},
+          {"blank_before": true, "note": "The arena: the boss starts when the duck reaches the left ledge.", "x": 155, "y": 4, "width": 64, "height": 24, "name": "arena"},
+          {"note": "Switched on by the boss (BossTrap), never by the duck.", "x": 243, "y": -200, "width": 8, "height": 8, "name": "arena_won"},
+          {"x": 243, "y": -200, "width": 8, "height": 8, "name": "arena_p2"},
+          {"x": 243, "y": -200, "width": 8, "height": 8, "name": "arena_p3"}
+        ]
+      },
+      "traps": {
+        "name": "world4_boss_traps",
+        "items": [
+          {"blank_before": true, "note": "The Hive Queen herself: a bug that trails the duck the whole fight,\nclosing the gap whenever the duck advances - constant pressure, like\nan enrage timer forcing forward movement.", "type": "CHASE", "x": -399, "y": 20, "width": 12, "height": 12, "offset_x": 0, "offset_y": 4, "sprite": "bug16x16", "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "chase_follow_distance": 50, "chase_speed": 1.8, "chase_limit": 432},
+          {"blank_before": true, "note": "A bush disguised as scenery, lunging if the duck lingers near it.", "type": "AMBUSH", "x": -239, "y": 56, "width": 24, "height": 24, "offset_x": 0, "offset_y": 0, "sprite": "strauch32x32", "sprite_waits": 16, "ambush_range": 30, "ambush_speed": 1.6, "ambush_duration": 20},
+          {"blank_before": true, "note": "Attack 1: a brick dive-bombs down, triggered by wave1.", "type": "MOVING", "x": -279, "y": -90, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 5, "max_vel": 5, "trigger_name": "wave1"},
+          {"blank_before": true, "note": "Attack 2: a second dive-bomb, triggered by wave2.", "type": "MOVING", "x": -159, "y": -106, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 5, "max_vel": 5, "trigger_name": "wave2"},
+          {"blank_before": true, "note": "A second, faster worker bug lunges in once the duck nears the door.", "type": "AMBUSH", "x": -49, "y": 50, "width": 12, "height": 12, "offset_x": 0, "offset_y": 4, "sprite": "bug16x16", "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "ambush_range": 32, "ambush_speed": 2.2, "ambush_duration": 16},
+          {"blank_before": true, "note": "Attack 3: final dive-bomb right before the door, triggered by wave3.", "type": "MOVING", "x": -39, "y": -90, "width": 16, "height": 16, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 4, "max_vel": 4.5, "trigger_name": "wave3"},
+          {"blank_before": true, "note": "The Beetle: 3 pogo strikes; every hit is a new phase\n(faster, and the arena_p<n> traps attack).", "type": "BOSS", "x": 204, "y": 29, "width": 26, "height": 18, "offset_x": 0, "offset_y": 2, "sprite": "bug32x32", "sprite_waits": 8, "graphic_indexes": "TRAP_GRAPHICS_INDEXES_3", "path": "BOSS_PATH", "path_waits": 80, "trigger_name": "arena", "sprite_scale": 1.25, "boss_hits": 3},
+          {"note": "Phase attacks: dropped through the pit when arena_p<n> switches on\n(in sight after ~37 frames), across the bounces on the boss.", "type": "MOVING", "x": 224, "y": -180, "width": 12, "height": 12, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 3, "max_vel": 3, "trigger_name": "arena_p2"},
+          {"type": "MOVING", "x": 261, "y": -180, "width": 12, "height": 12, "offset_x": 0, "offset_y": 0, "sprite": "brick16x16", "velocity_x": 0.0, "velocity_y": 3, "max_vel": 3, "trigger_name": "arena_p3"}
+        ]
+      },
+      "checkpoints": {
+        "name": "world4_boss_checkpoints",
+        "note": "One checkpoint, on the arena's left ledge: a lost boss fight starts there.",
+        "items": [
+          {"x": 147, "y": 8}
+        ]
+      },
+      "background": "world4",
+      "music": "world4",
+      "boss_music_order": 6,
+      "spawn": [-363, 42],
+      "door": {
+        "x": 335,
+        "y": 6
+      },
+      "world_width": 758,
+      "world_height": 160,
+      "ground_friction": 1,
+      "intro_hint": "Same trick: R from above",
+      "intro_hint": "Same trick: R from above",
+      "field_notes": {
+        "spawn": "Player spawn",
+        "door": "Door position",
+        "world_width": "World size (enables scrolling)",
+        "ground_friction": "Ground friction: default",
+        "checkpoints": "Checkpoints, in play order",
+        "intro_hint": "Shown once the duck reaches the arena (a boss level waits for it).",
+        "intro_hint": "Shown once the duck reaches the arena (a boss level waits for it)."
+      }
+    }
+  ]
+}

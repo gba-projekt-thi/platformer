@@ -17,10 +17,10 @@ gen = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(gen)
 
 
-def render():
+def render(name="dash"):
     with tempfile.TemporaryDirectory() as tmp:
-        path = Path(tmp) / "dash.wav"
-        gen.write(path)
+        path = Path(tmp) / f"{name}.wav"
+        gen.write(path, name)
         with wave.open(str(path), "rb") as wav:
             params = wav.getparams()
             frames = wav.readframes(wav.getnframes())
@@ -60,6 +60,62 @@ class DashSoundTests(unittest.TestCase):
         first = sum(abs(b - 128) for b in frames[:half])
         second = sum(abs(b - 128) for b in frames[half:])
         self.assertGreater(first, second)
+
+
+class PogoSoundTests(unittest.TestCase):
+    """The pogo strike's swish: shorter than the dash, sweeping up."""
+
+    def test_is_a_short_audible_effect(self):
+        params, frames = render("pogo")
+        self.assertEqual((params.nchannels, params.sampwidth, params.framerate), (1, 1, 11025))
+        self.assertLess(params.nframes / params.framerate, render()[0].nframes / 11025)
+        peak = max(abs(b - 128) for b in frames)
+        self.assertGreater(peak, 90)
+        self.assertLess(peak, 127)
+
+    def test_differs_from_the_dash(self):
+        self.assertNotEqual(render("pogo")[1][:500], render("dash")[1][:500])
+
+    def test_starts_and_ends_near_silence(self):
+        _, frames = render("pogo")
+        self.assertLessEqual(abs(frames[0] - 128), 8)
+        self.assertLessEqual(max(abs(b - 128) for b in frames[-40:]), 12)
+
+
+def zero_crossings(frames):
+    return sum(1 for a, b in zip(frames, frames[1:]) if (a - 128) * (b - 128) < 0)
+
+
+class LayoutShiftSoundTests(unittest.TestCase):
+    """The cue that the level changed between attempts: a low rustle."""
+
+    def test_is_a_short_audible_effect(self):
+        params, frames = render("layout_shift")
+        self.assertEqual((params.nchannels, params.sampwidth, params.framerate), (1, 1, 11025))
+        seconds = params.nframes / params.framerate
+        self.assertGreater(seconds, 0.15)
+        self.assertLess(seconds, 0.4)
+        peak = max(abs(b - 128) for b in frames)
+        self.assertGreater(peak, 90)
+        self.assertLess(peak, 127)
+
+    def test_is_lower_than_the_movement_sounds(self):
+        # Fewer zero crossings per second: it rumbles where they hiss.
+        params, frames = render("layout_shift")
+        rate = zero_crossings(frames) / params.nframes
+        for name in ("dash", "pogo"):
+            other_params, other = render(name)
+            self.assertLess(rate, zero_crossings(other) / other_params.nframes, name)
+
+    def test_starts_and_ends_near_silence(self):
+        _, frames = render("layout_shift")
+        self.assertLessEqual(abs(frames[0] - 128), 8)
+        self.assertLessEqual(max(abs(b - 128) for b in frames[-40:]), 12)
+
+    def test_is_written_with_the_others(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            gen.main([tmp])
+            self.assertTrue((Path(tmp) / "layout_shift.wav").exists())
 
 
 if __name__ == "__main__":

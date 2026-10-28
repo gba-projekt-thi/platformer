@@ -16,20 +16,8 @@
 // ----------------------------------------------------------------------------
 class ChaserTrap : public BaseTrap {
    public:
-    ChaserTrap(
-        bn::fixed t_start_x,
-        bn::fixed t_start_y,
-        bn::fixed t_width,
-        bn::fixed t_height,
-        bn::fixed t_offset_x,
-        bn::fixed t_offset_y,
-        const bn::sprite_item& t_sprite_item,
-        int t_sprite_waits,
-        bn::span<const uint16_t> t_graphics_indexes,
-        uint16_t t_blocking_layers,
-        bn::fixed t_follow_distance,
-        bn::fixed t_chase_speed,
-        Player& t_player);
+    // chase_speed already scaled for Hard / Assist Mode.
+    ChaserTrap(const TrapData& data, bn::fixed chase_speed, Player& player);
 
     void update() override;
 
@@ -45,6 +33,7 @@ class ChaserTrap : public BaseTrap {
 
     // Max horizontal distance closed per frame while chasing.
     bn::fixed _chase_speed;
+    bn::fixed _limit;  // TrapData::chase_limit
 
     Player& _player;
 };

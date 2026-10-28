@@ -1,84 +1,28 @@
 // Butano
-#include "bn_bg_palettes.h"
 #include "bn_blending.h"
-#include "bn_colors.h"
 #include "bn_core.h"
 #include "bn_span.h"
 #include "bn_unique_ptr.h"
 
 // Engine team
-#include "collision_registry.h"
+#include "core_scene_manager.h"
 #include "log.h"
-#include "sprite.h"
 
 // Our team
-#include "moving_trap.h"
-#include "player.h"
-#include "trigger.h"
-
-// Level 1
-#include "bn_sprite_items_bubbles.h"
-#include "bn_sprite_items_connector16x16.h"
-#include "bn_sprite_items_door32x32.h"
-#include "bn_sprite_items_kugelfisch.h"
-#include "bn_sprite_items_platforms_world1.h"
-
-// Level 2
-#include "bn_sprite_items_box32x32.h"
-#include "bn_sprite_items_can32x32.h"
-#include "bn_sprite_items_ladder.h"
-#include "bn_sprite_items_pipe16x16.h"
-#include "bn_sprite_items_platforms_world2.h"
-#include "bn_sprite_items_rustynails32x16.h"
-
-// Level 3
-#include "bn_sprite_items_baumstamm.h"
-#include "bn_sprite_items_branch32x16.h"
-#include "bn_sprite_items_mushroom32x32.h"
-#include "bn_sprite_items_nebel.h"
-#include "bn_sprite_items_slithermanarms32x32.h"
-
-// World 4 (garden, scrolling)
-#include "bn_sprite_items_beet.h"
-#include "bn_sprite_items_brick16x16.h"
-#include "bn_sprite_items_bug16x16.h"
-#include "bn_sprite_items_flower1.h"
-#include "bn_sprite_items_flower2.h"
-#include "bn_sprite_items_flower3.h"
-#include "bn_sprite_items_korb.h"
-#include "bn_sprite_items_nest32x16.h"
-#include "bn_sprite_items_strauch32x32.h"
-
-// World 5 (dungeon, scrolling finale)
-#include "bn_sprite_items_axe64x32.h"
-#include "bn_sprite_items_barrel32x32.h"
-#include "bn_sprite_items_bars32x32.h"
-#include "bn_sprite_items_chest32x32.h"
-#include "bn_sprite_items_mimic32x32.h"
-#include "bn_sprite_items_rostybar32x32.h"
-#include "bn_sprite_items_thwomp32x32.h"
-
-// Wallpapers
-#include "bn_regular_bg_items_kissingscene.h"
-#include "bn_regular_bg_items_world1.h"
-#include "bn_regular_bg_items_world2.h"
-#include "bn_regular_bg_items_world3.h"
-#include "bn_regular_bg_items_world4.h"
-#include "bn_regular_bg_items_world5.h"
-#include "bn_regular_bg_ptr.h"
-
-// Music
-#include "bn_music_items.h"
-
-// Levels
-#include "core_scene.h"
-#include "core_scene_manager.h"
+#include "data_manager.h"
 #include "game_session.h"
-#include "kissing_scene.h"
 #include "level_manager.h"
-#include "level_scene.h"
 #include "levels.h"
+#include "player.h"
+#include "replay_runner.h"
 #include "start_scene.h"
+#include "story.h"
+#include "story_scene.h"
+#if defined(PLATFORMER_TOUR)
+#include "tour.h"
+#include "tour_data.h"
+#endif
+#include "world_index.h"
 
 int main() {
     // -------------------------------------------------------------------------
@@ -87,7 +31,13 @@ int main() {
     // features.
     // -------------------------------------------------------------------------
 
+#if defined(PLATFORMER_TOUR)
+    // The tour's menu buttons (tools/tour.py), replayed by Butano.
+    bn::core::init(bn::string_view(tour_data::KEYPAD));
+    tour::boot();
+#else
     bn::core::init();
+#endif
 
     // Configure global fade behavior once.
     bn::blending::set_fade_color(bn::blending::fade_color_type::BLACK);
@@ -104,28 +54,38 @@ int main() {
         LEVEL_0,
         LEVEL_1,
         LEVEL_WORLD1_SCROLL,
+        LEVEL_WORLD1_TRICK,
         LEVEL_WORLD1_BOSS,
         LEVEL_2,
         LEVEL_WORLD2_SCROLL,
+        LEVEL_WORLD2_TRICK,
         LEVEL_WORLD2_BOSS,
         LEVEL_3,
         LEVEL_WORLD3_SCROLL,
+        LEVEL_WORLD3_TRICK,
         LEVEL_WORLD3_BOSS,
+        LEVEL_WORLD4_POGO,
         LEVEL_WORLD4_SCROLL,
         LEVEL_WORLD4_SCROLL_2,
+        LEVEL_WORLD4_TRICK,
         LEVEL_WORLD4_BOSS,
         LEVEL_WORLD5_SCROLL,
         LEVEL_WORLD5_SCROLL_2,
         LEVEL_WORLD5_DASH,
         LEVEL_WORLD5_LEVERS,
+        LEVEL_WORLD5_CLIMB,
+        LEVEL_WORLD5_TRICK,
         LEVEL_WORLD5_BOSS,
         LEVEL_WORLD5_FINALE};
+    static_assert(
+        sizeof(levels) / sizeof(levels[0]) == WorldIndex::LEVEL_COUNT,
+        "levels[] and WorldIndex::WORLDS must list the same number of levels");
 
     // -------------------------------------------------------------------------
     // Create the player entity and apply an offset for the sprite anchor point.
     // -------------------------------------------------------------------------
 
-    Player player(0, 0, 8, 8);
+    Player player(0, 0, Cfg::Player::BODY_WIDTH, Cfg::Player::BODY_HEIGHT);
 
     // Initialize the level manager and begin the game loop.
     // Static lifetime prevents accidental destruction
@@ -148,6 +108,12 @@ int main() {
     static LevelManager level_manager
         __attribute__((section(".ewram"))) (player, data_manager);
 
+#if defined(PLATFORMER_REPLAY)
+    // Emulator test build (`make replay`): plays every recorded level instead.
+    run_replays(
+        player, bn::span<const LevelData>(levels), data_manager, level_manager);
+#endif
+
     auto first_scene = bn::make_unique<StartScene>(
         player, bn::span<const LevelData>(levels), data_manager, level_manager);
 
@@ -163,15 +129,17 @@ int main() {
         }
 
         // -------------------------------------------------------------------------
-        // After the final level completes, switch into a dedicated endgame
-        // scene instead of directly showing the kiss background from main.
+        // After the final level completes, switch into dedicated endgame
+        // scenes instead of directly showing the kiss background from main.
         // This ensures the previous level and its palettes are released first.
         // -------------------------------------------------------------------------
 
-        auto kissing_scene = bn::make_unique<KissingScene>(
-            player, bn::span<const LevelData>(levels), data_manager,
-            level_manager);
-        core::SceneManager::instance().set_next_scene(bn::move(kissing_scene));
+        // The story's ending first, then the reunion (StoryScene goes on to
+        // KissingScene).
+        auto ending = bn::make_unique<StoryScene>(
+            story::ENDING, player, bn::span<const LevelData>(levels),
+            data_manager, level_manager, StoryScene::Then::Reunion);
+        core::SceneManager::instance().set_next_scene(bn::move(ending));
 
         // Reset the completion flag so the next scene can run normally.
         GameSession::instance().reset();

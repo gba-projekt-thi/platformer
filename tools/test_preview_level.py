@@ -31,13 +31,19 @@ constexpr bn::fixed_point MY_PATH[] = {
 LEVELS = """
 constexpr PlatformData plats[] = {
     {-40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0},
-    {40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0},
+    {40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0, nullptr, true, 30, 120},
     {160, 60, 32, 16, 0, 0, bn::sprite_items::p, 0},
     {400, 60, 32, 16, 0, 0, bn::sprite_items::p, 0}};
 
 constexpr TriggerData trigs[] = {
     {0, 30, 20, 20, false, "go"},
-    {100, 30, 10, 10, false, "lev", TriggerMode::Toggle}};
+    {100, 30, 10, 10, false, "lev", TriggerMode::Toggle},
+    {200, 30, 10, 10, false, "slow", TriggerMode::Latch, nullptr, 0, 1, 45},
+    {220, 30, 10, 10, false, "clock", TriggerMode::Timer, nullptr, 0, 1, 120},
+    {240, 30, 10, 10, false, "hop", TriggerMode::Toggle, nullptr, 0, 1, 0,
+     TriggerAction::Jump},
+    {260, 30, 10, 10, false, "zip", TriggerMode::Latch, nullptr, 0, 1, 15,
+     TriggerAction::Dash}};
 
 constexpr TrapData traps[] = {
     {TrapType::BASE, 0, 40, 12, 12, 0, 0, bn::sprite_items::t, 1,
@@ -50,7 +56,14 @@ constexpr TrapData traps[] = {
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 40, 1.5,
      20},
     {TrapType::CHASE, -100, 20, 12, 12, 0, 0, bn::sprite_items::t, 1,
-     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 40, 2.5}};
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 40, 2.5},
+    {TrapType::CYCLE, 300, 56, 12, 12, 0, 0, bn::sprite_items::t, 1,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, "go", 0, 0, 0,
+     0, -12, 8, 40, 8, 60, 5},
+    // a fake door: a BASE trap that looks like the real one
+    {TrapType::BASE, 340, 40, 10, 20, 0, 0, bn::sprite_items::door32x32, 8,
+     DOOR32X32_GRAPHICS_INDEXES, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 1}};
 
 constexpr CheckpointData cps[] = {{-40, 44}, {40, 44}};
 
@@ -61,10 +74,15 @@ const LevelData LEVEL_T = {
     bn::regular_bg_items::w, bn::music_items::m, {-40, 30}, {40, 40},
     640, 160, 1, "hello", cps, 2};
 
+// a door that stands somewhere else after every death
+constexpr bn::fixed_point LEVEL_T2_door_attempt_positions[] = {{0, 0}, {-80, 0}};
+
 const LevelData LEVEL_T2 = {
     plats, sizeof(plats) / sizeof(plats[0]),
     nullptr, 0, nullptr, 0,
-    bn::regular_bg_items::w, bn::music_items::m, {-40, 30}, {40, 40}};
+    bn::regular_bg_items::w, bn::music_items::m, {-40, 30},
+    {40, 40, bn::sprite_items::door32x32, DOOR32X32_GRAPHICS_INDEXES, 8, false,
+     {}, 0, 0, nullptr, LEVEL_T2_door_attempt_positions, 1}};
 """
 
 
@@ -132,10 +150,24 @@ class ParsingTests(Fixture):
         other = self.levels["LEVEL_T2"]
         self.assertEqual((other.world_w, other.world_h), (240.0, 160.0))
 
+    def test_crumbling_platforms_are_parsed(self):
+        crumble = [(p.crumble, p.respawn) for p in self.level.platforms]
+        self.assertEqual(crumble, [(0, 0), (30, 120), (0, 0), (0, 0)])
+        self.assertIsNone(self.level.platforms[1].trigger)
+
     def test_trap_fields(self):
         kinds = [t["type"] for t in self.level.traps]
-        self.assertEqual(kinds, ["BASE", "MOVING", "PATH", "AMBUSH", "CHASE"])
-        moving, path, ambush, chase = (self.level.traps[i] for i in (1, 2, 3, 4))
+        self.assertEqual(
+            kinds, ["BASE", "MOVING", "PATH", "AMBUSH", "CHASE", "CYCLE", "BASE"]
+        )
+        moving, path, ambush, chase, cycle = (self.level.traps[i] for i in (1, 2, 3, 4, 5))
+        self.assertEqual((cycle["cycle_dx"], cycle["cycle_dy"]), (0.0, -12.0))
+        self.assertEqual(
+            [cycle[k] for k in ("cycle_extend", "cycle_hold", "cycle_retract", "cycle_wait", "cycle_phase")],
+            [8.0, 40.0, 8.0, 60.0, 5.0],
+        )
+        self.assertEqual(cycle["trigger"], "go")
+        self.assertEqual([t["sprite_z_order"] for t in self.level.traps], [0] * 6 + [1])
         self.assertEqual((moving["velocity_y"], moving["max_vel"]), (4.0, 4.0))
         self.assertEqual(moving["trigger"], "go")
         self.assertEqual(path["path"], [(0.0, 0.0), (20.0, 0.0), (20.0, 10.0)])
@@ -153,8 +185,30 @@ class ParsingTests(Fixture):
         self.assertEqual(self.levels["LEVEL_T2"].checkpoints, [])
 
     def test_trigger_modes_and_names(self):
-        self.assertEqual([t["name"] for t in self.level.triggers], ["go", "lev"])
-        self.assertEqual([t["mode"] for t in self.level.triggers], ["Latch", "Toggle"])
+        self.assertEqual(
+            [t["name"] for t in self.level.triggers],
+            ["go", "lev", "slow", "clock", "hop", "zip"],
+        )
+        self.assertEqual(
+            [t["mode"] for t in self.level.triggers],
+            ["Latch", "Toggle", "Latch", "Timer", "Toggle", "Latch"],
+        )
+
+    def test_trigger_delay_is_parsed_and_defaults_to_zero(self):
+        self.assertEqual([t["delay"] for t in self.level.triggers], [0, 0, 45, 120, 0, 15])
+
+    def test_trigger_action_is_parsed_and_defaults_to_enter(self):
+        self.assertEqual(
+            [t["action"] for t in self.level.triggers],
+            ["Enter", "Enter", "Enter", "Enter", "Jump", "Dash"],
+        )
+
+    def test_trigger_note_names_delay_and_timer(self):
+        notes = [pv.trigger_note(t) for t in self.level.triggers]
+        self.assertEqual(
+            notes,
+            ["", " [Toggle]", " +45f", " [Timer 120f]", " [Toggle] on jump", " on dash +15f"],
+        )
 
 
 class GeometryTests(Fixture):
@@ -214,6 +268,19 @@ class DrawingTests(Fixture):
         self.assertIn("dash-only", classes[2])  # 88px gap: dash only
         self.assertIn("unreachable", classes[3])  # far beyond even the dash
 
+    def test_a_crumbling_platform_is_drawn_dotted_and_labelled_but_still_reachable(self):
+        root = self.svg(arcs="none")
+        crumbling = [
+            r for r in root.iter(SVG + "rect") if "crumble" in r.get("class", "").split()
+        ]
+        self.assertEqual(len(crumbling), 1)
+        self.assertIn("platform 1", title_of(crumbling[0]))
+        self.assertIn("crumbles 30f", title_of(crumbling[0]))
+        self.assertIn("back after 120f", title_of(crumbling[0]))
+        self.assertNotIn("unreachable", crumbling[0].get("class").split())
+        text = " ".join(t.text or "" for t in root.iter(SVG + "text"))
+        self.assertIn("crumbles 30f", text)
+
     def test_without_reachability_nothing_is_flagged(self):
         root = ET.fromstring(pv.render(self.level, arcs="none", reach=False))
         self.assertEqual(drawn(root, "unreachable"), [])
@@ -221,18 +288,26 @@ class DrawingTests(Fixture):
 
     def test_every_trap_type_is_drawn_once(self):
         root = self.svg(arcs="none")
-        for kind in ("base", "moving", "path", "ambush", "chase"):
+        for kind in ("base", "moving", "path", "ambush", "chase", "cycle"):
             drawn = [
                 r
                 for r in rects_with(root, "trap", f"trap-{kind}")
                 if title_of(r)  # the legend swatches have no title
             ]
-            self.assertEqual(len(drawn), 1, kind)
+            # the fake door is a second BASE trap
+            self.assertEqual(len(drawn), 2 if kind == "base" else 1, kind)
+
+    def test_delayed_and_timer_triggers_are_labelled(self):
+        text = " ".join(t.text or "" for t in self.svg(arcs="none").iter(SVG + "text"))
+        self.assertIn("slow +45f", text)
+        self.assertIn("clock [Timer 120f]", text)
+        self.assertIn("hop [Toggle] on jump", text)
+        self.assertIn("zip on dash +15f", text)
 
     def test_triggers_are_linked_to_their_traps_and_labelled(self):
         root = self.svg(arcs="none")
         links = [e for e in root.iter(SVG + "line") if e.get("class") == "link"]
-        self.assertEqual(len(links), 2)  # MOVING and PATH are bound to "go"
+        self.assertEqual(len(links), 3)  # MOVING, PATH and CYCLE are bound to "go"
         text = " ".join(t.text or "" for t in root.iter(SVG + "text"))
         self.assertIn("lev [Toggle]", text)
 
@@ -263,11 +338,31 @@ class DrawingTests(Fixture):
         self.assertIn("checkpoint 2", text)
         self.assertIn("checkpoints 2", text)
 
+    def test_cycle_trap_shows_its_stroke_and_timing(self):
+        root = self.svg(arcs="none")
+        text = " ".join(t.text or "" for t in root.iter(SVG + "text"))
+        self.assertIn("CYCLE 8/40/8/60f +5", text)
+        # the resting box and the ghost box at full extension (12px higher)
+        cycle = [r for r in rects_with(root, "trap-cycle") if title_of(r)][0]
+        self.assertEqual((float(cycle.get("x")), float(cycle.get("y"))), (294.0, 50.0))
+        ghosts = [g for g in rects_with(root, "ghost") if float(g.get("x")) == 294.0]
+        self.assertTrue(any(float(g.get("y")) == 38.0 for g in ghosts))
+
     def test_spawn_and_door_markers(self):
         root = self.svg(arcs="none")
         spawn = rects_with(root, "spawn")[0]
         self.assertEqual(float(spawn.get("x")), -44.0)  # center -40, width 8
         self.assertEqual(len(rects_with(root, "door")), 1)
+
+    def test_a_door_that_moves_between_attempts_shows_every_spot(self):
+        other = self.levels["LEVEL_T2"]
+        self.assertEqual(other.door, (40.0, 40.0))
+        self.assertEqual(other.door_spots, [(40.0, 40.0), (-40.0, 40.0)])
+        root = ET.fromstring(pv.render(other, arcs="none"))
+        later = rects_with(root, "door", "later")
+        self.assertEqual(len(later), 1)
+        self.assertEqual(float(later[0].get("x")), -56.0)  # center -40, width 32
+        self.assertIn("after 1 death", title_of(later[0]))
 
     def test_no_traps_option_hides_traps_and_triggers(self):
         root = ET.fromstring(pv.render(self.level, arcs="none", show_traps=False))
@@ -357,6 +452,49 @@ class CommandLineTests(Fixture):
             self.assertEqual(code, 1)
 
 
+WINDOW_LEVEL = """
+constexpr PlatformData wplats[] = {
+    {-40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0},
+    {40, 60, 32, 16, 0, 0, bn::sprite_items::p, 0, nullptr, true, 0, 0, {}, 0, 0, 3}};
+
+constexpr TrapData wtraps[] = {
+    {TrapType::BASE, 0, 40, 12, 12, 0, 0, bn::sprite_items::t, 1,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, false, 0, 3}};
+
+const LevelData LEVEL_W = {
+    wplats, 2, nullptr, 0, wtraps, 1,
+    bn::regular_bg_items::w, bn::music_items::m, {-40, 30}, {40, 40}};
+"""
+
+
+class DeathWindowTests(unittest.TestCase):
+    """Level Devil: objects only there for some attempts are labelled."""
+
+    @classmethod
+    def setUpClass(cls):
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "levels_common.h").write_text(COMMON)
+            path = Path(tmp, "levels_worldW.h")
+            path.write_text(WINDOW_LEVEL)
+            cls.level = pv.load_level_file(path)["LEVEL_W"]
+
+    def test_window_label(self):
+        self.assertIsNone(pv.window_label(0, 0))
+        self.assertEqual(pv.window_label(3, 0), "deaths 3+")
+        self.assertEqual(pv.window_label(0, 3), "deaths 0-2")
+        self.assertEqual(pv.window_label(2, 3), "deaths 2")
+
+    def test_trap_window_is_parsed(self):
+        trap = self.level.traps[0]
+        self.assertEqual((trap["from_death"], trap["until_death"]), (0, 3))
+
+    def test_windowed_platform_and_trap_are_labelled(self):
+        svg = pv.render(self.level, arcs="none", reach=False)
+        self.assertIn("deaths 3+", svg)
+        self.assertIn("deaths 0-2", svg)
+
+
 def _real_files():
     here = Path(__file__).resolve().parent
     files = sorted(here.glob("levels_world*.h")) or sorted(
@@ -391,9 +529,8 @@ class RealLevelTests(unittest.TestCase):
 
     def test_long_levels_and_bosses_have_checkpoints(self):
         for name in (
-            "LEVEL_WORLD1_BOSS", "LEVEL_WORLD2_BOSS", "LEVEL_WORLD3_BOSS",
-            "LEVEL_WORLD4_BOSS", "LEVEL_WORLD5_BOSS", "LEVEL_WORLD5_SCROLL",
-            "LEVEL_WORLD5_DASH",
+            "LEVEL_WORLD3_BOSS", "LEVEL_WORLD4_BOSS", "LEVEL_WORLD5_BOSS",
+            "LEVEL_WORLD4_SCROLL", "LEVEL_WORLD5_SCROLL", "LEVEL_WORLD5_DASH",
         ):
             self.assertGreaterEqual(len(self.levels[name].checkpoints), 1, name)
 

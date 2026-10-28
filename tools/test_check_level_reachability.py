@@ -12,6 +12,9 @@ when it cannot be found. Run from the repository root:
 
 import importlib.util
 import itertools
+import os
+import re
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -25,8 +28,7 @@ def _find_world5():
     here = Path(__file__).resolve().parent
     if (here / "levels_world5.h").exists():
         return here / "levels_world5.h"
-    matches = sorted(here.parent.glob("**/levels_world5.h"))
-    return matches[0] if matches else None
+    return sim._ctr.find_game_file(here.parent, "levels_world5.h")
 
 
 WORLD5 = _find_world5()
@@ -156,10 +158,625 @@ class NewLevelTests(unittest.TestCase):
         self.assertTrue(ok)
         self.assertGreater(configs, 1)
 
+    def test_only_triggers_that_switch_a_platform_are_levers(self):
+        # Lever Hall's trap chain (an invisible plate and its followers) only
+        # drives traps: flipping it changes no platform, so it is no lever.
+        _, triggers, _, _ = self.level("LEVEL_WORLD5_LEVERS")
+        self.assertEqual(sorted(triggers), ["lever1", "lever2", "lever3", "lever4"])
+
     def test_every_lever_stands_on_a_platform(self):
         _, triggers, _, _ = self.level("LEVEL_WORLD5_LEVERS")
         for name, t in triggers.items():
             self.assertIsNotNone(t["platform"], name)
+
+
+def shaft(gap=14, walls=3):
+    """A floor, and on it a shaft between two columns of 26x32 barrels with
+    `gap` px between them; the left column leaves a 32 px doorway at the
+    bottom. Returns (platforms, spawn, door on top of the right column)."""
+    plats = [sim.Rect(x, 76, 26, 32, i) for i, x in enumerate(range(-104, 120, 26))]
+    left, right = 0.0, 26.0 + gap
+    for k in range(walls):
+        plats.append(sim.Rect(right, 44 - 32 * k, 26, 32, len(plats)))
+        if k > 0:
+            plats.append(sim.Rect(left, 44 - 32 * k, 26, 32, len(plats)))
+    top = 44 - 32 * (walls - 1) - 16
+    return plats, (-90.0, 40.0), (right, top - 4.0)
+
+
+class WallJumpModelTests(unittest.TestCase):
+    """Duck mirrors locomotion::Core::step() with the wall jump
+    (tests/host/test_locomotion.cpp)."""
+
+    WALL = [sim.Rect(20, 0, 26, 200, 0)]  # a wall right of the duck
+
+    def at_the_wall(self):
+        duck = sim.Duck(self.WALL, 3.0, -40.0, wall_jump=True)
+        duck.on_ground = False
+        for _ in range(10):
+            duck.step(right=True)
+        return duck
+
+    def test_holding_toward_a_wall_slides(self):
+        duck = self.at_the_wall()
+        self.assertEqual(duck.wall(), 1)
+        self.assertEqual(duck.vy, sim.SLIDE)
+
+    def test_a_wall_jump_pushes_away_and_up(self):
+        duck = self.at_the_wall()
+        duck.step(right=True, a_held=False)
+        x = duck.x
+        duck.step(right=True, a_pressed=True)
+        self.assertTrue(duck.wall_jumped)
+        self.assertEqual(duck.vx, -sim.PUSH)
+        self.assertEqual(duck.vy, sim.JUMP)
+        self.assertEqual(duck.x, x - sim.PUSH)
+
+    def test_the_duck_uses_the_games_fixed_point_values(self):
+        # bn::fixed keeps 12 fraction bits: 0.38 is stored as 1556 / 4096.
+        self.assertEqual(sim.fx(0.38), 1556 / 4096)
+        self.assertEqual(sim.fx(-3), -3)
+        duck = sim.Duck([], 0.0, 0.0)
+        duck.on_ground = False
+        duck.step(right=True)
+        self.assertEqual(duck.vx, 1556 / 4096)
+
+    def test_fixed_times_fixed_uses_half_precision_like_butano(self):
+        # (a / 64) * (b / 64): Cfg::Player::DECELERATION * friction 1.
+        self.assertEqual(sim.fx_mul(sim.fx(0.3), sim.fx(1)), 1216 / 4096)
+        self.assertEqual(sim.fx_mul(-1.5, 2), -3)
+
+    def test_without_wall_jumps_the_wall_is_ignored(self):
+        duck = sim.Duck(self.WALL, 3.0, -40.0, wall_jump=False)
+        for _ in range(40):
+            duck.step(right=True)
+        self.assertEqual(duck.wall(), 0)
+        self.assertEqual(duck.vy, sim.MAXFALL)
+
+    def test_a_shaft_needs_wall_jumps(self):
+        plats, spawn, door = shaft()
+        _, plain = sim.reach(plats, spawn, door, True, True)
+        _, climbed = sim.reach(plats, spawn, door, False, False, allow_wall=True)
+        self.assertFalse(plain)
+        self.assertTrue(climbed)
+
+
+class PogoModelTests(unittest.TestCase):
+    """Duck's pogo strike mirrors locomotion::Core (tests/host/test_locomotion.cpp)."""
+
+    SPIKES = [sim.Rect(0, 28, 16, 16, 0)]  # top at 20, in reach after 8 frames
+
+    def falling_above_the_spikes(self):
+        duck = sim.Duck([], 0.0, 0.0, pogo_targets=self.SPIKES)
+        duck.on_ground = False
+        for _ in range(8):
+            duck.step()
+        return duck
+
+    def test_a_strike_over_a_trap_bounces(self):
+        duck = self.falling_above_the_spikes()
+        duck.step(r_pressed=True)
+        self.assertTrue(duck.pogo_bounced)
+        self.assertEqual(duck.vy, sim.POGO_BOUNCE)
+
+    def test_the_bounce_is_not_cut_by_letting_go_of_a(self):
+        duck = self.falling_above_the_spikes()
+        duck.step(r_pressed=True)
+        duck.step(a_held=False)
+        self.assertEqual(duck.vy, sim.POGO_BOUNCE + sim.fx(sim.G))
+
+    def test_no_strike_without_a_trap_below(self):
+        duck = sim.Duck([], 0.0, 0.0, pogo_targets=[sim.Rect(0, 80, 16, 16, 0)])
+        duck.on_ground = False
+        duck.step()
+        duck.step(r_pressed=True)
+        self.assertFalse(duck.pogo_bounced)
+
+    def test_constants_match_cfg_pogo_h(self):
+        if REPO is None:
+            self.skipTest("levels_world5.h not found")
+        for sim_value, constant in (
+            (sim.POGO_FRAMES, "STRIKE_FRAMES"), (sim.POGO_COOLDOWN, "COOLDOWN_FRAMES"),
+            (sim.POGO_REACH, "REACH"), (sim.POGO_WIDTH, "WIDTH"), (sim.POGO_BOUNCE, "BOUNCE_SPEED"),
+        ):
+            self.assertEqual(sim_value, cfg_value("cfg_pogo.h", "Pogo", constant), constant)
+
+
+class BossBridgeTests(unittest.TestCase):
+    """A bridge bound to "<arena>_won" appears when the boss is beaten; the
+    check assumes it is (the fight is the emulator replays' job)."""
+
+    def test_the_bridge_of_a_beaten_boss_counts(self):
+        plats = [sim.Rect(0, 60, 32, 16, 0), sim.Rect(150, 60, 32, 16, 1)]
+        plats += [sim.Rect(x, 60, 32, 16, 2 + k, "arena_won", True)
+                  for k, x in enumerate((40, 75, 110))]
+        triggers = {"arena_won": {"default_on": False, "rect": (0, -200, 1, 1)}}
+        sim.attach_lever_platforms(plats, triggers)
+        _, ok, _ = sim.reach_with_levers(plats, triggers, (0, 40), (150, 48), False, False)
+        self.assertTrue(ok)
+        self.assertFalse(sim.reach(plats[:2], (0, 40), (150, 48), False, True)[1])
+
+
+class PogoReachTests(unittest.TestCase):
+    """A gap wider than jump + dash, with a bush to bounce off in it."""
+
+    def gap(self):
+        plats = [sim.Rect(-200, 60, 32, 16, 0), sim.Rect(-168, 60, 32, 16, 1),
+                 sim.Rect(-12, 60, 32, 16, 2), sim.Rect(20, 60, 32, 16, 3)]
+        bush = sim.Rect(-108, 60, 24, 24, 0)  # pit -152 .. -28, 124 px
+        return plats, bush
+
+    def test_a_gap_beyond_the_dash_needs_the_pogo(self):
+        plats, bush = self.gap()
+        door = (20.0, 48.0)
+        self.assertFalse(sim.reach(plats, (-200, 40), door, True, True)[1])
+        self.assertTrue(sim.reach(plats, (-200, 40), door, True, False, pogo_targets=[bush])[1])
+
+    def test_static_traps_are_read_from_the_level(self):
+        traps = sim.load_static_traps(WORLD5)["LEVEL_WORLD5_SCROLL"]
+        self.assertIn((-240.0, 60.0, 16.0, 16.0), [(t.cx, t.cy, t.w, t.h) for t in traps])
+
+
+class RunningDoorTests(unittest.TestCase):
+    """A door with DoorData::flee_path has to be reached at its last stop."""
+
+    def load(self, door):
+        spec = importlib.util.spec_from_file_location(
+            "generate_levels", Path(__file__).with_name("Generate_levels.py"))
+        gen = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gen)
+        level = {
+            "name": "LEVEL_X",
+            "platforms": {"name": "x_platforms", "items": [
+                {"x": 0, "y": 60, "width": 32, "height": 16, "offset_x": 0,
+                 "offset_y": 0, "sprite": "stone", "sprite_index": 0}]},
+            "background": "world9", "music": "world9",
+            "spawn": [0, 40], "door": door,
+        }
+        header = gen.generate({"levels": [level]}, gen.read_structs())
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "levels.h"
+            path.write_text(header)
+            return sim.load_levels(path)["LEVEL_X"]
+
+    def test_a_plain_door_is_where_it_stands(self):
+        _, _, _, door = self.load({"x": 30, "y": 4})
+        self.assertEqual(door, (30.0, 8.0, 18.0, 18.0))
+
+    def test_a_running_platform_counts_at_its_last_stop(self):
+        spec = importlib.util.spec_from_file_location(
+            "generate_levels", Path(__file__).with_name("Generate_levels.py"))
+        gen = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gen)
+        level = {
+            "name": "LEVEL_X",
+            "platforms": {"name": "x_platforms", "items": [
+                {"x": 0, "y": 60, "width": 32, "height": 16, "offset_x": 0, "offset_y": 0,
+                 "sprite": "stone", "sprite_index": 0,
+                 "flee_path": [[48, -8]], "flee_range": 32, "flee_frames": 8}]},
+            "background": "world9", "music": "world9", "spawn": [0, 40], "door": {"x": 30, "y": 4},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "levels.h"
+            path.write_text(gen.generate({"levels": [level]}, gen.read_structs()))
+            platforms = sim.load_levels(path)["LEVEL_X"][0]
+        self.assertEqual((platforms[0].cx, platforms[0].cy), (48.0, 52.0))
+
+    def test_a_running_door_counts_at_its_last_stop(self):
+        _, _, _, door = self.load({"x": 30, "y": 4, "flee_path": [[40, 0], [60, -20]],
+                                   "flee_range": 24, "flee_frames": 10})
+        self.assertEqual(door, (90.0, -12.0, 18.0, 18.0))
+
+
+class DeathWindowTests(unittest.TestCase):
+    """Level Devil: platforms and traps only there for some attempts
+    (from_death / until_death). The door must be reachable on every one."""
+
+    def rect(self, cx, index, start=0, end=0):
+        return sim.Rect(cx, 60, 32, 16, index, from_death=start, until_death=end)
+
+    def test_attempts_split_where_a_window_opens_or_closes(self):
+        self.assertEqual(sim.death_breakpoints([self.rect(0, 0)]), [0])
+        self.assertEqual(
+            sim.death_breakpoints([self.rect(0, 0, 0, 3), self.rect(0, 1, 3, 0), self.rect(0, 2, 2, 5)]),
+            [0, 2, 3, 5])
+
+    def test_present_follows_attempt_variant(self):
+        r = self.rect(0, 0, 2, 5)
+        self.assertEqual([sim.present(r, d) for d in range(7)],
+                         [False, False, True, True, True, False, False])
+        self.assertTrue(sim.present(self.rect(0, 0), 99))
+
+    def level(self, bridges):
+        # start 0, door platform at 160: 96 px between them, too wide for a
+        # plain jump without a bridge in between
+        plats = [self.rect(0, 0), self.rect(160, 1)] + bridges
+        return plats, {}, (0, 40), (160.0, 48.0)
+
+    def test_a_bridge_that_is_gone_after_3_deaths_fails_from_then_on(self):
+        plats, triggers, spawn, door = self.level([self.rect(80, 2, 0, 3)])
+        self.assertEqual(sim.unreachable_windows(plats, triggers, spawn, door, False, False), [3])
+
+    def test_a_bridge_that_moves_after_3_deaths_keeps_the_level_finishable(self):
+        plats, triggers, spawn, door = self.level([self.rect(80, 2, 0, 3), self.rect(72, 3, 3, 0)])
+        self.assertEqual(sim.unreachable_windows(plats, triggers, spawn, door, False, False), [])
+
+    def test_the_window_is_read_from_the_level(self):
+        spec = importlib.util.spec_from_file_location(
+            "generate_levels", Path(__file__).with_name("Generate_levels.py"))
+        gen = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gen)
+        level = {
+            "name": "LEVEL_X",
+            "platforms": {"name": "x_platforms", "items": [
+                {"x": 0, "y": 60, "width": 32, "height": 16, "offset_x": 0, "offset_y": 0,
+                 "sprite": "stone", "sprite_index": 0, "from_death": 3}]},
+            "traps": {"name": "x_traps", "items": [
+                {"type": "BASE", "x": 0, "y": 0, "width": 8, "height": 8, "offset_x": 0,
+                 "offset_y": 0, "sprite": "b", "until_death": 2}]},
+            "background": "world9", "music": "world9", "spawn": [0, 40], "door": {"x": 30, "y": 4},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "levels.h"
+            path.write_text(gen.generate({"levels": [level]}, gen.read_structs()))
+            platform = sim.load_levels(path)["LEVEL_X"][0][0]
+            trap = sim.load_static_traps(path)["LEVEL_X"][0]
+        self.assertEqual((platform.from_death, platform.until_death), (3, 0))
+        self.assertEqual((trap.from_death, trap.until_death), (0, 2))
+
+
+class AttemptDoorTests(unittest.TestCase):
+    """A door with DoorData::attempt_positions stands somewhere else after
+    deaths: every one of its spots has to be reachable and in the play area."""
+
+    def header(self, door, tmp):
+        spec = importlib.util.spec_from_file_location(
+            "generate_levels", Path(__file__).with_name("Generate_levels.py"))
+        gen = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gen)
+        level = {
+            "name": "LEVEL_X",
+            "platforms": {"name": "x_platforms", "items": [
+                {"x": 0, "y": 60, "width": 160, "height": 16, "offset_x": 0,
+                 "offset_y": 0, "sprite": "stone", "sprite_index": 0}]},
+            "background": "world9", "music": "world9",
+            "spawn": [0, 40], "door": door, "world_width": 240,
+        }
+        path = Path(tmp) / "levels.h"
+        path.write_text(gen.generate({"levels": [level]}, gen.read_structs()))
+        return path
+
+    def campaign(self, path):
+        return [sim.CampaignLevel(0, "LEVEL_X", path, False, False, False)]
+
+    def test_a_plain_door_has_one_position(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            positions = sim.load_door_positions(self.header({"x": 30, "y": 40}, tmp))
+        self.assertEqual(positions["LEVEL_X"], [(30.0, 44.0, 18.0, 18.0)])
+
+    def test_every_attempt_position_is_a_door_position(self):
+        door = {"x": 30, "y": 40, "attempt_positions": [[0, 0], [-60, 0]], "attempt_every": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.header(door, tmp)
+            positions = sim.load_door_positions(path)["LEVEL_X"]
+            first = sim.load_levels(path)["LEVEL_X"][3]
+        self.assertEqual(positions, [(30.0, 44.0, 18.0, 18.0), (-30.0, 44.0, 18.0, 18.0)])
+        # load_levels() keeps the door of the first attempt.
+        self.assertEqual(first, (30.0, 44.0, 18.0, 18.0))
+
+    def test_a_running_door_runs_from_every_attempt_position(self):
+        door = {"x": 30, "y": 40, "flee_path": [[20, 0]], "flee_range": 24, "flee_frames": 8,
+                "attempt_positions": [[0, 0], [-60, 0]], "attempt_every": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            positions = sim.load_door_positions(self.header(door, tmp))["LEVEL_X"]
+        self.assertEqual(positions, [(50.0, 44.0, 18.0, 18.0), (-10.0, 44.0, 18.0, 18.0)])
+
+    def test_reachable_attempt_positions_pass(self):
+        door = {"x": 30, "y": 40, "attempt_positions": [[0, 0], [-60, 0]], "attempt_every": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(sim.unreachable_doors(self.campaign(self.header(door, tmp))), [])
+
+    def test_one_unreachable_attempt_position_fails_the_level(self):
+        door = {"x": 30, "y": 40, "attempt_positions": [[0, 0], [0, -200]], "attempt_every": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(sim.unreachable_doors(self.campaign(self.header(door, tmp))), ["LEVEL_X"])
+
+    def test_an_attempt_position_outside_the_play_area_is_reported(self):
+        door = {"x": 30, "y": 40, "attempt_positions": [[0, 0], [300, 0]], "attempt_every": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(sim.outside_play_areas(self.campaign(self.header(door, tmp))),
+                             ["LEVEL_X: door"])
+
+
+    def test_a_single_level_run_checks_every_attempt_position(self):
+        import contextlib, io
+        door = {"x": 30, "y": 40, "attempt_positions": [[0, 0], [0, -200]], "attempt_every": 1}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.header(door, tmp)
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(sim.main([str(path), "LEVEL_X"]), 1)
+
+
+def _header(level, tmp):
+    """`level` (game/levels/ JSON, with defaults for the art) as a generated
+    levels header in `tmp`; returns its path."""
+    spec = importlib.util.spec_from_file_location(
+        "generate_levels", Path(__file__).with_name("Generate_levels.py"))
+    gen = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gen)
+    level = {"name": "LEVEL_X", "background": "world9", "music": "world9",
+             "world_width": 480, **level}
+    path = Path(tmp) / "levels.h"
+    path.write_text(gen.generate({"levels": [level]}, gen.read_structs()))
+    return path
+
+
+def _platforms(*rects):
+    """{"items": ...} of stones (x, y, width[, extra fields])."""
+    items = []
+    for x, y, w, *extra in rects:
+        item = {"x": x, "y": y, "width": w, "height": 16, "offset_x": 0, "offset_y": 0,
+                "sprite": "stone", "sprite_index": 0}
+        item.update(*extra)
+        items.append(item)
+    return {"name": "x_platforms", "items": items}
+
+
+class CheckpointDoorTests(unittest.TestCase):
+    """A respawn at a checkpoint must reach the door on every attempt: a
+    later layout may strand the duck at its flag even though the spawn
+    still reaches the door.
+
+    Spawn on A (0), door on D (100); the flag stands in the pit C (140),
+    32 px below D - too deep to jump out. The step S (168) leads back up."""
+
+    def level(self, step):
+        return {
+            "platforms": _platforms((0, 60, 64), (100, 60, 32), (140, 92, 24), (168, 76, 32, step)),
+            "spawn": [0, 40], "door": {"x": 100, "y": 40},
+            "checkpoints": {"name": "x_checkpoints", "items": [{"x": 140, "y": 76}]},
+        }
+
+    def campaign(self, path):
+        return [sim.CampaignLevel(0, "LEVEL_X", path, False, False, False)]
+
+    def test_checkpoints_are_read_from_the_level(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = _header(self.level({}), tmp)
+            self.assertEqual(sim.load_checkpoints(path), {"LEVEL_X": [(140.0, 76.0)]})
+
+    def test_a_flag_with_a_way_out_on_every_attempt_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(sim.unreachable_doors(self.campaign(_header(self.level({}), tmp))), [])
+
+    def test_a_step_out_of_the_pit_that_is_gone_after_3_deaths_strands_the_respawn(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = _header(self.level({"until_death": 3}), tmp)
+            self.assertEqual(sim.unreachable_doors(self.campaign(path)),
+                             ["LEVEL_X (from checkpoint 1 after 3 deaths)"])
+
+    def lever_level(self):
+        # S is only there while the lever on A is off; the duck can flip it
+        # on, drop into the pit and touch the flag - then it respawns with
+        # the lever on (the checkpoint's trigger snapshot), S gone.
+        a, d, c, s = (sim.Rect(0, 60, 64, 16, 0), sim.Rect(100, 60, 32, 16, 1),
+                      sim.Rect(140, 92, 24, 16, 2), sim.Rect(168, 76, 32, 16, 3, "sw", False))
+        triggers = {"sw": {"default_on": False, "rect": (0, 44, 16, 16)}}
+        return [a, d, c, s], triggers
+
+    def test_the_spawn_reaches_the_door_whatever_the_lever(self):
+        plats, triggers = self.lever_level()
+        self.assertEqual(sim.unreachable_windows(plats, triggers, (0, 40), (100.0, 46.0), False, False), [])
+
+    def test_a_respawn_keeps_the_levers_that_were_on_at_the_flag(self):
+        plats, triggers = self.lever_level()
+        self.assertEqual(sim.checkpoint_unreachable_windows(
+            plats, triggers, (0, 40), (140, 76), (100.0, 46.0), False, False), [0])
+
+    def test_a_flag_the_spawn_never_reaches_is_left_to_check_checkpoints(self):
+        plats, triggers = self.lever_level()
+        plats.append(sim.Rect(400, 60, 32, 16, 4))
+        # never touched, never a respawn point (Check_checkpoints.py reports it)
+        self.assertEqual(sim.checkpoint_unreachable_windows(
+            plats, triggers, (0, 40), (400, 44), (100.0, 46.0), False, False), [])
+
+
+class DoorTrapTriggerTests(unittest.TestCase):
+    """A false exit (DoorData::trap_trigger_name): while the trigger is on the
+    door kills. A Latch (or Toggle) trigger stays on, so the door must be
+    reachable without passing through its zone.
+
+    Spawn on A (-40), door on B (40), a 48 px gap between them."""
+
+    def level(self, trigger):
+        trigger = {"x": 0, "y": 0, "width": 16, "height": 16, "name": "door_trap", **trigger}
+        return {
+            "platforms": _platforms((-40, 60, 32), (40, 60, 32)),
+            "triggers": {"name": "x_triggers", "items": [trigger]},
+            "spawn": [-40, 40], "door": {"x": 40, "y": 34, "trap_trigger_name": "door_trap"},
+        }
+
+    def bad(self, trigger):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = _header(self.level(trigger), tmp)
+            return sim.unreachable_doors([sim.CampaignLevel(0, "LEVEL_X", path, False, False, False)])
+
+    def test_the_door_trap_trigger_is_read_from_the_level(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = _header(self.level({"mode": "Toggle", "y": 30, "height": 160}), tmp)
+            trap = sim.load_door_traps(path)["LEVEL_X"]
+        self.assertEqual(trap["name"], "door_trap")
+        self.assertEqual(trap["mode"], "Toggle")
+        self.assertFalse(trap["default_on"])
+        self.assertEqual(trap["rect"], (0.0, 30.0, 16.0, 160.0))
+
+    def test_a_latch_wall_in_front_of_the_door_turns_it_into_a_trap_for_good(self):
+        self.assertEqual(self.bad({"mode": "Latch", "height": 240}),
+                         ["LEVEL_X (door only through its trap trigger 'door_trap')"])
+
+    def test_a_toggle_wall_counts_too(self):
+        self.assertEqual(self.bad({"mode": "Toggle", "height": 240}),
+                         ["LEVEL_X (door only through its trap trigger 'door_trap')"])
+
+    def test_a_latch_zone_the_duck_can_jump_over_is_fine(self):
+        self.assertEqual(self.bad({"mode": "Latch", "y": 76, "height": 8}), [])
+
+    def test_a_hold_plate_lets_go_so_it_is_not_checked(self):
+        self.assertEqual(self.bad({"mode": "Hold", "height": 240}), [])
+
+    def test_a_latch_that_is_on_from_the_start_never_lets_the_door_be_a_door(self):
+        self.assertEqual(self.bad({"mode": "Latch", "y": -200, "default_on": True}),
+                         ["LEVEL_X (door only through its trap trigger 'door_trap')"])
+
+
+class ResolveAxisTests(unittest.TestCase):
+    """Mirrors resolve_axis() in the engine's move_resolution.h."""
+
+    @staticmethod
+    def floor(p):
+        return p + 4 > 10  # 8 px body over a floor whose top is at 10
+
+    def test_a_free_move_goes_all_the_way(self):
+        self.assertEqual(sim.resolve_axis(0.0, 2.5, self.floor), (2.5, False))
+
+    def test_a_fall_ends_less_than_a_pixel_above_the_floor(self):
+        pos, blocked = sim.resolve_axis(3.5, 3.0, self.floor)
+        self.assertTrue(blocked)
+        self.assertFalse(self.floor(pos))
+        self.assertGreater(pos + 4, 9)
+
+    def test_a_small_blocked_step_does_not_move(self):
+        self.assertEqual(sim.resolve_axis(5.5, 0.75, self.floor), (5.5, True))
+
+    def test_no_move_is_never_blocked(self):
+        self.assertEqual(sim.resolve_axis(6.0, 0.0, self.floor), (6.0, False))
+
+
+class DashUnlockTests(unittest.TestCase):
+    WORLDS = [("World 1", 0, 4), ("World 2", 4, 3), ("World 3", 7, 3)]
+
+    def test_levels_before_the_unlock_world_have_no_dash(self):
+        for index in range(7):
+            self.assertFalse(sim.dash_allowed(index, self.WORLDS, 2), index)
+
+    def test_the_unlock_world_and_everything_after_it_have_the_dash(self):
+        for index in (7, 8, 9, 30):
+            self.assertTrue(sim.dash_allowed(index, self.WORLDS, 2), index)
+
+
+REPO = WORLD5.parents[3] if WORLD5 is not None else None
+
+
+def cfg_value(header, namespace, constant):
+    """`inline constexpr ... CONSTANT = value;` inside `namespace NAMESPACE { }`."""
+    text = (REPO / "game/include" / header).read_text()
+    block = re.search(
+        r"namespace " + namespace + r" \{(.*?)\}  // namespace " + namespace, text, re.DOTALL
+    ).group(1)
+    return float(re.search(r"\b" + constant + r"\s*=\s*(-?[\d.]+)", block).group(1))
+
+
+@unittest.skipIf(REPO is None, "levels_world5.h not found")
+class ConstantsMatchTheGameTests(unittest.TestCase):
+    """The simulator copies the duck's physics; a tuning change in cfg.h must
+    show up here instead of silently invalidating every reachability result."""
+
+    def test_player_constants_match_cfg_h(self):
+        for sim_value, constant in (
+            (sim.ACC, "ACCELERATION"),
+            (sim.DECEL, "DECELERATION"),
+            (sim.MAXS, "MAX_SPEED"),
+            (sim.JUMP, "JUMP_SPEED"),
+            (sim.G, "GRAVITY"),
+            (sim.MAXFALL, "MAX_FALL_SPEED"),
+            (sim.COYOTE, "COYOTE_FRAMES"),
+            (sim.DEATH_Y, "DEATH_HEIGHT"),
+        ):
+            self.assertEqual(sim_value, cfg_value("cfg.h", "Player", constant), constant)
+
+    def test_dash_constants_match_cfg_dash_h(self):
+        self.assertEqual(sim.DASH_SPEED, cfg_value("cfg_dash.h", "Dash", "SPEED"))
+        self.assertEqual(sim.DASH_FRAMES, cfg_value("cfg_dash.h", "Dash", "DURATION_FRAMES"))
+
+    def test_wall_jump_constants_match_cfg_wall_jump_h(self):
+        for sim_value, constant in (
+            (sim.SLIDE, "SLIDE_SPEED"), (sim.PUSH, "PUSH_SPEED"), (sim.LOCK, "LOCK_FRAMES"),
+        ):
+            self.assertEqual(sim_value, cfg_value("cfg_wall_jump.h", "WallJump", constant), constant)
+        self.assertEqual(sim.JUMP_BUFFER, cfg_value("cfg.h", "Player", "JUMP_BUFFER_FRAMES"))
+
+    def test_edge_margin_matches_cfg_h(self):
+        self.assertEqual(sim.EDGE_MARGIN, cfg_value("cfg.h", "Screen", "EDGE_MARGIN"))
+
+    def test_duck_body_matches_cfg_h(self):
+        self.assertEqual(
+            (sim.BW, sim.BH),
+            (cfg_value("cfg.h", "Player", "BODY_WIDTH"), cfg_value("cfg.h", "Player", "BODY_HEIGHT")),
+        )
+
+
+class WallJumpUnlockTests(unittest.TestCase):
+    @unittest.skipIf(REPO is None, "levels_world5.h not found")
+    def test_campaign_has_the_pogo_from_world_4_and_in_every_boss_level(self):
+        pogo = {level.name: level.pogo for level in sim.campaign(REPO)}
+        self.assertFalse(pogo["LEVEL_3"])
+        self.assertTrue(pogo["LEVEL_WORLD1_BOSS"])
+        self.assertTrue(pogo["LEVEL_WORLD4_SCROLL"])
+
+    def test_campaign_unlocks_wall_jumps_with_world_5(self):
+        wall = {level.name: level.wall for level in sim.campaign(REPO)}
+        self.assertFalse(wall["LEVEL_WORLD4_BOSS"])
+        self.assertTrue(wall["LEVEL_WORLD5_SCROLL"])
+        self.assertTrue(wall["LEVEL_WORLD5_FINALE"])
+
+
+class PlayAreaTests(unittest.TestCase):
+    # The duck bounces back past world_width / 2 - EDGE_MARGIN
+    # (Core::set_horizontal_bound): a spawn or door out there is lost.
+    def test_a_spawn_and_door_inside_the_bounce_are_fine(self):
+        self.assertEqual(sim.outside_play_area((-220, 40), (220, 40), 480), [])
+
+    def test_a_spawn_past_the_left_bounce_is_reported(self):
+        self.assertEqual(sim.outside_play_area((-264, 40), (200, 40), 480), ["spawn"])
+
+    def test_a_door_the_duck_touches_at_the_bounce_is_fine(self):
+        # The duck at the bound (230) overlaps a door box up to 230 + 4 + 9.
+        self.assertEqual(sim.outside_play_area((0, 40), (242, 40), 480), [])
+
+    def test_a_door_past_the_right_bounce_is_reported(self):
+        self.assertEqual(sim.outside_play_area((0, 40), (244, 40), 480), ["door"])
+
+
+@unittest.skipIf(REPO is None, "levels_world5.h not found")
+class CampaignTests(unittest.TestCase):
+    """Every level of the real game, in play order (main.cpp's levels[])."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.campaign = sim.campaign(REPO)
+
+    def test_campaign_follows_main_cpp_levels_in_play_order(self):
+        names = [level.name for level in self.campaign]
+        self.assertEqual(len(names), 26)
+        self.assertEqual(names[0], "LEVEL_0")
+        self.assertEqual(names[-1], "LEVEL_WORLD5_FINALE")
+
+    def test_campaign_unlocks_the_dash_with_world_3(self):
+        dash = {level.name: level.dash for level in self.campaign}
+        self.assertFalse(dash["LEVEL_WORLD2_BOSS"])
+        self.assertTrue(dash["LEVEL_3"])
+        self.assertTrue(dash["LEVEL_WORLD5_DASH"])
+
+    def test_every_spawn_and_door_lies_inside_the_play_area(self):
+        self.assertEqual(sim.outside_play_areas(self.campaign), [])
+
+    # ~20 s: the same check runs as `Check_level_reachability.py --all` in CI
+    # and as a pre-commit hook whenever level data changes.
+    @unittest.skipUnless(os.environ.get("SLOW_TESTS"), "set SLOW_TESTS=1 to run")
+    def test_every_door_is_reachable_with_the_abilities_of_its_level(self):
+        # Conservative start (no coyote time, no run-up): a normal player can
+        # finish every level, so the game can be played to the end.
+        self.assertEqual(sim.unreachable_doors(self.campaign), [])
 
 
 if __name__ == "__main__":

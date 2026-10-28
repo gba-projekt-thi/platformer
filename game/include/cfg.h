@@ -1,7 +1,12 @@
 #pragma once
 #include <cstdint>
 #include "bn_fixed.h"
+#include "cfg_boss.h"
+#include "cfg_camera.h"
 #include "cfg_dash.h"
+#include "cfg_death_fx.h"
+#include "cfg_pogo.h"
+#include "cfg_wall_jump.h"
 
 namespace Cfg {
 
@@ -61,9 +66,21 @@ inline constexpr int JUMP_RIGHT_FRAMES[2] = {2, 3};
 inline constexpr int JUMP_LEFT_FRAMES[2] = {6, 7};
 inline constexpr int IDLE_FRAME = 8;
 inline constexpr int BACK_FRAME = 9;
-inline constexpr int PLAYER_TILE_CACHE_SIZE = 10;
+// Wall slide: back to the wall (drawn for a wall on the right; flipped like
+// every frame for one on the left), dust drifting up along it.
+inline constexpr int SLIDE_FRAMES[2] = {10, 11};
+inline constexpr int SLIDE_WAIT = 6;  // frames per dust picture
+inline constexpr int PLAYER_TILE_CACHE_SIZE = 12;
 inline constexpr int ANIMATION_FRAME_COUNT = 4;
 inline constexpr int WAIT_UPDATE = 4;
+
+// Collision body (centered on the duck's position). The 16x16 picture is
+// larger, so it is drawn SPRITE_OFFSET_Y higher: its feet (the lowest opaque
+// row of ente.bmp) then rest on the body's bottom, i.e. on the platform.
+// Visual only; tools/Check_hitboxes.py checks the feet.
+inline constexpr int BODY_WIDTH = 8;
+inline constexpr int BODY_HEIGHT = 8;
+inline constexpr int SPRITE_OFFSET_Y = -4;
 
 // Misc.
 inline constexpr int DEATH_HEIGHT = 100;
@@ -76,6 +93,11 @@ namespace Hint {
 inline constexpr int FRAMES = 300;  // visible for 5s unless dismissed
 inline constexpr int Y = -48;       // below the HUD row (y = -70), above play
 }  // namespace Hint
+
+namespace ClearMoment {
+// "Clear!" of the level-clear moment (clear_logic.h), above the door's row.
+inline constexpr int Y = -24;
+}  // namespace ClearMoment
 
 namespace DeathCounter {
 inline constexpr int X = -110;
@@ -109,17 +131,16 @@ inline constexpr int LINE_SPACING = 16;
 namespace HardMode {
 // Applied to MOVING (velocity/max_vel), CHASE (chase_speed) and AMBUSH
 // (speed) trap values in TrapFactory::create() when GameState::
-// hard_mode_enabled is set. PATH traps are deliberately left alone -
-// their speed lives in path_waits (an unsigned frame count), which
-// needs its own division/rounding-edge-case handling; a separate
-// change if wanted later.
+// hard_mode_enabled is set. PATH traps get the same factor too, but their
+// speed lives in path_waits (an unsigned frame count per node), so it is
+// divided instead: trap_timing::scaled_frames(path_waits, percent).
 inline constexpr bn::fixed SPEED_MULTIPLIER = 1.35;
 }  // namespace HardMode
 
 namespace AssistMode {
-// Mirror image of HardMode: applied to the same MOVING/CHASE/AMBUSH
-// values in TrapFactory::create(). PATH traps are left alone for the
-// same reason as in Hard Mode (speed lives in path_waits).
+// Mirror image of HardMode: applied to the same MOVING/CHASE/AMBUSH values
+// in TrapFactory::create(), and to PATH traps via trap_timing::scaled_frames()
+// (half speed = twice the frames per node).
 inline constexpr bn::fixed TRAP_SPEED_MULTIPLIER = 0.5;
 // Forgiveness windows, replacing Cfg::Player::COYOTE_FRAMES /
 // JUMP_BUFFER_FRAMES while active. Jump speed, gravity and acceleration
@@ -134,7 +155,7 @@ inline constexpr unsigned int PLATFORMS = 32;
 inline constexpr unsigned int PLATFORM_BODIES = 32;
 inline constexpr unsigned int TRIGGERS = 16;
 inline constexpr unsigned int TOTAL_TRAPS = 32;
-inline constexpr unsigned int CHECKPOINTS = 4;
+inline constexpr unsigned int CHECKPOINTS = 1;
 }  // namespace Limits
 }  // namespace Level
 
@@ -162,6 +183,22 @@ inline constexpr int SAVE_SLOT_COUNT = 3;
 // Save slots plus the "Controls" entry below them.
 inline constexpr int ENTRY_COUNT = SAVE_SLOT_COUNT + 1;
 }  // namespace StartScreen
+
+namespace Story {
+// StoryScene: up to story::MAX_LINES centered lines from FIRST_LINE_Y, the
+// prompt below them (checked to fit by tests/host/test_story.cpp).
+inline constexpr int FIRST_LINE_Y = -48;
+inline constexpr int LINE_SPACING = 18;
+inline constexpr int PROMPT_Y = 60;
+}  // namespace Story
+
+namespace LevelSelect {
+// One row per level of the chosen world, from StartScreen::Y down; a world
+// with more levels starts higher (menu_nav::first_row_y()) so its last row
+// still sits at LAST_ROW_Y at most.
+inline constexpr int ROW_SPACING = 16;
+inline constexpr int LAST_ROW_Y = 70;
+}  // namespace LevelSelect
 
 namespace Physics {
 inline constexpr bn::fixed NO_MAX_VELOCITY = 0;

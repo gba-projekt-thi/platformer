@@ -145,15 +145,23 @@ number:
 
 | Ceiling | Value | What counts against it |
 |---------|-------|------------------------|
-| **Entity limits** (`Cfg::Level::Limits`) | 32 platforms, 32 traps, 16 triggers, 4 checkpoints | Fixed-capacity containers in the level manager. Exactly the limit is valid, one more fails the load-time assertion. |
+| **Entity limits** (`Cfg::Level::Limits`) | 32 platforms, 32 traps, 16 triggers, 1 checkpoint | Fixed-capacity containers in the level manager. Exactly the limit is valid, one more fails the load-time assertion. |
 | **Sprite registry** (`SpriteRegistry`) | 72 | Everything that scrolls with the camera: the duck, the door, platforms, traps, switch sprites, checkpoint flags and the four dash afterimages. A sprite beyond the capacity is dropped (logged) and would stay pinned to its screen position. |
-| **Hardware sprites** (OAM) | 128 | The registered sprites plus all text: death counter and timer, the hidden "Paused" title, the level hint, the "New Best!" banner and the pause overlay. Hidden sprites still occupy a slot. |
+| **Hardware sprites** (OAM) | 128 | The registered sprites plus all text: death counter and timer, the level hint, the "New Best!" banner and the pause overlay. Hidden sprites still occupy a slot. |
 
 The entity limits alone do not keep a stage inside the other two: a stage that
-filled every limit would need 90 registered sprites. In practice the stages are
+filled every limit would need 87 registered sprites. In practice the stages are
 far below that, but the pause overlay is large (up to ~57 glyph sprites in the
-Options sub-menu with Hard Mode on), and while it is open the level hint can
-still be visible, so the worst case of a hint-carrying stage is close to 128.
+Options sub-menu with Hard Mode on). The level hint is therefore released while
+the game is paused (`hint::should_draw()`; the countdown stops with it and the
+sprites are drawn again on resume), so the two never take slots at once. The
+pause overlay allocates its sprites in the very `update()` call in which Start
+is pressed, so `LevelScene` frees the hint before that call. The overlay itself
+exists only while the game is paused: `PauseController` creates the 'Paused'
+title and the rows when the game pauses and releases them on resume (the title
+also goes while the Controls view is open). Hiding them is not enough, because
+a hidden sprite keeps its slot: until this was fixed, the first pause left the
+last menu (up to ~57 sprites) allocated for the rest of the level.
 `tools/Check_sprite_budget.py` counts this worst case per stage (spaces draw no
 sprite), fails on an overflow and warns when fewer than 8 slots are left. Its
 text constants mirror `pause_controller.cpp`, `level_scene.cpp` and

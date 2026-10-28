@@ -59,3 +59,41 @@ repos:
         language: system
         files: ^(game/include/level/levels_world.*\.h|game/include/cfg\.h|game/include/pause_controller\.h|extern/engine/core/include/(sprite|collision)_registry\.h|tools/Check_sprite_budget\.py)$
         pass_filenames: false
+      - id: check-level-reachability
+        name: Validate that every level can be finished
+        description: >-
+          Every door must be reachable with the abilities of its level (the
+          dash only from Cfg::Dash::UNLOCK_WORLD on) - see
+          tools/Check_level_reachability.py.
+        entry: python3 tools/Check_level_reachability.py --all
+        language: system
+        files: ^(game/include/level/levels_world.*\.h|game/src/main\.cpp|game/include/world_index\.h|game/include/cfg(_dash)?\.h|tools/Check_level_reachability\.py)$
+        pass_filenames: false
+      - id: check-hitboxes
+        name: Validate hitboxes against their pictures
+        description: >-
+          Platform and trap collision boxes must match the opaque pixels of
+          their sprites - see tools/Check_hitboxes.py.
+        entry: python3 tools/Check_hitboxes.py
+        language: system
+        files: ^(game/include/level/levels.*\.h|game/include/cfg\.h|game/graphics/.*\.(bmp|json)|tools/Check_hitboxes\.py)$
+        pass_filenames: false
+      - id: host-tests
+        name: Host unit tests
+        description: >-
+          Builds (incrementally) and runs tests/host whenever game headers or
+          the tests change - see tests/host/Makefile.
+        entry: make -C tests/host
+        language: system
+        files: ^(game/include/.*\.h|tests/host/.*|extern/engine/src/save_system/.*)$
+        pass_filenames: false
+      - id: generated-levels
+        name: Level headers match game/levels/*.json
+        description: >-
+          game/include/level/levels_world*.h are generated from
+          game/levels/world*.json - edit the JSON and run
+          python3 tools/Generate_levels.py.
+        entry: python3 tools/Generate_levels.py --check
+        language: system
+        files: ^(game/levels/.*\.json|game/include/level/levels_world.*\.h|game/include/level/level_structure\.h|tools/Generate_levels\.py)$
+        pass_filenames: false

@@ -10,23 +10,7 @@
 #include "level_manager.h"
 #include "player.h"
 #include "start_scene.h"
-
-namespace {
-// Same small helper as WorldSelectScene's anonymous-namespace
-// append_uint() - not a hot path (menu build only, run once), plain
-// division/modulo is fine here.
-void append_uint(char* buf, int* pos, unsigned int value) {
-    char digits[8];
-    int digit_count = 0;
-    do {
-        digits[digit_count++] = char('0' + (value % 10));
-        value /= 10;
-    } while (value > 0 && digit_count < 8);
-    while (digit_count > 0) {
-        buf[(*pos)++] = digits[--digit_count];
-    }
-}
-}  // namespace
+#include "text_buffer.h"
 
 SummaryScene::SummaryScene(
     Player& player,
@@ -61,7 +45,7 @@ void SummaryScene::init() {
     const unsigned int remaining_seconds =
         static_cast<unsigned int>(total_seconds % 60);
 
-    const int level_count = static_cast<int>(_levels.size());
+    const int level_count = _levels.size();
     int no_death_count = 0;
     for (int i = 0; i < level_count && i < GameState::MAX_LEVELS; ++i) {
         if (has_no_death_clear(state, i)) {
@@ -74,52 +58,30 @@ void SummaryScene::init() {
     _text_gen->generate(Cfg::Summary::X, y, "Game Complete!", _sprites);
     y += Cfg::Summary::LINE_SPACING;
 
-    {
-        // "Total Time: M:SS" - minutes left unpadded (this is a sum
-        // across every level, not a single clear, so it can run past 99
-        // and doesn't need the mm:ss.cc single-level format used
-        // elsewhere; centiseconds are dropped as noise at this scale).
-        char buf[24];
-        int pos = 0;
-        const char* label = "Total Time: ";
-        for (const char* p = label; *p; ++p)
-            buf[pos++] = *p;
-        append_uint(buf, &pos, total_minutes);
-        buf[pos++] = ':';
-        if (remaining_seconds < 10) {
-            buf[pos++] = '0';
-        }
-        append_uint(buf, &pos, remaining_seconds);
-        buf[pos] = '\0';
-        _text_gen->generate(Cfg::Summary::X, y, buf, _sprites);
-        y += Cfg::Summary::LINE_SPACING;
-    }
+    // "Total Time: M:SS" - minutes left unpadded (this is a sum across every
+    // level, not a single clear, so it can run past 99 and doesn't need the
+    // mm:ss.cc single-level format used elsewhere; centiseconds are dropped
+    // as noise at this scale).
+    TextBuffer<24> line;
+    line.append("Total Time: ")
+        .append_uint(total_minutes)
+        .append(':')
+        .append_uint(remaining_seconds, 2);
+    _text_gen->generate(Cfg::Summary::X, y, line.c_str(), _sprites);
+    y += Cfg::Summary::LINE_SPACING;
 
-    {
-        char buf[16];
-        int pos = 0;
-        const char* label = "Deaths: ";
-        for (const char* p = label; *p; ++p)
-            buf[pos++] = *p;
-        append_uint(buf, &pos, state.deaths);
-        buf[pos] = '\0';
-        _text_gen->generate(Cfg::Summary::X, y, buf, _sprites);
-        y += Cfg::Summary::LINE_SPACING;
-    }
+    line.clear();
+    line.append("Deaths: ").append_uint(state.deaths);
+    _text_gen->generate(Cfg::Summary::X, y, line.c_str(), _sprites);
+    y += Cfg::Summary::LINE_SPACING;
 
-    {
-        char buf[24];
-        int pos = 0;
-        const char* label = "No-Death: ";
-        for (const char* p = label; *p; ++p)
-            buf[pos++] = *p;
-        append_uint(buf, &pos, static_cast<unsigned int>(no_death_count));
-        buf[pos++] = '/';
-        append_uint(buf, &pos, static_cast<unsigned int>(level_count));
-        buf[pos] = '\0';
-        _text_gen->generate(Cfg::Summary::X, y, buf, _sprites);
-        y += Cfg::Summary::LINE_SPACING;
-    }
+    line.clear();
+    line.append("No-Death: ")
+        .append_uint(unsigned(no_death_count))
+        .append('/')
+        .append_uint(unsigned(level_count));
+    _text_gen->generate(Cfg::Summary::X, y, line.c_str(), _sprites);
+    y += Cfg::Summary::LINE_SPACING;
 
     _text_gen->generate(
         Cfg::Summary::X, y + Cfg::Summary::LINE_SPACING, "Press A to continue",

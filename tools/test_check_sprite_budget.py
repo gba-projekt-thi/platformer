@@ -88,8 +88,25 @@ class GlyphTests(unittest.TestCase):
         b = sb.Budget()
         self.assertEqual(b.hud, 20)
         self.assertEqual(b.banner, 8 + 8 + 16)
-        # options sub-menu (all rows + info line + cursor) is the widest view
-        self.assertEqual(b.pause_overlay, 10 + 8 + 13 + 15 + 10 + 1)
+        # the controls view (six lines, no title) ...
+        controls = sum(sb.glyphs(line) for line in sb.DEFAULT_CONTROLS_LINES)
+        self.assertEqual(controls, 59)
+        options = 10 + 8 + 13 + 15 + 10 + 1
+        self.assertEqual(b.pause_menu, max(controls, options))
+        # ... stays below the options sub-menu with its 'Paused' title
+        self.assertEqual(b.pause_overlay, options + sb.PAUSE_TITLE_GLYPHS)
+
+
+class AbilityTests(unittest.TestCase):
+    """Which levels can dash / pogo (LevelManager::_load_player_spawn())."""
+
+    def test_abilities_follow_the_unlock_worlds_and_bosses(self):
+        abilities = sb.abilities(Path(__file__).resolve().parent.parent)
+        self.assertEqual(abilities["LEVEL_1"], (False, False))
+        self.assertEqual(abilities["LEVEL_3"], (True, False))
+        self.assertEqual(abilities["LEVEL_WORLD4_SCROLL"], (True, True))
+        # every boss level has the pogo, the weapon against its boss
+        self.assertEqual(abilities["LEVEL_WORLD1_BOSS"], (False, True))
 
 
 class DemandTests(Fixture):
@@ -97,7 +114,39 @@ class DemandTests(Fixture):
         lv = self.load(level("A", plats=3, traps=2, checkpoints=1))["A"]
         b = self.budget()
         registry, _ = sb.demand(lv, b)
-        self.assertEqual(registry, 2 + 3 + 2 + 1 + b.SLOTS)
+        self.assertEqual(registry, 2 + 3 + 2 + 1 + b.SLOTS + sb.POGO_SLASH)
+
+    def test_objects_with_a_death_window_count_on_every_attempt(self):
+        # Level Devil: a trap that moves after the 3rd death is two traps
+        # (until_death 3 / from_death 3). LevelManager creates both at load
+        # and only hides the absent one, so both sprites are allocated.
+        text, _ = platforms(1)
+        text += (
+            "constexpr TrapData W_traps[] = {"
+            "{TrapType::BASE, 0, 40, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
+            " 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,"
+            " false, 0, 3},"
+            "{TrapType::BASE, 40, 40, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
+            " 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,"
+            " false, 3, 0}};\n"
+            "const LevelData W = {plats1, 1, nullptr, 0, W_traps, 2, bn::regular_bg_items::w,"
+            " bn::music_items::m, {-40, 30}, {40, 40}};\n"
+        )
+        lv = self.load(text)["W"]
+        b = self.budget()
+        registry, _ = sb.demand(lv, b)
+        self.assertEqual(registry, 2 + 1 + 2 + b.SLOTS + sb.POGO_SLASH)
+
+    def test_dash_trail_counts_only_where_the_dash_is(self):
+        lv = self.load(level("A", plats=3))["A"]
+        b = self.budget()
+        # one slot stays: the death ghost
+        self.assertEqual(sb.demand(lv, b, dash=False)[0], sb.demand(lv, b)[0] - (b.SLOTS - 1))
+
+    def test_pogo_slash_counts_only_where_the_pogo_is(self):
+        lv = self.load(level("A", plats=3))["A"]
+        b = self.budget()
+        self.assertEqual(sb.demand(lv, b, pogo=False)[0], sb.demand(lv, b)[0] - sb.POGO_SLASH)
 
     def test_only_triggers_with_a_sprite_count(self):
         levels = self.load(
@@ -113,16 +162,25 @@ class DemandTests(Fixture):
         lv = self.load(level("H", plats=1, hint="hello world"))["H"]
         b = self.budget()
         registry, sc = sb.demand(lv, b)
-        fixed = registry + b.hud + sb.PAUSE_TITLE_GLYPHS
+        fixed = registry + b.hud
         self.assertEqual(sc["play"], fixed + 10)  # "helloworld"
         self.assertEqual(sc["banner"], fixed + 10 + b.banner)
-        self.assertEqual(sc["pause"], fixed + 10 + b.pause_overlay)
+        # the hint is released while the pause overlay is open
+        self.assertEqual(sc["pause"], fixed + b.pause_overlay)
+
+    def test_a_hint_does_not_raise_the_pause_peak(self):
+        with_hint = self.load(level("WH", plats=2, hint="a hint that is long"))["WH"]
+        without = self.load(level("NH", plats=2))["NH"]
+        b = self.budget()
+        self.assertEqual(sb.demand(with_hint, b)[1]["pause"], sb.demand(without, b)[1]["pause"])
 
     def test_level_without_hint_costs_nothing_extra(self):
         lv = self.load(level("N", plats=1))["N"]
         b = self.budget()
         registry, sc = sb.demand(lv, b)
-        self.assertEqual(sc["play"], registry + b.hud + sb.PAUSE_TITLE_GLYPHS)
+        # no hidden title, no hidden menu rows: nothing of the pause overlay is
+        # allocated while the level runs
+        self.assertEqual(sc["play"], registry + b.hud)
 
     def test_pause_is_the_peak_with_the_default_model(self):
         lv = self.load(level("P", plats=2))["P"]
@@ -183,6 +241,18 @@ class CheckTests(Fixture):
 
 
 class ConfigurationTests(unittest.TestCase):
+    def test_hint_and_pause_overlay_are_not_added_up_in_the_worst_case(self):
+        b = sb.Budget(MAX_SPRITES=500)
+        registry = (
+            sb.PLAYER_AND_DOOR + b.PLATFORMS + b.TOTAL_TRAPS + b.TRIGGERS + b.CHECKPOINTS + b.SLOTS
+        )
+        fixed = registry + b.hud
+        worst = fixed + max(sb.HINT_MAX_GLYPHS + b.banner, b.pause_overlay)
+        _, warnings = sb.check_configuration(sb.Budget(MAX_SPRITES=500, oam=worst))
+        self.assertEqual(warnings, [])
+        _, warnings = sb.check_configuration(sb.Budget(MAX_SPRITES=500, oam=worst - 1))
+        self.assertEqual(len(warnings), 1)
+
     def test_default_limits_exceed_the_registry_and_warn(self):
         errors, warnings = sb.check_configuration(sb.Budget())
         self.assertEqual(errors, [])
@@ -340,7 +410,7 @@ class RealLevelTests(unittest.TestCase):
             self.skipTest("pause_controller.h not found")
         match = re.search(r"bn::vector<bn::sprite_ptr,\s*(\d+)>\s+_menu_sprites", path.read_text())
         self.assertIsNotNone(match)
-        self.assertLessEqual(self.budget.pause_overlay, int(match.group(1)))
+        self.assertLessEqual(self.budget.pause_menu, int(match.group(1)))
 
     def test_hints_are_inside_the_model_limit(self):
         for name, lv in self.levels.items():

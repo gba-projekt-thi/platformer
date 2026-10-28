@@ -2,8 +2,9 @@
 """
 Check_trigger_references.py
 
-Statically validates every TrapData::trigger_name a MOVING/PATH trap - and
-every PlatformData::trigger_name a switched platform - references against the TriggerData::name entries actually defined for
+Statically validates every TrapData::trigger_name a MOVING/PATH/CYCLE/BOSS trap - and
+every PlatformData::trigger_name a switched platform and the DoorData::trap_trigger_name
+of a door that turns into a trap - references against the TriggerData::name entries actually defined for
 THAT SAME LEVEL - the exact per-level lookup
 LevelManager::get_trigger_by_name() performs at runtime, but checked here
 without compiling or running the game.
@@ -41,7 +42,6 @@ Python 3 is available (already a build-time dependency of this project;
 see docker/Dockerfile and Tilemap.md).
 """
 
-import glob
 import re
 import sys
 from pathlib import Path
@@ -129,6 +129,72 @@ def quoted_strings_in(fields):
     return [f[1:-1] for f in fields if f.startswith('"') and f.endswith('"')]
 
 
+# Positions in a TriggerData literal (level_structure.h): x, y, width, height,
+# default_on, name, mode, sprite, sprite_index_off, sprite_index_on,
+# delay_frames, action, follows.
+TRIGGER_DEFAULT_ON_FIELD = 4
+TRIGGER_NAME_FIELD = 5
+TRIGGER_FOLLOWS_FIELD = 12
+
+
+def quoted_field(fields, index):
+    """The string at position `index` of a literal, or None (missing,
+    nullptr)."""
+    if index < len(fields):
+        f = fields[index]
+        if f.startswith('"') and f.endswith('"'):
+            return f[1:-1]
+    return None
+
+
+def check_follows(followers, defined_names, where, trigger_array_name):
+    """Errors for TriggerData::follows (delayed trap chains). `followers`:
+    one (name, source, default_on) per following trigger, so unnamed and
+    same-named followers are each checked. The source must be a trigger of
+    the same level, not the trigger itself, and following must never lead in
+    a circle (nothing outside a cycle could ever start it). A follower must
+    not start on: fired, it is off, and a checkpoint's snapshot only switches
+    triggers back on, so it would fire again late after a respawn."""
+    errors = []
+    for name, source, default_on in sorted(followers, key=lambda f: (str(f[0]), f[1])):
+        if source == name:
+            errors.append(f'{where} - trigger "{name}" follows itself')
+        elif source not in defined_names:
+            errors.append(
+                f'{where} - trigger "{name}" follows "{source}", '
+                f"not found in '{trigger_array_name}'"
+            )
+        if default_on:
+            errors.append(
+                f'{where} - trigger "{name}" follows "{source}" with '
+                f"default_on true: a checkpoint cannot keep such a follower "
+                f"fired; start it off"
+            )
+    # By name, as the game looks the source up (the first of a name wins).
+    follows = {}
+    for name, source, _ in followers:
+        if name is not None:
+            follows.setdefault(name, source)
+    reported = set()
+    for start in sorted(n for n in follows if n is not None):
+        path = []
+        current = start
+        while current in follows and current not in path:
+            path.append(current)
+            current = follows[current]
+        if current not in path:
+            continue  # the chain ends at an ordinary trigger
+        cycle = path[path.index(current):]
+        if len(cycle) == 1 or frozenset(cycle) in reported:
+            continue  # following itself is reported above
+        reported.add(frozenset(cycle))
+        first = cycle.index(min(cycle))
+        cycle = cycle[first:] + cycle[:first]
+        chain = " -> ".join(f'"{n}"' for n in cycle + [cycle[0]])
+        errors.append(f"{where} - follows forms a cycle: {chain}")
+    return errors
+
+
 def check_file(path: Path):
     """Returns (errors, warnings) - lists of human-readable strings."""
     content = strip_comments(path.read_text())
@@ -156,6 +222,7 @@ def check_file(path: Path):
         trap_array_name = level_fields[4]
 
         defined_names = set()
+        followers = []  # (name, source, default_on) per TriggerData::follows
         if trigger_array_name != "nullptr":
             body = trigger_arrays.get(trigger_array_name)
             if body is None:
@@ -165,9 +232,33 @@ def check_file(path: Path):
                 )
             else:
                 for lit in extract_top_level_literals(body):
-                    defined_names.update(quoted_strings_in(top_level_fields(lit)))
+                    fields = top_level_fields(lit)
+                    name = quoted_field(fields, TRIGGER_NAME_FIELD)
+                    if name is not None:
+                        defined_names.add(name)
+                    source = quoted_field(fields, TRIGGER_FOLLOWS_FIELD)
+                    if source is not None:
+                        default_on = (
+                            len(fields) > TRIGGER_DEFAULT_ON_FIELD
+                            and fields[TRIGGER_DEFAULT_ON_FIELD] == "true"
+                        )
+                        followers.append((name, source, default_on))
 
-        referenced_names = set()
+        follows = {}  # follower name -> source name (the first of a name)
+        for name, source, _ in followers:
+            if name is not None:
+                follows.setdefault(name, source)
+        # Every use of a trigger name: one entry per follower, trap and
+        # platform bound to it (the door is checked against these below).
+        uses = {}
+        for name, source, _ in followers:
+            uses.setdefault(source, []).append(f'follower "{name}"')
+
+        referenced_names = {source for _, source, _ in followers}
+        errors.extend(
+            check_follows(followers, defined_names, f"{path.name}: {level_name}",
+                          trigger_array_name)
+        )
         if trap_array_name != "nullptr":
             body = trap_arrays.get(trap_array_name)
             if body is None:
@@ -181,10 +272,11 @@ def check_file(path: Path):
                     if not fields or "::" not in fields[0]:
                         continue
                     trap_type = fields[0].split("::")[-1]
-                    if trap_type in ("MOVING", "PATH"):
+                    if trap_type in ("MOVING", "PATH", "CYCLE", "BOSS"):
                         names = quoted_strings_in(fields)
                         referenced_names.update(names)
                         for n in names:
+                            uses.setdefault(n, []).append(f"trap in '{trap_array_name}'")
                             if n not in defined_names:
                                 errors.append(
                                     f"{path.name}: {level_name} - trap in "
@@ -202,29 +294,91 @@ def check_file(path: Path):
                 for lit in extract_top_level_literals(body):
                     for n in quoted_strings_in(top_level_fields(lit)):
                         referenced_names.add(n)
+                        uses.setdefault(n, []).append(f"platform in '{platform_array_name}'")
                         if n not in defined_names:
                             errors.append(
                                 f"{path.name}: {level_name} - platform in "
                                 f"'{platform_array_name}' references trigger_name "
                                 f'"{n}", not found in \'{trigger_array_name}\''
                             )
+                        elif n in follows:
+                            # The reachability check takes it for a lever the
+                            # duck flips; a follower ignores the duck.
+                            errors.append(
+                                f"{path.name}: {level_name} - platform in "
+                                f"'{platform_array_name}' is bound to trigger "
+                                f'"{n}", which follows "{follows[n]}": bind '
+                                f"followers to traps, platforms to the source"
+                            )
+
+        # DoorData::trap_trigger_name: the door that turns into a trap. The
+        # door literal (LevelData field 9) has no other quoted field.
+        if len(level_fields) > 9:
+            for n in quoted_strings_in(top_level_fields(level_fields[9].strip()[1:-1])):
+                referenced_names.add(n)
+                if n not in defined_names:
+                    errors.append(
+                        f"{path.name}: {level_name} - door references "
+                        f'trap_trigger_name "{n}", not found in '
+                        f"'{trigger_array_name}'"
+                    )
+                # CheckpointRun::forget_trigger() leaves only this trigger
+                # out of the checkpoint snapshot. A source it follows would
+                # be restored and re-arm the door after every respawn, and
+                # whatever else uses it would lose its checkpoint state too.
+                elif n in follows:
+                    errors.append(
+                        f"{path.name}: {level_name} - door's trap_trigger_name "
+                        f'"{n}" follows "{follows[n]}": a checkpoint restores '
+                        f"the source and re-arms the door; use a trigger "
+                        f"that follows nothing"
+                    )
+                for use in uses.get(n, []):
+                    errors.append(
+                        f"{path.name}: {level_name} - door's trap_trigger_name "
+                        f'"{n}" is also used by a {use}: the checkpoint '
+                        f"forgets it for both; give the door its own trigger"
+                    )
 
         unused = defined_names - referenced_names
         for n in sorted(unused):
             warnings.append(
                 f"{path.name}: {level_name} - trigger \"{n}\" in "
                 f"'{trigger_array_name}' is never referenced by any "
-                f"MOVING/PATH trap or platform in this level"
+                f"MOVING/PATH/CYCLE/BOSS trap, platform or door in this level"
             )
 
     return errors, warnings
+
+
+_GAME_DIRS = ("game/include", "game/include/level", "game/src", ".")
+
+
+def find_game_file(root, name):
+    """The game file `name` under `root`: looked up in the game's own folders
+    first, searched recursively only if it is not there (a recursive search
+    walks extern/ and build/ too and takes seconds). None if missing."""
+    root = Path(root)
+    for folder in _GAME_DIRS:
+        if (root / folder / name).is_file():
+            return root / folder / name
+    matches = sorted(root.glob(f"**/{name}"))
+    return matches[0] if matches else None
+
+
+def level_files(root="."):
+    """Every levels_world*.h, from game/include/level/ when it exists."""
+    level_dir = Path(root) / "game/include/level"
+    if level_dir.is_dir():
+        return sorted(level_dir.glob("levels_world*.h"))
+    return sorted(Path(root).glob("**/levels_world*.h"))
 
 
 def main(argv):
     if argv:
         paths = [Path(p) for p in argv]
     else:
-        paths = sorted(Path(p) for p in glob.glob("**/levels_world*.h", recursive=True))
+        paths = level_files()
 
     if not paths:
         print("No levels_world*.h files found - nothing to check.", file=sys.stderr)

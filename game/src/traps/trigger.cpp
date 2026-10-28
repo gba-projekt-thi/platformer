@@ -1,6 +1,7 @@
 #include "trigger.h"
 
 #include "cfg.h"
+#include "player_events.h"
 
 Trigger::Trigger(
     bn::fixed t_x,
@@ -12,7 +13,10 @@ Trigger::Trigger(
     TriggerMode t_mode,
     const bn::sprite_item* t_sprite,
     int t_sprite_index_off,
-    int t_sprite_index_on)
+    int t_sprite_index_on,
+    unsigned t_delay_frames,
+    TriggerAction t_action,
+    bool t_follower)
     : PhysicsBody(
           t_x,
           t_y,
@@ -21,7 +25,7 @@ Trigger::Trigger(
           Cfg::Layer::TRIGGER,
           Cfg::Layer::PLAYER,
           0),
-      _state(t_default_on, t_mode),
+      _zone(t_default_on, t_mode, t_delay_frames, t_action, t_follower),
       _name(t_name) {
     if (t_sprite != nullptr) {
         const int graphics_count = t_sprite->tiles_item().graphics_count();
@@ -42,30 +46,43 @@ Trigger::Trigger(
 }
 
 bool Trigger::is_triggered() const {
-    return _state.triggered();
+    return _zone.triggered();
+}
+
+void Trigger::update() {
+    // Jump / Dash triggers fire on the duck's action inside the zone.
+    const PlayerEvents& events = PlayerEvents::instance();
+    _zone.update(events.jumped(), events.dashed());
+    // A Timer trigger changes its pressed state on its own.
+    _refresh_visual();
 }
 
 void Trigger::on_enter(
     [[maybe_unused]] uint16_t hit_layers,
     [[maybe_unused]] StaticBody* body) {
-    _state.on_enter();
+    _zone.enter();
     _refresh_visual();
 }
 
 void Trigger::on_exit(
     [[maybe_unused]] uint16_t hit_layers,
     [[maybe_unused]] StaticBody* body) {
-    _state.on_exit();
+    _zone.exit();
     _refresh_visual();
 }
 
 void Trigger::reset() {
-    _state.reset();
+    _zone.reset();
+    _refresh_visual();
+}
+
+void Trigger::follow(bool source_on) {
+    _zone.follow(source_on);
     _refresh_visual();
 }
 
 void Trigger::restore(bool triggered) {
-    _state.restore(triggered);
+    _zone.restore(triggered);
     _refresh_visual();
 }
 
@@ -73,5 +90,6 @@ void Trigger::_refresh_visual() {
     if (!_sprite) {
         return;
     }
-    _sprite->sprite().set_tiles(_state.triggered() ? *_tiles_on : *_tiles_off);
+    // Follows what the player did, not the delayed state traps see.
+    _sprite->sprite().set_tiles(_zone.pressed() ? *_tiles_on : *_tiles_off);
 }

@@ -50,6 +50,13 @@ Pick whichever fits your flow; they all produce the same ROM.
 
 > **First build is slow.** The very first build assembles the container image,
 > which takes a few minutes. After that, incremental builds are fast.
+>
+> Creating the container also runs `post-create.sh` once (`postCreateCommand`):
+> it installs the pre-commit hook and does one full build under `bear` to
+> generate `compile_commands.json` for clang-tidy. That file lives in the
+> workspace and is git-ignored, so rebuilding the container skips the build while
+> it exists. After adding source files or changing the Makefile, regenerate it
+> with `./post-create.sh --force`.
 
 ## Testing methodology
 
@@ -70,12 +77,21 @@ bit-flag helpers), and `frame_time.h` (`frames_to_time()`, including the
 >99-minute case `SummaryScene`'s total-time readout can hit).
 
 These build with the **host's own g++/clang++**, not the ARM cross-compiler
-- no devkitARM, no Butano, no container needed:
+- no devkitARM, no container needed. They may use Butano's header-only types
+(`bn::fixed`), so movement rules are tested with the game's own fixed-point
+arithmetic (it rounds: `0.3 * 1` is 0.297), but nothing that needs the GBA:
 
 ```bash
-cd tests/host
-make        # builds and runs; non-zero exit on any failure
+make test                          # host tests + tools/ tests + level data checks
+make -C tests/host                 # builds and runs; non-zero exit on any failure
+make -C tests/host FILTER=crumble  # only tests whose name contains "crumble"
+make coverage                      # line coverage of game/ per file
 ```
+
+Every test file compiles to its own object in `build/host-tests/` with header
+dependencies, so after a change only the affected files rebuild (about 1-2
+seconds - fast enough for a test-first red/green loop). A failing `CHECK_EQ`
+prints both values; a filter that matches no test fails, so a typo cannot pass.
 
 The same extraction pattern covers the later features: the pure decision
 logic of Assist/Hard Mode (`game_modes.h`: `modes::trap_speed_mode()`,
@@ -91,7 +107,18 @@ shows, how long it stays), and the controls overview text (`controls_text.h`: li
 count, length, ASCII and sprite-budget limits, and that the dash line names
 the world `Cfg::Dash::UNLOCK_WORLD` unlocks) and the entity-limit rule
 (`level_limits.h`: a level with exactly `Cfg::Level::Limits` entries fits, one
-more does not). `PlayerLocomotion`,
+more does not) and the camera rig (`camera_rig.h`: smoothing never overshoots,
+look-ahead direction, look up / down hold, world-edge bounds, also with
+truncating fixed-point numbers) and the death feedback (`death_fx.h`: freeze
+length, the end of the freeze reported once, shake fading out, flicker
+pattern), the trap frame scaling (`trap_timing.h`) and the one-frame player
+events with the jump / dash trigger rule (`player_events.h`,
+`trigger_logic.h`) and the crumbling-platform state machine
+(`crumble_logic.h`), the duck's movement (`locomotion.h`: `locomotion::Core`
+with running, braking, gravity, jump buffer, coyote time, variable jump, dash,
+world-edge bounce and fall death, driven by an `InputState` value and a fake
+world for the collision probes), menu text (`text_buffer.h`) and what a level
+clear records (`level_records.h`). `PlayerLocomotion`,
 `LevelManager`, `PauseController` and the scenes only feed these helpers
 and apply their results, so what is left in the Butano-dependent files is
 glue that still needs the manual checks below.
@@ -101,22 +128,74 @@ specifically so it has no Butano include chain to drag along - `timer.h`
 includes it, so every existing `#include "timer.h"` call site is
 unaffected.
 
-When adding a new pure-logic helper (no `bn::` types, no hardware access),
-consider whether it belongs in a similarly dependency-free header so it can
-gain the same kind of test coverage, rather than being bundled into a
-Butano-dependent file where it becomes untestable on the host.
+When adding a new rule (no hardware access, at most header-only `bn::`
+types such as `bn::fixed`), write its test in `tests/host/` first and put the
+rule in a header like the ones above, rather than into a Butano-dependent
+file where it becomes untestable on the host. Hardware input reaches a rule
+as a value (see `InputState` in `locomotion.h`), collision queries through a
+small interface the test can fake.
+
+### Automated: replays in the emulator (`make replay`)
+
+The host tests check rules; whether a level can really be played to its door
+with the real game, traps and all, is checked by **replays**: recorded buttons
+of a finished attempt, one file per level in `game/replays/`.
+
+- `make replay` (dev container) generates `game/include/replay_data.h` from
+  the recordings, builds `platformer.replay/platformer.gba` (the game with
+  `PLATFORMER_REPLAY`: no title screen, it plays every recorded level and logs
+  the result) and runs it in mGBA without a frame limit. It fails unless every
+  recorded level reaches its door; levels without a recording are listed. CI
+  runs it in the `gba-build` job.
+- To record: `make record` builds `platformer.record/platformer.gba`. Play the
+  level(s) to the door in mGBA (Restart Level starts a level's recording over;
+  deaths, pauses and checkpoints are fine), quit, then
+  `python3 tools/replays.py import platformer.record/platformer.sav`. Each
+  finished level's last attempt is stored in SRAM behind the save slots
+  (`game/include/replay.h`), so any mGBA frontend works.
+- Buttons are recorded per movement step, not per frame, so the death freeze
+  and pauses do not shift them. A change to movement, physics, traps or level
+  data that breaks a recorded solution fails the replay: re-record that level
+  if the change is intended.
+- A level can change with the deaths in it (death windows, a door with
+  `attempt_positions`), and Restart Level is one of them. A recording keeps
+  the deaths in the level it began with (`"deaths": N` in its JSON, left out
+  for 0); the replay ROM sets the level up as after that many deaths before
+  the first step, so a recording made after three restarts plays the layout
+  it was made on.
+
+### Semi-automated: the photographed tour (`make tour`)
+
+What only shows on screen - story pages, menus, the pause overlay, banners,
+the bosses, the ending - is checked by looking. `make tour` (dev container,
+about 4 minutes) does the playing:
+
+- `tools/tour.py` describes a walk through the real game: start screen,
+  controls, a new game's intro, the pause menu, every boss fight and the
+  story page behind it, the finale, the ending, the reunion, the summary, the
+  level selects, "Bramble Hop" and "Barrel Tower". It builds
+  `platformer.tour/platformer.gba` (`PLATFORMER_TOUR`, `game/src/tour.cpp`):
+  Butano replays the menu buttons, the recordings in `game/replays/` play the
+  levels, and slot 1 gets a fitting save each time the start screen opens.
+- mgba-qt runs without a window (Qt's VNC platform, its own save file); the
+  ROM logs `TOUR SHOT <n>` at the frame of every shot and the script keeps the
+  screen then. Results in `platformer.tour/shots/`: one PNG per shot,
+  `report.html` (each picture with what to look for), `contact.png` (all on
+  one sheet) and `shots.json`.
+- `python3 tools/tour.py compare OLD NEW` lists the shots whose picture
+  changed between two runs of the same tour: copy `shots/` away, change
+  something, run `make tour` again. Menus and story pages compare pixel for
+  pixel; action shots move a little with capture timing.
 
 ### Automated: CI (`.github/workflows/ci.yml`)
 
 Two independent jobs, so the fast check isn't blocked by the slow one:
 
-- **`host-tests`** - checks out just the `extern/engine` submodule (not its
-  nested Butano submodule, which host tests never touch) and runs
-  `tests/host`'s `make`. No Docker, no ARM toolchain - this is the fast,
-  cheap check.
-- **`level-data-checks`** - no submodules, no Docker: runs
-  `tools/Check_trigger_references.py` (see below) against
-  `game/include/level/levels_world*.h`.
+- **`host-tests`** - checks out the submodules recursively (the host tests
+  use Butano's header-only `bn::fixed`, so movement rules are tested with the
+  game's own arithmetic), runs
+  `make -C tests/host` and prints the line coverage (`make coverage`). No
+  Docker, no ARM toolchain - this is the fast, cheap check.
 - **`gba-build`** - checks out recursively, builds the dev container image
   from `docker/Dockerfile` (the same image the devcontainer uses), runs
   `make` inside it to produce the ROM, then runs `./test-rom.sh` headlessly
@@ -127,9 +206,10 @@ Two independent jobs, so the fast check isn't blocked by the slow one:
 
 A separate workflow, `.github/workflows/python-tools.yml`, runs the Python
 side on its own: every `tools/test_*.py` (the checkers, the reachability
-simulator, the sprite and sound generators) and the level-data checks
-(`Check_trigger_references.py`, `Check_level_hints.py`, `Check_world_index.py`,
-`Check_checkpoints.py`, `Check_sprite_budget.py`).
+simulator, the sprite and sound generators) and the level-data checks via
+`make checks` (`Check_trigger_references.py`, `Check_level_hints.py`,
+`Check_world_index.py`, `Check_checkpoints.py`, `Check_sprite_budget.py`,
+`Check_hitboxes.py`, `Check_level_reachability.py --all`).
 It needs no Docker or ARM toolchain and only the first-level `extern/engine`
 submodule (not its nested Butano), so it is fast and independent of the slower
 `gba-build` job.
@@ -171,7 +251,7 @@ gets caught before it reaches a PR, not just at commit time in CI.
 
 ### Level geometry and roster checks
 
-Two more static checkers keep level content honest (pure Python, no C++):
+Static checkers keep level content honest (pure Python, no C++):
 
 - `tools/Check_level_reachability.py FILE LEVEL...` - a jump/dash reachability
   check driven by a small re-implementation of the duck's per-frame movement.
@@ -180,8 +260,18 @@ Two more static checkers keep level content honest (pure Python, no C++):
   can set. Use it when placing platforms: a gap meant to need the dash must
   fail the no-dash optimistic run (see [Level Design](level-design.md#dash-and-switch-levels)).
   Its tests calibrate the model against the documented jump/dash envelope and
-  check the two World 5 levels' design intent; a whole-roster run takes a few
-  minutes, the tests about 15 seconds.
+  check the two World 5 levels' design intent. `--all` checks the whole
+  roster in play order (the dash only from `Cfg::Dash::UNLOCK_WORLD` on) and
+  fails if any door cannot be reached; it runs in CI and as a pre-commit hook
+  and takes about 20 seconds.
+- `tools/Check_hitboxes.py` - compares every platform and trap collision box
+  with the opaque pixels of the sprite frame the game shows for it. On a
+  platform the duck must stand on the picture (no sinking in or floating, no
+  standing in the air beside it, no dropping off a visible edge); a trap must
+  not kill before the pictures touch. Tolerance 3 px for platforms, 2 px for
+  traps. To fix a height, move the picture (`x`/`y`) and keep the hitbox
+  (`x + offset_x`, `y + offset_y`), so jumps stay the same; a width can only be
+  fixed in the hitbox. Runs in CI and as a pre-commit hook.
 - `tools/Check_world_index.py` - confirms `WorldIndex::WORLDS` still describes
   main.cpp's `levels[]` (no gaps or overlaps, same total, no duplicates; warns
   about levels defined but not listed). It also runs as a pre-commit hook.
@@ -190,10 +280,11 @@ Two more static checkers keep level content honest (pure Python, no C++):
   only, never empty. Also a pre-commit hook.
 - `tools/Check_checkpoints.py` - validates `LevelData::checkpoints`: the flag
   stands on a platform that is not switched, the respawn box overlaps no
-  platform, trap start box, PATH route node or ambush lunge, the platform is
-  reachable from the spawn (jump + dash model), count within
-  `Cfg::Level::Limits::CHECKPOINTS`, plus warnings for an ambush range, order
-  and spacing. Runs in the Python CI job.
+  platform, trap start box or anywhere on a trap's path (the whole PATH route,
+  the MOVING track, the CHASE row, the AMBUSH lunge), the platform is reachable
+  from the spawn (jump + dash model), count within
+  `Cfg::Level::Limits::CHECKPOINTS` (one per level), plus warnings for an ambush
+  range, order and spacing. Runs in the Python CI job.
 - `tools/Check_sprite_budget.py` - checks every level against the entity limits
   (`Cfg::Level::Limits`), the `SpriteRegistry` capacity and the 128 hardware
   sprites, in a worst-case model (see
@@ -242,12 +333,14 @@ A practical manual test checklist for any gameplay change:
 | Movement | Acceleration, jump height, coyote/buffer feel, screen-edge bounce |
 | Traps | Activation timing, hit behavior, reset on respawn |
 | Triggers | Fire at the intended zone; linked traps respond correctly |
-| Level hints | Show once at the start of World 3's first level, "Cloak Corridor" and "Lever Hall"; B or five seconds hides them; gone after the first clear |
+| Level hints | Show once at the start of World 3's first level, "Cloak Corridor" and "Lever Hall"; B or five seconds hides them; gone after the first clear; hidden while paused (also in the first frame of the pause) and back on resume with the countdown where it stood |
+| Camera | Glides after the duck on scrolling levels instead of sticking to it; looks ahead in the direction of travel; no seam or jitter on platforms; cuts (does not glide) to the respawn point after a death; turning at a world edge is followed at once |
+| Death feedback | Short freeze with a copy of the duck where it died and the killing trap still in place; screen shake that fades, HUD and background steady; duck flickers after respawn and is NOT invulnerable; no effect on Restart Level; pausing during the freeze and leaving the level during it leave nothing behind; the record time is not affected |
 | World 5 dash / lever levels | Dash gaps clear with a dash; levers flip once per pass and show the right frame; the Room 2 stone disappears and returns |
 | Switches | Toggle flips per entry, Hold releases on exit; bound platforms appear/vanish with their trigger; a platform never appears inside the duck; death resets switches and platforms |
 | Progression | Door advances to the right stage; final stage triggers the kiss scene |
 | Persistence | Deaths/timer/level saved and reloaded per slot |
-| Pause | Menu navigates; continue/restart/title behave correctly |
+| Pause | Menu navigates; continue/restart/title behave correctly; after resuming (also from inside Options or Controls with Start) the level shows no leftover menu text and the sprite count is back to normal (a mGBA sprite viewer shows the hidden ones) |
 | Dash | Whoosh sound and a flickering afterimage trail while dashing, none left behind after a death or level end; B dashes from World 3 onward (not in Worlds 1-2); one air dash per jump, refilled on landing; wall/edge/death cancel it |
 | Assist / Hard Mode | Toggling one turns the other off; traps and coyote/buffer change from the next level load |
 | Controls overview | Reachable from the start screen's "Controls" entry and the pause menu; A/B returns; text fits on screen in the longest level |

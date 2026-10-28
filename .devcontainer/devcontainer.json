@@ -27,7 +27,9 @@
 		}
 	},
 	"postCreateCommand": "${containerWorkspaceFolder}/post-create.sh",
-	"updateContentCommand": "${containerWorkspaceFolder}/post-create.sh",
+	// post-create.sh builds the project once (compile_commands.json). It must not
+	// also be the updateContentCommand: both hooks run when the container is
+	// created, which built the project twice (make, then make clean; make).
 	// NOTE: No manual X11 mount, no "xhost", no "--privileged" needed here.
 	// The Dev Containers extension (Remote-WSL + WSLg) forwards X11/DISPLAY
 	// to the container automatically. A manual bind mount of /tmp/.X11-unix

@@ -29,10 +29,16 @@ than fighting it.
    silently rebinds a trap. A single named trigger can activate more than
    one trap at once - just point several traps' `trigger_name` at the same
    trigger to build a trigger chain (see `level0_traps` in
-   `levels_world1.h` for a worked example: one trigger releases both a
+   `game/levels/world1.json` for a worked example: one trigger releases both a
    falling hazard and a patrol).
 
 ### Conceptual steps
+
+Stage data is written in `game/levels/worldN.json` (see
+[Level Design](level-design.md#where-the-level-data-lives));
+`python3 tools/Generate_levels.py` writes the matching
+`game/include/level/levels_worldN.h`. A new world gets a new `worldN.json`
+plus an include in `levels.h`.
 
 1. **Gather the theme assets** (background tilemap, platform tileset, hazard
    sprites, music track). If reusing existing themes, this step is free — see
@@ -108,6 +114,9 @@ graph TD
      rather than continuous tracking, model it on the ambush trap (also
      reads the player directly, but only to test a proximity threshold
      before running a fixed, self-contained sequence).
+   - If it repeats a movement on its own clock, model it on the cycle trap
+     (its timeline lives in `trap_timing.h`, Butano-free, so the rhythm is
+     unit-tested on the host).
    - If it is purely static, the base trap alone may suffice.
 4. **Teach the factory to construct your type** from a stage-data entry, wiring
    in its parameters and, if applicable, its linked trigger.

@@ -1,0 +1,242 @@
+#!/usr/bin/env python3
+"""
+replays.py
+
+Emulator tests that play every level to its door with recorded buttons.
+
+Recording (once per level, by playing it):
+    make record                         builds platformer.record/platformer.gba
+    (play the level(s) to the door in mGBA, then quit)
+    python3 tools/replays.py import platformer.record/platformer.sav
+        -> game/replays/<LEVEL>.json, one file per level that was finished
+
+Playing back:
+    make replay                         generate + build + run, see below
+    python3 tools/replays.py generate [--check]
+        game/replays/*.json -> game/include/replay_data.h
+    python3 tools/replays.py run platformer.replay/platformer.gba [--seconds N]
+        runs the replay ROM headless (mGBA without frame limit) and exits 1
+        unless every recorded level reached its door
+
+The recording build stores each level's last finished attempt in SRAM behind
+the save slots (layout in game/include/replay.h); a Restart Level from the
+pause menu starts the recording of that level over. Buttons are recorded per
+movement step, so pauses and the death freeze do not matter.
+
+A level may change with the deaths in it (death windows, a door that moves),
+and a Restart Level is a death: a recording keeps the deaths in the level it
+began with ("deaths" in the JSON, 0 when left out), and the replay ROM sets
+the level up as it stands after that many deaths before it plays.
+"""
+
+import importlib.util
+import json
+import os
+import re
+import shutil
+import struct
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+REPLAY_DIR = ROOT / "game/replays"
+HEADER = ROOT / "game/include/replay_data.h"
+
+# Must match game/include/replay.h (checked by tools/test_replays.py).
+SRAM_OFFSET = 0x2000
+BLOCK_SIZE = 0x300
+HEADER_SIZE = 6
+MAGIC = 0x54
+FLAG_TRUNCATED = 0x01
+
+
+def _campaign_levels():
+    spec = importlib.util.spec_from_file_location(
+        "check_world_index", ROOT / "tools/Check_world_index.py")
+    cwi = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cwi)
+    return cwi.parse_levels((ROOT / "game/src/main.cpp").read_text())
+
+
+# ---- import -----------------------------------------------------------------
+def read_sav(data, level_count):
+    """{level index: ([(buttons, count), ...], truncated, deaths in the level
+    at the start)} from a .sav image."""
+    recordings = {}
+    for index in range(level_count):
+        offset = SRAM_OFFSET + index * BLOCK_SIZE
+        if offset + HEADER_SIZE > len(data):
+            break
+        magic, flags, count, deaths = struct.unpack_from("<BBHH", data, offset)
+        if magic != MAGIC or count * 2 + HEADER_SIZE > BLOCK_SIZE:
+            continue
+        runs = []
+        for k in range(count):
+            packed, = struct.unpack_from("<H", data, offset + HEADER_SIZE + 2 * k)
+            runs.append((packed >> 10, packed & 0x3FF))
+        recordings[index] = (runs, bool(flags & FLAG_TRUNCATED), deaths)
+    return recordings
+
+
+def replay_json(name, runs, deaths):
+    """The JSON of one recording; "deaths" only when it began after some."""
+    data = {"level": name, "runs": runs}
+    if deaths:
+        data["deaths"] = deaths
+    return data
+
+
+def import_sav(path):
+    levels = _campaign_levels()
+    recordings = read_sav(Path(path).read_bytes(), len(levels))
+    if not recordings:
+        print(f"No recording in {path}.", file=sys.stderr)
+        return 1
+    REPLAY_DIR.mkdir(exist_ok=True)
+    for index, (runs, truncated, deaths) in sorted(recordings.items()):
+        name = levels[index]
+        if truncated:
+            print(f"SKIP  {name}: the recording did not fit (too many button changes)")
+            continue
+        target = REPLAY_DIR / f"{name}.json"
+        target.write_text(json.dumps(replay_json(name, runs, deaths)) + "\n")
+        print(f"wrote {target.relative_to(ROOT)} ({sum(c for _, c in runs)} steps)")
+    return 0
+
+
+# ---- generate -----------------------------------------------------------------
+def load_replays():
+    """({level: runs}, {level: [x, y]} for the replays that start elsewhere,
+    {level: deaths} for those that begin after deaths in the level)."""
+    replays, starts, deaths = {}, {}, {}
+    for path in sorted(REPLAY_DIR.glob("*.json")):
+        data = json.loads(path.read_text())
+        replays[data["level"]] = data["runs"]
+        if "start" in data:
+            starts[data["level"]] = data["start"]
+        if data.get("deaths"):
+            deaths[data["level"]] = data["deaths"]
+    return replays, starts, deaths
+
+
+def generate(levels, replays, starts=None, deaths=None):
+    """`starts`: optional {level: [x, y]} - the duck starts there instead of
+    at the level's spawn (a boss fight tested on its own). `deaths`: optional
+    {level: N} - the level is played as it stands after N deaths in it."""
+    starts = starts or {}
+    deaths = deaths or {}
+    out = ["#pragma once", "",
+           "// Generated by tools/replays.py from game/replays/*.json - record with",
+           "// `make record` and `tools/replays.py import`, do not edit by hand.", "",
+           '#include "replay.h"', "", "namespace replay_data {", "",
+           "struct Entry {", "    const char* name;", "    const replay::Run* runs;",
+           "    int run_count;", "    int steps;",
+           "    bool has_start;  // the duck starts at (start_x, start_y)",
+           "    int start_x;", "    int start_y;",
+           "    unsigned deaths;  // deaths in the level before the first step",
+           "};", ""]
+    for name in levels:
+        runs = replays.get(name)
+        if runs:
+            body = ", ".join(f"{{{b}, {c}}}" for b, c in runs)
+            out.append(f"constexpr replay::Run {name}_RUNS[] = {{{body}}};")
+    out += ["", "// One entry per level, in play order (main.cpp's levels[]).",
+            "inline constexpr Entry ENTRIES[] = {"]
+    entries = []
+    for name in levels:
+        runs = replays.get(name)
+        start = starts.get(name)
+        where = f"true, {start[0]}, {start[1]}" if start else "false, 0, 0"
+        where += f", {deaths.get(name, 0)}"
+        if runs:
+            entries.append(f'    {{"{name}", {name}_RUNS, {len(runs)}, {sum(c for _, c in runs)}, {where}}}')
+        else:
+            entries.append(f'    {{"{name}", nullptr, 0, 0, {where}}}')
+    out.append(",\n".join(entries))
+    out += ["};", "", "inline constexpr int ENTRY_COUNT = sizeof(ENTRIES) / sizeof(ENTRIES[0]);",
+            "", "}  // namespace replay_data", ""]
+    return "\n".join(out)
+
+
+def _squash(text):
+    return re.sub(r"\s+", "", text)
+
+
+def write_header(check):
+    text = generate(_campaign_levels(), *load_replays())
+    # Whitespace does not count: the committed header is clang-formatted.
+    up_to_date = HEADER.exists() and _squash(HEADER.read_text()) == _squash(text)
+    if check:
+        if not up_to_date:
+            print("ERROR game/include/replay_data.h does not match game/replays/: "
+                  "run python3 tools/replays.py generate", file=sys.stderr)
+            return 1
+        return 0
+    if not up_to_date:
+        HEADER.write_text(text)
+        # Formatted as committed (the pre-commit hook would do it otherwise).
+        if shutil.which("clang-format"):
+            subprocess.run(["clang-format", "-i", str(HEADER)], check=True)
+        print(f"wrote {HEADER.name}")
+    return 0
+
+
+# ---- run ---------------------------------------------------------------------
+LINE = re.compile(r"REPLAY (\d+) (\w+) (pass|FAIL|none)")
+
+
+def parse_log(text):
+    """([(level, result)], whether the run reached its end)."""
+    results = [(m.group(2), m.group(3)) for m in LINE.finditer(text)]
+    return results, "REPLAY DONE" in text
+
+
+def run(rom, seconds):
+    env = dict(os.environ, SDL_VIDEODRIVER="dummy", SDL_AUDIODRIVER="dummy")
+    runtime = Path(tempfile.mkdtemp(prefix="mgba-"))
+    env.setdefault("XDG_RUNTIME_DIR", str(runtime))
+    # stdbuf: mGBA would buffer its log until it exits.
+    command = ["stdbuf", "-oL", "-eL", "timeout", str(seconds), "mgba", "-l", "4",  # Butano logs as WARN
+               "-C", "videoSync=0", "-C", "audioSync=0", "-C", "fpsTarget=100000", str(rom)]
+    output = []
+    try:
+        # The ROM never exits: stop the emulator as soon as the run is done.
+        with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                              text=True, env=env) as process:
+            for line in process.stdout:
+                output.append(line)
+                if "REPLAY DONE" in line:
+                    process.terminate()
+                    break
+    except FileNotFoundError:
+        print("mgba is not installed (it is in the dev container).", file=sys.stderr)
+        return 1
+    results, done = parse_log("".join(output))
+    for level, outcome in results:
+        print(f"{outcome:5s} {level}")
+    failed = [level for level, outcome in results if outcome == "FAIL"]
+    played = [level for level, outcome in results if outcome == "pass"]
+    if not done:
+        print(f"ERROR the replay ROM did not finish within {seconds} s", file=sys.stderr)
+        return 1
+    print(f"\nReplays: {len(played)} passed, {len(failed)} failed, "
+          f"{len(results) - len(played) - len(failed)} level(s) without a recording.")
+    return 1 if failed else 0
+
+
+def main(argv):
+    if argv[:1] == ["import"] and len(argv) == 2:
+        return import_sav(argv[1])
+    if argv[:1] == ["generate"]:
+        return write_header("--check" in argv)
+    if argv[:1] == ["run"] and len(argv) >= 2:
+        seconds = int(argv[argv.index("--seconds") + 1]) if "--seconds" in argv else 120
+        return run(argv[1], seconds)
+    print(__doc__)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
