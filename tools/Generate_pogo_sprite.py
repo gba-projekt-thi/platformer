@@ -4,17 +4,20 @@ Generate_pogo_sprite.py
 
 Writes the three-frame pogo strike graphic (shown under the duck while the
 down strike reaches, Player::_update_pogo_slash) as a Butano-ready 4bpp
-indexed BMP plus its JSON:
+indexed BMP plus its JSON. It is the duck's beak dive: a yellow teardrop with
+an orange beak tip plunges down, then splashes into the bathtub's water.
 
     pogo16x16.bmp   16 x 48 px, three 16x16 frames stacked vertically
-                    frame 0 = wide downward swoosh (a flattened V) with
-                              speed streaks above it
-                    frame 1 = the swoosh narrows and drops, impact star forms
-                    frame 2 = impact star under the feet, swoosh fading
+                    frame 0 = the beak dive starts, water streaks beside it
+                    frame 1 = it plunges lower, a ripple forms under the tip
+                    frame 2 = the dive is a small tip, a splash crown of
+                              droplets and a water line below
     pogo16x16.json  {"type": "sprite", "height": 16}
 
-Palette index 0 is the transparent color (magenta), as Butano expects.
-Pure Python (no Pillow). Usage:
+The look follows ente.bmp: black outline, yellow body, cream highlight,
+orange beak. Water is light blue. Palette index 0 is the transparent color
+(magenta), as Butano expects. Each frame is drawn as its left half and
+mirrored. Pure Python (no Pillow). Usage:
 
     python3 tools/Generate_pogo_sprite.py game/graphics/global [preview.png]
 
@@ -29,83 +32,88 @@ from pathlib import Path
 
 W, H, FRAMES = 16, 16, 3
 T = 0  # transparent
-OUT, WHITE, LIGHT, MID, YELLOW = 1, 2, 3, 4, 5
+OUT, YELLOW, CREAM, ORANGE, WATER, WHITE = 1, 2, 3, 4, 5, 6
 
+# Same colors as ente.bmp (outline, yellow body, cream highlight, orange
+# beak) plus a light water blue and white foam.
 PALETTE = {
     T: (255, 0, 255),
-    OUT: (34, 64, 140),
-    WHITE: (255, 255, 255),
-    LIGHT: (190, 240, 255),
-    MID: (120, 190, 240),
+    OUT: (0, 0, 0),
     YELLOW: (255, 236, 39),
+    CREAM: (255, 241, 232),
+    ORANGE: (255, 163, 0),
+    WATER: (120, 190, 240),
+    WHITE: (255, 255, 255),
 }
 
+GLYPHS = {".": T, "k": OUT, "y": YELLOW, "c": CREAM, "o": ORANGE,
+          "b": WATER, "w": WHITE}
 
-def blank():
-    return [[T] * W for _ in range(H)]
-
-
-def put(img, x, y, color):
-    if 0 <= x < W and 0 <= y < H:
-        img[y][x] = color
-
-
-def outline(img):
-    """Surround every drawn pixel with OUT where the neighbour is empty."""
-    src = [row[:] for row in img]
-    for y in range(H):
-        for x in range(W):
-            if src[y][x] != T:
-                continue
-            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < W and 0 <= ny < H and src[ny][nx] not in (T, OUT):
-                    img[y][x] = OUT
-                    break
-
-
-def swoosh(img, tip_y, spread, colors):
-    """A V pointing down: tip at the bottom centre, arms rising by `spread`
-    rows over each half. Two pixels thick, bright on top."""
-    for x in range(1, W - 1):  # leave a column for the outline
-        d = abs(x - 7.5)  # 0.5 .. 6.5
-        y = tip_y - int(round(d * spread))
-        put(img, x, y, colors[0])
-        put(img, x, y + 1, colors[1])
-
-
-def streaks(img, ys):
-    """Short vertical speed lines above the swoosh."""
-    for x, y0, y1 in ys:
-        for y in range(y0, y1 + 1):
-            put(img, x, y, LIGHT)
-
-
-def star(img, cx, cy, r):
-    """Impact sparkle: plus shape with a bright core."""
-    for i in range(-r, r + 1):
-        put(img, cx + i, cy, YELLOW if abs(i) > 0 else WHITE)
-        put(img, cx, cy + i, YELLOW if abs(i) > 0 else WHITE)
-    if r >= 2:
-        for dx, dy in ((1, 1), (-1, 1), (1, -1), (-1, -1)):
-            put(img, cx + dx, cy + dy, WHITE)
+# Left half (8 columns) of each frame, 16 rows; mirrored to the right.
+HALVES = (
+    (  # 0: the dive starts
+        "........",
+        "........",
+        "......kk",
+        ".....kyc",
+        "b...kycy",
+        "b...kycy",
+        ".b..kyyy",
+        ".b...kyy",
+        "..b..kyy",
+        ".....koo",
+        "......ko",
+        "......kk",
+        "........",
+        "........",
+        "........",
+        "........",
+    ),
+    (  # 1: it plunges, a ripple forms
+        "........",
+        "........",
+        "........",
+        "......kk",
+        ".....kyc",
+        "b...kycy",
+        "b...kycy",
+        ".b..kyyy",
+        ".b...kyy",
+        "..b..kyy",
+        ".....koo",
+        "...b..ko",
+        "..bbb.kk",
+        ".bbbbbbb",
+        "........",
+        "........",
+    ),
+    (  # 2: a splash crown
+        "........",
+        "........",
+        "........",
+        "......kk",
+        ".....kyo",
+        "b...b.ko",
+        ".b..b..k",
+        ".b.b.b..",
+        "..b.b..b",
+        "w.b.bwb.",
+        ".bbbbbbb",
+        "bbbwwbbb",
+        "........",
+        "........",
+        "........",
+        "........",
+    ),
+)
 
 
 def frame(index):
-    img = blank()
-    if index == 0:
-        streaks(img, [(3, 1, 2), (12, 1, 2), (7, 0, 1)])
-        swoosh(img, 10, 0.7, (WHITE, MID))
-    elif index == 1:
-        streaks(img, [(4, 3, 4), (11, 3, 4)])
-        swoosh(img, 11, 0.5, (WHITE, MID))
-        star(img, 7, 14, 1)
-    else:
-        swoosh(img, 8, 0.5, (LIGHT, MID))
-        star(img, 7, 12, 2)
-        put(img, 3, 13, YELLOW)
-        put(img, 12, 13, YELLOW)
-    outline(img)
+    img = []
+    for half in HALVES[index]:
+        assert len(half) == W // 2
+        left = [GLYPHS[c] for c in half]
+        img.append(left + left[::-1])
     return img
 
 

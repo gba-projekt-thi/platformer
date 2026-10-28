@@ -139,6 +139,11 @@ class Core {
     [[nodiscard]] auto pogo_striking() const -> bool {
         return _pogo_frames > 0;
     }
+    // The strike's picture: while it reaches, and for at least
+    // Cfg::Pogo::MIN_SHOW_FRAMES after R (a bounce ends the reach at once).
+    [[nodiscard]] auto pogo_visible() const -> bool {
+        return _pogo_frames > 0 || _pogo_show > 0;
+    }
 
     // The world-edge bounce (world_width / 2 - Cfg::Screen::EDGE_MARGIN).
     void set_horizontal_bound(bn::fixed bound) { _horizontal_bound = bound; }
@@ -232,9 +237,15 @@ class Core {
         if (in.r_pressed && _pogo_enabled && !_on_ground && _pogo_frames == 0 &&
             _pogo_cooldown == 0) {
             _pogo_frames = Cfg::Pogo::STRIKE_FRAMES;
+            _pogo_show = Cfg::Pogo::MIN_SHOW_FRAMES;
             effects.pogo_started = true;
-        } else if (_pogo_cooldown > 0) {
-            --_pogo_cooldown;
+        } else {
+            if (_pogo_cooldown > 0) {
+                --_pogo_cooldown;
+            }
+            if (_pogo_show > 0) {
+                --_pogo_show;
+            }
         }
         if (_pogo_frames == 0) {
             return;
@@ -252,6 +263,7 @@ class Core {
 
     void _reset_pogo() {
         _pogo_frames = 0;
+        _pogo_show = 0;
         _pogo_cooldown = 0;
         _pogo_rise = false;
     }
@@ -383,6 +395,7 @@ class Core {
 
     bool _pogo_enabled = false;
     int _pogo_frames = 0;     // > 0 while a strike reaches
+    int _pogo_show = 0;       // frames the picture stays up after R
     int _pogo_cooldown = 0;   // frames until the next strike after a miss
     bool _pogo_rise = false;  // a bounce's rise, not cut by letting go of A
 

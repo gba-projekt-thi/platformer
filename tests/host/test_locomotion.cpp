@@ -648,6 +648,39 @@ TEST_CASE(pogo_a_strike_on_a_trap_bounces_up) {
     CHECK(!rig.core.pogo_striking());
 }
 
+TEST_CASE(pogo_graphic_is_shown_even_when_the_bounce_is_instant) {
+    // A trap already in reach: the bounce ends the strike in the very frame
+    // R is pressed, yet the picture must be visible for a few frames.
+    Rig rig;
+    fall_with_pogo(rig);
+    rig.world.pogo_target = true;
+    rig.step(strike());
+    rig.world.pogo_target = false;
+    CHECK(rig.core.pogo_visible());
+    rig.steps(Cfg::Pogo::MIN_SHOW_FRAMES - 1);
+    CHECK(rig.core.pogo_visible());
+    rig.step();
+    CHECK(!rig.core.pogo_visible());
+}
+
+TEST_CASE(pogo_graphic_stays_for_the_whole_reach_of_a_miss) {
+    Rig rig;
+    fall_with_pogo(rig);
+    rig.step(strike());
+    rig.steps(Cfg::Pogo::STRIKE_FRAMES - 2);
+    CHECK(rig.core.pogo_visible());
+    rig.step();
+    CHECK(!rig.core.pogo_visible());
+}
+
+TEST_CASE(pogo_graphic_is_hidden_after_a_reset) {
+    Rig rig;
+    fall_with_pogo(rig);
+    rig.step(strike());
+    rig.core.reset_dash();
+    CHECK(!rig.core.pogo_visible());
+}
+
 TEST_CASE(pogo_strike_keeps_reaching_for_its_frames) {
     Rig rig;
     fall_with_pogo(rig);
