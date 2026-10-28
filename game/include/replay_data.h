@@ -221,13 +221,12 @@ constexpr replay::Run LEVEL_WORLD5_TRICK_RUNS[] = {
     {0, 2},  {1, 2},   {0, 2},  {14, 1}, {10, 21}, {0, 8},  {1, 10},  {0, 7},
     {14, 1}, {10, 32}, {0, 10}};
 constexpr replay::Run LEVEL_WORLD5_BOSS_RUNS[] = {
-    {0, 5},  {14, 1},  {10, 4}, {2, 10}, {34, 1}, {2, 5},   {1, 30}, {0, 68},
-    {14, 1}, {10, 10}, {34, 1}, {2, 9},  {1, 32}, {0, 68},  {14, 1}, {10, 4},
-    {2, 8},  {34, 1},  {2, 19}, {34, 1}, {2, 19}, {34, 1},  {2, 19}, {34, 1},
-    {2, 19}, {34, 1},  {2, 19}, {34, 1}, {2, 1},  {0, 28},  {13, 1}, {9, 4},
-    {41, 1}, {9, 5},   {1, 14}, {33, 1}, {1, 19}, {33, 1},  {1, 19}, {33, 1},
-    {1, 19}, {33, 1},  {1, 19}, {33, 1}, {1, 3},  {0, 4},   {14, 1}, {10, 4},
-    {2, 24}, {34, 1},  {2, 28}, {0, 4},  {14, 1}, {10, 28}, {2, 10}, {0, 10}};
+    {0, 145}, {14, 1}, {10, 10}, {34, 1},  {2, 11}, {34, 1}, {2, 11}, {34, 1},
+    {2, 11},  {34, 1}, {2, 11},  {34, 1},  {2, 11}, {34, 1}, {2, 9},  {0, 4},
+    {13, 1},  {9, 4},  {1, 4},   {33, 1},  {1, 11}, {2, 21}, {0, 34}, {13, 1},
+    {9, 10},  {33, 1}, {1, 9},   {2, 32},  {0, 56}, {13, 1}, {9, 10}, {33, 1},
+    {1, 9},   {2, 32}, {0, 10},  {13, 1},  {9, 10}, {1, 12}, {33, 1}, {1, 27},
+    {0, 4},   {2, 11}, {14, 1},  {10, 28}, {2, 11}, {0, 10}};
 constexpr replay::Run LEVEL_WORLD5_FINALE_RUNS[] = {{2, 400}};
 
 // One entry per level, in play order (main.cpp's levels[]).
@@ -258,7 +257,7 @@ inline constexpr Entry ENTRIES[] = {
     {"LEVEL_WORLD5_LEVERS", LEVEL_WORLD5_LEVERS_RUNS, 74, 483, false, 0, 0, 0},
     {"LEVEL_WORLD5_CLIMB", LEVEL_WORLD5_CLIMB_RUNS, 26, 251, false, 0, 0, 0},
     {"LEVEL_WORLD5_TRICK", LEVEL_WORLD5_TRICK_RUNS, 107, 536, false, 0, 0, 0},
-    {"LEVEL_WORLD5_BOSS", LEVEL_WORLD5_BOSS_RUNS, 56, 612, true, 231, 12, 0},
+    {"LEVEL_WORLD5_BOSS", LEVEL_WORLD5_BOSS_RUNS, 46, 594, true, 231, 12, 0},
     {"LEVEL_WORLD5_FINALE", LEVEL_WORLD5_FINALE_RUNS, 1, 400, false, 0, 0, 0}};
 
 inline constexpr int ENTRY_COUNT = sizeof(ENTRIES) / sizeof(ENTRIES[0]);
