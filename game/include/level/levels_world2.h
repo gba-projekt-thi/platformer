@@ -214,8 +214,8 @@ constexpr TrapData world2_trick_traps[] = {
     {TrapType::CYCLE,
      -24,
      100,
-     16,
-     10,
+     28,
+     12,
      0,
      0,
      bn::sprite_items::rustynails32x16,
@@ -333,21 +333,21 @@ constexpr TrapData world2_boss_traps[] = {
      "wave1"},
 
     // Attack 1: a can slams down from above, triggered by wave1.
-    {TrapType::MOVING, -256, -40, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
+    {TrapType::MOVING, -256, -40, 28, 26, 0, 1, bn::sprite_items::can32x32, 26,
      TRAP_GRAPHICS_INDEXES_8, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "wave1"},
 
     // Attack 2: a second can charges in sideways, triggered by wave2.
-    {TrapType::MOVING, 89, 64, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
+    {TrapType::MOVING, 89, 64, 28, 26, 0, 1, bn::sprite_items::can32x32, 26,
      TRAP_GRAPHICS_INDEXES_8, -2.0, 0, 3, NO_PATH_TRAP, 0, 0, 0, "wave2"},
 
     // A crate disguised as scenery - punishes lingering mid-arena.
     {TrapType::AMBUSH,
      -56,
      65,
-     20,
-     20,
+     26,
+     26,
      0,
-     0,
+     1,
      bn::sprite_items::box32x32,
      1,
      TRAP_GRAPHICS_INDEXES_8,
@@ -364,7 +364,7 @@ constexpr TrapData world2_boss_traps[] = {
      18},
 
     // Attack 3: second slam, triggered by wave3.
-    {TrapType::MOVING, -11, -40, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
+    {TrapType::MOVING, -11, -40, 28, 26, 0, 1, bn::sprite_items::can32x32, 26,
      TRAP_GRAPHICS_INDEXES_8, 0.0, 4, 4, NO_PATH_TRAP, 0, 0, 0, "wave3"},
 
     // A row of rusty nails, always dangerous - forces a precise landing
@@ -373,7 +373,7 @@ constexpr TrapData world2_boss_traps[] = {
      26, TRAP_GRAPHICS_INDEXES_8, 0, 0, 0, NO_PATH_TRAP},
 
     // Attack 4: final charge before the door, triggered by wave4.
-    {TrapType::MOVING, 149, 60, 28, 28, 0, 0, bn::sprite_items::can32x32, 26,
+    {TrapType::MOVING, 149, 60, 28, 26, 0, 1, bn::sprite_items::can32x32, 26,
      TRAP_GRAPHICS_INDEXES_8, -2.4, 0, 3.4, NO_PATH_TRAP, 0, 0, 0, "wave4"},
 
     // The Rusty Can: 3 pogo strikes; every hit is a new phase

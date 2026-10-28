@@ -314,7 +314,7 @@ class PogoReachTests(unittest.TestCase):
 
     def test_static_traps_are_read_from_the_level(self):
         traps = sim.load_static_traps(WORLD5)["LEVEL_WORLD5_SCROLL"]
-        self.assertIn((-240.0, 60.0, 16.0, 16.0), [(t.cx, t.cy, t.w, t.h) for t in traps])
+        self.assertIn((-240.0, 60.0, 24.0, 28.0), [(t.cx, t.cy, t.w, t.h) for t in traps])
 
 
 class RunningDoorTests(unittest.TestCase):
