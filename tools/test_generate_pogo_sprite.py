@@ -71,11 +71,23 @@ class PogoSpriteTests(unittest.TestCase):
         used = {p for row in self.bmp["rows"] for p in row}
         self.assertTrue(used <= set(gen.PALETTE))
 
-    def test_impact_star_only_in_the_later_frames(self):
+    def test_splash_water_only_in_the_later_frames(self):
         first, second, third = ([p for row in f for p in row] for f in self.frames())
-        self.assertNotIn(gen.YELLOW, first)
-        self.assertIn(gen.YELLOW, second)
-        self.assertIn(gen.YELLOW, third)
+        self.assertNotIn(gen.WATER, first[16 * 11 :])  # no ripple yet
+        self.assertIn(gen.WATER, second[16 * 11 :])
+        self.assertIn(gen.WATER, third[16 * 11 :])
+        self.assertIn(gen.WHITE, third)
+
+    def test_is_drawn_in_the_ducks_colors(self):
+        duck = {(0, 0, 0), (255, 236, 39), (255, 241, 232), (255, 163, 0)}
+        palette = self.bmp["palette"]
+        for index in (gen.OUT, gen.YELLOW, gen.CREAM, gen.ORANGE):
+            self.assertIn(palette[index], duck)
+
+    def test_every_frame_is_mirror_symmetric(self):
+        for frame in self.frames():
+            for row in frame:
+                self.assertEqual(row, row[::-1])
 
     def test_preview_png_is_written(self):
         png = Path(self.tmp.name, "preview.png").read_bytes()
