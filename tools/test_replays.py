@@ -152,7 +152,9 @@ class WriteHeaderTests(unittest.TestCase):
     def test_a_header_that_only_differs_in_whitespace_is_kept(self):
         # clang-format reflows the committed header; `make replay` must not
         # undo that and leave the working tree dirty.
-        text = replays.generate(replays._campaign_levels(), *replays.load_replays())
+        text = replays.generate(
+            replays._campaign_levels(), *replays.load_replays(),
+            counter=replays.load_replays(replays.COUNTER_DIR))
         reflowed = text.replace("};", "\n};")
         replays.HEADER.write_text(reflowed)
         self.assertEqual(replays.write_header(check=False), 0)
