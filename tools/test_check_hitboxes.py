@@ -144,6 +144,136 @@ class ScaledSpriteTests(unittest.TestCase):
         self.assertGreater(checker.trap_field_index("sprite_scale"), 9)
 
 
+class FrameRuleTests(unittest.TestCase):
+    """box_problems(): every animation frame is judged on its own."""
+
+    NO_MARGIN = (0, 0, 0, 0)
+
+    def test_a_box_inside_every_frame_is_fine(self):
+        frames = {0: (0, 0, 16, 16), 1: (1, 1, 15, 15)}
+        self.assertEqual(checker.box_problems((2, 2, 14, 14), frames, self.NO_MARGIN), [])
+
+    def test_a_frame_that_shows_less_makes_the_box_kill_on_empty_pixels(self):
+        frames = {0: (0, 0, 16, 16), 1: (0, 6, 16, 16)}  # frame 1: top 6 px gone
+        problems = checker.box_problems((0, 0, 16, 16), frames, self.NO_MARGIN)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("frame 1", problems[0])
+        self.assertIn("6", problems[0])
+
+    def test_an_empty_frame_must_not_kill(self):
+        problems = checker.box_problems((0, 0, 4, 4), {0: (0, 0, 4, 4), 3: None}, self.NO_MARGIN)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("frame 3", problems[0])
+
+    def test_the_ducks_own_picture_hides_overhang_per_frame(self):
+        duck = (3, 8, 3, 0)
+        self.assertEqual(checker.box_problems((-3, 0, 19, 16), {0: (0, 0, 16, 16)}, duck), [])
+
+    def test_a_box_much_smaller_than_what_is_always_drawn_misses_the_picture(self):
+        frames = {0: (0, 0, 32, 32), 1: (0, 0, 32, 32)}
+        problems = checker.box_problems((8, 8, 24, 24), frames, self.NO_MARGIN)
+        self.assertEqual(len(problems), 4)  # every side is 8 px in
+        self.assertIn("left", problems[0])
+
+    def test_parts_drawn_in_only_some_frames_do_not_count_as_always_drawn(self):
+        # Frame 1 reaches 10 px further right; only frame 0's part is always
+        # there.
+        frames = {0: (0, 0, 16, 16), 1: (0, 0, 26, 16)}
+        self.assertEqual(checker.box_problems((0, 0, 16, 16), frames, self.NO_MARGIN), [])
+
+    def test_inset_within_the_under_tolerance_is_fine(self):
+        frames = {0: (0, 0, 16, 16)}
+        inset = checker.TRAP_UNDER_TOLERANCE
+        self.assertEqual(
+            checker.box_problems((inset, 0, 16 - inset, 16), frames, self.NO_MARGIN), [])
+
+    def test_numbers_report_each_frame(self):
+        numbers = checker.frame_numbers(
+            (0, 0, 16, 16), {0: (0, 0, 16, 16), 1: (0, 4, 16, 16)}, self.NO_MARGIN)
+        self.assertEqual(numbers[0], 0)
+        self.assertEqual(numbers[1], 4)
+
+
+class TrapFramesTests(unittest.TestCase):
+    SEQUENCES = {"SEQ": [0, 1, 2, 3, 4], "ONE": [2]}
+
+    def test_no_animation_shows_frame_zero(self):
+        self.assertEqual(checker.trap_frames("TRAP_GRAPHICS_INDEXES_0", self.SEQUENCES, 3), [0])
+
+    def test_frames_wrap_like_the_game_and_are_listed_once(self):
+        self.assertEqual(checker.trap_frames("SEQ", self.SEQUENCES, 3), [0, 1, 2])
+
+    def test_unknown_sequence_is_an_error(self):
+        with self.assertRaises(ValueError):
+            checker.trap_frames("NOPE", self.SEQUENCES, 3)
+
+
+class DuckFrameTests(unittest.TestCase):
+    # Body 8x8, picture drawn 4 px up (feet on the body's bottom).
+    def test_a_picture_that_matches_the_body_is_fine(self):
+        frames = {0: (-5, -8, 5, 8)}
+        self.assertEqual(checker.duck_problems(frames, 8, 8, -4), [])
+
+    def test_body_reaching_past_the_picture_is_unfair(self):
+        frames = {0: (-2, -8, 2, 8)}  # a 4 px wide picture, 8 px body
+        problems = checker.duck_problems(frames, 8, 8, -4)
+        self.assertTrue(any("frame 0" in p and "body" in p for p in problems))
+
+    def test_feet_floating_above_the_body_are_found(self):
+        frames = {0: (-5, -8, 5, 4)}  # feet 4 px above the body's bottom
+        problems = checker.duck_problems(frames, 8, 8, -4)
+        self.assertTrue(any("feet" in p for p in problems))
+
+    def test_picture_much_wider_than_the_body_is_found(self):
+        frames = {0: (-12, -8, 12, 8)}
+        problems = checker.duck_problems(frames, 8, 8, -4)
+        self.assertTrue(any("sideways" in p for p in problems))
+
+    def test_mirrored_pictures_are_judged_both_ways(self):
+        # Wall slide: drawn for a wall on the right, flipped for the left.
+        frames = {0: (-6, -8, 8, 8)}
+        self.assertEqual(checker.duck_problems(frames, 8, 8, -4), [])
+
+
+class CoverageTests(unittest.TestCase):
+    def test_a_sprite_with_a_body_that_nothing_checks_fails(self):
+        problems = checker.coverage_problems({"a", "b"}, {"a"}, {})
+        self.assertEqual(len(problems), 1)
+        self.assertIn("b", problems[0])
+
+    def test_a_sprite_without_a_body_needs_a_reason(self):
+        self.assertEqual(checker.coverage_problems({"a", "b"}, {"a"}, {"b": "title screen"}), [])
+
+    def test_a_no_body_sprite_that_is_checked_anyway_is_stale(self):
+        problems = checker.coverage_problems({"a"}, {"a"}, {"a": "title screen"})
+        self.assertEqual(len(problems), 1)
+        self.assertIn("a", problems[0])
+
+    def test_a_no_body_entry_for_a_missing_sprite_is_stale(self):
+        problems = checker.coverage_problems({"a"}, {"a"}, {"gone": "old"})
+        self.assertEqual(len(problems), 1)
+
+
+@unittest.skipUnless(HAS_GAME, "game/ not found")
+class AllSpritesDataTests(unittest.TestCase):
+    def test_every_sprite_sheet_is_checked_or_has_no_body(self):
+        covered = set()
+        checker.check(REPO, covered=covered)
+        sheets = checker.sprite_sheet_names(REPO)
+        self.assertEqual(checker.coverage_problems(sheets, covered, checker.NO_BODY), [])
+
+    def test_bodies_of_the_code_and_the_levels_are_all_checked(self):
+        covered = set()
+        checker.check(REPO, covered=covered)
+        for name in ("ente", "pogo16x16", "checkpoint16x16", "lever16x16", "door32x32",
+                     "susanne16x16", "thwomp64x64", "mimic32x32"):
+            self.assertIn(name, covered)
+
+    def test_the_cfg_constants_are_read_from_the_code(self):
+        self.assertEqual(checker.pogo_box(REPO), (-8, -6, 8, 6))
+        self.assertEqual(checker.checkpoint_zone(REPO)[0], 16)
+
+
 class RealDataTests(unittest.TestCase):
     def test_duck_feet_rest_on_the_bottom_of_its_body(self):
         _, _, _, below_feet = checker.duck_margins(REPO)

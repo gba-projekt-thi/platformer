@@ -117,7 +117,7 @@ def parse_traps(array_body, paths):
             "velocity_x velocity_y max_vel chase_follow_distance chase_speed "
             "ambush_range ambush_speed ambush_duration path_waits "
             "cycle_dx cycle_dy cycle_extend cycle_hold cycle_retract cycle_wait cycle_phase "
-            "sprite_z_order"
+            "sprite_z_order chase_limit"
         ).split():
             trap[key] = _num(fields.get(key, 0))
         for key in ("from_death", "until_death"):

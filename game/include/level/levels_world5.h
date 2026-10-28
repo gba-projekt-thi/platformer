@@ -51,16 +51,16 @@ constexpr TrapData world5_scroll_traps[] = {
     // point and only ever flies right, easing toward a position roughly
     // 40px behind the player at up to 2.5px/frame. Standing still or
     // moving left just widens the gap; running right is what closes it.
-    {TrapType::CHASE, -300, 20, 32, 16, 0, 0, bn::sprite_items::axe64x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 40, 2.5},
+    {TrapType::CHASE, -300, 20, 52, 22, -2, -3, bn::sprite_items::axe64x32, 1,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 48, 2.5},
 
     // Static rusty bar hazard sitting in the first gap.
-    {TrapType::BASE, -240, 60, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
+    {TrapType::BASE, -240, 60, 24, 28, 0, 0, bn::sprite_items::rostybar32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
 
     // Disguised, animated mimic sitting in a mid gap (mimic32x32 has 8
     // animation frames).
-    {TrapType::BASE, 56, 60, 16, 16, 0, 0, bn::sprite_items::mimic32x32, 16,
+    {TrapType::BASE, 56, 60, 20, 22, 0, 3, bn::sprite_items::mimic32x32, 16,
      TRAP_GRAPHICS_INDEXES_8, 0, 0, 0, NO_PATH_TRAP},
 
     // Falling thwomp guarding the approach to the final platforms,
@@ -123,11 +123,11 @@ constexpr TrapData world5b_scroll_traps[] = {
     // LEVEL_WORLD5_BOSS's tighter 28/3.0. Same sprite, no new graphics -
     // just closes the gap a little faster and sits a little closer than
     // the first time the duck met it.
-    {TrapType::CHASE, -196, 20, 32, 16, 0, 0, bn::sprite_items::axe64x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 34, 2.75},
+    {TrapType::CHASE, -196, 20, 52, 22, -2, -3, bn::sprite_items::axe64x32, 1,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 42, 2.75},
 
     // Static rusty bar hazard in the first gap.
-    {TrapType::BASE, -140, 60, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
+    {TrapType::BASE, -140, 60, 24, 28, 0, 0, bn::sprite_items::rostybar32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
 
     // Ambush mimic disguised among the real chests - lunges left/right
@@ -137,10 +137,10 @@ constexpr TrapData world5b_scroll_traps[] = {
     {TrapType::AMBUSH,
      48,
      60,
-     16,
-     16,
+     20,
+     22,
      0,
-     0,
+     3,
      bn::sprite_items::mimic32x32,
      16,
      TRAP_GRAPHICS_INDEXES_8,
@@ -210,14 +210,14 @@ constexpr TrapData world5_dash_traps[] = {
     // The axe: starts well behind the spawn and trails 48px behind the duck
     // at 2.0px/frame - exactly walking speed, so it never catches a duck that
     // keeps moving, but punishes stopping to think.
-    {TrapType::CHASE, -350, 20, 32, 16, 0, 0, bn::sprite_items::axe64x32, 1,
-     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 48, 2.0},
+    {TrapType::CHASE, -350, 20, 52, 22, -2, -3, bn::sprite_items::axe64x32, 1,
+     TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP, 0, 56, 2.0},
 
     // Rusty bars in the pits under the first two dash gaps: the gap reads as
     // lethal at a glance.
-    {TrapType::BASE, -238, 68, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
+    {TrapType::BASE, -238, 68, 24, 28, 0, 0, bn::sprite_items::rostybar32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
-    {TrapType::BASE, -8, 68, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
+    {TrapType::BASE, -8, 68, 24, 28, 0, 0, bn::sprite_items::rostybar32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
 
     // Mimic lurking in the gap between the two short hops: lunges left
@@ -226,10 +226,10 @@ constexpr TrapData world5_dash_traps[] = {
     {TrapType::AMBUSH,
      123,
      60,
-     16,
-     16,
+     20,
+     22,
      0,
-     0,
+     3,
      bn::sprite_items::mimic32x32,
      16,
      TRAP_GRAPHICS_INDEXES_8,
@@ -341,11 +341,11 @@ constexpr TriggerData world5_levers_triggers[] = {
 constexpr TrapData world5_levers_traps[] = {
 
     // Rusty bars in the pits: the chasms read as lethal.
-    {TrapType::BASE, -124, 68, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
+    {TrapType::BASE, -124, 68, 24, 28, 0, 0, bn::sprite_items::rostybar32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
-    {TrapType::BASE, 42, 68, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
+    {TrapType::BASE, 42, 68, 24, 28, 0, 0, bn::sprite_items::rostybar32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
-    {TrapType::BASE, 228, 68, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
+    {TrapType::BASE, 228, 68, 24, 28, 0, 0, bn::sprite_items::rostybar32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
 
     // The chain's spikes: hidden below the screen behind their barrel, one
@@ -354,8 +354,8 @@ constexpr TrapData world5_levers_traps[] = {
     {TrapType::CYCLE,
      -48,
      100,
-     16,
-     16,
+     24,
+     28,
      0,
      0,
      bn::sprite_items::rostybar32x32,
@@ -383,8 +383,8 @@ constexpr TrapData world5_levers_traps[] = {
     {TrapType::CYCLE,
      -16,
      100,
-     16,
-     16,
+     24,
+     28,
      0,
      0,
      bn::sprite_items::rostybar32x32,
@@ -606,8 +606,8 @@ constexpr TrapData world5_trick_traps[] = {
     {TrapType::CYCLE,
      -218,
      100,
-     16,
-     16,
+     24,
+     28,
      0,
      0,
      bn::sprite_items::rostybar32x32,
@@ -640,15 +640,15 @@ constexpr TrapData world5_trick_traps[] = {
      2},
 
     // 2 - the pogo bar in the middle of the pit.
-    {TrapType::BASE, -122, 68, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
+    {TrapType::BASE, -122, 68, 24, 28, 0, 0, bn::sprite_items::rostybar32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
 
     // 3 - the chain's stabs, one each.
     {TrapType::CYCLE,
      -2,
      100,
-     16,
-     16,
+     24,
+     28,
      0,
      0,
      bn::sprite_items::rostybar32x32,
@@ -676,8 +676,8 @@ constexpr TrapData world5_trick_traps[] = {
     {TrapType::CYCLE,
      24,
      100,
-     16,
-     16,
+     24,
+     28,
      0,
      0,
      bn::sprite_items::rostybar32x32,
@@ -709,8 +709,8 @@ constexpr TrapData world5_trick_traps[] = {
     {TrapType::AMBUSH,
      53,
      112,
-     16,
      24,
+     28,
      0,
      0,
      bn::sprite_items::rostybar32x32,
@@ -745,10 +745,10 @@ constexpr TrapData world5_trick_traps[] = {
     {TrapType::BASE,
      218,
      42,
-     10,
-     16,
+     18,
+     18,
      0,
-     2,
+     4,
      bn::sprite_items::door32x32,
      1,
      TRAP_GRAPHICS_INDEXES_0,
@@ -867,10 +867,10 @@ constexpr TrapData world5_boss_traps[] = {
     {TrapType::CHASE,
      -452,
      20,
-     32,
-     16,
-     0,
-     0,
+     52,
+     22,
+     -2,
+     -3,
      bn::sprite_items::axe64x32,
      1,
      TRAP_GRAPHICS_INDEXES_0,
@@ -879,7 +879,7 @@ constexpr TrapData world5_boss_traps[] = {
      0,
      NO_PATH_TRAP,
      0,
-     28,
+     36,
      3.0,
      nullptr,
      0,
@@ -898,7 +898,7 @@ constexpr TrapData world5_boss_traps[] = {
      573},
 
     // Static rusty bar in the first gap - always dangerous.
-    {TrapType::BASE, -392, 60, 16, 16, 0, 0, bn::sprite_items::rostybar32x32, 1,
+    {TrapType::BASE, -392, 60, 24, 28, 0, 0, bn::sprite_items::rostybar32x32, 1,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
 
     // Attack 1: first thwomp slam, triggered by wave1.
@@ -909,10 +909,10 @@ constexpr TrapData world5_boss_traps[] = {
     {TrapType::AMBUSH,
      -104,
      60,
-     16,
-     16,
+     20,
+     22,
      0,
-     0,
+     3,
      bn::sprite_items::mimic32x32,
      16,
      TRAP_GRAPHICS_INDEXES_8,
@@ -936,10 +936,10 @@ constexpr TrapData world5_boss_traps[] = {
     {TrapType::AMBUSH,
      52,
      60,
-     16,
-     16,
+     20,
+     22,
      0,
-     0,
+     3,
      bn::sprite_items::mimic32x32,
      16,
      TRAP_GRAPHICS_INDEXES_8,
@@ -965,10 +965,10 @@ constexpr TrapData world5_boss_traps[] = {
     {TrapType::BOSS,
      289,
      40,
-     56,
-     40,
+     57,
+     70,
      0,
-     2,
+     -1,
      bn::sprite_items::thwomp64x64,
      1,
      TRAP_GRAPHICS_INDEXES_0,
@@ -995,7 +995,7 @@ constexpr TrapData world5_boss_traps[] = {
      5},
     // Phase attacks: dropped through the pit when arena_p<n> switches on
     // (in sight after ~37 frames), across the bounces on the boss.
-    {TrapType::MOVING, 299, -180, 16, 16, 0, 0, bn::sprite_items::rostybar32x32,
+    {TrapType::MOVING, 299, -180, 24, 28, 0, 0, bn::sprite_items::rostybar32x32,
      1, TRAP_GRAPHICS_INDEXES_0, 0.0, 3, 3, NO_PATH_TRAP, 0, 0, 0, "arena_p2"},
     {TrapType::MOVING, 342, -180, 28, 28, 0, 0, bn::sprite_items::thwomp32x32,
      1, TRAP_GRAPHICS_INDEXES_0, 0.0, 3, 3, NO_PATH_TRAP, 0, 0, 0, "arena_p4"}};

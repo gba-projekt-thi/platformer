@@ -123,7 +123,11 @@ def _trap_boxes(level, trap):
         return boxes or [(x, y, w, h)]
     if kind == "CHASE":
         # ChaserTrap only ever moves right (it never retreats), along its row.
-        return _segment_boxes((x, y), (max(x, level.world_w / 2 + w), y), w, h)
+        # chase_limit > 0 stops it that far right of its start.
+        end = max(x, level.world_w / 2 + w)
+        if trap.get("chase_limit"):
+            end = min(end, x + trap["chase_limit"])
+        return _segment_boxes((x, y), (end, y), w, h)
     return [(x, y, w, h)]
 
 

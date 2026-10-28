@@ -42,6 +42,9 @@ MOVING = ("{TrapType::MOVING, %d, %d, 16, 16, 0, 0, bn::sprite_items::t, 1, TRAP
           " 0.0, %s, %s, NO_PATH_TRAP, 0, 0, 0, \"sw\"}")
 CHASE = ("{TrapType::CHASE, %d, %d, 32, 16, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
          " 0, 0, 0, NO_PATH_TRAP, 0, 40, 2.5}")
+CHASE_LIMITED = ("{TrapType::CHASE, %d, %d, 32, 16, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
+                 " 0, 0, 0, NO_PATH_TRAP, 0, 40, 2.5, nullptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,"
+                 " 0, %d}")
 CYCLE = ("{TrapType::CYCLE, %d, %d, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
          " 0, 0, 0, NO_PATH_TRAP, 0, 0, 0, nullptr, 0, 0, 0, 0, %d, 8, 40, 8, 60, 0}")
 AMBUSH = ("{TrapType::AMBUSH, %d, %d, 12, 12, 0, 0, bn::sprite_items::t, 1, TRAP_GRAPHICS_INDEXES_0,"
@@ -105,6 +108,9 @@ LEVELS = HEAD + CRUMBLE_PLATS + WINDOW_PLATS + "".join(
         level("CHASE_AHEAD", [(40, 44)], [CHASE % (-200, 44)]),
         level("CHASE_OTHER_ROW", [(40, 44)], [CHASE % (-200, -20)]),
         level("CHASE_BEHIND", [(40, 44)], [CHASE % (100, 44)]),
+        # chase_limit: how far right of its start the chaser flies at most
+        level("CHASE_STOPS_SHORT", [(40, 44)], [CHASE_LIMITED % (-200, 44, 100)]),
+        level("CHASE_LIMIT_REACHES", [(40, 44)], [CHASE_LIMITED % (-200, 44, 300)]),
         # spikes that rise out of the floor under the flag: the whole stroke
         # counts, not only the resting place
         level("CYCLE_STROKE", [(40, 44)], [CYCLE % (40, 90, -50)]),
@@ -206,6 +212,11 @@ class SyntheticTests(unittest.TestCase):
 
     def test_the_row_a_chaser_sweeps_to_the_right_is_part_of_its_path(self):
         self.assertError("CHASE_AHEAD", "overlaps a CHASE trap's path")
+
+    def test_a_chaser_with_a_limit_only_sweeps_up_to_it(self):
+        errors, _ = self.run_check("CHASE_STOPS_SHORT")
+        self.assertEqual(errors, [])
+        self.assertError("CHASE_LIMIT_REACHES", "overlaps a CHASE trap's path")
 
     def test_a_flag_in_another_row_or_behind_a_chaser_is_fine(self):
         # the chaser only ever moves right: a flag to its left is never reached

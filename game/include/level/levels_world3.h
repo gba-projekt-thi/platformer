@@ -119,7 +119,7 @@ constexpr TriggerData world3_scroll_triggers[] = {
 
 constexpr TrapData world3_scroll_traps[] = {
 
-    {TrapType::BASE, -36, 48, 16, 16, 0, 0, bn::sprite_items::mushroom32x32, 16,
+    {TrapType::BASE, -36, 48, 27, 24, 0, 2, bn::sprite_items::mushroom32x32, 16,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP},
 
     // Slither arms rise upward once "mid_trigger" fires. Shares it with
@@ -143,7 +143,7 @@ constexpr TrapData world3_scroll_traps[] = {
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, LEVEL3_BRANCH_PATH_PHASE2, 20, 0, 0,
      "mid_trigger"},
 
-    {TrapType::BASE, 168, 6, 12, 16, 0, 0, bn::sprite_items::branch32x16, 16,
+    {TrapType::BASE, 168, 6, 26, 16, 0, 0, bn::sprite_items::branch32x16, 16,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP}};
 
 const LevelData LEVEL_WORLD3_SCROLL = {
@@ -259,10 +259,10 @@ constexpr TrapData world3_trick_traps[] = {
     {TrapType::BASE,
      236,
      50,
-     10,
-     16,
+     18,
+     18,
      0,
-     2,
+     4,
      bn::sprite_items::door32x32,
      1,
      TRAP_GRAPHICS_INDEXES_0,
@@ -392,7 +392,7 @@ constexpr TrapData world3_boss_traps[] = {
 
     // Idle patrol: a branch sweeping the corridor throughout the fight.
     // Shares "wave1" with Attack 1 below - starts once the fight begins.
-    {TrapType::PATH, -348, 0, 32, 16, 0, 0, bn::sprite_items::branch32x16, 10,
+    {TrapType::PATH, -348, 0, 32, 13, 0, 2, bn::sprite_items::branch32x16, 10,
      TRAP_GRAPHICS_INDEXES_8, 0, 0, 0, LEVEL3_BRANCH_PATH, 20, 0, 0, "wave1"},
 
     // Attack 1: an arm rises up out of the mist, triggered by wave1.
@@ -444,10 +444,10 @@ constexpr TrapData world3_boss_traps[] = {
     {TrapType::BOSS,
      246,
      36,
-     32,
-     24,
-     0,
-     2,
+     35,
+     30,
+     1,
+     3,
      bn::sprite_items::mushroom32x32,
      10,
      TRAP_GRAPHICS_INDEXES_8,
@@ -474,9 +474,9 @@ constexpr TrapData world3_boss_traps[] = {
      3},
     // Phase attacks: dropped through the pit when arena_p<n> switches on
     // (in sight after ~37 frames), across the bounces on the boss.
-    {TrapType::MOVING, 263, -180, 20, 20, 0, 0, bn::sprite_items::mushroom32x32,
+    {TrapType::MOVING, 263, -180, 27, 24, 0, 2, bn::sprite_items::mushroom32x32,
      10, TRAP_GRAPHICS_INDEXES_8, 0.0, 3, 3, NO_PATH_TRAP, 0, 0, 0, "arena_p2"},
-    {TrapType::MOVING, 300, -180, 20, 20, 0, 0, bn::sprite_items::mushroom32x32,
+    {TrapType::MOVING, 300, -180, 27, 24, 0, 2, bn::sprite_items::mushroom32x32,
      10, TRAP_GRAPHICS_INDEXES_8, 0.0, 3, 3, NO_PATH_TRAP, 0, 0, 0,
      "arena_p3"}};
 
