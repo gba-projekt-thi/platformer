@@ -169,7 +169,7 @@ TEST_CASE(game_state_layout_lock) {
     // SAVE_VERSION, add the previous version's line to
     // game_state_migration.h::valid_bytes() (offsetof the new field), then
     // update the numbers below.
-    CHECK_EQ(static_cast<int>(sizeof(GameState)), 224);
+    CHECK_EQ(static_cast<int>(sizeof(GameState)), 360);
     CHECK_EQ(static_cast<int>(offsetof(GameState, level)), 0);
     CHECK_EQ(static_cast<int>(offsetof(GameState, furthest_level)), 10);
     CHECK_EQ(static_cast<int>(offsetof(GameState, best_time_frames)), 16);
@@ -179,7 +179,12 @@ TEST_CASE(game_state_layout_lock) {
     CHECK_EQ(static_cast<int>(offsetof(GameState, entry_deaths)), 154);
     CHECK_EQ(static_cast<int>(offsetof(GameState, play_frames)), 156);
     CHECK_EQ(static_cast<int>(offsetof(GameState, level_deaths)), 160);
-    CHECK_EQ(SAVE_VERSION, 12);
+    CHECK_EQ(
+        static_cast<int>(offsetof(GameState, best_time_frames_mirror)), 224);
+    CHECK_EQ(
+        static_cast<int>(offsetof(GameState, no_death_clears_mirror)), 352);
+    CHECK_EQ(static_cast<int>(offsetof(GameState, mirror_mode_enabled)), 356);
+    CHECK_EQ(SAVE_VERSION, 13);
 }
 
 TEST_CASE(game_state_current_payload_roundtrips_exactly) {
@@ -513,4 +518,53 @@ TEST_CASE(game_state_inserting_a_level_moves_its_deaths_too) {
     CHECK_EQ(int(state.level_deaths[2]), 4);
     CHECK_EQ(int(state.level_deaths[3]), 0);
     CHECK_EQ(int(state.level_deaths[4]), 5);
+}
+
+// ---- schema 13: Mirror Mode (own best times and no-death badges)
+// --------------------------------------------------------------
+
+TEST_CASE(game_state_v12_payload_keeps_everything_before_the_mirror_records) {
+    CHECK_EQ(
+        game_state_migration::valid_bytes(12),
+        static_cast<int>(offsetof(GameState, best_time_frames_mirror)));
+}
+
+TEST_CASE(game_state_v12_slot_starts_with_empty_mirror_records) {
+    GameState saved{};
+    saved.level = 5;
+    saved.best_time_frames[2] = 777;
+    saved.play_frames = 99;
+    saved.level_deaths[3] = 4;
+    uint8_t bytes[sizeof(GameState)];
+    std::memset(bytes, 0xAB, sizeof(bytes));
+    std::memcpy(bytes, &saved, offsetof(GameState, best_time_frames_mirror));
+
+    GameState out{};
+    CHECK(
+        restore_state(
+            bytes, offsetof(GameState, best_time_frames_mirror), 12,
+            &game_state_migration::valid_bytes,
+            out) == RestoreResult::Migrated);
+    game_state_migration::upgrade(out, 12);
+    CHECK_EQ(int(out.level), 5);
+    CHECK_EQ(out.best_time_frames[2], 777u);
+    CHECK_EQ(out.play_frames, 99u);
+    CHECK_EQ(int(out.level_deaths[3]), 4);
+    for (int i = 0; i < GameState::MAX_LEVELS; ++i) {
+        CHECK_EQ(out.best_time_frames_mirror[i], 0u);
+    }
+    CHECK_EQ(out.no_death_clears_mirror, 0u);
+    CHECK(!out.mirror_mode_enabled);
+}
+
+TEST_CASE(game_state_inserting_a_level_moves_the_mirror_records_too) {
+    GameState state{};
+    state.best_time_frames_mirror[2] = 40;
+    state.best_time_frames_mirror[3] = 50;
+    state.no_death_clears_mirror = (1u << 2) | (1u << 3);
+    game_state_migration::insert_level(state, 3);
+    CHECK_EQ(state.best_time_frames_mirror[2], 40u);
+    CHECK_EQ(state.best_time_frames_mirror[3], 0u);
+    CHECK_EQ(state.best_time_frames_mirror[4], 50u);
+    CHECK_EQ(state.no_death_clears_mirror, (1u << 2) | (1u << 4));
 }

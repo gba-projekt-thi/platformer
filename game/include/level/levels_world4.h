@@ -19,6 +19,7 @@
 
 #include "level_structure.h"
 #include "levels_common.h"
+#include "mirror_world4.h"
 
 // =============================================================================
 // WORLD 4 POGO - "Bramble Hop", the pogo level (world_width=460)
@@ -65,7 +66,11 @@ const LevelData LEVEL_WORLD4_POGO = {
     160,
     1,
     // First level built on the pogo (Cfg::Pogo::UNLOCK_WORLD = World 4).
-    "New: strike down with R"};
+    "New: strike down with R",
+    nullptr,
+    0,
+    0,
+    &LEVEL_WORLD4_POGO_MIRROR};
 
 // =============================================================================
 // WORLD 4 SCROLL - garden theme (world_width=528)
@@ -135,7 +140,9 @@ const LevelData LEVEL_WORLD4_SCROLL = {
     nullptr,
     // Checkpoints, in play order
     world4_scroll_checkpoints,
-    sizeof(world4_scroll_checkpoints) / sizeof(world4_scroll_checkpoints[0])};
+    sizeof(world4_scroll_checkpoints) / sizeof(world4_scroll_checkpoints[0]),
+    0,
+    &LEVEL_WORLD4_SCROLL_MIRROR};
 
 // =============================================================================
 // WORLD 4 SCROLL 2 - garden theme, second level (world_width=320)
@@ -235,7 +242,13 @@ const LevelData LEVEL_WORLD4_SCROLL_2 = {
      3},
     // World size (enables scrolling)
     320,
-    160};
+    160,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    &LEVEL_WORLD4_SCROLL_2_MIRROR};
 
 // =============================================================================
 // WORLD 4 TRICK - "Hedge Your Bets", a Level Devil level (world_width=480)
@@ -341,7 +354,11 @@ const LevelData LEVEL_WORLD4_TRICK = {
     160,
     1,
     // A Level Devil level: say once that it is not all about the bounce.
-    "Bounce now, panic later."};
+    "Bounce now, panic later.",
+    nullptr,
+    0,
+    0,
+    &LEVEL_WORLD4_TRICK_MIRROR};
 
 // =============================================================================
 // WORLD 4 BOSS - "The Hive Queen" (world_width=480)
@@ -544,4 +561,5 @@ const LevelData LEVEL_WORLD4_BOSS = {
     // Checkpoints, in play order
     world4_boss_checkpoints,
     sizeof(world4_boss_checkpoints) / sizeof(world4_boss_checkpoints[0]),
-    6};
+    6,
+    &LEVEL_WORLD4_BOSS_MIRROR};

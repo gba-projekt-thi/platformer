@@ -158,14 +158,37 @@ class CycleClock {
 
 // Where a ChaserTrap heads: `follow` px behind the duck, but never more than
 // `limit` px right of its start (0 = no limit) - so a boss arena can be kept
-// free of it.
+// free of it. A negative `follow` is the mirrored chaser (Mirror Mode): it
+// trails to the right of the duck and flies left, `limit` px left of its
+// start at most.
 template <typename T>
 inline auto chase_target(T duck_x, T follow, T start_x, T limit) -> T {
     const T target = duck_x - follow;
+    if (follow < 0) {
+        if (limit > 0 && target < start_x - limit) {
+            return start_x - limit;
+        }
+        return target;
+    }
     if (limit > 0 && target > start_x + limit) {
         return start_x + limit;
     }
     return target;
+}
+
+// The chaser's x after one frame: it only ever flies away from where it
+// trails (right, or left for a negative `follow`), by at most `speed`, and
+// never retreats.
+template <typename T>
+inline auto chase_step(T x, T target, T follow, T speed) -> T {
+    T step = follow < 0 ? x - target : target - x;
+    if (step <= 0) {
+        return x;
+    }
+    if (step > speed) {
+        step = speed;
+    }
+    return follow < 0 ? x - step : x + step;
 }
 
 }  // namespace trap_timing

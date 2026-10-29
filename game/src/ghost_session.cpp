@@ -76,12 +76,12 @@ void set_enabled(bool enabled) {
     on = enabled;
 }
 
-void level_started(Player& player, unsigned level_index) {
+void level_started(Player& player, unsigned level_index, bool mirrored) {
     if (!ACTIVE) {
         return;
     }
     sprite.reset();
-    key = ghost::key_for(level_index);
+    key = ghost::key_for(level_index, mirrored);
     playback = store.open(key);
     recorder.clear();
     last_frame = -1;

@@ -32,8 +32,9 @@ replay::Player buttons(nullptr, 0);
 // A level played a second time starts this many frames late, so that its
 // ghost (the first run, ghost_session.h) is ahead of the duck on the pictures.
 constexpr int REVISIT_DELAY = 40;
-bool visited[32] = {};
+bool visited[64] = {};
 int delay = 0;
+bool mirrored = false;
 
 void play(InputState& input) {
     if (delay > 0) {
@@ -42,6 +43,11 @@ void play(InputState& input) {
         return;
     }
     input = buttons.next();
+    if (mirrored) {
+        const bool left = input.left_held;
+        input.left_held = input.right_held;
+        input.right_held = left;
+    }
 }
 
 void seed(DataManager& data_manager, int slot, int level, int furthest) {
@@ -78,6 +84,8 @@ void start_screen(DataManager& data_manager) {
         }
         state.best_time_frames[WorldIndex::LEVEL_COUNT - 1] = 0;
         state.no_death_clears = 0x2D;
+        // Slot 2 has finished the game: Mirror Mode can be switched on.
+        state.hard_mode_unlocked = true;
         data_manager.save();
     }
     data_manager.set_slot_index(0);
@@ -88,7 +96,8 @@ void boss_music(int order) {
     BN_LOG("BOSS MUSIC ", order);
 }
 
-void level_started(Player& player, unsigned level_index) {
+void level_started(Player& player, unsigned level_index, bool mirror) {
+    mirrored = mirror;
     // The level's first entry (its plain recording when it has one).
     const replay_data::Entry* found = nullptr;
     for (const replay_data::Entry& candidate : replay_data::ENTRIES) {
@@ -104,13 +113,16 @@ void level_started(Player& player, unsigned level_index) {
     }
     buttons = replay::Player(entry.runs, entry.run_count);
     delay = 0;
-    if (level_index < 32) {
-        delay = visited[level_index] ? REVISIT_DELAY : 0;
-        visited[level_index] = true;
+    // A mirrored level has its own ghost.
+    const unsigned key = level_index + (mirror ? 32 : 0);
+    if (key < 64) {
+        delay = visited[key] ? REVISIT_DELAY : 0;
+        visited[key] = true;
     }
     player.set_input_hook(play);
     if (entry.has_start) {
-        player.teleport_to(entry.start_x, entry.start_y);
+        player.teleport_to(
+            mirror ? -entry.start_x : entry.start_x, entry.start_y);
     }
 }
 

@@ -56,6 +56,20 @@ inline auto records_enabled(const GameState& state) -> bool {
     return !assist_active(state);
 }
 
+// Mirror Mode (the levels flipped left-right, own records): a post-game mode,
+// available with Hard Mode - from the moment the game has been finished. The
+// toggle is remembered in the save, but only counts while it is unlocked.
+inline auto mirror_active(const GameState& state) -> bool {
+    return state.hard_mode_unlocked && state.mirror_mode_enabled;
+}
+
+// Flips Mirror Mode; does nothing while it is still locked.
+inline void toggle_mirror_mode(GameState& state) {
+    if (state.hard_mode_unlocked) {
+        state.mirror_mode_enabled = !state.mirror_mode_enabled;
+    }
+}
+
 // Options sub-menu rows: Music (0), SFX (1), [Hard Mode (2) once unlocked],
 // Assist Mode, then Ghost (ghost_session.h).
 inline auto assist_row(bool hard_unlocked) -> int {

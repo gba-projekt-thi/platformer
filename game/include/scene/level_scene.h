@@ -42,6 +42,8 @@ class LevelScene : public core::Scene {
     void _leave_level();
     // One-time level hint (LevelData::intro_hint, see hint_logic.h).
     void _show_hint_if_needed();
+    // The level to play: LevelData::mirror in Mirror Mode.
+    const LevelData& _level() const;
     void _draw_hint();
     void _update_hint();
 
@@ -50,6 +52,10 @@ class LevelScene : public core::Scene {
     unsigned int _level_index;
     LevelManager& _level_manager;
     DataManager& _data_manager;
+    // Mirror Mode as it was when the level began: the level, its hint and its
+    // records stay the mirrored (or normal) ones even if the mode is toggled
+    // while the level runs.
+    bool _mirror;
 
     // Prevents multiple scene transitions.
     bool _transition_requested;

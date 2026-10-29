@@ -104,17 +104,46 @@ struct GameState {
     // best_time_frames. Added in save schema version 12.
     uint32_t play_frames = 0;
     uint16_t level_deaths[MAX_LEVELS] = {};
+
+    // Mirror Mode (mirror_mode.h): the left-right mirrored levels have their
+    // own best times and no-death badges, indexed like best_time_frames /
+    // no_death_clears and kept across DataManager::reset(). The toggle is
+    // like hard_mode_enabled (not kept across reset(), only in effect once
+    // hard_mode_unlocked). Added in save schema version 13.
+    uint32_t best_time_frames_mirror[MAX_LEVELS] = {};
+    uint32_t no_death_clears_mirror = 0;
+    bool mirror_mode_enabled = false;
 };
 
-inline void set_no_death_clear(GameState& state, unsigned level_index) {
+// `mirror` picks the record of the mirrored levels (Mirror Mode) instead of
+// the normal one.
+inline void set_no_death_clear(
+    GameState& state,
+    unsigned level_index,
+    bool mirror = false) {
     if (level_index < 32) {
-        state.no_death_clears |= (uint32_t(1) << level_index);
+        (mirror ? state.no_death_clears_mirror : state.no_death_clears) |=
+            (uint32_t(1) << level_index);
     }
 }
 
 [[nodiscard]] inline bool has_no_death_clear(
     const GameState& state,
-    unsigned level_index) {
-    return level_index < 32 &&
-           (state.no_death_clears & (uint32_t(1) << level_index)) != 0;
+    unsigned level_index,
+    bool mirror = false) {
+    const uint32_t mask =
+        mirror ? state.no_death_clears_mirror : state.no_death_clears;
+    return level_index < 32 && (mask & (uint32_t(1) << level_index)) != 0;
+}
+
+// The personal-best time of a level (0 = none), normal or mirrored.
+[[nodiscard]] inline auto best_time(
+    const GameState& state,
+    unsigned level_index,
+    bool mirror = false) -> uint32_t {
+    if (level_index >= unsigned(GameState::MAX_LEVELS)) {
+        return 0;
+    }
+    return mirror ? state.best_time_frames_mirror[level_index]
+                  : state.best_time_frames[level_index];
 }

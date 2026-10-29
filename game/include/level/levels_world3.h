@@ -14,6 +14,7 @@
 
 #include "level_structure.h"
 #include "levels_common.h"
+#include "mirror_world3.h"
 
 // =============================================================================
 // LEVEL 3 (World 3) - unchanged
@@ -88,7 +89,11 @@ const LevelData LEVEL_3 = {
     0.55,
     // First level with the dash enabled (Cfg::Dash::UNLOCK_WORLD = World 3):
     // tell the player once.
-    "New: Dash with B"};
+    "New: Dash with B",
+    nullptr,
+    0,
+    0,
+    &LEVEL_3_MIRROR};
 
 // =============================================================================
 // WORLD 3 SCROLL - new, uses the scrolling camera (world_width=480)
@@ -163,7 +168,12 @@ const LevelData LEVEL_WORLD3_SCROLL = {
     480,
     160,
     // Ground friction: mossy forest floor, noticeably slippery to stop on
-    0.55};
+    0.55,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    &LEVEL_WORLD3_SCROLL_MIRROR};
 
 // =============================================================================
 // WORLD 3 TRICK - "Trickwood", a Level Devil level (world_width=512)
@@ -343,7 +353,11 @@ const LevelData LEVEL_WORLD3_TRICK = {
     160,
     1,
     // The first level made of tricks.
-    "Trust nothing here."};
+    "Trust nothing here.",
+    nullptr,
+    0,
+    0,
+    &LEVEL_WORLD3_TRICK_MIRROR};
 
 // =============================================================================
 // WORLD 3 BOSS - "Slitherman, Heart of the Forest" (world_width=520)
@@ -506,7 +520,8 @@ const LevelData LEVEL_WORLD3_BOSS = {
     // Checkpoints, in play order
     world3_boss_checkpoints,
     sizeof(world3_boss_checkpoints) / sizeof(world3_boss_checkpoints[0]),
-    8};
+    8,
+    &LEVEL_WORLD3_BOSS_MIRROR};
 
 // Deliberately NOT given the slippery ground_friction the other two
 // World 3 levels use (see LEVEL_3 / LEVEL_WORLD3_SCROLL above) - a

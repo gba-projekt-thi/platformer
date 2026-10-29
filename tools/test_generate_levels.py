@@ -220,7 +220,7 @@ class GenerateTests(unittest.TestCase):
     def test_death_window_fields_come_from_level_structure_h(self):
         for struct in ("PlatformData", "TrapData"):
             fields = [f for f, _ in STRUCTS[struct]]
-            self.assertEqual(fields[-2:], ["from_death", "until_death"])
+            self.assertEqual(fields[-3:], ["from_death", "until_death", "flip_horizontal"])
             self.assertEqual(dict(STRUCTS[struct])["from_death"], "0")
 
     def test_an_empty_death_window_is_an_error(self):
@@ -311,15 +311,115 @@ class CheckTests(unittest.TestCase):
             self.assertTrue(gen.matches(path, data, STRUCTS))
 
 
+def trap(**fields):
+    base = {"type": "BASE", "x": 40, "y": 10, "width": 16, "height": 16, "offset_x": 2,
+            "offset_y": 0, "sprite": "bubbles"}
+    base.update(fields)
+    return base
+
+
+def mirrored(item, kind="traps"):
+    return gen.mirror_item(kind, item, {"SWING": [[0, 0], [20, 5]]})
+
+
+class MirrorTests(unittest.TestCase):
+    def test_positions_and_hitbox_offsets_change_sign_and_the_picture_flips(self):
+        item = mirrored(trap())
+        self.assertEqual((item["x"], item["offset_x"], item["y"]), (-40, -2, 10))
+        self.assertTrue(item["flip_horizontal"])
+        plat = mirrored({"x": -96, "y": 60, "offset_x": 0, "offset_y": 1}, "platforms")
+        self.assertEqual((plat["x"], plat["offset_x"], plat["flip_horizontal"]), (96, 0, True))
+        self.assertEqual(mirrored({"x": 0, "y": 1}, "triggers"), {"x": 0, "y": 1})
+
+    def test_zero_stays_zero_and_floats_work(self):
+        item = mirrored(trap(x=0, offset_x=0, velocity_x=0.25))
+        self.assertEqual((item["x"], item["velocity_x"]), (0, -0.25))
+        self.assertEqual(str(item["x"]), "0")
+
+    def test_a_named_path_becomes_its_mirror_image(self):
+        item = mirrored(trap(type="PATH", path="SWING"))
+        self.assertEqual(item["path"], [[0, 0], [-20, 5]])
+
+    def test_sideways_motion_flips_but_vertical_motion_does_not(self):
+        self.assertEqual(mirrored(trap(type="AMBUSH", ambush_speed=-2.5))["ambush_speed"], 2.5)
+        up = mirrored(trap(type="AMBUSH", ambush_speed=-2.5, ambush_vertical=True))
+        self.assertEqual(up["ambush_speed"], -2.5)
+        self.assertEqual(mirrored(trap(type="CYCLE", cycle_dx=6, cycle_dy=-8))["cycle_dx"], -6)
+        self.assertEqual(mirrored(trap(type="MOVING", velocity_x=0.1, velocity_y=4))["velocity_y"], 4)
+
+    def test_a_chaser_trails_to_the_right(self):
+        item = mirrored(trap(type="CHASE", chase_follow_distance=40, chase_limit=100))
+        self.assertEqual((item["chase_follow_distance"], item["chase_limit"]), (-40, 100))
+
+    def test_notes_do_not_travel(self):
+        self.assertNotIn("note", mirrored(trap(note="x", blank_before=True)))
+
+    def test_a_level_is_mirrored_with_door_spawn_and_paths(self):
+        lv = level(door={"x": 30, "y": 4, "flee_path": [[10, 0]], "attempt_positions": [[0, 0], [8, 2]]},
+                   checkpoints={"name": "c", "items": [{"x": -40, "y": 1}]},
+                   traps={"name": "t", "items": [trap()]})
+        out = gen.mirror_level(lv, {})
+        self.assertEqual(out["name"], "LEVEL_X_MIRROR")
+        self.assertEqual(out["spawn"], [10, 20])
+        self.assertEqual(out["door"]["x"], -30)
+        self.assertEqual(out["door"]["flee_path"], [[-10, 0]])
+        self.assertEqual(out["door"]["attempt_positions"], [[0, 0], [-8, 2]])
+        self.assertTrue(out["door"]["sprite_flip_horizontal"])
+        self.assertEqual(out["checkpoints"]["items"], [{"x": 40, "y": 1}])
+        self.assertEqual(out["traps"]["name"], "t_mirror")
+        self.assertEqual(out["background"], "world9")
+
+    def test_mirroring_twice_gives_the_original_geometry(self):
+        lv = level(traps={"name": "t", "items": [trap(velocity_x=-0.5)]})
+        back = gen.mirror_level(gen.mirror_level(lv, {}), {})
+        self.assertEqual(back["traps"]["items"][0]["x"], 40)
+        self.assertEqual(back["traps"]["items"][0]["velocity_x"], -0.5)
+        self.assertEqual(back["spawn"], lv["spawn"])
+        self.assertFalse(back["door"]["sprite_flip_horizontal"])
+
+    def test_the_level_links_to_its_mirror_and_the_mirror_header_defines_it(self):
+        data = world(level())
+        text = squash(gen.generate(data, STRUCTS, mirror_header="mirror_x.h"))
+        self.assertIn('#include"mirror_x.h"', text)
+        self.assertIn("&LEVEL_X_MIRROR};", text)
+        mirror = squash(gen.generate_mirror(data, STRUCTS))
+        self.assertIn("constLevelDataLEVEL_X_MIRROR=", mirror)
+        self.assertNotIn("&LEVEL_X_MIRROR", mirror)
+
+    def test_every_named_path_of_levels_common_h_is_known(self):
+        paths = gen.common_paths(REPO / "game/include/level/levels_common.h")
+        self.assertEqual(paths["BOSS_PATH"], [[0, 0], [72, 0]])
+        self.assertIn("FIGURE_8_PATH", paths)
+
+
 @unittest.skipUnless((REPO / "game/levels").is_dir(), "game/levels/ not found")
 class RealLevelsTests(unittest.TestCase):
     def test_every_header_matches_its_json(self):
         for source in sorted((REPO / "game/levels").glob("world*.json")):
             header = REPO / "game/include/level" / f"levels_{source.stem}.h"
+            mirror = REPO / "game/include/level" / f"mirror_{source.stem}.h"
+            data = gen.load(source)
             self.assertTrue(
-                gen.matches(header, gen.load(source), STRUCTS),
+                gen.matches(header, data, STRUCTS, mirror.name),
                 f"{header.name} is out of date: run python3 tools/Generate_levels.py",
             )
+            self.assertTrue(
+                gen.matches_mirror(mirror, data, STRUCTS),
+                f"{mirror.name} is out of date: run python3 tools/Generate_levels.py",
+            )
+
+    def test_every_level_mirrored_twice_is_the_level_again(self):
+        paths = gen.common_paths()
+        for source in sorted((REPO / "game/levels").glob("world*.json")):
+            for lv in gen.load(source)["levels"]:
+                back = gen.mirror_level(gen.mirror_level(lv, paths), paths)
+                for kind in ("platforms", "triggers", "traps", "checkpoints"):
+                    for a, b in zip((lv.get(kind) or {}).get("items", []),
+                                    (back.get(kind) or {}).get("items", [])):
+                        for key in ("x", "offset_x", "velocity_x", "cycle_dx"):
+                            self.assertEqual(a.get(key, 0), b.get(key, 0), (lv["name"], kind, key))
+                self.assertEqual(lv["spawn"], back["spawn"])
+                self.assertEqual(lv["door"]["x"], back["door"]["x"])
 
 
 if __name__ == "__main__":

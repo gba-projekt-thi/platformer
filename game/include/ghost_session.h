@@ -22,7 +22,7 @@ void set_enabled(bool enabled);
 
 // The level is loaded, the clock stands at 0: start recording; the level's
 // ghost, if there is one, will play.
-void level_started(Player& player, unsigned level_index);
+void level_started(Player& player, unsigned level_index, bool mirrored);
 // Before a frame of the level: draws the ghost where it was when the clock
 // reached `level_frame` + 1.
 void before_frame(unsigned level_frame);

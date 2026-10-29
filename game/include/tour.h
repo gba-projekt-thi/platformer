@@ -25,8 +25,9 @@ void boot();
 // The start screen opens: slot 1 gets the save of the tour's next part
 // (tour_data::SLOT_1), slot 2 one with every level unlocked.
 void start_screen(DataManager& data_manager);
-// A level was loaded: play its recording, if there is one.
-void level_started(Player& player, unsigned level_index);
+// A level was loaded: play its recording, if there is one (with LEFT and
+// RIGHT swapped on a mirrored level, `mirror`).
+void level_started(Player& player, unsigned level_index, bool mirror);
 // The level's music jumped to song order `order` (the boss section when the
 // fight starts, 0 = the world theme again): logs "BOSS MUSIC <order>".
 void boss_music(int order);
@@ -35,7 +36,7 @@ void boss_music(int order);
 
 inline void boot() {}
 inline void start_screen(DataManager&) {}
-inline void level_started(Player&, unsigned) {}
+inline void level_started(Player&, unsigned, bool) {}
 inline void boss_music(int) {}
 
 #endif

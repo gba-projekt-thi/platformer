@@ -107,6 +107,7 @@ checks:
 	python3 tools/Check_sprite_budget.py
 	python3 tools/Check_hitboxes.py
 	python3 tools/Check_level_reachability.py --all
+	python3 tools/Check_level_reachability.py --all --mirror
 
 coverage:
 	$(MAKE) -C tests/host coverage
@@ -117,7 +118,7 @@ coverage:
 #   make replay   plays every recorded level headless; fails unless each one reaches its door
 # (Butano needs a one-level build directory; platformer.* is already ignored by git.)
 #---------------------------------------------------------------------------------------------------------------------
-.PHONY: record replay tour
+.PHONY: record replay replay-mirror tour
 
 record:
 	$(MAKE) TARGET=platformer.record/platformer BUILD=platformer.record USERFLAGS=-DPLATFORMER_RECORD
@@ -134,3 +135,11 @@ replay:
 	python3 tools/replays.py generate
 	$(MAKE) TARGET=platformer.replay/platformer BUILD=platformer.replay USERFLAGS=-DPLATFORMER_REPLAY
 	python3 tools/replays.py run platformer.replay/platformer.gba
+
+# The same recordings with LEFT and RIGHT swapped, on the mirrored levels
+# (Mirror Mode). The physics is left-right symmetric: all recordings pass.
+# Not part of `make replay` only to keep that one fast.
+replay-mirror:
+	python3 tools/replays.py generate
+	$(MAKE) TARGET=platformer.replay-mirror/platformer BUILD=platformer.replay-mirror USERFLAGS="-DPLATFORMER_REPLAY -DPLATFORMER_REPLAY_MIRROR"
+	python3 tools/replays.py run platformer.replay-mirror/platformer.gba
