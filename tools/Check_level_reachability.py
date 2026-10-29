@@ -3,9 +3,10 @@
 Check_level_reachability.py
 
 Static jump/dash reachability check for the level data in
-game/include/level/levels_world*.h, using a small re-implementation of the
-duck's per-frame movement (PlayerLocomotion::update() + PhysicsBody::move(),
-same constants as Cfg::Player / Cfg::Dash).
+game/include/level/levels_world*.h. The duck's per-frame movement is the
+game's own: tools/duck_sim/duck_sim.cpp builds locomotion::Core and
+PhysicsBody's move for the host (`make duck-sim`, run by this script), so a
+change to the movement rules or to cfg.h needs no change here.
 
 What it answers, per level:
   - Which platforms can the duck reach from its spawn, WITHOUT dash and WITH
@@ -42,7 +43,7 @@ that is on from the start is always reported. Hold / Timer triggers let go
 by themselves and are not checked.
 
 Traps are ignored (this checks geometry, not hazard timing). Wall jumps
-(from Cfg::WallJump::UNLOCK_WORLD on) are simulated frame by frame by Duck,
+(from Cfg::WallJump::UNLOCK_WORLD on) are simulated frame by frame by duck_sim,
 with a few climb policies (between two walls, up one wall).
 
 Usage (from the repository root):
@@ -63,6 +64,7 @@ otherwise. The module is also imported by tools/test_check_level_reachability.py
 import importlib.util
 import json
 import re
+import subprocess
 import sys
 from collections import namedtuple
 from pathlib import Path
@@ -100,18 +102,67 @@ def _window(fields, struct):
         out.append(int(_num(fields[i])) if len(fields) > i else 0)
     return tuple(out)
 
-# ---- constants mirrored from cfg.h / cfg_dash.h ---------------------------
-ACC = 0.38
-MAXS = 2.0
-JUMP = -3.0
-G = 0.22
-MAXFALL = 3.0
-DECEL = 0.3
-COYOTE = 4
-DASH_SPEED = 4.0
-DASH_FRAMES = 8
-BW = 8.0
-BH = 8.0
+# ---- the duck's movement comes from the game ------------------------------
+# tools/duck_sim/duck_sim.cpp is locomotion::Core built for the host
+# (`make duck-sim`); this module only plans and asks it to play each jump.
+_REPO = Path(__file__).resolve().parent.parent
+DUCK_SIM = _REPO / "build/host-tools/duck_sim"
+
+
+class _DuckSim:
+    """The duck_sim process (line protocol in its header comment)."""
+
+    def __init__(self):
+        subprocess.run(["make", "-s", "-C", str(_REPO), "duck-sim"], check=True)
+        self.proc = subprocess.Popen(
+            [str(DUCK_SIM)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+        self.scene_key = None
+
+    def ask(self, lines, answers=None):
+        """Sends the lines, returns the answers (one per line unless said)."""
+        self.proc.stdin.write("\n".join(lines) + "\n")
+        self.proc.stdin.flush()
+        return [self.proc.stdout.readline().split()
+                for _ in range(len(lines) if answers is None else answers)]
+
+    def use_scene(self, plats, door, targets, forbid):
+        """Hands the platforms of a search to the process (once per scene)."""
+        key = (tuple(plats), door and tuple(door), tuple(targets), tuple(forbid))
+        if key == self.scene_key:
+            return
+        def boxes(rects):
+            return " ".join(
+                [str(len(rects))] + [f"{r.cx!r} {r.cy!r} {r.w!r} {r.h!r}" for r in rects])
+        d = "0" if door is None else "1 " + " ".join(repr(v) for v in (*door[:2], *door_size(door)))
+        self.ask([f"scene {d} {boxes(plats)} {boxes(targets)} {boxes(forbid)}"], answers=0)
+        self.scene_key = key
+
+
+_SIM = None
+
+
+def _sim():
+    global _SIM
+    if _SIM is None:
+        _SIM = _DuckSim()
+    return _SIM
+
+
+def _outcome(answer, plats, trace):
+    """(landed platform or None, door touched, trace points or None)."""
+    landed = int(answer[0])
+    pts = None
+    if trace:
+        n = int(answer[2])
+        pts = [(float(answer[3 + 2 * i]), float(answer[4 + 2 * i])) for i in range(n)]
+    return (plats[landed] if landed >= 0 else None), answer[1] == "1", pts
+
+
+# Cfg::Player::BODY_WIDTH / BODY_HEIGHT / MAX_SPEED, Cfg::Screen::EDGE_MARGIN,
+# Cfg::Player::DEATH_HEIGHT, as the game was built.
+_info = _sim().ask(["info"])[0]
+BW, BH, MAXS = float(_info[0]), float(_info[1]), float(_info[2])
+EDGE_MARGIN = int(_info[3])  # the duck bounces back past world_width / 2 - this
 # A door is a box (x, y, w, h) around its hitbox centre: door_logic.h's
 # DOOR_BOX_<sprite height> (the opaque pixels of the picture, 2 px in). A bare
 # (x, y) means the standard 32 px door.
@@ -141,23 +192,6 @@ def _sprite_height(name):
     for path in (_REPO / "game/graphics").rglob(name + ".json"):
         return json.loads(path.read_text()).get("height", 32)
     return 32
-DEATH_Y = 100.0
-EDGE_MARGIN = 10  # Cfg::Screen: the duck bounces back past world_width / 2 - this
-MAX_FRAMES = 160
-JUMP_BUFFER = 6
-# Cfg::WallJump
-SLIDE = 1.0
-PUSH = 2.0
-LOCK = 8
-WALL_FRAMES = 400  # a climb up a shaft takes longer than one jump
-# Cfg::Pogo
-POGO_FRAMES = 10
-POGO_COOLDOWN = 8
-POGO_REACH = 12
-POGO_WIDTH = 16
-POGO_BOUNCE = -3.0
-
-
 class Rect:
     __slots__ = (
         "cx", "cy", "w", "h", "index", "trigger", "active_when_on",
@@ -195,23 +229,6 @@ class Rect:
         return self.cy - self.h / 2
 
 
-def resolve_axis(frm, delta, blocked):
-    """PhysicsBody::move() on one axis (move_resolution.h): the whole move if
-    it is free, else steps of at most 1 px up to the obstacle. Returns
-    (position, blocked)."""
-    if delta == 0 or not blocked(frm + delta):
-        return frm + delta, False
-    one = 1.0 if delta > 0 else -1.0
-    pos, remaining = frm, delta
-    while remaining != 0:
-        step = one if abs(remaining) > 1.0 else remaining
-        if blocked(pos + step):
-            break
-        pos += step
-        remaining -= step
-    return pos, True
-
-
 def overlap(ax, ay, aw, ah, bx, by, bw, bh):
     return (
         ax - aw / 2 < bx + bw / 2
@@ -228,287 +245,8 @@ def _hits(plats, x, y, w, h):
     return None
 
 
-def simulate(
-    plats,
-    door,
-    x0,
-    y0,
-    vx0,
-    d,
-    jump,
-    hold,
-    dash_t,
-    start_plat,
-    coyote0,
-    release=MAX_FRAMES,
-    trace=None,
-    forbid=(),
-):
-    """Runs one policy. Returns (landed_platform_or_None, door_touched).
-
-    `trace`, when a list, receives the duck's (x, y) center after every frame
-    (used by tools/Preview_level.py to draw the jump arcs). A jump that
-    touches a `forbid` box (a false exit's trap trigger zone) ends there."""
-    x, y, vx, vy = x0, y0, vx0, 0.0
-    if trace is not None:
-        trace.append((x, y))
-    on_ground = True
-    coyote = coyote0
-    dashing = False
-    dash_timer = 0
-    dash_used = False
-    airborne = False
-    door_touched = False
-    for f in range(MAX_FRAMES):
-        a_held = jump and f < hold
-        a_pressed = jump and f == 0
-        ended_this_frame = False
-        if dash_t is not None and f == dash_t and not dash_used:
-            dashing, dash_timer, dash_used = True, DASH_FRAMES, True
-        moved_by_dash = False
-        if dashing:
-            if dash_timer == 0:
-                dashing = False
-                vx, vy = d * MAXS, 0.0
-                ended_this_frame = True
-            else:
-                vx, vy = d * DASH_SPEED, 0.0
-                dash_timer -= 1
-                moved_by_dash = True
-        if not moved_by_dash:
-            # normal path (also the frame a dash ends)
-            if f < release:
-                vx = vx + d * ACC
-                if abs(vx) > MAXS:
-                    vx = d * MAXS
-            elif vx > 0:  # direction released: brake toward zero
-                vx = max(0.0, vx - DECEL)
-            elif vx < 0:
-                vx = min(0.0, vx + DECEL)
-            vy += G
-            if not a_held and vy < 0:
-                vy = 0.0  # letting go of A ends the rise (locomotion::Core)
-            if vy > MAXFALL:
-                vy = MAXFALL
-        # ground state (probe 1px below, width-2)
-        gp = _hits(plats, x, y + BH / 2 + 1, BW - 2, 1)
-        if gp is not None:
-            on_ground, coyote = True, COYOTE
-        elif coyote > 0:
-            coyote -= 1
-            on_ground = True
-        else:
-            on_ground = False
-        if not moved_by_dash and a_pressed and on_ground:
-            vy = JUMP
-            on_ground = False
-            coyote = 0
-        # move: X then Y up to any obstacle, blocked -> velocity zeroed
-        x, blocked = resolve_axis(x, vx, lambda nx: _hits(plats, nx, y, BW, BH) is not None)
-        if blocked:
-            vx = 0.0
-        y, blocked = resolve_axis(y, vy, lambda ny: _hits(plats, x, ny, BW, BH) is not None)
-        if blocked:
-            vy = 0.0
-        if trace is not None:
-            trace.append((x, y))
-        if forbid and _hits(forbid, x, y, BW, BH) is not None:
-            return None, door_touched
-        if door is not None and overlap(x, y, BW, BH, door[0], door[1], *door_size(door)):
-            door_touched = True
-        if y > DEATH_Y:
-            return None, door_touched
-        gp = _hits(plats, x, y + BH / 2 + 1, BW - 2, 1)
-        if gp is not None:
-            if gp is not start_plat or airborne:
-                if vy >= 0 and f >= 1:
-                    return gp, door_touched
-        if y < start_plat.top - BH / 2 - 1 or vy != 0:
-            airborne = True
-    return None, door_touched
-
-
-def fx(value):
-    """`value` as bn::fixed stores it (12 fraction bits, truncated)."""
-    return int(value * 4096) / 4096
-
-
-def fx_mul(a, b):
-    """bn::fixed * bn::fixed: both reduced to 6 fraction bits first."""
-    return int(int(a * 4096) / 64) * int(int(b * 4096) / 64) / 4096
-
-
-def _probe(plats, x, y, w, h):
-    return _hits(plats, x, y, w, h) is not None
-
-
-# Braking in the game: DECELERATION * ground friction 1 as bn::fixed computes it.
-BRAKE = fx_mul(fx(DECEL), 1)
-
-
-class Duck:
-    """One frame of locomotion::Core::step() and PhysicsBody::move(), button by
-    button, with the jump buffer, the wall slide / wall jump and the pogo
-    strike off `pogo_targets` (trap boxes; no dash and no world-edge bounce).
-    Uses the constants as bn::fixed stores them (fx()), so a scripted run
-    stays frame-exact with the ROM. Drives the wall-climb policies below and
-    scripted replays."""
-
-    def __init__(self, plats, x, y, vx=0.0, wall_jump=True, pogo_targets=()):
-        self.plats = plats
-        self.x, self.y, self.vx, self.vy = x, y, vx, 0.0
-        self.wall_jump = wall_jump
-        self.on_ground = True
-        self.coyote = 0
-        self.buffer = 0
-        self.lock = 0
-        self.wall_jumped = False
-        self.pogo_targets = list(pogo_targets)
-        self.pogo_frames = 0
-        self.pogo_cooldown = 0
-        self.pogo_rise = False
-        self.pogo_bounced = False
-
-    def wall(self):
-        """-1 / 1 = a wall touches the left / right side, 0 = none."""
-        if not self.wall_jump:
-            return 0
-        if _probe(self.plats, self.x - BW / 2 - 1, self.y, 1, BH - 2):
-            return -1
-        return 1 if _probe(self.plats, self.x + BW / 2 + 1, self.y, 1, BH - 2) else 0
-
-    def _pogo(self, r_pressed):
-        self.pogo_bounced = False
-        if r_pressed and self.pogo_targets and not self.on_ground \
-                and self.pogo_frames == 0 and self.pogo_cooldown == 0:
-            self.pogo_frames = POGO_FRAMES
-        elif self.pogo_cooldown > 0:
-            self.pogo_cooldown -= 1
-        if self.pogo_frames == 0:
-            return
-        below = self.y + BH / 2 + POGO_REACH / 2
-        if _probe(self.pogo_targets, self.x, below, POGO_WIDTH, POGO_REACH):
-            self.vy, self.pogo_rise, self.pogo_frames = POGO_BOUNCE, True, 0
-            self.pogo_bounced = True
-        else:
-            self.pogo_frames -= 1
-            if self.pogo_frames == 0:
-                self.pogo_cooldown = POGO_COOLDOWN
-
-    def step(self, left=False, right=False, a_pressed=False, a_held=True, r_pressed=False):
-        if a_pressed:
-            self.buffer = JUMP_BUFFER
-        wall = self.wall()
-        if self.lock > 0:
-            self.lock -= 1
-        elif left or right:
-            d = -1 if left else 1
-            self.vx = max(-MAXS, min(MAXS, self.vx + d * fx(ACC)))
-        elif self.vx > 0:
-            self.vx = max(0.0, self.vx - BRAKE)
-        elif self.vx < 0:
-            self.vx = min(0.0, self.vx + BRAKE)
-        self.vy += fx(G)
-        if self.vy >= 0:
-            self.pogo_rise = False
-        if not a_held and self.vy < 0 and not self.pogo_rise:
-            self.vy = 0.0
-        self.vy = min(self.vy, MAXFALL)
-        toward = (wall < 0 and left) or (wall > 0 and right)
-        if toward and not self.on_ground and self.vy > SLIDE:
-            self.vy = SLIDE
-        self._pogo(r_pressed)
-        if _probe(self.plats, self.x, self.y + BH / 2 + 1, BW - 2, 1):
-            self.on_ground, self.coyote, self.lock = True, COYOTE, 0
-        elif self.coyote > 0:
-            self.coyote -= 1
-            self.on_ground = True
-        else:
-            self.on_ground = False
-        self.wall_jumped = False
-        if self.buffer > 0 and self.on_ground:
-            self.vy, self.on_ground, self.buffer, self.coyote = JUMP, False, 0, 0
-        elif self.buffer > 0 and wall != 0:
-            self.vy, self.vx = JUMP, -wall * PUSH
-            self.lock, self.buffer = LOCK, 0
-            self.wall_jumped = True
-        if self.vy < 0 and _probe(self.plats, self.x, self.y - BH / 2 - 1, BW - 2, 1):
-            self.vy = 0.0
-        if self.buffer > 0:
-            self.buffer -= 1
-        self.x, blocked = resolve_axis(self.x, self.vx, lambda nx: _probe(self.plats, nx, self.y, BW, BH))
-        if blocked:
-            self.vx = 0.0
-        self.y, blocked = resolve_axis(self.y, self.vy, lambda ny: _probe(self.plats, self.x, ny, BW, BH))
-        if blocked:
-            self.vy = 0.0
-
-
-def climb(plats, door, start, x0, vx0, d, mode, slide, jump, forbid=()):
-    """A wall-jump policy from `start`: run toward d (jumping first if `jump`),
-    and at every wall touched in the air slide `slide` frames, let go of A for
-    a frame and jump off it - then hold toward the next wall ("chimney", the
-    one the push leads to) or back toward the same one ("same"). Returns
-    (landed platform or None, door touched), like simulate()."""
-    duck = Duck(plats, x0, start.top - BH / 2, vx0)
-    touching = 0
-    airborne = False
-    door_touched = False
-    for f in range(WALL_FRAMES):
-        at = duck.wall()
-        touching = touching + 1 if (at == d and not duck.on_ground) else 0
-        a_held = touching != slide + 1
-        pressed = (jump and f == 0) or touching == slide + 2
-        duck.step(left=d < 0, right=d > 0, a_pressed=pressed, a_held=a_held)
-        if duck.wall_jumped:
-            touching = 0
-            if mode == "chimney":
-                d = -d
-        if forbid and _hits(forbid, duck.x, duck.y, BW, BH) is not None:
-            return None, door_touched
-        if door is not None and overlap(duck.x, duck.y, BW, BH, door[0], door[1], *door_size(door)):
-            door_touched = True
-        if duck.y > DEATH_Y:
-            return None, door_touched
-        ground = _hits(plats, duck.x, duck.y + BH / 2 + 1, BW - 2, 1)
-        if ground is not None and (ground is not start or airborne) and duck.vy >= 0 and f >= 1:
-            return ground, door_touched
-        if duck.y < start.top - BH / 2 - 1 or duck.vy != 0:
-            airborne = True
-    return None, door_touched
-
-
-def pogo_hop(plats, traps, door, start, x0, vx0, d, r_from, wall_jump, forbid=()):
-    """A pogo policy from `start`: jump toward d holding A, and from frame
-    `r_from` on press R every other frame, bouncing off any trap (`traps`)
-    below. Returns (landed platform or None, door touched), like simulate().
-    Touching a trap with the body is death."""
-    duck = Duck(plats, x0, start.top - BH / 2, vx0, wall_jump=wall_jump, pogo_targets=traps)
-    airborne = False
-    door_touched = False
-    bounces = 0
-    for f in range(WALL_FRAMES):
-        if bounces > 4:  # hopping in place on one trap leads nowhere
-            return None, door_touched
-        r = f >= r_from and (f - r_from) % 2 == 0
-        duck.step(left=d < 0, right=d > 0, a_pressed=f == 0, a_held=True, r_pressed=r)
-        bounces += duck.pogo_bounced
-        if any(overlap(duck.x, duck.y, BW, BH, t.cx, t.cy, t.w, t.h) for t in traps):
-            return None, door_touched
-        if forbid and _hits(forbid, duck.x, duck.y, BW, BH) is not None:
-            return None, door_touched
-        if door is not None and overlap(duck.x, duck.y, BW, BH, door[0], door[1], *door_size(door)):
-            door_touched = True
-        if duck.y > DEATH_Y:
-            return None, door_touched
-        ground = _hits(plats, duck.x, duck.y + BH / 2 + 1, BW - 2, 1)
-        if ground is not None and (ground is not start or airborne) and duck.vy >= 0 and f >= 1:
-            return ground, door_touched
-        if duck.y < start.top - BH / 2 - 1 or duck.vy != 0:
-            airborne = True
-    return None, door_touched
-
-
+# Policy shapes (the movement itself is duck_sim's).
+NEVER = 10**6  # `release`: the direction is held for the whole jump
 POGO_STARTS = (0, 8, 14, 20)
 
 
@@ -524,8 +262,8 @@ def policies(allow_dash):
         dash_ts += list(range(0, 40, 5))
     for d in (1, -1):
         for jump, hold in ((True, 99), (True, 6), (False, 0)):
-            for release in (MAX_FRAMES, 18, 12):
-                if not jump and release != MAX_FRAMES:
+            for release in (NEVER, 18, 12):
+                if not jump and release != NEVER:
                     continue
                 for dash_t in dash_ts:
                     yield d, jump, hold, dash_t, release
@@ -541,9 +279,14 @@ def landings(active, start, door, allow_dash, optimistic, traces=None, allow_wal
 
     `traces`, when a dict, collects one jump trajectory per
     (start index, landed index, dash scheduled) - the shortest one found."""
-    found = set()
-    door_hit = False
-    y0 = start.top - BH / 2
+    # only traps a jump from here can reach (about 60 px past either edge)
+    near = [t for t in pogo_targets if start.left - 80 < t.cx < start.right + 80]
+    sim = _sim()
+    sim.use_scene(active, door, near, forbid)
+    at = active.index(start)
+    trace = int(traces is not None)
+    # every request of this start platform, answered in one go
+    asks = []  # (request line, dash scheduled)
     for d, jump, hold, dash_t, release in policies(allow_dash):
         edge = start.right if d == 1 else start.left
         starts = []
@@ -558,32 +301,8 @@ def landings(active, start, door, allow_dash, optimistic, traces=None, allow_wal
             # ran ~11px past the edge (coyote time at full speed)
             starts.append((edge + d * 11.0, d * MAXS))
         for x0, vx0 in starts:
-            trace = [] if traces is not None else None
-            landed, touched = simulate(
-                active,
-                door,
-                x0,
-                y0,
-                vx0,
-                d,
-                jump,
-                hold,
-                dash_t,
-                start,
-                COYOTE,
-                release,
-                trace,
-                forbid,
-            )
-            door_hit |= touched
-            if landed is not None and landed is not start:
-                found.add(landed)
-                if traces is not None:
-                    key = (start.index, landed.index, dash_t is not None)
-                    if key not in traces or len(trace) < len(traces[key]):
-                        traces[key] = trace
-    # only traps a jump from here can reach (about 60 px past either edge)
-    near = [t for t in pogo_targets if start.left - 80 < t.cx < start.right + 80]
+            asks.append((f"run {at} {x0!r} {vx0!r} {d} {int(jump)} {hold} "
+                         f"{-1 if dash_t is None else dash_t} {release} {trace}", dash_t is not None))
     if near:
         for d in (1, -1):
             edge = start.right if d == 1 else start.left
@@ -594,11 +313,7 @@ def landings(active, start, door, allow_dash, optimistic, traces=None, allow_wal
                 runway = (x0 - start.left) if d == 1 else (start.right - x0)
                 vx0 = d * MAXS if runway >= 12 else 0.0
                 for r_from in POGO_STARTS:
-                    landed, touched = pogo_hop(
-                        active, near, door, start, x0, vx0, d, r_from, allow_wall, forbid)
-                    door_hit |= touched
-                    if landed is not None and landed is not start:
-                        found.add(landed)
+                    asks.append((f"pogo {at} {x0!r} {vx0!r} {d} {r_from} {int(allow_wall)} 0", False))
     if allow_wall:
         for d, mode, slide, jump in WALL_POLICIES:
             edge = start.right if d == 1 else start.left
@@ -606,27 +321,27 @@ def landings(active, start, door, allow_dash, optimistic, traces=None, allow_wal
                 x0 = edge - d * k
                 if not start.left <= x0 <= start.right:
                     continue
-                landed, touched = climb(active, door, start, x0, 0.0, d, mode, slide, jump, forbid)
-                door_hit |= touched
-                if landed is not None and landed is not start:
-                    found.add(landed)
+                asks.append((f"climb {at} {x0!r} 0.0 {d} {int(mode == 'chimney')} {slide} "
+                             f"{int(jump)} 0", False))
+    found = set()
+    door_hit = False
+    for (line, dashed), answer in zip(asks, sim.ask([a for a, _ in asks])):
+        landed, touched, points = _outcome(answer, active, bool(trace))
+        door_hit |= touched
+        if landed is not None and landed is not start:
+            found.add(landed)
+            if traces is not None and line.startswith("run"):
+                key = (start.index, landed.index, dashed)
+                if key not in traces or len(points) < len(traces[key]):
+                    traces[key] = points
     return found, door_hit
 
 
 def spawn_platform(active, spawn):
-    x, y = spawn
-    vy = 0.0
-    for _ in range(300):
-        vy = min(vy + G, MAXFALL)
-        if _hits(active, x, y + vy, BW, BH) is None:
-            y += vy
-        else:
-            return _hits(active, x, y + vy + 0.5, BW, BH) or _hits(
-                active, x, y + BH / 2 + 1, BW - 2, 1
-            )
-        if y > DEATH_Y:
-            return None
-    return None
+    """The platform a duck dropped at `spawn` lands on (None: it falls out)."""
+    _sim().use_scene(active, None, (), ())
+    landed = int(_sim().ask([f"spawn {spawn[0]!r} {spawn[1]!r}"])[0][0])
+    return active[landed] if landed >= 0 else None
 
 
 _REACH_CACHE = {}

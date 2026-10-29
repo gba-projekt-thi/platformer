@@ -1,19 +1,18 @@
 """Unit tests for tools/Check_level_reachability.py.
 
-The movement model is calibrated against the documented jump/dash envelope,
+The movement (the game's locomotion::Core, via tools/duck_sim) is checked against the documented jump/dash envelope,
 then the new dash and lever levels are checked against their design intent.
 The real-level tests need game/include/level/levels_world5.h and are skipped
 when it cannot be found. Run from the repository root:
 
     python3 -m unittest discover -s tools -p 'test_*.py'
 
-(about half a minute - every test simulates thousands of jumps)
+(a few seconds)
 """
 
 import importlib.util
 import itertools
 import os
-import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -185,53 +184,8 @@ def shaft(gap=14, walls=3):
 
 
 class WallJumpModelTests(unittest.TestCase):
-    """Duck mirrors locomotion::Core::step() with the wall jump
-    (tests/host/test_locomotion.cpp)."""
-
-    WALL = [sim.Rect(20, 0, 26, 200, 0)]  # a wall right of the duck
-
-    def at_the_wall(self):
-        duck = sim.Duck(self.WALL, 3.0, -40.0, wall_jump=True)
-        duck.on_ground = False
-        for _ in range(10):
-            duck.step(right=True)
-        return duck
-
-    def test_holding_toward_a_wall_slides(self):
-        duck = self.at_the_wall()
-        self.assertEqual(duck.wall(), 1)
-        self.assertEqual(duck.vy, sim.SLIDE)
-
-    def test_a_wall_jump_pushes_away_and_up(self):
-        duck = self.at_the_wall()
-        duck.step(right=True, a_held=False)
-        x = duck.x
-        duck.step(right=True, a_pressed=True)
-        self.assertTrue(duck.wall_jumped)
-        self.assertEqual(duck.vx, -sim.PUSH)
-        self.assertEqual(duck.vy, sim.JUMP)
-        self.assertEqual(duck.x, x - sim.PUSH)
-
-    def test_the_duck_uses_the_games_fixed_point_values(self):
-        # bn::fixed keeps 12 fraction bits: 0.38 is stored as 1556 / 4096.
-        self.assertEqual(sim.fx(0.38), 1556 / 4096)
-        self.assertEqual(sim.fx(-3), -3)
-        duck = sim.Duck([], 0.0, 0.0)
-        duck.on_ground = False
-        duck.step(right=True)
-        self.assertEqual(duck.vx, 1556 / 4096)
-
-    def test_fixed_times_fixed_uses_half_precision_like_butano(self):
-        # (a / 64) * (b / 64): Cfg::Player::DECELERATION * friction 1.
-        self.assertEqual(sim.fx_mul(sim.fx(0.3), sim.fx(1)), 1216 / 4096)
-        self.assertEqual(sim.fx_mul(-1.5, 2), -3)
-
-    def test_without_wall_jumps_the_wall_is_ignored(self):
-        duck = sim.Duck(self.WALL, 3.0, -40.0, wall_jump=False)
-        for _ in range(40):
-            duck.step(right=True)
-        self.assertEqual(duck.wall(), 0)
-        self.assertEqual(duck.vy, sim.MAXFALL)
+    """The wall jump itself is locomotion::Core's (tests/host/test_locomotion.cpp);
+    here: what the checker makes of it."""
 
     def test_a_shaft_needs_wall_jumps(self):
         plats, spawn, door = shaft()
@@ -241,45 +195,25 @@ class WallJumpModelTests(unittest.TestCase):
         self.assertTrue(climbed)
 
 
-class PogoModelTests(unittest.TestCase):
-    """Duck's pogo strike mirrors locomotion::Core (tests/host/test_locomotion.cpp)."""
+class DuckSimTests(unittest.TestCase):
+    """The duck is the game's own locomotion::Core (tools/duck_sim)."""
 
-    SPIKES = [sim.Rect(0, 28, 16, 16, 0)]  # top at 20, in reach after 8 frames
+    def test_the_body_is_the_games(self):
+        self.assertEqual((sim.BW, sim.BH), (8.0, 8.0))
+        self.assertEqual(sim.MAXS, 2.0)
 
-    def falling_above_the_spikes(self):
-        duck = sim.Duck([], 0.0, 0.0, pogo_targets=self.SPIKES)
-        duck.on_ground = False
-        for _ in range(8):
-            duck.step()
-        return duck
+    def test_a_dropped_duck_lands_on_the_platform_below(self):
+        plats = two_platforms(40)
+        self.assertIs(sim.spawn_platform(plats, (70, 0)), plats[1])
+        self.assertIsNone(sim.spawn_platform(plats, (500, 0)))
 
-    def test_a_strike_over_a_trap_bounces(self):
-        duck = self.falling_above_the_spikes()
-        duck.step(r_pressed=True)
-        self.assertTrue(duck.pogo_bounced)
-        self.assertEqual(duck.vy, sim.POGO_BOUNCE)
-
-    def test_the_bounce_is_not_cut_by_letting_go_of_a(self):
-        duck = self.falling_above_the_spikes()
-        duck.step(r_pressed=True)
-        duck.step(a_held=False)
-        self.assertEqual(duck.vy, sim.POGO_BOUNCE + sim.fx(sim.G))
-
-    def test_no_strike_without_a_trap_below(self):
-        duck = sim.Duck([], 0.0, 0.0, pogo_targets=[sim.Rect(0, 80, 16, 16, 0)])
-        duck.on_ground = False
-        duck.step()
-        duck.step(r_pressed=True)
-        self.assertFalse(duck.pogo_bounced)
-
-    def test_constants_match_cfg_pogo_h(self):
-        if REPO is None:
-            self.skipTest("levels_world5.h not found")
-        for sim_value, constant in (
-            (sim.POGO_FRAMES, "STRIKE_FRAMES"), (sim.POGO_COOLDOWN, "COOLDOWN_FRAMES"),
-            (sim.POGO_REACH, "REACH"), (sim.POGO_WIDTH, "WIDTH"), (sim.POGO_BOUNCE, "BOUNCE_SPEED"),
-        ):
-            self.assertEqual(sim_value, cfg_value("cfg_pogo.h", "Pogo", constant), constant)
+    def test_a_trace_follows_the_duck_frame_by_frame(self):
+        plats = two_platforms(20)
+        traces = {}
+        sim.landings(plats, plats[0], None, False, False, traces)
+        trace = traces[(0, 1, False)]
+        self.assertEqual(trace[0][1], plats[0].top - sim.BH / 2)
+        self.assertGreater(trace[-1][0], plats[1].left)
 
 
 class BossBridgeTests(unittest.TestCase):
@@ -629,29 +563,6 @@ class DoorTrapTriggerTests(unittest.TestCase):
                          ["LEVEL_X (door only through its trap trigger 'door_trap')"])
 
 
-class ResolveAxisTests(unittest.TestCase):
-    """Mirrors resolve_axis() in the engine's move_resolution.h."""
-
-    @staticmethod
-    def floor(p):
-        return p + 4 > 10  # 8 px body over a floor whose top is at 10
-
-    def test_a_free_move_goes_all_the_way(self):
-        self.assertEqual(sim.resolve_axis(0.0, 2.5, self.floor), (2.5, False))
-
-    def test_a_fall_ends_less_than_a_pixel_above_the_floor(self):
-        pos, blocked = sim.resolve_axis(3.5, 3.0, self.floor)
-        self.assertTrue(blocked)
-        self.assertFalse(self.floor(pos))
-        self.assertGreater(pos + 4, 9)
-
-    def test_a_small_blocked_step_does_not_move(self):
-        self.assertEqual(sim.resolve_axis(5.5, 0.75, self.floor), (5.5, True))
-
-    def test_no_move_is_never_blocked(self):
-        self.assertEqual(sim.resolve_axis(6.0, 0.0, self.floor), (6.0, False))
-
-
 class DashUnlockTests(unittest.TestCase):
     WORLDS = [("World 1", 0, 4), ("World 2", 4, 3), ("World 3", 7, 3)]
 
@@ -665,54 +576,6 @@ class DashUnlockTests(unittest.TestCase):
 
 
 REPO = WORLD5.parents[3] if WORLD5 is not None else None
-
-
-def cfg_value(header, namespace, constant):
-    """`inline constexpr ... CONSTANT = value;` inside `namespace NAMESPACE { }`."""
-    text = (REPO / "game/include" / header).read_text()
-    block = re.search(
-        r"namespace " + namespace + r" \{(.*?)\}  // namespace " + namespace, text, re.DOTALL
-    ).group(1)
-    return float(re.search(r"\b" + constant + r"\s*=\s*(-?[\d.]+)", block).group(1))
-
-
-@unittest.skipIf(REPO is None, "levels_world5.h not found")
-class ConstantsMatchTheGameTests(unittest.TestCase):
-    """The simulator copies the duck's physics; a tuning change in cfg.h must
-    show up here instead of silently invalidating every reachability result."""
-
-    def test_player_constants_match_cfg_h(self):
-        for sim_value, constant in (
-            (sim.ACC, "ACCELERATION"),
-            (sim.DECEL, "DECELERATION"),
-            (sim.MAXS, "MAX_SPEED"),
-            (sim.JUMP, "JUMP_SPEED"),
-            (sim.G, "GRAVITY"),
-            (sim.MAXFALL, "MAX_FALL_SPEED"),
-            (sim.COYOTE, "COYOTE_FRAMES"),
-            (sim.DEATH_Y, "DEATH_HEIGHT"),
-        ):
-            self.assertEqual(sim_value, cfg_value("cfg.h", "Player", constant), constant)
-
-    def test_dash_constants_match_cfg_dash_h(self):
-        self.assertEqual(sim.DASH_SPEED, cfg_value("cfg_dash.h", "Dash", "SPEED"))
-        self.assertEqual(sim.DASH_FRAMES, cfg_value("cfg_dash.h", "Dash", "DURATION_FRAMES"))
-
-    def test_wall_jump_constants_match_cfg_wall_jump_h(self):
-        for sim_value, constant in (
-            (sim.SLIDE, "SLIDE_SPEED"), (sim.PUSH, "PUSH_SPEED"), (sim.LOCK, "LOCK_FRAMES"),
-        ):
-            self.assertEqual(sim_value, cfg_value("cfg_wall_jump.h", "WallJump", constant), constant)
-        self.assertEqual(sim.JUMP_BUFFER, cfg_value("cfg.h", "Player", "JUMP_BUFFER_FRAMES"))
-
-    def test_edge_margin_matches_cfg_h(self):
-        self.assertEqual(sim.EDGE_MARGIN, cfg_value("cfg.h", "Screen", "EDGE_MARGIN"))
-
-    def test_duck_body_matches_cfg_h(self):
-        self.assertEqual(
-            (sim.BW, sim.BH),
-            (cfg_value("cfg.h", "Player", "BODY_WIDTH"), cfg_value("cfg.h", "Player", "BODY_HEIGHT")),
-        )
 
 
 class WallJumpUnlockTests(unittest.TestCase):

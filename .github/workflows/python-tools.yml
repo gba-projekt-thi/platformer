@@ -15,10 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Only extern/engine itself (not its nested Butano submodule): the
-          # sprite budget check reads the SpriteRegistry / CollisionRegistry
-          # capacities from its headers instead of assuming them.
-          submodules: true
+          # extern/engine and its nested Butano: the reachability check plays
+          # the duck with tools/duck_sim, locomotion::Core built for the host
+          # (needs Butano's header-only bn::fixed), and the sprite budget
+          # check reads the registry capacities from the engine headers.
+          submodules: recursive
 
       - uses: actions/setup-python@v5
         with:

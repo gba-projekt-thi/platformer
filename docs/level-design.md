@@ -83,7 +83,7 @@ From World 3 onward the duck can also dash (see
 flat ground dash covers 32px, and a jump plus a well-timed air dash crosses
 same-height edge-to-edge gaps up to ~103px (~61px with a jump alone, ~72px with
 a run-up and coyote time; measured with `tools/Check_level_reachability.py`,
-which re-implements the per-frame movement). The climb stays at ~22px.
+which plays the game's own movement code, `locomotion::Core`, frame by frame). The climb stays at ~22px.
 
 - **Existing layouts stay valid.** The 16px / 40px rules guarantee a dash-free
   route, so a level is clearable without the dash unless it says otherwise.
@@ -269,8 +269,8 @@ puzzle; they are limited to 28 ASCII characters (`tools/Check_level_hints.py`
 checks this) and vanish after the first clear.
 
 **Verifying levels.** Run `tools/Check_level_reachability.py` on a level: it
-re-implements the duck's per-frame movement (same constants as `Cfg::Player`
-and `Cfg::Dash`), simulates every combination of start position, jump,
+plays the duck's per-frame movement with the game's own `locomotion::Core`
+(built for the host by `make duck-sim`), simulates every combination of start position, jump,
 direction release and dash timing from each platform, and reports which
 platforms and the door are reachable - without the dash and with it, from a
 conservative start (center exactly on the edge) and an optimistic one (already
