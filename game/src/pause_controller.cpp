@@ -1,6 +1,7 @@
 #include "pause_controller.h"
 
 #include "audio_settings.h"
+#include "bn_blending.h"
 #include "bn_core.h"
 #include "bn_keypad.h"
 #include "bn_music.h"
@@ -32,6 +33,10 @@ struct PauseController::FlowOps {
     }
     void rebuild_menu() { p._rebuild_menu(); }
     void show_title() { p._show_title(); }
+    static void dim_level() {
+        bn::blending::set_fade_alpha(Cfg::PauseMenu::DIM_ALPHA);
+    }
+    static void undim_level() { bn::blending::set_fade_alpha(0); }
     static void pause_music() { bn::music::pause(); }
     static void resume_music() { bn::music::resume(); }
     static void sfx_menu() {
@@ -69,7 +74,7 @@ void PauseController::_init_pause_menu() {
 
     _text_gen.emplace(common::variable_8x16_sprite_font);
     _text_gen->set_z_order(Cfg::ZOrder::PAUSE_MENU);
-    _text_gen->set_blending_enabled(true);
+    // Blending stays off: the dimming of the level must not touch the text.
 
     // Only the generator: it owns no sprites. The title and the menu rows are
     // created when the game is paused and released when it resumes.
@@ -80,9 +85,6 @@ void PauseController::_show_title() {
     _title_sprites.clear();
     _text_gen->generate(
         Cfg::PauseMenu::X, Cfg::PauseMenu::Y_TITLE, "Paused", _title_sprites);
-    for (bn::sprite_ptr& sprite : _title_sprites) {
-        sprite.set_blending_enabled(true);
-    }
 }
 
 void PauseController::_release_sprites() {
@@ -113,7 +115,6 @@ void PauseController::_rebuild_menu() {
 
     for (bn::sprite_ptr& sprite : _menu_sprites) {
         sprite.set_visible(_paused);
-        sprite.set_blending_enabled(true);
     }
 }
 
@@ -189,7 +190,6 @@ void PauseController::_rebuild_options_menu() {
 
     for (bn::sprite_ptr& sprite : _menu_sprites) {
         sprite.set_visible(_paused);
-        sprite.set_blending_enabled(true);
     }
 }
 
@@ -214,7 +214,6 @@ void PauseController::_rebuild_controls_view() {
 
     for (bn::sprite_ptr& sprite : _menu_sprites) {
         sprite.set_visible(_paused);
-        sprite.set_blending_enabled(true);
     }
 }
 
