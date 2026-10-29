@@ -47,13 +47,16 @@ void release(Title& title, Rows& rows) {
     rows.clear();
 }
 
-// The game just paused: the menu rows, then the title above them.
+// The game just paused: the menu rows, then the title above them. The level
+// behind is dimmed (text sprites have blending off, so they stay white); every
+// way out undims it again.
 template <typename Host>
 void open(Host& h) {
     h.select_first_option();
     h.leave_submenus();
     h.rebuild_menu();
     h.show_title();
+    h.dim_level();
     h.pause_music();
     h.sfx_menu();
 }
@@ -62,6 +65,7 @@ void open(Host& h) {
 template <typename Host>
 void close(Host& h) {
     h.release_sprites();
+    h.undim_level();
     h.sfx_cancel();
     h.resume_music();
 }
@@ -89,6 +93,7 @@ template <typename Host>
 void leave_for_action(Host& h) {
     h.set_unpaused();
     h.release_sprites();
+    h.undim_level();
     h.resume_music();
 }
 
@@ -99,6 +104,7 @@ void reset(Host& h) {
     h.init_text_generator();
     h.reset_state();
     h.release_sprites();
+    h.undim_level();
 }
 
 }  // namespace pause_flow

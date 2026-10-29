@@ -171,6 +171,9 @@ inline constexpr int X = -30;
 inline constexpr int Y_TITLE = -28;
 inline constexpr int Y_OPTION_0 = -8;
 inline constexpr int OPTION_SPACING = 16;
+// Black fade over the level (blending-enabled sprites and backgrounds) while
+// the menu is open, so the white text stays readable on bright backgrounds.
+inline constexpr bn::fixed DIM_ALPHA = 0.6;
 }  // namespace PauseMenu
 
 namespace StartScreen {

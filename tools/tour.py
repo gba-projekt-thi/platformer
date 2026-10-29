@@ -111,7 +111,10 @@ def build_tour(levels):
     start_screen(0, 0)
     t.press("A").wait(fade).shot("story_intro", "Story: Intro bei einem neuen Spiel")
     t.press("A").wait(fade).shot("level0", "Level 1 beginnt")
-    t.press("START").wait(20).press("DOWN", 3).press("A").wait(20)
+    t.press("START").wait(20).shot("pause_level0", "Pausemenü über Level 1: Level abgedunkelt, Text hell")
+    t.press("DOWN", 2).press("A").wait(20)
+    t.shot("pause_options", "Pausemenü, Optionen: Level abgedunkelt")
+    t.press("B").wait(20).press("DOWN").press("A").wait(20)
     t.shot("pause_controls", "Pausemenü, Steuerung: 6 Zeilen ohne Überschrift")
     t.press("B").wait(20).press("DOWN").press("A")
 
@@ -128,6 +131,13 @@ def build_tour(levels):
             t.wait(max(0, target - done))
             t.shot(f"boss{world}_{k + 1}", f"Boss Welt {world}, Kampf ({int(part * 100)} %)")
             done = target + 30
+            if k == 0:
+                # The pause menu on this world's background: the level is
+                # dimmed, the white text stands out. The recording waits.
+                t.press("START").wait(20).shot(
+                    f"pause_world{world}", f"Pausemenü über Welt {world}: Level abgedunkelt, Text hell")
+                t.press("START")
+                done += 12 + 12
         # The door finish holds the world still for a moment (clear_logic.h):
         # the door blinks and "Clear!" stands on the screen.
         t.wait(max(0, steps - done) + 20)
