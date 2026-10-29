@@ -382,14 +382,7 @@ PauseController::Action PauseController::update() {
             FlowOps ops{*this};
             pause_flow::leave_for_action(ops);
 
-            switch (pause_flow::outcome_for(option)) {
-                case pause_flow::Outcome::Restart:
-                    return Action::RestartRequested;
-                case pause_flow::Outcome::ReturnToTitle:
-                    return Action::ReturnToTitleRequested;
-                default:
-                    return Action::None;
-            }
+            return pause_flow::action_for(option);
         }
 
         bn::core::update();

@@ -178,14 +178,15 @@ TEST_CASE(pause_flow_a_second_pause_after_a_resume_leaves_no_old_menu_behind) {
 }
 
 TEST_CASE(pause_flow_confirming_restart_or_title_screen_tells_the_level) {
+    using pause_flow::Action;
     using pause_flow::Option;
-    using pause_flow::Outcome;
-    CHECK(pause_flow::outcome_for(Option::Restart) == Outcome::Restart);
+    CHECK(pause_flow::action_for(Option::Restart) == Action::RestartRequested);
     CHECK(
-        pause_flow::outcome_for(Option::TitleScreen) == Outcome::ReturnToTitle);
-    CHECK(pause_flow::outcome_for(Option::Continue) == Outcome::None);
-    CHECK(pause_flow::outcome_for(Option::Options) == Outcome::None);
-    CHECK(pause_flow::outcome_for(Option::Controls) == Outcome::None);
+        pause_flow::action_for(Option::TitleScreen) ==
+        Action::ReturnToTitleRequested);
+    CHECK(pause_flow::action_for(Option::Continue) == Action::None);
+    CHECK(pause_flow::action_for(Option::Options) == Action::None);
+    CHECK(pause_flow::action_for(Option::Controls) == Action::None);
 }
 
 TEST_CASE(pause_flow_release_frees_the_title_and_the_rows) {
