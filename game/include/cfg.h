@@ -208,6 +208,10 @@ namespace LevelSelect {
 // still sits at LAST_ROW_Y at most.
 inline constexpr int ROW_SPACING = 16;
 inline constexpr int LAST_ROW_Y = 70;
+// The selected level's goals ("[*] No death  [+] <1:30"), above the first row
+// of even the longest list.
+inline constexpr int GOALS_X = -90;
+inline constexpr int GOALS_Y = -66;
 }  // namespace LevelSelect
 
 namespace Physics {

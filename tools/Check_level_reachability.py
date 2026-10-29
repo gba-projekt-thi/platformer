@@ -1111,7 +1111,10 @@ def load_world_widths(path):
         if content[m.end()] != "{":
             continue
         f = _ctr.top_level_fields(content[m.end() + 1 : _ctr.find_balanced_block(content, m.end())])
-        widths[m.group(1)] = _num(f[10]) if len(f) > 10 else 240
+        # An unspecified width is written as the screen width when a later
+        # field (target_time_s) follows it.
+        given = len(f) > 10 and f[10].strip() != "Cfg::Screen::WIDTH"
+        widths[m.group(1)] = _num(f[10]) if given else 240
     return widths
 
 

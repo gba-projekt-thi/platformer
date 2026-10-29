@@ -263,6 +263,12 @@ class ConfigurationTests(unittest.TestCase):
         self.assertEqual(errors, [])
         self.assertTrue(any("SpriteRegistry holds" in w for w in warnings))
 
+    def test_the_level_select_must_fit_the_hardware_sprites(self):
+        b = sb.Budget()
+        self.assertEqual(b.level_select, 8 * 13 + 1 + 18)
+        errors, _ = sb.check_configuration(sb.Budget(LEVEL_SELECT_ROWS=9))
+        self.assertTrue(any("level select" in e for e in errors))
+
     def test_the_combined_sprite_cap_makes_the_limits_fit(self):
         b = sb.Budget()
         self.assertEqual(sb.check_configuration(b), ([], []))

@@ -483,4 +483,12 @@ struct LevelData {
     // the boss fights, see tools/Make_boss_music.py); 0 = the level has no
     // boss music.
     int boss_music_order = 0;
+    // -------------------------------------------------------------------------
+    // Goal
+    // -------------------------------------------------------------------------
+
+    // The "Under X seconds" goal shown in the level select (goals.h): a
+    // personal best of at most this many seconds. Set by
+    // tools/Target_times.py from the level's replay and checked there.
+    int target_time_s = 0;
 };

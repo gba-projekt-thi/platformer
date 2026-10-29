@@ -30,6 +30,8 @@ JSON layout (one file per world):
           "boss_music_order": 9,                  // optional: song order of the boss
                                                   // section of the module (checked
                                                   // by tools/Make_boss_music.py)
+          "target_time_s": 45,                    // the "Under X seconds" goal (set by
+                                                  // tools/Target_times.py)
           "field_notes": {"door": "comment above the door field", ...}
         }
       ]
@@ -103,7 +105,7 @@ LEVEL_KEYS = [
     ("world_width", "world_width"), ("world_height", "world_height"),
     ("ground_friction", "ground_friction"), ("intro_hint", "intro_hint"),
     ("checkpoints", "checkpoints"), ("checkpoint_count", "checkpoints"),
-    ("boss_music_order", "boss_music_order"),
+    ("boss_music_order", "boss_music_order"), ("target_time_s", "target_time_s"),
 ]
 ARRAYS = [("platforms", "PlatformData"), ("triggers", "TriggerData"),
           ("traps", "TrapData"), ("checkpoints", "CheckpointData")]
@@ -268,7 +270,7 @@ def _level(level, structs):
         "door": positional("DoorData", door, structs),
     }
     for key in ("world_width", "world_height", "ground_friction", "intro_hint",
-                "boss_music_order"):
+                "boss_music_order", "target_time_s"):
         if key in level:
             values[key] = value("LevelData", key, level[key])
 

@@ -8,6 +8,7 @@
 
 #include "cfg.h"
 #include "data_manager.h"
+#include "goals.h"
 #include "level_manager.h"
 #include "level_scene.h"
 #include "menu_nav.h"
@@ -64,7 +65,7 @@ void LevelSelectScene::_rebuild_menu() {
 
         TextBuffer<40> line;
         line.append(i == _selected_index ? "> " : "  ")
-            .append("Level ")
+            .append("Lv ")
             .append_uint(unsigned(i + 1));
 
         if (!_is_unlocked(absolute_index)) {
@@ -72,12 +73,19 @@ void LevelSelectScene::_rebuild_menu() {
         } else if (
             absolute_index < GameState::MAX_LEVELS &&
             game_state.best_time_frames[absolute_index] > 0) {
-            // The personal-best clear time, e.g. " 01:23.45", plus a "*"
-            // if that level has ever been cleared without dying.
+            // The personal-best clear time, e.g. " 01:23.45", plus a "*" if
+            // that level has ever been cleared without dying and a "+" if the
+            // time is within the level's target (goals.h).
             line.append(' ').append_time(
                 frames_to_time(game_state.best_time_frames[absolute_index]));
-            if (has_no_death_clear(game_state, absolute_index)) {
+            if (goals::no_death_goal_met(
+                    game_state.no_death_clears, unsigned(absolute_index))) {
                 line.append('*');
+            }
+            if (goals::time_goal_met(
+                    game_state.best_time_frames[absolute_index],
+                    _levels[absolute_index].target_time_s)) {
+                line.append('+');
             }
         }
 
@@ -85,6 +93,31 @@ void LevelSelectScene::_rebuild_menu() {
             Cfg::StartScreen::X, first_y + i * Cfg::LevelSelect::ROW_SPACING,
             line.c_str(), _menu_sprites);
     }
+
+    // The selected level's two goals, above the list: "[*] No death" and
+    // "[+] <1:30", the mark inside the brackets once the goal is met.
+    const int selected = world.start_index + _selected_index;
+    const bool tracked = selected < GameState::MAX_LEVELS;
+    const int target_s = _levels[selected].target_time_s;
+    TextBuffer<40> goals_line;
+    goals_line.append(
+        tracked && goals::no_death_goal_met(
+                       game_state.no_death_clears, unsigned(selected))
+            ? "[*]"
+            : "[ ]");
+    goals_line.append(" No death  ");
+    goals_line.append(
+        tracked && goals::time_goal_met(
+                       game_state.best_time_frames[selected], target_s)
+            ? "[+]"
+            : "[ ]");
+    goals_line.append(" <")
+        .append_uint(unsigned(target_s / 60))
+        .append(':')
+        .append_uint(unsigned(target_s % 60), 2);
+    _text_gen->generate(
+        Cfg::LevelSelect::GOALS_X, Cfg::LevelSelect::GOALS_Y,
+        goals_line.c_str(), _menu_sprites);
 
     for (bn::sprite_ptr& sprite : _menu_sprites) {
         sprite.set_blending_enabled(true);

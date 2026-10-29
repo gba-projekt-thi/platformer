@@ -93,7 +93,9 @@ const LevelData LEVEL_WORLD5_SCROLL = {
     nullptr,
     // Checkpoints, in play order
     world5_scroll_checkpoints,
-    sizeof(world5_scroll_checkpoints) / sizeof(world5_scroll_checkpoints[0])};
+    sizeof(world5_scroll_checkpoints) / sizeof(world5_scroll_checkpoints[0]),
+    0,
+    12};
 
 // =============================================================================
 // WORLD 5 SCROLL 2 - dungeon theme, second level (world_width=380)
@@ -171,7 +173,13 @@ const LevelData LEVEL_WORLD5_SCROLL_2 = {
     {176, 42},
     // World size (enables scrolling)
     380,
-    160};
+    160,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    7};
 
 // =============================================================================
 // WORLD 5 DASH - "Cloak Corridor" (world_width=700)
@@ -271,7 +279,9 @@ const LevelData LEVEL_WORLD5_DASH = {
     "Too far? Jump + B to dash",
     // Checkpoints, in play order
     world5_dash_checkpoints,
-    sizeof(world5_dash_checkpoints) / sizeof(world5_dash_checkpoints[0])};
+    sizeof(world5_dash_checkpoints) / sizeof(world5_dash_checkpoints[0]),
+    0,
+    12};
 
 // =============================================================================
 // WORLD 5 LEVERS - "Lever Hall" (world_width=700)
@@ -429,7 +439,11 @@ const LevelData LEVEL_WORLD5_LEVERS = {
     // Ground friction: default
     1,
     // The levers flip on entry; say so once.
-    "Step on a lever to flip it"};
+    "Step on a lever to flip it",
+    nullptr,
+    0,
+    0,
+    13};
 
 // =============================================================================
 // WORLD 5 CLIMB - "Barrel Tower", the wall-jump level (one screen)
@@ -489,7 +503,11 @@ const LevelData LEVEL_WORLD5_CLIMB = {
     1,
     // First level built on the wall jump (Cfg::WallJump::UNLOCK_WORLD = World
     // 5).
-    "New: wall jump with A"};
+    "New: wall jump with A",
+    nullptr,
+    0,
+    0,
+    7};
 
 // =============================================================================
 // WORLD 5 TRICK - "Liar's Keep", the Level Devil exam (world_width=640)
@@ -813,7 +831,11 @@ const LevelData LEVEL_WORLD5_TRICK = {
     // Ground friction: default
     1,
     // The Level Devil exam: say once that the rules change.
-    "Nothing works twice here."};
+    "Nothing works twice here.",
+    nullptr,
+    0,
+    0,
+    14};
 
 // =============================================================================
 // WORLD 5 BOSS - "The Mimic Lord" (world_width=650)
@@ -1026,7 +1048,8 @@ const LevelData LEVEL_WORLD5_BOSS = {
     // Checkpoints, in play order
     world5_boss_checkpoints,
     sizeof(world5_boss_checkpoints) / sizeof(world5_boss_checkpoints[0]),
-    11};
+    11,
+    24};
 
 // =============================================================================
 // WORLD 5 FINALE - "Reunited" (world_width=360, 1.5 screens)
@@ -1071,4 +1094,10 @@ const LevelData LEVEL_WORLD5_FINALE = {
     {160, 40, bn::sprite_items::susanne16x16, TRAP_GRAPHICS_INDEXES_8, 8, true},
     // World size (1.5 screen widths)
     360,
-    160};
+    160,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    10};

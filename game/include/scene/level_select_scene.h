@@ -48,9 +48,9 @@ class LevelSelectScene : public core::Scene {
     bool _transition_requested = false;
 
     bn::optional<bn::sprite_text_generator> _text_gen;
-    // Sized for the longest world (World 5: 6 levels): each line is up to
-    // ~16 visible glyphs ("> Level 6 01:23.45*"; spaces draw no sprite),
-    // so 6 * 16 = 96, with headroom. The list also fits the screen: the sixth
-    // line ends at y = 78.
-    bn::vector<bn::sprite_ptr, 112> _menu_sprites;
+    // Sized for the longest world (World 5: 8 levels): each line is up to
+    // 13 visible glyphs ("Lv 1 01:23.45*+", 14 with the '>'; spaces draw no
+    // sprite) plus the 18 of the goals line = 123 at most (checked by
+    // tools/Check_sprite_budget.py against the hardware's 128).
+    bn::vector<bn::sprite_ptr, 124> _menu_sprites;
 };

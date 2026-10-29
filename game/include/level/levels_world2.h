@@ -56,7 +56,15 @@ const LevelData LEVEL_2 = {
     // Player spawn
     {-96, -32},
     // Door position
-    {104, 0}};
+    {104, 0},
+    Cfg::Screen::WIDTH,
+    Cfg::Screen::HEIGHT,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    6};
 
 // =============================================================================
 // WORLD 2 SCROLL - new, uses the scrolling camera (world_width=432)
@@ -122,7 +130,13 @@ const LevelData LEVEL_WORLD2_SCROLL = {
     {200, -16},
     // World size (enables scrolling)
     432,
-    160};
+    160,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    12};
 
 // =============================================================================
 // WORLD 2 TRICK - "Rigged Yard", a Level Devil level (world_width=480)
@@ -268,7 +282,11 @@ const LevelData LEVEL_WORLD2_TRICK = {
     160,
     1,
     // Pipes hold, grates lie; say so gently.
-    "Watch your step."};
+    "Watch your step.",
+    nullptr,
+    0,
+    0,
+    6};
 
 // =============================================================================
 // WORLD 2 BOSS - "The Rusty Behemoth" (world_width=480)
@@ -443,4 +461,5 @@ const LevelData LEVEL_WORLD2_BOSS = {
     "Land on it. Press R midair",
     world2_boss_checkpoints,
     sizeof(world2_boss_checkpoints) / sizeof(world2_boss_checkpoints[0]),
-    6};
+    6,
+    13};

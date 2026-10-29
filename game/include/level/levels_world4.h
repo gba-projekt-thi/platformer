@@ -65,7 +65,11 @@ const LevelData LEVEL_WORLD4_POGO = {
     160,
     1,
     // First level built on the pogo (Cfg::Pogo::UNLOCK_WORLD = World 4).
-    "New: strike down with R"};
+    "New: strike down with R",
+    nullptr,
+    0,
+    0,
+    7};
 
 // =============================================================================
 // WORLD 4 SCROLL - garden theme (world_width=528)
@@ -135,7 +139,9 @@ const LevelData LEVEL_WORLD4_SCROLL = {
     nullptr,
     // Checkpoints, in play order
     world4_scroll_checkpoints,
-    sizeof(world4_scroll_checkpoints) / sizeof(world4_scroll_checkpoints[0])};
+    sizeof(world4_scroll_checkpoints) / sizeof(world4_scroll_checkpoints[0]),
+    0,
+    11};
 
 // =============================================================================
 // WORLD 4 SCROLL 2 - garden theme, second level (world_width=320)
@@ -235,7 +241,13 @@ const LevelData LEVEL_WORLD4_SCROLL_2 = {
      3},
     // World size (enables scrolling)
     320,
-    160};
+    160,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    9};
 
 // =============================================================================
 // WORLD 4 TRICK - "Hedge Your Bets", a Level Devil level (world_width=480)
@@ -341,7 +353,11 @@ const LevelData LEVEL_WORLD4_TRICK = {
     160,
     1,
     // A Level Devil level: say once that it is not all about the bounce.
-    "Bounce now, panic later."};
+    "Bounce now, panic later.",
+    nullptr,
+    0,
+    0,
+    9};
 
 // =============================================================================
 // WORLD 4 BOSS - "The Hive Queen" (world_width=480)
@@ -544,4 +560,5 @@ const LevelData LEVEL_WORLD4_BOSS = {
     // Checkpoints, in play order
     world4_boss_checkpoints,
     sizeof(world4_boss_checkpoints) / sizeof(world4_boss_checkpoints[0]),
-    6};
+    6,
+    18};

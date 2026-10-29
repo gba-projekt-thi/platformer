@@ -172,7 +172,9 @@ def build_tour(levels):
     start_screen(*slot_1[-1])
     pogo = "LEVEL_WORLD4_POGO"
     t.press("DOWN").press("B").wait(fade).press("DOWN", 3).press("A").wait(fade)
-    t.shot("select_w4", "Levelauswahl Welt 4: 5 Level, Bramble Hop zuerst")
+    t.shot("select_w4", "Levelauswahl Welt 4: 5 Level, Bramble Hop zuerst; Ziel Ohne Tod erreicht, Zeit nicht")
+    t.press("DOWN", 2).shot("select_w4_both", "Levelauswahl Welt 4, drittes Level: beide Ziele erreicht")
+    t.press("UP", 2)
     t.press("A").wait(fade).shot("pogo_start", "Bramble Hop über die Levelauswahl (schon geschafft: ohne Hinweis)")
     steps = replay_steps(pogo)
     t.wait(steps // 3).shot("pogo_1", "Bramble Hop: Abprall vom ersten Busch")
@@ -201,7 +203,7 @@ def build_tour(levels):
     # Slot 2: World 5's level select (7 rows) and Barrel Tower.
     climb = "LEVEL_WORLD5_CLIMB"
     t.press("DOWN").press("B").wait(fade).press("DOWN", 4).press("A").wait(fade)
-    t.shot("select_w5", "Levelauswahl Welt 5: alle 7 Zeilen sichtbar")
+    t.shot("select_w5", "Levelauswahl Welt 5: alle 7 Zeilen sichtbar; erstes Level nur mit Zeitziel")
     t.press("DOWN", 4).press("A").wait(fade).shot("climb_start", "Barrel Tower: Start, Tür auf dem Boden")
     steps = replay_steps(climb)
     t.wait(steps // 4).shot("climb_door", "Barrel Tower: die Tür ist auf den Turm geflohen")
