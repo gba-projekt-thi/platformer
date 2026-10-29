@@ -97,6 +97,13 @@ struct GameState {
     // Added in save schema version 10.
     int16_t entry_level = -1;
     uint16_t entry_deaths = 0;
+
+    // Statistics screen (statistics.h), counted over every playthrough of
+    // the slot and kept across DataManager::reset(): frames played in levels
+    // (60 = 1 second) and the deaths per level, indexed like
+    // best_time_frames. Added in save schema version 12.
+    uint32_t play_frames = 0;
+    uint16_t level_deaths[MAX_LEVELS] = {};
 };
 
 inline void set_no_death_clear(GameState& state, unsigned level_index) {

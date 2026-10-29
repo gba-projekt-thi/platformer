@@ -21,6 +21,7 @@
 #include "level_scene.h"
 #include "menu_nav.h"
 #include "player.h"
+#include "statistics_scene.h"
 #include "story.h"
 #include "story_scene.h"
 #include "text_buffer.h"
@@ -84,6 +85,11 @@ void StartScene::_rebuild_slot_list() {
         (_selected_slot == Cfg::StartScreen::SAVE_SLOT_COUNT) ? "> Controls"
                                                               : "  Controls",
         _slot_sprites);
+
+    _text_gen->generate(
+        Cfg::StartScreen::X,
+        Cfg::StartScreen::Y + (Cfg::StartScreen::SAVE_SLOT_COUNT + 1) * 16,
+        "Select: Statistics", _slot_sprites);
 
     for (bn::sprite_ptr& s : _slot_sprites) {
         s.set_blending_enabled(true);
@@ -164,7 +170,19 @@ void StartScene::update() {
             _rebuild_slot_list();
         }
 
-        if (bn::keypad::a_pressed() &&
+        if (bn::keypad::select_pressed() &&
+            _selected_slot < Cfg::StartScreen::SAVE_SLOT_COUNT) {
+            // Statistics of the slot under the cursor; no slot is loaded.
+            _transition_requested = true;
+
+            auto next = bn::make_unique<StatisticsScene>(
+                _selected_slot, _player, _levels, _data_manager,
+                _level_manager);
+            core::SceneManager::instance().set_next_scene(bn::move(next));
+
+            AudioSettings::instance().play_sfx(bn::sound_items::confirm);
+        } else if (
+            bn::keypad::a_pressed() &&
             _selected_slot == Cfg::StartScreen::SAVE_SLOT_COUNT) {
             // "Controls" entry: no slot is loaded, just show the overview.
             _transition_requested = true;

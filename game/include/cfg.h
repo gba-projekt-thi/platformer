@@ -181,6 +181,16 @@ inline constexpr int SAVE_SLOT_COUNT = 3;
 inline constexpr int ENTRY_COUNT = SAVE_SLOT_COUNT + 1;
 }  // namespace StartScreen
 
+namespace Statistics {
+// StatisticsScene: a title, statistics::VISIBLE_LINES lines of LINE_SPACING
+// from FIRST_LINE_Y, and the hint below them.
+inline constexpr int X = -100;
+inline constexpr int TITLE_Y = -70;
+inline constexpr int FIRST_LINE_Y = -50;
+inline constexpr int LINE_SPACING = 16;
+inline constexpr int HINT_Y = 68;
+}  // namespace Statistics
+
 namespace Story {
 // StoryScene: up to story::MAX_LINES centered lines from FIRST_LINE_Y, the
 // prompt below them (checked to fit by tests/host/test_story.cpp), all inside

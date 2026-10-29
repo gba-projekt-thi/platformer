@@ -56,7 +56,8 @@ class StartScene : public core::Scene {
     bn::optional<bn::sprite_ptr> _tail_sprite;
     bn::optional<bn::sprite_text_generator> _text_gen;
     // Each slot line carries a "World N"/"New" suffix on top of "> Slot N":
-    // worst case ~51 sprites across 3 slots.
+    // worst case ~51 sprites across 3 slots, plus Controls and the 17 of the
+    // Statistics hint.
     bn::vector<bn::sprite_ptr, 80> _slot_sprites;
 
     // Per-slot progress preview, peeked once in init() via
