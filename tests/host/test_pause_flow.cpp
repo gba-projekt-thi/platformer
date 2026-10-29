@@ -17,6 +17,7 @@ struct Host {
     bool paused = false;
     bool controls_view = false;
     int music_paused = 0;
+    bool dimmed = false;
 
     [[nodiscard]] auto alive() const -> int {
         return title_sprites + menu_sprites;
@@ -46,6 +47,8 @@ struct Host {
     }
     void pause_music() { ++music_paused; }
     void resume_music() { --music_paused; }
+    void dim_level() { dimmed = true; }
+    void undim_level() { dimmed = false; }
     void sfx_menu() {}
     void sfx_cancel() {}
     void release_sprites() {
@@ -76,6 +79,29 @@ TEST_CASE(pause_flow_opening_builds_the_rows_then_the_title) {
     CHECK(h.title_sprites > 0);
     CHECK(h.menu_sprites > 0);
     CHECK_EQ(h.music_paused, 1);
+}
+
+TEST_CASE(pause_flow_the_level_is_dimmed_while_paused_and_clear_after) {
+    Host h;
+    pause_flow::open(h);
+    CHECK(h.dimmed);
+    pause_flow::open_controls(h);
+    CHECK(h.dimmed);  // sub-views keep the dimming
+    pause_flow::leave_controls(h);
+    CHECK(h.dimmed);
+    pause_flow::close(h);
+    CHECK(!h.dimmed);
+}
+
+TEST_CASE(pause_flow_every_way_out_undims_the_level) {
+    Host h;
+    pause_flow::open(h);
+    pause_flow::leave_for_action(h);  // Continue, Restart, Title Screen
+    CHECK(!h.dimmed);
+
+    pause_flow::open(h);
+    pause_flow::reset(h);  // level load while paused
+    CHECK(!h.dimmed);
 }
 
 TEST_CASE(pause_flow_resuming_releases_everything) {

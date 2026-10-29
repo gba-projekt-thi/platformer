@@ -25,6 +25,7 @@ whose picture changed between two runs - a visual regression check.
 import json
 import os
 import queue
+import re
 import socket
 import struct
 import subprocess
@@ -80,6 +81,15 @@ def _levels():
     return cwi.parse_levels((ROOT / "game/src/main.cpp").read_text())
 
 
+def story_page_counts():
+    """Pages of each story chapter in the order of story.h (intro, worlds 2-5,
+    ending), read from the data so the tour follows edits to the text."""
+    text = (ROOT / "game/include/story.h").read_text()
+    chunks = text.split("Picture::")[1:]  # one per chapter (the enum has no ::)
+    # A chapter ends "<last page's line count>}}, <page count>};" or ",".
+    return [int(re.search(r"\}\},\s*(\d+)\}[;,]", c).group(1)) for c in chunks]
+
+
 def replay_steps(name):
     path = ROOT / "game/replays" / f"{name}.json"
     return sum(c for _, c in json.loads(path.read_text())["runs"])
@@ -92,6 +102,16 @@ def build_tour(levels):
     slot_1 = []
     index = {name: i for i, name in enumerate(levels)}
     fade = 120  # frames until a new scene has faded in
+    pages = story_page_counts()  # intro, worlds 2-5, ending
+
+    def story(chapter, name, what):
+        """Photograph every page of a story chapter; A turns each page (the
+        last one is left for the caller to confirm)."""
+        for page in range(pages[chapter]):
+            if page:
+                t.press("A").wait(10)
+            t.shot(name if page == 0 else f"{name}_p{page + 1}",
+                   f"{what}, Seite {page + 1}/{pages[chapter]}")
 
     def start_screen(level, furthest):
         """The start screen opens (again); slot 1 holds this save."""
@@ -116,9 +136,13 @@ def build_tour(levels):
     t.shot("statistics_scrolled", "Statistik gescrollt: Tode pro Level in der Mitte der Liste")
     t.press("B")
     start_screen(0, 0)
-    t.press("A").wait(fade).shot("story_intro", "Story: Intro bei einem neuen Spiel")
+    t.press("A").wait(fade)
+    story(0, "story_intro", "Story: Intro bei einem neuen Spiel")
     t.press("A").wait(fade).shot("level0", "Level 1 beginnt")
-    t.press("START").wait(20).press("DOWN", 3).press("A").wait(20)
+    t.press("START").wait(20).shot("pause_level0", "Pausemenü über Level 1: Level abgedunkelt, Text hell")
+    t.press("DOWN", 2).press("A").wait(20)
+    t.shot("pause_options", "Pausemenü, Optionen: Level abgedunkelt")
+    t.press("B").wait(20).press("DOWN").press("A").wait(20)
     t.shot("pause_controls", "Pausemenü, Steuerung: 6 Zeilen ohne Überschrift")
     t.press("B").wait(20).press("DOWN").press("A")
 
@@ -135,6 +159,13 @@ def build_tour(levels):
             t.wait(max(0, target - done))
             t.shot(f"boss{world}_{k + 1}", f"Boss Welt {world}, Kampf ({int(part * 100)} %)")
             done = target + 30
+            if k == 0:
+                # The pause menu on this world's background: the level is
+                # dimmed, the white text stands out. The recording waits.
+                t.press("START").wait(20).shot(
+                    f"pause_world{world}", f"Pausemenü über Welt {world}: Level abgedunkelt, Text hell")
+                t.press("START")
+                done += 12 + 12
         # The door finish holds the world still for a moment (clear_logic.h):
         # the door blinks and "Clear!" stands on the screen.
         t.wait(max(0, steps - done) + 20)
@@ -143,7 +174,7 @@ def build_tour(levels):
         t.shot(f"boss{world}_won", f"Boss Welt {world}: besiegt, Trittstein und Tür, Banner 'New Best!'")
         t.press("A").wait(fade)
         if world < len(bosses):
-            t.shot(f"story_w{world + 1}", f"Story-Seite Welt {world + 1}")
+            story(world, f"story_w{world + 1}", f"Story-Kapitel Welt {world + 1}")
             t.press("A").wait(fade)
             t.shot(f"world{world + 1}_first",
                    f"Erstes Level von Welt {world + 1}, zum ersten Mal: der Einführungshinweis, falls es einen gibt")
@@ -153,7 +184,7 @@ def build_tour(levels):
             t.wait(replay_steps(finale) + 120)
             t.shot("finale_door", "Finale: Susanne erreicht, Banner")
             t.press("A").wait(fade)
-            t.shot("story_ending", "Abschlusstext vor der Kuss-Szene")
+            story(len(pages) - 1, "story_ending", "Abschlusstext vor der Kuss-Szene")
             t.press("A").wait(fade).shot("kiss", "Kuss-Szene")
             t.wait(330).shot("summary", "Zusammenfassung")
             t.press("A")

@@ -171,6 +171,9 @@ inline constexpr int X = -30;
 inline constexpr int Y_TITLE = -28;
 inline constexpr int Y_OPTION_0 = -8;
 inline constexpr int OPTION_SPACING = 16;
+// Black fade over the level (blending-enabled sprites and backgrounds) while
+// the menu is open, so the white text stays readable on bright backgrounds.
+inline constexpr bn::fixed DIM_ALPHA = 0.6;
 }  // namespace PauseMenu
 
 namespace StartScreen {
@@ -193,10 +196,17 @@ inline constexpr int HINT_Y = 68;
 
 namespace Story {
 // StoryScene: up to story::MAX_LINES centered lines from FIRST_LINE_Y, the
-// prompt below them (checked to fit by tests/host/test_story.cpp).
-inline constexpr int FIRST_LINE_Y = -48;
+// prompt below them (checked to fit by tests/host/test_story.cpp), all inside
+// the text panel of the story pictures (PANEL in
+// tools/Generate_story_backgrounds.py: screen y 28..122).
+inline constexpr int FIRST_LINE_Y = -42;
 inline constexpr int LINE_SPACING = 18;
-inline constexpr int PROMPT_Y = 60;
+inline constexpr int PROMPT_Y = 30;  // A 256 x 256 background is centered on
+                                     // the screen; this puts its top-left
+// corner (where the pictures are) on the screen's: (256 - 240) / 2, (256 - 160)
+// / 2.
+inline constexpr int BG_X = 8;
+inline constexpr int BG_Y = 48;
 }  // namespace Story
 
 namespace LevelSelect {

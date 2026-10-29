@@ -22,55 +22,73 @@ auto glyphs(const story::Page& page) -> int {
     return count;
 }
 
-void check_fits(const story::Page& page) {
-    CHECK(page.line_count > 0);
-    CHECK(page.line_count <= story::MAX_LINES);
-    for (int i = 0; i < page.line_count; ++i) {
-        CHECK(page.lines[i] != nullptr);
-        const int length = int(std::strlen(page.lines[i]));
-        CHECK(length <= story::MAX_LINE_CHARS);
-        for (int c = 0; c < length; ++c) {
-            CHECK(page.lines[i][c] >= 32 && page.lines[i][c] <= 126);
+void check_fits(const story::Chapter& chapter) {
+    CHECK(chapter.page_count > 0);
+    CHECK(chapter.page_count <= story::MAX_PAGES);
+    for (int p = 0; p < chapter.page_count; ++p) {
+        const story::Page& page = chapter.pages[p];
+        CHECK(page.line_count > 0);
+        CHECK(page.line_count <= story::MAX_LINES);
+        for (int i = 0; i < page.line_count; ++i) {
+            CHECK(page.lines[i] != nullptr);
+            const int length = int(std::strlen(page.lines[i]));
+            CHECK(length > 0);
+            CHECK(length <= story::MAX_LINE_CHARS);
+            for (int c = 0; c < length; ++c) {
+                CHECK(page.lines[i][c] >= 32 && page.lines[i][c] <= 126);
+            }
+        }
+        CHECK(glyphs(page) <= story::MAX_GLYPHS);
+    }
+}
+
+auto mentions(const story::Chapter& chapter, const char* word) -> bool {
+    for (int p = 0; p < chapter.page_count; ++p) {
+        for (int i = 0; i < chapter.pages[p].line_count; ++i) {
+            if (std::strstr(chapter.pages[p].lines[i], word) != nullptr) {
+                return true;
+            }
         }
     }
-    CHECK(glyphs(page) <= story::MAX_GLYPHS);
+    return false;
 }
 
 }  // namespace
 
 TEST_CASE(story_a_new_game_starts_with_the_intro) {
     const GameState fresh{};
-    CHECK(story::page_on_continue(fresh) == &story::INTRO);
+    CHECK(story::chapter_on_continue(fresh) == &story::INTRO);
 }
 
 TEST_CASE(story_a_game_under_way_skips_the_intro) {
     GameState died{};
     died.deaths = 3;
-    CHECK(story::page_on_continue(died) == nullptr);
+    CHECK(story::chapter_on_continue(died) == nullptr);
 
     GameState later{};
     later.level = 5;
     later.furthest_level = 5;
-    CHECK(story::page_on_continue(later) == nullptr);
+    CHECK(story::chapter_on_continue(later) == nullptr);
 
     GameState finished_before{};  // DataManager::reset() keeps the records
     finished_before.best_time_frames[0] = 1234;
-    CHECK(story::page_on_continue(finished_before) == nullptr);
+    CHECK(story::chapter_on_continue(finished_before) == nullptr);
 }
 
 TEST_CASE(story_reaching_a_new_world_shows_its_page_once) {
     for (int world = 1; world < WorldIndex::WORLD_COUNT; ++world) {
         const int first = WorldIndex::WORLDS[world].start_index;
         CHECK(
-            story::page_on_advance(first - 1, first) == &story::WORLDS[world]);
+            story::chapter_on_advance(first - 1, first) ==
+            &story::WORLDS[world]);
         // Coming back (furthest already past it): no page again.
-        CHECK(story::page_on_advance(first + 1, first) == nullptr);
+        CHECK(story::chapter_on_advance(first + 1, first) == nullptr);
     }
 }
 
 TEST_CASE(story_no_page_inside_a_world) {
     const int second = WorldIndex::WORLDS[1].start_index + 1;
-    CHECK(story::page_on_advance(second - 1, second) == nullptr);
+    CHECK(story::chapter_on_advance(second - 1, second) == nullptr);
 }
 
 TEST_CASE(story_every_page_fits_the_screen) {
@@ -81,19 +99,28 @@ TEST_CASE(story_every_page_fits_the_screen) {
     }
 }
 
-TEST_CASE(story_has_a_page_for_every_world) {
-    CHECK_EQ(story::WORLD_PAGE_COUNT, WorldIndex::WORLD_COUNT);
+TEST_CASE(story_pages_follow_each_other_until_the_last) {
+    CHECK(story::has_next_page(story::ENDING, 0));
+    CHECK(story::has_next_page(story::ENDING, story::ENDING.page_count - 2));
+    CHECK(!story::has_next_page(story::ENDING, story::ENDING.page_count - 1));
+}
+
+TEST_CASE(story_every_chapter_has_its_own_picture) {
+    // The intro and the worlds in order, then the ending: six pictures.
+    for (int world = 1; world < WorldIndex::WORLD_COUNT; ++world) {
+        CHECK(int(story::WORLDS[world].picture) == world);
+    }
+    CHECK(story::WORLDS[0].picture == story::Picture::Intro);
+    CHECK(story::ENDING.picture == story::Picture::Ending);
+}
+
+TEST_CASE(story_has_a_chapter_for_every_world) {
+    CHECK_EQ(story::WORLD_CHAPTER_COUNT, WorldIndex::WORLD_COUNT);
 }
 
 TEST_CASE(story_tells_of_hildegard_and_susanne) {
-    bool hildegard = false;
-    bool susanne = false;
-    for (int i = 0; i < story::INTRO.line_count; ++i) {
-        hildegard |= std::strstr(story::INTRO.lines[i], "Hildegard") != nullptr;
-        susanne |= std::strstr(story::INTRO.lines[i], "Susanne") != nullptr;
-    }
-    CHECK(hildegard);
-    CHECK(susanne);
+    CHECK(mentions(story::INTRO, "Hildegard"));
+    CHECK(mentions(story::INTRO, "Susanne"));
 }
 
 TEST_CASE(story_layout_keeps_the_page_and_its_prompt_on_screen) {
@@ -105,19 +132,6 @@ TEST_CASE(story_layout_keeps_the_page_and_its_prompt_on_screen) {
     CHECK(last + 8 <= Cfg::Story::PROMPT_Y - 8);
     CHECK(Cfg::Story::PROMPT_Y + 8 <= 80);
 }
-
-namespace {
-
-auto mentions(const story::Page& page, const char* word) -> bool {
-    for (int i = 0; i < page.line_count; ++i) {
-        if (std::strstr(page.lines[i], word) != nullptr) {
-            return true;
-        }
-    }
-    return false;
-}
-
-}  // namespace
 
 TEST_CASE(story_the_ending_reunites_hildegard_and_susanne) {
     CHECK(mentions(story::ENDING, "Susanne"));

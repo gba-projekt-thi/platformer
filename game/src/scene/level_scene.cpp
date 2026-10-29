@@ -249,7 +249,7 @@ void LevelScene::_finalize_advance(unsigned int next_level_index) {
     auto& timer = _player.get_timer();
     auto& game_state = _data_manager.state();
     // The first arrival in a world tells its part of the story.
-    const story::Page* page = story::page_on_advance(
+    const story::Chapter* page = story::chapter_on_advance(
         game_state.furthest_level, int(next_level_index));
     game_state.level = next_level_index;
     if (next_level_index >

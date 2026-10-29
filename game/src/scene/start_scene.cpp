@@ -200,8 +200,8 @@ void StartScene::update() {
 
             // Transition to the level scene - through the story's intro
             // when the game has not begun yet.
-            if (const story::Page* intro =
-                    story::page_on_continue(_data_manager.state())) {
+            if (const story::Chapter* intro =
+                    story::chapter_on_continue(_data_manager.state())) {
                 auto next = bn::make_unique<StoryScene>(
                     *intro, _player, _levels, _data_manager, _level_manager);
                 core::SceneManager::instance().set_next_scene(bn::move(next));
