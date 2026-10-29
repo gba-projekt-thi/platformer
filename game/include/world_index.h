@@ -1,14 +1,15 @@
 #pragma once
 
+#include "level_roster.h"
+
 // -----------------------------------------------------------------------------
 // WorldIndex
 //
 // Describes how the flat levels[] array in main.cpp is grouped into worlds,
-// for use by WorldSelectScene / LevelSelectScene. This table is NOT derived
-// from levels[] automatically - it must be kept in sync by hand whenever
-// main.cpp's levels[] array changes (add/remove/reorder a level). The
-// compiler catches gaps, overlaps and a wrong total (static_asserts below and
-// in main.cpp); tools/Check_world_index.py also catches duplicates.
+// for use by WorldSelectScene / LevelSelectScene. Both are derived from
+// game/levels/world*.json (tools/Generate_levels.py writes level_roster.h:
+// world N = world<N>.json, its levels in file order), so adding a level is one
+// edit in the JSON.
 //
 // start_index/level_count are indices into the SAME bn::span<const LevelData>
 // every scene already receives (StartScene, LevelScene, KissingScene) - not
@@ -23,40 +24,33 @@ struct WorldEntry {
 
 namespace WorldIndex {
 
-inline constexpr WorldEntry WORLDS[] = {
-    {"World 1", 0, 5},   // LEVEL_0, LEVEL_1, LEVEL_WORLD1_SCROLL,
-                         // LEVEL_WORLD1_TRICK, LEVEL_WORLD1_BOSS
-    {"World 2", 5, 4},   // LEVEL_2, LEVEL_WORLD2_SCROLL, LEVEL_WORLD2_TRICK,
-                         // LEVEL_WORLD2_BOSS
-    {"World 3", 9, 4},   // LEVEL_3, LEVEL_WORLD3_SCROLL, LEVEL_WORLD3_TRICK,
-                         // LEVEL_WORLD3_BOSS
-    {"World 4", 13, 5},  // LEVEL_WORLD4_POGO, LEVEL_WORLD4_SCROLL,
-                         // LEVEL_WORLD4_SCROLL_2, LEVEL_WORLD4_TRICK,
-                         // LEVEL_WORLD4_BOSS
-    {"World 5", 18, 8},  // LEVEL_WORLD5_SCROLL, LEVEL_WORLD5_SCROLL_2,
-                         // LEVEL_WORLD5_DASH, LEVEL_WORLD5_LEVERS,
-                         // LEVEL_WORLD5_CLIMB, LEVEL_WORLD5_TRICK,
-                         // LEVEL_WORLD5_BOSS, LEVEL_WORLD5_FINALE
+inline constexpr int WORLD_COUNT = sizeof(level_roster::WORLD_LEVEL_COUNTS) /
+                                   sizeof(level_roster::WORLD_LEVEL_COUNTS[0]);
+
+struct WorldTable {
+    WorldEntry entries[WORLD_COUNT];
+
+    constexpr const WorldEntry& operator[](int world) const {
+        return entries[world];
+    }
+    constexpr const WorldEntry* begin() const { return entries; }
+    constexpr const WorldEntry* end() const { return entries + WORLD_COUNT; }
 };
 
-inline constexpr int WORLD_COUNT = sizeof(WORLDS) / sizeof(WORLDS[0]);
-
-// The worlds follow each other without gaps or overlaps, starting at level 0,
-// and none is empty. Checked at compile time below (and by
-// tools/Check_world_index.py against main.cpp's levels[]).
-constexpr auto contiguous() -> bool {
-    int expected_start = 0;
-    for (const WorldEntry& world : WORLDS) {
-        if (world.start_index != expected_start || world.level_count <= 0) {
-            return false;
-        }
-        expected_start += world.level_count;
+constexpr auto make_worlds() -> WorldTable {
+    WorldTable table{};
+    int start = 0;
+    for (int i = 0; i < WORLD_COUNT; ++i) {
+        const int count = level_roster::WORLD_LEVEL_COUNTS[i];
+        table.entries[i] = {level_roster::WORLD_NAMES[i], start, count};
+        start += count;
     }
-    return true;
+    return table;
 }
-static_assert(contiguous(), "WorldIndex::WORLDS must be contiguous");
 
-// Levels covered by all worlds: main.cpp static_asserts levels[] against it.
+inline constexpr WorldTable WORLDS = make_worlds();
+
+// Levels covered by all worlds (= the size of levels[] in main.cpp).
 inline constexpr int LEVEL_COUNT =
     WORLDS[WORLD_COUNT - 1].start_index + WORLDS[WORLD_COUNT - 1].level_count;
 

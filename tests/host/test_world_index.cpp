@@ -36,8 +36,7 @@ TEST_CASE(world_for_level_new_world_5_levels_belong_to_world_5) {
 }
 
 TEST_CASE(world_index_worlds_are_contiguous_and_cover_the_roster) {
-    // Same invariant tools/Check_world_index.py checks against main.cpp's
-    // levels[]: no gaps or overlaps, total equals the roster size.
+    // No gaps or overlaps, total equals the roster size.
     int expected_start = 0;
     for (int world = 0; world < WorldIndex::WORLD_COUNT; ++world) {
         const WorldEntry& entry = WorldIndex::WORLDS[world];
@@ -48,16 +47,13 @@ TEST_CASE(world_index_worlds_are_contiguous_and_cover_the_roster) {
     CHECK_EQ(expected_start, 26);
 }
 
-TEST_CASE(world_index_contiguity_rule_and_level_count) {
-    // The same rule as a constant expression: world_index.h static_asserts
-    // it, and main.cpp static_asserts levels[] against LEVEL_COUNT.
-    CHECK(WorldIndex::contiguous());
+TEST_CASE(world_index_level_count) {
     CHECK_EQ(WorldIndex::LEVEL_COUNT, 26);
 }
 
 TEST_CASE(world_for_level_exhaustive_sweep_over_every_real_level) {
     // Every one of the 26 levels currently in the roster (see
-    // levels_common.h / main.cpp's levels[]), checked against the exact
+    // game/levels/world*.json), checked against the exact
     // world boundaries WORLDS itself declares - not hardcoded numbers
     // that could silently drift from WORLDS.
     for (int world = 0; world < WorldIndex::WORLD_COUNT; ++world) {

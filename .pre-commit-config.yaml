@@ -31,15 +31,6 @@ repos:
         language: system
         files: ^(game/include/level/levels_world.*\.h|game/include/hint_logic\.h|tools/Check_level_hints\.py)$
         pass_filenames: false
-      - id: check-world-index
-        name: Validate WorldIndex against levels[]
-        description: >-
-          world_index.h's WORLDS table must cover main.cpp's levels[] exactly
-          - see tools/Check_world_index.py.
-        entry: python3 tools/Check_world_index.py
-        language: system
-        files: ^(game/src/main\.cpp|game/include/world_index\.h|tools/Check_world_index\.py)$
-        pass_filenames: false
       - id: check-trigger-references
         name: Validate trigger_name references
         description: >-
@@ -97,5 +88,5 @@ repos:
           python3 tools/Generate_levels.py.
         entry: python3 tools/Generate_levels.py --check
         language: system
-        files: ^(game/levels/.*\.json|game/include/level/levels_world.*\.h|game/include/level/level_structure\.h|tools/Generate_levels\.py)$
+        files: ^(game/levels/.*\.json|game/include/level/(levels|mirror)_world.*\.h|game/include/level/level_roster\.h|game/include/level/level_structure\.h|tools/Generate_levels\.py)$
         pass_filenames: false

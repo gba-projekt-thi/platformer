@@ -28,7 +28,7 @@ jobs:
         run: python3 -m unittest discover -s tools -p 'test_*.py'
 
       # Every level data checker (see the root Makefile's `checks` target):
-      # trigger references, hints, world index, checkpoints, budgets,
+      # trigger references, hints, checkpoints, budgets,
       # hitboxes and that every level can be finished.
       - name: Level data checks
         run: make checks

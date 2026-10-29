@@ -48,13 +48,14 @@ knowing first:
 - `game/include/game_state.h` and `game_state_migration.h` - the save record and
   how old saves are upgraded.
 - `game/include/world_index.h` - how `levels[]` is grouped into worlds for the
-  select scenes; `tools/Check_world_index.py` keeps it in sync.
+  select scenes, generated from `game/levels/world*.json` (`level_roster.h`).
 
 ## Extending the game
 
 To add a level, edit the world's JSON (see [Level Design](level-design.md)),
-run `python3 tools/Generate_levels.py`, add the `LEVEL_*` name to `levels[]` in
-`main.cpp` and the world's row in `WorldIndex::WORLDS`. Inserting a level
+and run `python3 tools/Generate_levels.py`: the level list (`levels[]` in
+`main.cpp`) and `WorldIndex::WORLDS` are derived from the JSON order
+(`level_roster.h`). Inserting a level
 anywhere but at the end shifts the save indices: see
 `game_state_migration.h`. New levels take part in Hard Mode, best times and
 no-death clears without extra authoring. For new traps or systems see the

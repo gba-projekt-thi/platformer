@@ -167,7 +167,7 @@ the ones that matter when you edit a level:
   move the picture (`x`/`y`) and keep the hitbox (`x + offset_x`,
   `y + offset_y`), so jumps stay the same; a width can only be fixed in the
   hitbox.
-- `Check_checkpoints.py`, `Check_level_hints.py`, `Check_world_index.py`,
+- `Check_checkpoints.py`, `Check_level_hints.py`,
   `Check_sprite_budget.py` (see
   [System Internals](system-internals.md#sprite-and-entity-budgets)).
 - `Make_boss_music.py --check` and `replays.py generate --check` - the

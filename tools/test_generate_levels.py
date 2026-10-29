@@ -256,6 +256,20 @@ class GenerateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "BOSS"):
             gen.generate(world(lv), STRUCTS)
 
+    def test_roster_lists_the_worlds_in_numeric_order_and_file_order(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for name, levels in (("world10", ["J"]), ("world2", ["C", "D"]),
+                                 ("world1", ["A", "B"])):
+                Path(tmp, name + ".json").write_text(
+                    json.dumps({"levels": [{"name": n} for n in levels]}))
+            self.assertEqual(gen.roster(tmp), [["A", "B"], ["C", "D"], ["J"]])
+
+    def test_roster_header_holds_the_counts_names_and_flat_list(self):
+        out = gen.generate_roster([["A", "B"], ["C"]])
+        self.assertIn("WORLD_LEVEL_COUNTS[] = {2, 1}", out)
+        self.assertIn('{"World 1", "World 2"}', out)
+        self.assertIn("#define LEVEL_ROSTER A, B, C", out)
+
     def test_includes_follow_the_assets_used(self):
         out = self.header(level())
         for include in ("bn_music_items.h", "bn_regular_bg_items_world9.h",

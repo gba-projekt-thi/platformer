@@ -307,20 +307,21 @@ def demand(level, budget, dash=True, pogo=True):
 def abilities(root):
     """{level name: (dash, pogo)} as LevelManager::_load_player_spawn() sets
     them: from their Cfg::...::UNLOCK_WORLD on, the pogo also in every level
-    with a boss. Read from main.cpp's levels[], world_index.h and the level
-    JSON; {} when they cannot be found (then every level counts both)."""
+    with a boss. Read from the level JSON (their order is the world
+    index); {} when they cannot be found (then every level counts both)."""
     root = Path(root)
     try:
         spec = importlib.util.spec_from_file_location(
-            "check_world_index", Path(__file__).with_name("Check_world_index.py"))
-        cwi = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(cwi)
-        order = cwi.parse_levels((root / "game/src/main.cpp").read_text())
-        worlds = cwi.parse_worlds((root / "game/include/world_index.h").read_text())
+            "generate_levels", Path(__file__).with_name("Generate_levels.py"))
+        gl = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(gl)
+        worlds = gl.roster(root / "game/levels")
+        order = [name for world in worlds for name in world]
+        starts = [sum(len(w) for w in worlds[:i]) for i in range(len(worlds))]
 
         def unlock(header):
             text = (root / "game/include" / header).read_text()
-            return worlds[int(re.search(r"UNLOCK_WORLD\s*=\s*(\d+)", text).group(1))][1]
+            return starts[int(re.search(r"UNLOCK_WORLD\s*=\s*(\d+)", text).group(1))]
 
         dash_from, pogo_from = unlock("cfg_dash.h"), unlock("cfg_pogo.h")
         bosses = set()
