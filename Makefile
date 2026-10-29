@@ -71,9 +71,10 @@ endif
 # Tests (no ARM toolchain needed, so Butano's makefile is skipped for these goals):
 #   make test       host unit tests + Python tool tests + level data checks
 #   make checks     level data checks only
+#   make duck-sim   the host tool the reachability check plays the duck with
 #   make coverage   host unit test line coverage of game/
 #---------------------------------------------------------------------------------------------------------------------
-TEST_GOALS	:=	test checks coverage
+TEST_GOALS	:=	test checks coverage duck-sim
 
 ifneq ($(MAKECMDGOALS),)
 ifeq ($(filter-out $(TEST_GOALS),$(MAKECMDGOALS)),)
@@ -90,12 +91,27 @@ endif
 
 .PHONY: $(TEST_GOALS)
 
-test:
+# tools/duck_sim: locomotion::Core built for the host (tools/Check_level_reachability.py
+# plays every jump with it). Same compiler and include paths as tests/host.
+DUCK_SIM	:=	build/host-tools/duck_sim
+DUCK_SIM_INC	:=	game/include game/include/player extern/engine/core/include \
+			extern/engine/extern/butano/butano/include
+
+duck-sim: $(DUCK_SIM)
+
+$(DUCK_SIM): tools/duck_sim/duck_sim.cpp
+	@mkdir -p $(dir $@)
+	$(or $(CXX),g++) -std=c++20 -Wall -Wextra -O2 $(addprefix -I,$(DUCK_SIM_INC)) \
+	    -MMD -MP -MF $@.d $< -o $@
+
+-include $(DUCK_SIM).d
+
+test: duck-sim
 	$(MAKE) -C tests/host
 	python3 -m unittest discover -s tools -p 'test_*.py'
 	$(MAKE) checks
 
-checks:
+checks: duck-sim
 	python3 tools/Generate_levels.py --check
 	python3 tools/replays.py generate --check
 	python3 tools/replays.py layouts --strict

@@ -160,7 +160,8 @@ the ones that matter when you edit a level:
 - `Check_trigger_references.py` - every `trigger_name` resolves to a trigger of
   the same level, as `LevelManager::get_trigger_by_name()` does at runtime.
 - `Check_level_reachability.py FILE LEVEL...` / `--all` - a jump/dash
-  reachability model of the duck's movement; a gap meant to need the dash must
+  reachability check that plays the game's own `locomotion::Core` (host tool
+  `tools/duck_sim`, built by `make duck-sim`); a gap meant to need the dash must
   fail the no-dash run (see [Level Design](level-design.md#dash-and-switch-levels)).
 - `Check_hitboxes.py` - every platform, trap, boss and checkpoint box against
   the opaque pixels of every animation frame of its sprite. To fix a height,

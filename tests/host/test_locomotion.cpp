@@ -509,6 +509,7 @@ TEST_CASE(wall_jump_pushes_away_from_the_wall) {
     fall_at_right_wall(rig);
     const Effects effects = rig.step(jump_right());
     CHECK(effects.jumped);
+    CHECK(effects.wall_jumped);
     CHECK_EQ(rig.body.vel_y, bn::fixed(Cfg::Player::JUMP_SPEED));
     CHECK_EQ(rig.body.vel_x, -bn::fixed(Cfg::WallJump::PUSH_SPEED));
     CHECK(rig.core.facing() == Facing::Left);
@@ -547,7 +548,9 @@ TEST_CASE(wall_jump_ground_jump_wins_next_to_a_wall) {
     rig.core.set_wall_jump_enabled(true);
     rig.world.wall_right = true;
     rig.step();
-    CHECK(rig.step(jump()).jumped);
+    const Effects effects = rig.step(jump());
+    CHECK(effects.jumped);
+    CHECK(!effects.wall_jumped);
     CHECK_EQ(rig.body.vel_x, bn::fixed(0));
 }
 

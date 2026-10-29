@@ -28,6 +28,7 @@ enum class Facing { Forward, Back, Left, Right };
 // What a frame did that PlayerLocomotion turns into sound and events.
 struct Effects {
     bool jumped = false;
+    bool wall_jumped = false;  // a jumped frame that pushed off a wall
     bool dash_started = false;
     bool step_sound = false;
     bool pogo_started = false;
@@ -365,6 +366,7 @@ class Core {
             _wall_jump_lock = Cfg::WallJump::LOCK_FRAMES;
             _jump_buffer_timer = 0;
             effects.jumped = true;
+            effects.wall_jumped = true;
         }
         if (body.vel_y < 0 && world.probe_ceiling()) {
             body.vel_y = 0;
