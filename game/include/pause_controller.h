@@ -62,7 +62,7 @@ class PauseController {
     // Controls overview shown in place of the menu (A/B returns).
     bool _showing_controls = false;
     // 0 = Music, 1 = SFX, 2 = Hard Mode (once unlocked), then Assist Mode
-    // (see _assist_row()).
+    // (see _assist_row()) and Ghost (modes::ghost_row()).
     int _option_row = 0;
 
     bn::optional<bn::sprite_text_generator> _text_gen;

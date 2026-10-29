@@ -228,6 +228,20 @@ def build_tour(levels):
     t.wait(steps // 4).shot("climb_door", "Barrel Tower: die Tür ist auf den Turm geflohen")
     t.wait(steps // 4).shot("climb_shaft", "Barrel Tower: Wandsprung im Schacht")
     t.wait(steps // 4).shot("climb_top", "Barrel Tower: oben an der Tür")
+    # The door, the clear moment, the "New Best!" banner: the run is the level's ghost.
+    t.wait(steps - 3 * (steps // 4) + 150).press("A").wait(fade)
+    to_title(*slot_1[-1])
+
+    # Barrel Tower again: the second run starts REVISIT_DELAY frames late
+    # (tour.cpp), so the pale ghost duck of the first run is ahead of it.
+    t.press("DOWN").press("B").wait(fade).press("DOWN", 4).press("A").wait(fade)
+    t.press("DOWN", 4).press("A").wait(fade)
+    t.wait(steps // 4).shot("ghost_1", "Barrel Tower, zweiter Lauf: das blasse Geister-Entchen des ersten Laufs ist voraus")
+    t.wait(steps // 4).shot("ghost_2", "Barrel Tower, zweiter Lauf: das Geister-Entchen im Schacht, dahinter die Ente")
+    t.press("START").wait(20).shot("ghost_pause", "Pause im zweiten Lauf: Geister-Entchen mit dem Level abgedunkelt")
+    t.press("DOWN", 2).press("A").wait(20).press("DOWN", 3).wait(20).shot(
+        "ghost_option", "Optionen: letzte Zeile 'Ghost < On >'")
+    t.press("B").wait(20).press("START")
     t.wait(120)
     return t, slot_1
 

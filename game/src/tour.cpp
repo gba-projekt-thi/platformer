@@ -29,7 +29,18 @@ void on_update() {
 }
 replay::Player buttons(nullptr, 0);
 
+// A level played a second time starts this many frames late, so that its
+// ghost (the first run, ghost_session.h) is ahead of the duck on the pictures.
+constexpr int REVISIT_DELAY = 40;
+bool visited[32] = {};
+int delay = 0;
+
 void play(InputState& input) {
+    if (delay > 0) {
+        --delay;
+        input = InputState{};
+        return;
+    }
     input = buttons.next();
 }
 
@@ -92,6 +103,11 @@ void level_started(Player& player, unsigned level_index) {
         return;
     }
     buttons = replay::Player(entry.runs, entry.run_count);
+    delay = 0;
+    if (level_index < 32) {
+        delay = visited[level_index] ? REVISIT_DELAY : 0;
+        visited[level_index] = true;
+    }
     player.set_input_hook(play);
     if (entry.has_start) {
         player.teleport_to(entry.start_x, entry.start_y);

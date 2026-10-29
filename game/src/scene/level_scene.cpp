@@ -9,6 +9,7 @@
 #include "cfg.h"
 #include "data_manager.h"
 #include "game_session.h"
+#include "ghost_session.h"
 #include "level_manager.h"
 #include "level_records.h"
 #include "player.h"
@@ -35,6 +36,7 @@ LevelScene::LevelScene(
       _transition_requested(false) {}
 
 LevelScene::~LevelScene() {
+    ghost_session::level_left();
     // Ensure all level-specific resources are released when the scene ends.
     // This prevents BPP8 palette exhaustion when loading the endgame
     // background.
@@ -45,6 +47,7 @@ void LevelScene::init() {
     replay_capture::level_started(_player, _level_index);
     _level_manager.load(_levels[_level_index]);
     tour::level_started(_player, _level_index);
+    ghost_session::level_started(_player, _level_index);
     _player.set_visible(true);
     _player.set_hud_visible(true);
     _show_hint_if_needed();
@@ -142,7 +145,14 @@ void LevelScene::update() {
         LevelScene& scene;
         static bool start_pressed() { return bn::keypad::start_pressed(); }
         void release_hint_sprites() { scene._hint_sprites.clear(); }
-        auto update_level() { return scene._level_manager.update(); }
+        auto update_level() {
+            LevelManager& manager = scene._level_manager;
+            ghost_session::before_frame(manager.level_frame_count());
+            const auto result = manager.update();
+            ghost_session::after_frame(
+                scene._player, manager.level_frame_count());
+            return result;
+        }
     } step{*this};
     const LevelManager::UpdateResult result = hint::step_level(step);
     if (result == LevelManager::UpdateResult::None) {
@@ -166,6 +176,8 @@ void LevelScene::update() {
     // -------------------------------------------------------------------------
 
     replay_capture::level_finished();
+    ghost_session::level_finished(
+        _level_manager.level_frame_count(), _level_manager.records_allowed());
 
     // Record the clear (best time, no-death mark) before anything else
     // touches game_state - covers both the "advance to next level" and "game

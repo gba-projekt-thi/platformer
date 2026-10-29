@@ -13,16 +13,16 @@ long before anybody runs the ROM:
     load time; this reports it at commit/CI time instead.
   * SpriteRegistry capacity (MAX_SPRITES, read from sprite_registry.h): every
     object that scrolls with the camera is a `Sprite` registered there - the
-    duck, the door, platforms, traps, switch sprites, checkpoint flags and the
-    dash afterimages. A sprite beyond the capacity is dropped by the registry
+    duck, the door, platforms, traps, switch sprites, checkpoint flags, the
+    dash afterimages and the ghost of the best run. A sprite beyond the capacity is dropped by the registry
     (logged, but it then stays pinned to its screen position).
   * the 128 hardware sprite slots (OAM): the registered sprites plus the HUD
     (death counter, timer), the level hint, the
     "New Best!" banner and the pause overlay. Butano counts hidden sprites
     too, so all of them are allocated at once in the worst case - except the
-    hint and the pause overlay: LevelScene releases the hint while paused, and
-    PauseController creates its title and rows only while paused and releases
-    them on resume.
+    hint and the pause overlay: LevelScene releases the hint while paused,
+    and PauseController creates its title and rows only while paused and
+    releases them on resume.
   * registry capacities of the collision system (collision_registry.h) against
     the entity limits.
 
@@ -69,6 +69,7 @@ OAM_SLOTS = 128  # GBA hardware: 128 sprites
 WARN_HEADROOM = 8
 PLAYER_AND_DOOR = 2  # the duck and the level's door are always registered
 POGO_SLASH = 1  # Player's slash while a pogo strike reaches (cfg_pogo.h)
+GHOST = 1  # the best run's ghost (ghost_session.cpp), a registered Sprite
 
 # Drawn glyphs of the always-present text (spaces draw nothing).
 DEATH_COUNTER_GLYPHS = 12  # "Deaths:" (7) + up to 5 digits (uint16_t)
@@ -79,13 +80,15 @@ BANNER_LINES = ("New Best!", "01:23.45", "Press A to continue")
 
 # pause_controller.cpp: main menu, options sub-menu and (controls_text.h)
 # controls view. Only one view exists at a time, so the overlay costs the
-# largest of them; each has one '>' cursor.
+# largest of them; each has one '>' cursor. The options and controls views
+# have no "Paused" title.
 PAUSE_MAIN_ROWS = ("Continue", "Restart Level", "Options", "Controls", "Title Screen")
 PAUSE_OPTIONS_ROWS = (
     "Music < 4/4 >",
     "SFX < 4/4 >",
-    "Hard Mode < Off >",
-    "Assist Mode < Off >",
+    "Hard < Off >",
+    "Assist < Off >",
+    "Ghost < Off >",
     "Traps x1.35",  # info line, only while a mode is on
 )
 CONTROLS_TITLE = "Controls"
@@ -101,7 +104,7 @@ DEFAULTS = {
     "TRIGGERS": 16,
     "TOTAL_TRAPS": 32,
     "CHECKPOINTS": 1,
-    "ENTITY_SPRITES": 39,
+    "ENTITY_SPRITES": 38,
     "MAX_STATIC_BODIES": 96,
     "MAX_PHYSICS_BODIES": 64,
     "MAX_COLLISION_SHAPES": 64,
@@ -189,9 +192,9 @@ class Budget:
         no title at all."""
         main = sum(glyphs(r) for r in PAUSE_MAIN_ROWS) + 1
         options = sum(glyphs(r) for r in PAUSE_OPTIONS_ROWS) + 1
-        # the controls view has no title (pause_controller.cpp)
+        # the options and controls views have no title (pause_controller.cpp)
         controls = sum(glyphs(r) for r in self.controls_lines)
-        return ((main, PAUSE_TITLE_GLYPHS), (options, PAUSE_TITLE_GLYPHS), (controls, 0))
+        return ((main, PAUSE_TITLE_GLYPHS), (options, 0), (controls, 0))
 
     @property
     def pause_menu(self):
@@ -262,6 +265,7 @@ def demand(level, budget, dash=True, pogo=True):
         # death clears the trail first (one slot without the dash)
         + (budget.SLOTS if dash else 1)
         + (POGO_SLASH if pogo else 0)
+        + GHOST
     )
     fixed = registry + budget.hud
     hint = hint_glyphs(level)
@@ -356,7 +360,7 @@ def check_configuration(budget):
     b = budget
     # the per-kind limits plus the combined cap (Limits::ENTITY_SPRITES) every level is held to
     entities = min(b.PLATFORMS + b.TOTAL_TRAPS + b.TRIGGERS + b.CHECKPOINTS, b.ENTITY_SPRITES)
-    registry_worst = PLAYER_AND_DOOR + entities + b.SLOTS
+    registry_worst = PLAYER_AND_DOOR + entities + b.SLOTS + GHOST
     if registry_worst > b.MAX_SPRITES:
         warnings.append(
             f"Cfg::Level::Limits together allow {registry_worst} registered sprites "

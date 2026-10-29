@@ -90,18 +90,20 @@ TEST_CASE(modes_mode_toggles_do_not_touch_hard_mode_unlock) {
 
 TEST_CASE(modes_options_rows_without_hard_mode_unlocked) {
     CHECK_EQ(modes::assist_row(false), 2);
-    CHECK_EQ(modes::options_row_count(false), 3);
+    CHECK_EQ(modes::ghost_row(false), 3);
+    CHECK_EQ(modes::options_row_count(false), 4);
 }
 
 TEST_CASE(modes_options_rows_with_hard_mode_unlocked) {
     // Hard Mode occupies row 2, Assist Mode moves down to row 3.
     CHECK_EQ(modes::assist_row(true), 3);
-    CHECK_EQ(modes::options_row_count(true), 4);
+    CHECK_EQ(modes::ghost_row(true), 4);
+    CHECK_EQ(modes::options_row_count(true), 5);
 }
 
-TEST_CASE(modes_assist_row_is_always_the_last_row) {
-    CHECK_EQ(modes::assist_row(false), modes::options_row_count(false) - 1);
-    CHECK_EQ(modes::assist_row(true), modes::options_row_count(true) - 1);
+TEST_CASE(modes_ghost_row_is_always_the_last_row) {
+    CHECK_EQ(modes::ghost_row(false), modes::options_row_count(false) - 1);
+    CHECK_EQ(modes::ghost_row(true), modes::options_row_count(true) - 1);
 }
 
 TEST_CASE(modes_records_are_enabled_in_normal_and_hard_mode) {
