@@ -13,6 +13,7 @@
 
 #include "level_structure.h"
 #include "levels_common.h"
+#include "mirror_world1.h"
 
 // =============================================================================
 // LEVEL 0 (World 1) - unchanged
@@ -62,7 +63,15 @@ const LevelData LEVEL_0 = {
     // Player spawn
     {-96, 42},
     // Door position
-    {32, 4}};
+    {32, 4},
+    Cfg::Screen::WIDTH,
+    Cfg::Screen::HEIGHT,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    &LEVEL_0_MIRROR};
 
 // =============================================================================
 // LEVEL 1 (World 1) - unchanged
@@ -114,7 +123,15 @@ const LevelData LEVEL_1 = {
     // Player spawn
     {-96, 42},
     // Door position
-    {112, 40}};
+    {112, 40},
+    Cfg::Screen::WIDTH,
+    Cfg::Screen::HEIGHT,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    &LEVEL_1_MIRROR};
 
 // =============================================================================
 // WORLD 1 SCROLL - new, uses the scrolling camera (world_width=384)
@@ -187,7 +204,13 @@ const LevelData LEVEL_WORLD1_SCROLL = {
     {176, 40},
     // World size (enables scrolling)
     384,
-    160};
+    160,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    &LEVEL_WORLD1_SCROLL_MIRROR};
 
 // =============================================================================
 // WORLD 1 TRICK - "Second Chances", a kind Level Devil level (world_width=384)
@@ -292,7 +315,11 @@ const LevelData LEVEL_WORLD1_TRICK = {
     160,
     1,
     // The first trick level: tell the player it is a kind one.
-    "The tub forgives. Mostly."};
+    "The tub forgives. Mostly.",
+    nullptr,
+    0,
+    0,
+    &LEVEL_WORLD1_TRICK_MIRROR};
 
 // =============================================================================
 // WORLD 1 BOSS - "The Kugelfisch King" (world_width=698)
@@ -467,4 +494,5 @@ const LevelData LEVEL_WORLD1_BOSS = {
     "Hit the boss from above: R",
     world1_boss_checkpoints,
     sizeof(world1_boss_checkpoints) / sizeof(world1_boss_checkpoints[0]),
-    9};
+    9,
+    &LEVEL_WORLD1_BOSS_MIRROR};

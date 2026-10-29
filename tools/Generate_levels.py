@@ -49,6 +49,13 @@ there while the duck has died that many times in the level, see
 attempt_variant.h); a window that is never open (until <= from) or one on a
 BOSS is an error.
 
+Mirror Mode: every level is also written mirrored left-right into
+game/include/level/mirror_worldN.h as <NAME>_MIRROR (see mirror_level()) and
+linked from the level by LevelData::mirror. The mirror image is made here, not
+at load time: the data costs a few KB of ROM, needs no RAM and no code in the
+level loader, and the reachability check and the replays run on it as on any
+other level.
+
 Usage (from the repository root):
     python3 tools/Generate_levels.py           write every header
     python3 tools/Generate_levels.py --check   exit 1 if a header is out of date
@@ -67,6 +74,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 LEVELS_DIR = ROOT / "game/levels"
 HEADER_DIR = ROOT / "game/include/level"
+COMMON = HEADER_DIR / "levels_common.h"
 STRUCTURE = HEADER_DIR / "level_structure.h"
 
 STRING_FIELDS = {
@@ -104,6 +112,7 @@ LEVEL_KEYS = [
     ("ground_friction", "ground_friction"), ("intro_hint", "intro_hint"),
     ("checkpoints", "checkpoints"), ("checkpoint_count", "checkpoints"),
     ("boss_music_order", "boss_music_order"),
+    ("mirror", "mirror"),
 ]
 ARRAYS = [("platforms", "PlatformData"), ("triggers", "TriggerData"),
           ("traps", "TrapData"), ("checkpoints", "CheckpointData")]
@@ -213,6 +222,8 @@ def _array(struct, array, structs):
         death_window(struct, item)
         definition, item = _flee_path(item, f"{array['name']}_{i}_flee_path")
         definitions += definition
+        definition, item = _flee_path(item, f"{array['name']}_{i}_path", "path")
+        definitions += definition
         text = ""
         if item.get("blank_before"):
             text += "\n"
@@ -249,7 +260,9 @@ def _door(level):
     return flee + attempts, door
 
 
-def _level(level, structs):
+def _level(level, structs, mirror=None):
+    if mirror:
+        level = dict(level, mirror="&" + mirror)
     definitions, door = _door(level)
     parts = {}
     for name, _ in ARRAYS:
@@ -268,7 +281,7 @@ def _level(level, structs):
         "door": positional("DoorData", door, structs),
     }
     for key in ("world_width", "world_height", "ground_friction", "intro_hint",
-                "boss_music_order"):
+                "boss_music_order", "mirror"):
         if key in level:
             values[key] = value("LevelData", key, level[key])
 
@@ -289,7 +302,86 @@ def _level(level, structs):
     return out
 
 
-def includes(data):
+def common_paths(path=COMMON):
+    """{name: [[x, y], ...]} of the bn::fixed_point arrays in levels_common.h
+    (the paths a trap's "path" names)."""
+    text = strip_comments(Path(path).read_text())
+    paths = {}
+    for m in re.finditer(r"constexpr bn::fixed_point (\w+)\[\]\s*=\s*\{(.*?)\};", text, re.S):
+        points = re.findall(r"bn::fixed_point\(\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\)", m.group(2))
+        paths[m.group(1)] = [[_number(x), _number(y)] for x, y in points]
+    return paths
+
+
+def _number(text):
+    return float(text) if "." in text else int(text)
+
+
+def _flip(v):
+    """-v, but 0 stays 0."""
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        raise ValueError(f"cannot mirror {v!r}: not a number")
+    return 0 - v
+
+
+def _flip_points(points):
+    return [[_flip(x), y] for x, y in points]
+
+
+def mirror_item(kind, item, paths):
+    """One platform, trigger, trap or checkpoint mirrored left-right: x, the
+    hitbox offset and everything that moves sideways change sign, the picture
+    is drawn flipped. A chaser trails to the right of the duck instead of the
+    left (a negative chase_follow_distance, see trap_timing::chase_target())."""
+    item = {k: v for k, v in item.items() if k not in META}
+    item["x"] = _flip(item["x"])
+    if "offset_x" in item:
+        item["offset_x"] = _flip(item["offset_x"])
+    if kind in ("platforms", "traps"):
+        item["flip_horizontal"] = True
+    if isinstance(item.get("flee_path"), list):
+        item["flee_path"] = _flip_points(item["flee_path"])
+    if kind != "traps":
+        return item
+    if "velocity_x" in item:
+        item["velocity_x"] = _flip(item["velocity_x"])
+    if "cycle_dx" in item:
+        item["cycle_dx"] = _flip(item["cycle_dx"])
+    if item.get("type") == "AMBUSH" and not item.get("ambush_vertical") and "ambush_speed" in item:
+        item["ambush_speed"] = _flip(item["ambush_speed"])
+    if item.get("type") == "CHASE":
+        item["chase_follow_distance"] = _flip(item.get("chase_follow_distance", 0))
+    if isinstance(item.get("path"), str):
+        item["path"] = _flip_points(paths[item["path"]])
+    return item
+
+
+def mirror_level(level, paths):
+    """`level` (JSON) mirrored left-right as <name>_MIRROR. The background and
+    the world's width (centered on 0) stay as they are."""
+    name = level["name"]
+    out = {"name": name + "_MIRROR", "note": f"{name} mirrored left-right (Mirror Mode)"}
+    for key, array in (("platforms", "platforms"), ("triggers", "triggers"),
+                       ("traps", "traps"), ("checkpoints", "checkpoints")):
+        if level.get(key):
+            out[key] = {"name": level[key]["name"] + "_mirror",
+                        "items": [mirror_item(key, i, paths) for i in level[key]["items"]]}
+    door = dict(level["door"])
+    door["x"] = _flip(door["x"])
+    for field in ("flee_path", "attempt_positions"):
+        if field in door:
+            door[field] = _flip_points(door[field])
+    door["sprite_flip_horizontal"] = not door.get("sprite_flip_horizontal", False)
+    out["door"] = door
+    out["spawn"] = [_flip(level["spawn"][0]), level["spawn"][1]]
+    for key in ("background", "music", "world_width", "world_height", "ground_friction",
+                "intro_hint", "boss_music_order"):
+        if key in level:
+            out[key] = level[key]
+    return out
+
+
+def includes(data, mirror_header=None):
     sprites, backgrounds = set(), set()
     for level in data["levels"]:
         backgrounds.add(level["background"])
@@ -303,14 +395,19 @@ def includes(data):
     names += [f"bn_regular_bg_items_{b}.h" for b in sorted(backgrounds)]
     names += [f"bn_sprite_items_{s}.h" for s in sorted(sprites)]
     out = "".join(f'#include "{n}"\n' for n in names)
-    return out + '\n#include "level_structure.h"\n#include "levels_common.h"\n'
+    out += '\n#include "level_structure.h"\n#include "levels_common.h"\n'
+    if mirror_header:
+        out += f'#include "{mirror_header}"\n'
+    return out
 
 
-def generate(data, structs, source="game/levels/<world>.json"):
+def generate(data, structs, source="game/levels/<world>.json", mirror_header=None):
+    """The header of a world. With `mirror_header` (its file name) every level
+    links to its mirror image, which mirror_header holds (generate_mirror())."""
     out = "#pragma once\n\n"
     out += f"// Generated by tools/Generate_levels.py from {source} - edit the JSON,\n"
     out += "// not this file.\n\n"
-    out += includes(data) + "\n"
+    out += includes(data, mirror_header) + "\n"
     if data.get("note"):
         out += comment(data["note"]) + "\n"
     for level in data["levels"]:
@@ -318,9 +415,26 @@ def generate(data, structs, source="game/levels/<world>.json"):
         for name, struct in ARRAYS:
             if level.get(name):
                 out += _array(struct, level[name], structs) + "\n"
-        out += _level(level, structs) + "\n"
+        out += _level(level, structs, level["name"] + "_MIRROR" if mirror_header else None) + "\n"
     if data.get("end_note"):
         out += comment(data["end_note"])
+    return out.rstrip("\n") + "\n"
+
+
+def generate_mirror(data, structs, source="game/levels/<world>.json"):
+    """The header with every level of the world mirrored left-right."""
+    paths = common_paths()
+    mirrored = {"levels": [mirror_level(level, paths) for level in data["levels"]]}
+    out = "#pragma once\n\n"
+    out += f"// Generated by tools/Generate_levels.py from {source} (Mirror Mode: every\n"
+    out += "// level mirrored left-right) - edit the JSON, not this file.\n\n"
+    out += includes(mirrored) + "\n"
+    for level in mirrored["levels"]:
+        out += comment(level.get("note"))
+        for name, struct in ARRAYS:
+            if level.get(name):
+                out += _array(struct, level[name], structs) + "\n"
+        out += _level(level, structs) + "\n"
     return out.rstrip("\n") + "\n"
 
 
@@ -328,11 +442,17 @@ def _squash(text):
     return re.sub(r"\s+", "", strip_comments(text))
 
 
-def matches(header, data, structs):
+def matches(header, data, structs, mirror_header=None):
     """The header holds the same code as the JSON (whitespace and comments
     aside)."""
     return Path(header).exists() and \
-        _squash(Path(header).read_text()) == _squash(generate(data, structs))
+        _squash(Path(header).read_text()) == _squash(generate(data, structs, mirror_header=mirror_header))
+
+
+def matches_mirror(header, data, structs):
+    """The same for the mirror header."""
+    return Path(header).exists() and \
+        _squash(Path(header).read_text()) == _squash(generate_mirror(data, structs))
 
 
 def main(argv):
@@ -344,15 +464,21 @@ def main(argv):
     stale = []
     for source in sources:
         header = HEADER_DIR / f"levels_{source.stem}.h"
+        mirror = HEADER_DIR / f"mirror_{source.stem}.h"
         data = load(source)
         if "--check" in argv:
-            if not matches(header, data, structs):
+            if not matches(header, data, structs, mirror.name):
                 stale.append(header)
+            if not matches_mirror(mirror, data, structs):
+                stale.append(mirror)
             continue
-        header.write_text(generate(data, structs, f"game/levels/{source.name}"))
-        if shutil.which("clang-format"):
-            subprocess.run(["clang-format", "-i", str(header)], check=True)
-        print(f"wrote {header.relative_to(ROOT)}")
+        name = f"game/levels/{source.name}"
+        header.write_text(generate(data, structs, name, mirror.name))
+        mirror.write_text(generate_mirror(data, structs, name))
+        for path in (header, mirror):
+            if shutil.which("clang-format"):
+                subprocess.run(["clang-format", "-i", str(path)], check=True)
+            print(f"wrote {path.relative_to(ROOT)}")
     for header in stale:
         print(f"ERROR {header.relative_to(ROOT)} does not match its JSON: "
               "run python3 tools/Generate_levels.py", file=sys.stderr)

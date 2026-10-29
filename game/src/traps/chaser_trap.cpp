@@ -21,15 +21,13 @@ void ChaserTrap::update() {
     const bn::fixed target_x = trap_timing::chase_target(
         _player.pos.x, _follow_distance, _start_x, _limit);
 
-    // Only ever flies right, chasing the player - never retreats left, so
-    // standing still or moving left just widens the gap instead of the
-    // trap backing off.
-    if (target_x > pos.x) {
-        bn::fixed step = target_x - pos.x;
-        if (step > _chase_speed) {
-            step = _chase_speed;
-        }
-        pos.x += step;
+    // Only ever flies away from where it trails (right; left in a mirrored
+    // level) - never retreats, so standing still or turning round just
+    // widens the gap instead of the trap backing off.
+    const bn::fixed next_x = trap_timing::chase_step(
+        pos.x, target_x, _follow_distance, _chase_speed);
+    if (next_x != pos.x) {
+        pos.x = next_x;
 
         // Direct position writes bypass PhysicsBody::move(), so sync the
         // collision shape and sprite manually.

@@ -228,7 +228,31 @@ def build_tour(levels):
     t.wait(steps // 4).shot("climb_door", "Barrel Tower: die Tür ist auf den Turm geflohen")
     t.wait(steps // 4).shot("climb_shaft", "Barrel Tower: Wandsprung im Schacht")
     t.wait(steps // 4).shot("climb_top", "Barrel Tower: oben an der Tür")
-    t.wait(120)
+    t.wait(steps - 3 * (steps // 4) + 120).press("A").wait(fade)
+    to_title(*slot_1[-1])
+
+    # Slot 2 has finished the game: Mirror Mode (SELECT in the level select),
+    # an ordinary level and World 1's boss, flipped left-right.
+    scroll, boss = "LEVEL_WORLD1_SCROLL", "LEVEL_WORLD1_BOSS"
+    t.press("DOWN").press("B").wait(fade).press("A").wait(fade)
+    t.shot("select_mirror_off", "Levelauswahl Welt 1: oben 'Mirror off (Select)', Zeilen darunter unverdeckt")
+    t.press("SELECT").wait(20)
+    t.shot("select_mirror_on", "Levelauswahl Welt 1: oben 'Mirror ON (Select)'")
+    t.press("DOWN", 2).press("A").wait(fade)
+    t.shot("mirror_scroll_start", "Gespiegeltes Level: Ente links-rechts vertauscht, Bilder gedreht, Tür links")
+    steps = replay_steps(scroll)
+    t.wait(steps // 2).shot("mirror_scroll_mid", "Gespiegeltes Level, Mitte: Ente läuft nach links, Kamera folgt")
+    t.wait(steps // 2 + 120).press("A").wait(fade)
+    to_title(*slot_1[-1])
+    t.press("DOWN").press("B").wait(fade).press("A").wait(fade).press("DOWN", 4).press("A").wait(fade)
+    steps = replay_steps(boss)
+    done = 0
+    for k, part in enumerate((0.15, 0.45, 0.75)):
+        target = int(steps * part)
+        t.wait(max(0, target - done))
+        t.shot(f"mirror_boss_{k + 1}", f"Gespiegelter Boss Welt 1 ({int(part * 100)} %): Gegner, Plattformen und Tür seitenverkehrt")
+        done = target + 30
+    t.wait(max(0, steps - done) + 120)
     return t, slot_1
 
 

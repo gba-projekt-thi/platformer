@@ -112,6 +112,9 @@ the file format and the recording workflow are documented at the top of
 - `make replay` builds the game with `PLATFORMER_REPLAY` (no title screen), plays
   every recording in mGBA without a frame limit and fails unless each reaches
   its door. Levels without a recording are listed. CI runs it in `gba-build`.
+- `make replay-mirror` plays the same recordings on the mirrored levels of
+  Mirror Mode with LEFT and RIGHT swapped (all pass; not part of `make replay`
+  to keep it fast).
 - `make record` builds a recording ROM; the last finished attempt of each
   level is stored in SRAM and imported with `tools/replays.py import`.
 - **Counter-checks** (`game/replays/counter/`) must *not* finish their level:

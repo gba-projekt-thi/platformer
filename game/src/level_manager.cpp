@@ -449,6 +449,7 @@ void LevelManager::_load_platforms(const LevelData& level) {
         raw_sprite.set_tiles(platform.sprite.tiles_item().create_tiles(
             platform.sprite_index % graphics_count));
         raw_sprite.set_blending_enabled(true);
+        raw_sprite.set_horizontal_flip(platform.flip_horizontal);
 
         // Wrap in the shared Sprite type - same pattern as Door and every
         // trap. This is what registers the sprite with SpriteRegistry so

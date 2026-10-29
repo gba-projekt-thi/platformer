@@ -61,6 +61,12 @@ void DataManager::reset() {
     // hard_mode_enabled (the toggle) is deliberately NOT preserved here,
     // matching the audio volume settings' reset-to-default behavior.
     const bool hard_mode_unlocked = _game_state.hard_mode_unlocked;
+    // The mirrored levels' records are personal achievements too.
+    uint32_t mirror_best_times[GameState::MAX_LEVELS];
+    for (int i = 0; i < GameState::MAX_LEVELS; ++i) {
+        mirror_best_times[i] = _game_state.best_time_frames_mirror[i];
+    }
+    const uint32_t no_death_clears_mirror = _game_state.no_death_clears_mirror;
     // Statistics (statistics.h) are lifetime numbers of the slot too.
     const uint32_t play_frames = _game_state.play_frames;
     uint16_t level_deaths[GameState::MAX_LEVELS];
@@ -75,6 +81,10 @@ void DataManager::reset() {
         _game_state.best_time_frames[i] = best_times[i];
     }
     _game_state.no_death_clears = no_death_clears;
+    for (int i = 0; i < GameState::MAX_LEVELS; ++i) {
+        _game_state.best_time_frames_mirror[i] = mirror_best_times[i];
+    }
+    _game_state.no_death_clears_mirror = no_death_clears_mirror;
     _game_state.hard_mode_unlocked = hard_mode_unlocked;
     _game_state.play_frames = play_frames;
     for (int i = 0; i < GameState::MAX_LEVELS; ++i) {

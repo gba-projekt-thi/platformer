@@ -29,8 +29,15 @@ void on_update() {
 }
 replay::Player buttons(nullptr, 0);
 
+bool mirrored = false;
+
 void play(InputState& input) {
     input = buttons.next();
+    if (mirrored) {
+        const bool left = input.left_held;
+        input.left_held = input.right_held;
+        input.right_held = left;
+    }
 }
 
 void seed(DataManager& data_manager, int slot, int level, int furthest) {
@@ -67,6 +74,8 @@ void start_screen(DataManager& data_manager) {
         }
         state.best_time_frames[WorldIndex::LEVEL_COUNT - 1] = 0;
         state.no_death_clears = 0x2D;
+        // Slot 2 has finished the game: Mirror Mode can be switched on.
+        state.hard_mode_unlocked = true;
         data_manager.save();
     }
     data_manager.set_slot_index(0);
@@ -77,7 +86,8 @@ void boss_music(int order) {
     BN_LOG("BOSS MUSIC ", order);
 }
 
-void level_started(Player& player, unsigned level_index) {
+void level_started(Player& player, unsigned level_index, bool mirror) {
+    mirrored = mirror;
     // The level's first entry (its plain recording when it has one).
     const replay_data::Entry* found = nullptr;
     for (const replay_data::Entry& candidate : replay_data::ENTRIES) {
@@ -94,7 +104,8 @@ void level_started(Player& player, unsigned level_index) {
     buttons = replay::Player(entry.runs, entry.run_count);
     player.set_input_hook(play);
     if (entry.has_start) {
-        player.teleport_to(entry.start_x, entry.start_y);
+        player.teleport_to(
+            mirror ? -entry.start_x : entry.start_x, entry.start_y);
     }
 }
 

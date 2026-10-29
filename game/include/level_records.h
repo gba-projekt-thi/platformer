@@ -11,6 +11,7 @@
 // it can be unit-tested on the host (tests/host/test_level_records.cpp):
 //   - the level's best time, if this clear is the first or a faster one,
 //   - the no-death mark, if the attempt had no death (never removed again).
+// With `mirror` (Mirror Mode) both go to the records of the mirrored levels.
 // Nothing is recorded while records are not allowed (Assist Mode, see
 // LevelManager::records_allowed()) or for a level beyond the save's
 // GameState::MAX_LEVELS. Returns true for a new best time ("New Best!").
@@ -20,16 +21,18 @@ inline auto record_clear(
     unsigned level_index,
     uint32_t frames,
     bool no_deaths,
-    bool records_allowed) -> bool {
+    bool records_allowed,
+    bool mirror = false) -> bool {
     if (!records_allowed || level_index >= unsigned(GameState::MAX_LEVELS)) {
         return false;
     }
 
     if (no_deaths) {
-        set_no_death_clear(state, level_index);
+        set_no_death_clear(state, level_index, mirror);
     }
 
-    uint32_t& best = state.best_time_frames[level_index];
+    uint32_t& best = mirror ? state.best_time_frames_mirror[level_index]
+                            : state.best_time_frames[level_index];
     if (best != 0 && frames >= best) {
         return false;
     }
