@@ -109,6 +109,13 @@ def build_tour(levels):
     t.shot("controls", "Steuerung: 6 Zeilen, darunter 'Press B to go back' ganz sichtbar")
     t.press("B")
     start_screen(0, 0)
+    # Slot 2's statistics (the seeded save), at the top and scrolled down.
+    t.press("DOWN").press("SELECT").wait(fade)
+    t.shot("statistics", "Statistik Slot 2: Summen und die ersten Level, Titel und Hinweis sichtbar")
+    t.press("DOWN", 12)
+    t.shot("statistics_scrolled", "Statistik gescrollt: Tode pro Level in der Mitte der Liste")
+    t.press("B")
+    start_screen(0, 0)
     t.press("A").wait(fade).shot("story_intro", "Story: Intro bei einem neuen Spiel")
     t.press("A").wait(fade).shot("level0", "Level 1 beginnt")
     t.press("START").wait(20).shot("pause_level0", "Pausemenü über Level 1: Level abgedunkelt, Text hell")

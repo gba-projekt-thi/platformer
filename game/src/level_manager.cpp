@@ -12,6 +12,7 @@
 #include "player_events.h"
 #include "replay_capture.h"
 #include "respawn_logic.h"
+#include "statistics.h"
 #include "switch_logic.h"
 #include "tour.h"
 #include "trap_factory.h"
@@ -157,7 +158,10 @@ struct LevelManager::FlowOps {
     [[nodiscard]] bool paused() const { return m._pause_controller.paused(); }
     [[nodiscard]] bool frozen() const { return m._death_fx.frozen(); }
     void clear_dash_trail() { m._player.clear_dash_trail(); }
-    void count_frame() { ++m._level_frame_count; }
+    void count_frame() {
+        ++m._level_frame_count;
+        statistics::tick_play_time(m._data_manager.state());
+    }
     void update_collisions() { CollisionRegistry::instance().update_all(); }
     void propagate_triggers() {
         // After every trigger ticked and the duck pressed its triggers: one

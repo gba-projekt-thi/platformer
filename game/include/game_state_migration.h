@@ -62,6 +62,9 @@ inline auto valid_bytes(uint16_t version) -> int {
     if (version < 10) {
         return static_cast<int>(offsetof(GameState, entry_level));
     }
+    if (version < 12) {
+        return static_cast<int>(offsetof(GameState, play_frames));
+    }
     // Add "if (version < N) return offsetof(GameState, field);" lines here,
     // newest first, when a field is appended (see the procedure above).
     return static_cast<int>(sizeof(GameState));
@@ -74,6 +77,11 @@ inline void insert_level(GameState& state, int index) {
         state.best_time_frames[i] = state.best_time_frames[i - 1];
     }
     state.best_time_frames[index] = 0;
+
+    for (int i = GameState::MAX_LEVELS - 1; i > index; --i) {
+        state.level_deaths[i] = state.level_deaths[i - 1];
+    }
+    state.level_deaths[index] = 0;
 
     const uint32_t below = (uint32_t(1) << index) - 1;
     state.no_death_clears = (state.no_death_clears & below) |
