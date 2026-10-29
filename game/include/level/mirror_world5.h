@@ -2241,7 +2241,7 @@ constexpr TrapData world5_trick_traps_mirror[] = {
      0,
      0,
      true,
-     0,
+     45,
      0,
      0,
      true},

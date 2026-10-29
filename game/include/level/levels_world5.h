@@ -528,8 +528,8 @@ const LevelData LEVEL_WORLD5_CLIMB = {
 //     the second barrel stabs, 31 frames after that the third. Run on and
 //     be skewered twice; wait on the first two barrels and both miss.
 //   4 Lurking bar under the next gap (vertical AMBUSH): lure it from the
-//     edge, jump while it sinks - onto a barrel that crumbles at once
-//     (24 frames).
+//     edge, jump once it has sunk (it rests there) - onto a barrel that
+//     crumbles at once (24 frames).
 //   5 False exit: the lever on the floor before the door turns the door
 //     into a trap; jump from the step over it. After three deaths the door
 //     waits on the step instead and a dead copy (no animation) stands at
@@ -730,6 +730,9 @@ constexpr TrapData world5_trick_traps[] = {
     // 4 - a rusty bar lurking below the gap 37 .. 69: it shoots up when the
     // duck stands at the edge of the last chain barrel (range 22) and sinks
     // back.
+    // Then it stays down 45 frames (ambush_rest), even with the duck at the
+    // edge:
+    // lure it out, let it sink, then jump (like World 3's arms).
     {TrapType::AMBUSH,
      53,
      112,
@@ -762,7 +765,8 @@ constexpr TrapData world5_trick_traps[] = {
      1,
      0,
      0,
-     true},
+     true,
+     45},
 
     // 5 - after three deaths the real door has moved onto the step and this
     // dead copy (it does not animate) stands where it was.
