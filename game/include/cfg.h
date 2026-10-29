@@ -180,8 +180,10 @@ namespace StartScreen {
 inline constexpr int X = -80;
 inline constexpr int Y = -10;
 inline constexpr int SAVE_SLOT_COUNT = 3;
-// Save slots plus the "Controls" entry below them.
-inline constexpr int ENTRY_COUNT = SAVE_SLOT_COUNT + 1;
+// Save slots plus the "Controls" and "Statistics" entries below them.
+inline constexpr int CONTROLS_ENTRY = SAVE_SLOT_COUNT;
+inline constexpr int STATISTICS_ENTRY = SAVE_SLOT_COUNT + 1;
+inline constexpr int ENTRY_COUNT = SAVE_SLOT_COUNT + 2;
 }  // namespace StartScreen
 
 namespace Statistics {

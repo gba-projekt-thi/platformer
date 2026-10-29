@@ -78,18 +78,20 @@ void StartScene::_rebuild_slot_list() {
             _slot_sprites);
     }
 
-    // Last entry below the save slots: the controls overview.
+    // Below the save slots: the controls overview and the statistics.
     _text_gen->generate(
         Cfg::StartScreen::X,
-        Cfg::StartScreen::Y + Cfg::StartScreen::SAVE_SLOT_COUNT * 16,
-        (_selected_slot == Cfg::StartScreen::SAVE_SLOT_COUNT) ? "> Controls"
-                                                              : "  Controls",
+        Cfg::StartScreen::Y + Cfg::StartScreen::CONTROLS_ENTRY * 16,
+        (_selected_slot == Cfg::StartScreen::CONTROLS_ENTRY) ? "> Controls"
+                                                             : "  Controls",
         _slot_sprites);
 
     _text_gen->generate(
         Cfg::StartScreen::X,
-        Cfg::StartScreen::Y + (Cfg::StartScreen::SAVE_SLOT_COUNT + 1) * 16,
-        "  Select: Statistics", _slot_sprites);
+        Cfg::StartScreen::Y + Cfg::StartScreen::STATISTICS_ENTRY * 16,
+        (_selected_slot == Cfg::StartScreen::STATISTICS_ENTRY) ? "> Statistics"
+                                                               : "  Statistics",
+        _slot_sprites);
 
     for (bn::sprite_ptr& s : _slot_sprites) {
         s.set_blending_enabled(true);
@@ -170,20 +172,24 @@ void StartScene::update() {
             _rebuild_slot_list();
         }
 
-        if (bn::keypad::select_pressed() &&
-            _selected_slot < Cfg::StartScreen::SAVE_SLOT_COUNT) {
-            // Statistics of the slot under the cursor; no slot is loaded.
+        const bool on_slot = _selected_slot < Cfg::StartScreen::SAVE_SLOT_COUNT;
+        if ((bn::keypad::select_pressed() && on_slot) ||
+            (bn::keypad::a_pressed() &&
+             _selected_slot == Cfg::StartScreen::STATISTICS_ENTRY)) {
+            // Statistics of the slot under the cursor (Select) or of slot 1
+            // (the "Statistics" entry; Left/Right there switch slots). No
+            // slot is loaded.
             _transition_requested = true;
 
             auto next = bn::make_unique<StatisticsScene>(
-                _selected_slot, _player, _levels, _data_manager,
+                on_slot ? _selected_slot : 0, _player, _levels, _data_manager,
                 _level_manager);
             core::SceneManager::instance().set_next_scene(bn::move(next));
 
             AudioSettings::instance().play_sfx(bn::sound_items::confirm);
         } else if (
             bn::keypad::a_pressed() &&
-            _selected_slot == Cfg::StartScreen::SAVE_SLOT_COUNT) {
+            _selected_slot == Cfg::StartScreen::CONTROLS_ENTRY) {
             // "Controls" entry: no slot is loaded, just show the overview.
             _transition_requested = true;
 
@@ -213,9 +219,7 @@ void StartScene::update() {
             _level_manager.restoreHUD();
 
             AudioSettings::instance().play_sfx(bn::sound_items::confirm);
-        } else if (
-            bn::keypad::b_pressed() &&
-            _selected_slot < Cfg::StartScreen::SAVE_SLOT_COUNT) {
+        } else if (bn::keypad::b_pressed() && on_slot) {
             // Jump to world/level select instead of continuing normally.
             _transition_requested = true;
             _data_manager.set_slot_index(_selected_slot);

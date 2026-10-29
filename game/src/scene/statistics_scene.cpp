@@ -29,11 +29,7 @@ StatisticsScene::StatisticsScene(
 void StatisticsScene::init() {
     _player.set_visible(false);
     _player.set_hud_visible(false);
-
-    // An empty slot has no statistics yet: all zeros.
-    if (!_data_manager.peek_state(_slot, _state)) {
-        _state = GameState{};
-    }
+    _peek_slot();
 
     _text_gen.emplace(common::variable_8x16_sprite_font);
     _text_gen->set_z_order(Cfg::ZOrder::PAUSE_MENU);
@@ -42,13 +38,18 @@ void StatisticsScene::init() {
     _rebuild();
 }
 
+void StatisticsScene::_peek_slot() {
+    // An empty slot has no statistics yet: all zeros.
+    if (!_data_manager.peek_state(_slot, _state)) {
+        _state = GameState{};
+    }
+}
+
 void StatisticsScene::_rebuild() {
     _sprites.clear();
 
     TextBuffer<24> title;
-    title.append("Slot ")
-        .append_uint(unsigned(_slot + 1))
-        .append(" statistics");
+    title.append("< Slot ").append_uint(unsigned(_slot + 1)).append(" stats >");
     _text_gen->generate(
         Cfg::Statistics::X, Cfg::Statistics::TITLE_Y, title.c_str(), _sprites);
 
@@ -84,6 +85,21 @@ void StatisticsScene::update() {
                 _rebuild();
                 AudioSettings::instance().play_sfx(bn::sound_items::select);
             }
+        }
+
+        // Left/Right: the previous/next save slot, from the top of its list.
+        int slot_delta = 0;
+        if (bn::keypad::right_pressed()) {
+            slot_delta = 1;
+        } else if (bn::keypad::left_pressed()) {
+            slot_delta = Cfg::StartScreen::SAVE_SLOT_COUNT - 1;
+        }
+        if (slot_delta != 0) {
+            _slot = (_slot + slot_delta) % Cfg::StartScreen::SAVE_SLOT_COUNT;
+            _top = 0;
+            _peek_slot();
+            _rebuild();
+            AudioSettings::instance().play_sfx(bn::sound_items::select);
         }
 
         if (bn::keypad::b_pressed()) {

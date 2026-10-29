@@ -140,8 +140,8 @@ TEST_CASE(statistics_longest_lines_fit_their_buffer) {
 }
 
 TEST_CASE(statistics_any_screenful_stays_within_the_sprite_budget) {
-    // One sprite per glyph; the title ("Slot 3 statistics") and the hint
-    // ("D-pad: scroll  B: back") take 15 + 18 of the 128.
+    // One sprite per glyph; the title ("< Slot 3 stats >") and the hint
+    // ("D-pad: scroll  B: back") take 13 + 18 of the 128.
     GameState state{};
     state.play_frames = UINT32_MAX;
     for (int i = 0; i < statistics::LEVELS; ++i) {
@@ -161,7 +161,7 @@ TEST_CASE(statistics_any_screenful_stays_within_the_sprite_budget) {
         }
         worst = glyphs > worst ? glyphs : worst;
     }
-    CHECK(worst <= 128 - 15 - 18);
+    CHECK(worst <= 128 - 13 - 18);
 }
 
 TEST_CASE(statistics_scrolling_stays_inside_the_list) {

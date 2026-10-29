@@ -21,8 +21,9 @@ class LevelManager;
 // StatisticsScene
 //
 // Deaths, play time, cleared levels and the deaths per level of one save slot,
-// reachable from the start screen (Select on a slot). Up/Down scroll the
-// lines (statistics.h), B returns to StartScene. Reads the slot with
+// reachable from the start screen ("Statistics", or Select on a slot).
+// Up/Down scroll the lines (statistics.h), Left/Right switch the slot, B
+// returns to StartScene. Reads the slot with
 // DataManager::peek_state(), so no slot gets loaded.
 // -----------------------------------------------------------------------------
 class StatisticsScene : public core::Scene {
@@ -38,6 +39,7 @@ class StatisticsScene : public core::Scene {
     void update() override;
 
    private:
+    void _peek_slot();
     void _rebuild();
 
     int _slot;
