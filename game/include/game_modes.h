@@ -63,6 +63,13 @@ inline auto mirror_active(const GameState& state) -> bool {
     return state.hard_mode_unlocked && state.mirror_mode_enabled;
 }
 
+// Whether a level can be picked in the world and level select: every level
+// in Mirror Mode (the game has been finished), otherwise up to the furthest
+// level reached.
+inline auto level_unlocked(const GameState& state, int level_index) -> bool {
+    return mirror_active(state) || level_index <= state.furthest_level;
+}
+
 // Flips Mirror Mode; does nothing while it is still locked.
 inline void toggle_mirror_mode(GameState& state) {
     if (state.hard_mode_unlocked) {

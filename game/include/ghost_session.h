@@ -32,6 +32,10 @@ void after_frame(Player& player, unsigned level_frame);
 // level's ghost if it is faster than the one there. `records_allowed`:
 // LevelManager::records_allowed() (no Assist Mode runs).
 void level_finished(unsigned level_frame, bool records_allowed);
+// Start was pressed: the ghost's sprite goes before the pause overlay takes
+// its sprites, and is not drawn again until resume() (the game runs again).
+void hide();
+void resume();
 // The scene ends: the ghost's sprite goes.
 void level_left();
 

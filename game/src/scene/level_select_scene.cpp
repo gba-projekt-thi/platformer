@@ -32,7 +32,7 @@ LevelSelectScene::LevelSelectScene(
       _world_index(world_index) {}
 
 bool LevelSelectScene::_is_unlocked(int level_absolute_index) const {
-    return level_absolute_index <= _data_manager.state().furthest_level;
+    return modes::level_unlocked(_data_manager.state(), level_absolute_index);
 }
 
 void LevelSelectScene::init() {

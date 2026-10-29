@@ -36,6 +36,7 @@ ghost::Playback playback;
 bn::optional<Sprite> sprite;
 int tile = -1;  // of the ghost's sprite
 bool on = true;
+bool hidden = false;  // hide() until resume()
 ghost::Key key = 0;
 bool level_running = false;
 int last_frame = -1;  // the level clock of the last sample offered
@@ -81,6 +82,7 @@ void level_started(Player& player, unsigned level_index, bool mirrored) {
         return;
     }
     sprite.reset();
+    hidden = false;
     key = ghost::key_for(level_index, mirrored);
     playback = store.open(key);
     recorder.clear();
@@ -90,7 +92,7 @@ void level_started(Player& player, unsigned level_index, bool mirrored) {
 }
 
 void before_frame(unsigned level_frame) {
-    if (!ACTIVE || !level_running) {
+    if (!ACTIVE || !level_running || hidden) {
         return;
     }
     ghost::Pose pose;
@@ -132,6 +134,15 @@ void level_finished(unsigned level_frame, bool records_allowed) {
         playback = ghost::Playback();
         store.offer(key, level_frame, recorder.data(), recorder.size());
     }
+}
+
+void hide() {
+    hidden = true;
+    sprite.reset();
+}
+
+void resume() {
+    hidden = false;
 }
 
 void level_left() {

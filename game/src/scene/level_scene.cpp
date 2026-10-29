@@ -144,18 +144,25 @@ void LevelScene::update() {
         return;
     }
 
-    // The hint's sprites are freed before the pause overlay allocates its own
-    // (hint::step_level); they are drawn again once the game runs.
+    // The hint's and the ghost's sprites are freed before the pause overlay
+    // allocates its own (hint::step_level); they are drawn again once the
+    // game runs.
     struct Step {
         LevelScene& scene;
         static bool start_pressed() { return bn::keypad::start_pressed(); }
-        void release_hint_sprites() { scene._hint_sprites.clear(); }
+        void release_hint_sprites() {
+            scene._hint_sprites.clear();
+            ghost_session::hide();
+        }
         auto update_level() {
             LevelManager& manager = scene._level_manager;
             ghost_session::before_frame(manager.level_frame_count());
             const auto result = manager.update();
             ghost_session::after_frame(
                 scene._player, manager.level_frame_count());
+            if (!manager.paused()) {
+                ghost_session::resume();
+            }
             return result;
         }
     } step{*this};

@@ -80,16 +80,15 @@ BANNER_LINES = ("New Best!", "01:23.45", "Press A to continue")
 
 # pause_controller.cpp: main menu, options sub-menu and (controls_text.h)
 # controls view. Only one view exists at a time, so the overlay costs the
-# largest of them; each has one '>' cursor. The options and controls views
-# have no "Paused" title.
+# largest of them; each has one '>' cursor. The controls view has no "Paused"
+# title.
 PAUSE_MAIN_ROWS = ("Continue", "Restart Level", "Options", "Controls", "Title Screen")
 PAUSE_OPTIONS_ROWS = (
     "Music < 4/4 >",
     "SFX < 4/4 >",
-    "Hard < Off >",
-    "Assist < Off >",
+    "Hard Mode < Off >",
+    "Assist Mode < Off >",
     "Ghost < Off >",
-    "Traps x1.35",  # info line, only while a mode is on
 )
 CONTROLS_TITLE = "Controls"
 DEFAULT_CONTROLS_LINES = (
@@ -201,9 +200,9 @@ class Budget:
         no title at all."""
         main = sum(glyphs(r) for r in PAUSE_MAIN_ROWS) + 1
         options = sum(glyphs(r) for r in PAUSE_OPTIONS_ROWS) + 1
-        # the options and controls views have no title (pause_controller.cpp)
+        # the controls view has no title (pause_controller.cpp)
         controls = sum(glyphs(r) for r in self.controls_lines)
-        return ((main, PAUSE_TITLE_GLYPHS), (options, 0), (controls, 0))
+        return ((main, PAUSE_TITLE_GLYPHS), (options, PAUSE_TITLE_GLYPHS), (controls, 0))
 
     @property
     def pause_menu(self):
@@ -298,9 +297,9 @@ def demand(level, budget, dash=True, pogo=True):
     scenarios = {
         "play": fixed + hint,
         "banner": fixed + hint + budget.banner,
-        # LevelScene releases the hint's sprites while the pause overlay is
-        # open (hint::should_draw()), so the two never coexist.
-        "pause": fixed + budget.pause_overlay,
+        # LevelScene releases the hint's and the ghost's sprites while the
+        # pause overlay is open (hint::step_level), so they never coexist.
+        "pause": fixed - GHOST + budget.pause_overlay,
     }
     return registry, scenarios
 

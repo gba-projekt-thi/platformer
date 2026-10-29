@@ -61,6 +61,9 @@ void DataManager::reset() {
     // hard_mode_enabled (the toggle) is deliberately NOT preserved here,
     // matching the audio volume settings' reset-to-default behavior.
     const bool hard_mode_unlocked = _game_state.hard_mode_unlocked;
+    // Mirror Mode's toggle stays, unlike Hard Mode's: the mirrored campaign
+    // is played after the finale, which ends in this reset.
+    const bool mirror_mode_enabled = _game_state.mirror_mode_enabled;
     // The mirrored levels' records are personal achievements too.
     uint32_t mirror_best_times[GameState::MAX_LEVELS];
     for (int i = 0; i < GameState::MAX_LEVELS; ++i) {
@@ -86,6 +89,7 @@ void DataManager::reset() {
     }
     _game_state.no_death_clears_mirror = no_death_clears_mirror;
     _game_state.hard_mode_unlocked = hard_mode_unlocked;
+    _game_state.mirror_mode_enabled = mirror_mode_enabled;
     _game_state.play_frames = play_frames;
     for (int i = 0; i < GameState::MAX_LEVELS; ++i) {
         _game_state.level_deaths[i] = level_deaths[i];

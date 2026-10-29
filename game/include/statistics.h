@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include "frame_time.h"
+#include "game_modes.h"
 #include "game_state.h"
 #include "text_buffer.h"
 #include "world_index.h"
@@ -28,8 +29,9 @@ inline constexpr int LINE_COUNT = SUMMARY_LINES + 1 + LEVELS;
 inline constexpr int VISIBLE_LINES = 7;
 inline constexpr int LINE_CHARS = 28;
 
+// Deaths in Assist Mode do not count, like its clear times (records_enabled).
 inline void record_death(GameState& state, unsigned level_index) {
-    if (level_index < unsigned(LEVELS) &&
+    if (modes::records_enabled(state) && level_index < unsigned(LEVELS) &&
         state.level_deaths[level_index] < UINT16_MAX) {
         ++state.level_deaths[level_index];
     }

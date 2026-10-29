@@ -8,6 +8,7 @@
 
 #include "cfg.h"
 #include "data_manager.h"
+#include "game_modes.h"
 #include "level_manager.h"
 #include "level_select_scene.h"
 #include "player.h"
@@ -26,8 +27,8 @@ WorldSelectScene::WorldSelectScene(
       _level_manager(level_manager) {}
 
 bool WorldSelectScene::_is_unlocked(int world_index) const {
-    const int furthest = _data_manager.state().furthest_level;
-    return WorldIndex::WORLDS[world_index].start_index <= furthest;
+    return modes::level_unlocked(
+        _data_manager.state(), WorldIndex::WORLDS[world_index].start_index);
 }
 
 void WorldSelectScene::init() {

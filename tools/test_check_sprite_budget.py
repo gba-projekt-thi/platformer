@@ -91,12 +91,12 @@ class GlyphTests(unittest.TestCase):
         # the controls view (six lines, no title) ...
         controls = sum(sb.glyphs(line) for line in sb.DEFAULT_CONTROLS_LINES)
         self.assertEqual(controls, 59)
-        # Music, SFX, Hard, Assist, Ghost, the trap speed line, the cursor
-        options = 10 + 8 + 9 + 11 + 10 + 10 + 1
+        # Music, SFX, Hard Mode, Assist Mode, Ghost, the cursor
+        options = 10 + 8 + 13 + 15 + 10 + 1
         self.assertEqual(b.pause_menu, max(controls, options))
-        # ... and the options sub-menu (no title either) are the largest views
-        self.assertEqual(b.pause_overlay, max(controls, options))
-        self.assertEqual(b.pause_overlay, 59)
+        # ... and the options sub-menu with its "Paused" title is the largest
+        self.assertEqual(b.pause_overlay, options + sb.PAUSE_TITLE_GLYPHS)
+        self.assertEqual(b.pause_overlay, 63)
 
 
 class AbilityTests(unittest.TestCase):
@@ -167,8 +167,8 @@ class DemandTests(Fixture):
         fixed = registry + b.hud
         self.assertEqual(sc["play"], fixed + 10)  # "helloworld"
         self.assertEqual(sc["banner"], fixed + 10 + b.banner)
-        # the hint is released while the pause overlay is open
-        self.assertEqual(sc["pause"], fixed + b.pause_overlay)
+        # the hint and the ghost are released while the pause overlay is open
+        self.assertEqual(sc["pause"], fixed - sb.GHOST + b.pause_overlay)
 
     def test_a_hint_does_not_raise_the_pause_peak(self):
         with_hint = self.load(level("WH", plats=2, hint="a hint that is long"))["WH"]

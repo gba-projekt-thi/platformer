@@ -89,7 +89,7 @@ void StartScene::_rebuild_slot_list() {
     _text_gen->generate(
         Cfg::StartScreen::X,
         Cfg::StartScreen::Y + (Cfg::StartScreen::SAVE_SLOT_COUNT + 1) * 16,
-        "Select: Statistics", _slot_sprites);
+        "  Select: Statistics", _slot_sprites);
 
     for (bn::sprite_ptr& s : _slot_sprites) {
         s.set_blending_enabled(true);

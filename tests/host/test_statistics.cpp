@@ -22,6 +22,13 @@ TEST_CASE(statistics_a_death_counts_for_its_level) {
     CHECK_EQ(statistics::total_deaths(state), 3u);
 }
 
+TEST_CASE(statistics_deaths_in_assist_mode_do_not_count) {
+    GameState state{};
+    state.assist_mode_enabled = true;
+    statistics::record_death(state, 3);
+    CHECK_EQ(statistics::total_deaths(state), 0u);
+}
+
 TEST_CASE(statistics_death_counts_stop_at_their_limit) {
     GameState state{};
     state.level_deaths[0] = UINT16_MAX;

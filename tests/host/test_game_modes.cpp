@@ -151,6 +151,17 @@ TEST_CASE(modes_mirror_mode_toggles_once_unlocked) {
     CHECK(!modes::mirror_active(state));
 }
 
+TEST_CASE(modes_mirror_mode_opens_every_level) {
+    GameState state{};
+    state.furthest_level = 2;
+    CHECK(modes::level_unlocked(state, 2));
+    CHECK(!modes::level_unlocked(state, 3));
+    state.hard_mode_unlocked = true;
+    modes::toggle_mirror_mode(state);
+    CHECK(modes::level_unlocked(state, 3));
+    CHECK(modes::level_unlocked(state, 25));
+}
+
 TEST_CASE(modes_mirror_mode_goes_with_hard_and_assist_mode) {
     GameState state{};
     state.hard_mode_unlocked = true;
