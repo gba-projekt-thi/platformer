@@ -21,7 +21,7 @@ class DataManager;
 // ----------------------------------------------------------------------------
 class PauseController {
    public:
-    enum class Action { None, RestartRequested, ReturnToTitleRequested };
+    using Action = pause_flow::Action;
 
     explicit PauseController(DataManager& data_manager);
 

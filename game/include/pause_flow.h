@@ -26,17 +26,18 @@ enum class Option : int {
     Count = 5
 };
 
-// What the level has to do once the menu closed on a confirmed row.
-enum class Outcome : int { None, Restart, ReturnToTitle };
+// What the level has to do once the menu closed on a confirmed row
+// (PauseController::Action).
+enum class Action { None, RestartRequested, ReturnToTitleRequested };
 
-inline auto outcome_for(Option option) -> Outcome {
+inline auto action_for(Option option) -> Action {
     switch (option) {
         case Option::Restart:
-            return Outcome::Restart;
+            return Action::RestartRequested;
         case Option::TitleScreen:
-            return Outcome::ReturnToTitle;
+            return Action::ReturnToTitleRequested;
         default:
-            return Outcome::None;
+            return Action::None;
     }
 }
 
