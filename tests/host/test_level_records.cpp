@@ -63,3 +63,19 @@ TEST_CASE(records_other_levels_are_untouched) {
     CHECK_EQ(state.best_time_frames[5], 0u);
     CHECK(!has_no_death_clear(state, 3));
 }
+
+TEST_CASE(records_mirror_clear_has_its_own_best_time_and_badge) {
+    GameState state{};
+    CHECK(record_clear(state, 3, 900, true, true));
+    CHECK(record_clear(state, 3, 1500, false, true, true));
+    CHECK_EQ(state.best_time_frames[3], 900u);
+    CHECK_EQ(state.best_time_frames_mirror[3], 1500u);
+    CHECK(has_no_death_clear(state, 3));
+    CHECK(!has_no_death_clear(state, 3, true));
+    CHECK(!record_clear(state, 3, 1600, true, true, true));
+    CHECK_EQ(state.best_time_frames_mirror[3], 1500u);
+    CHECK(has_no_death_clear(state, 3, true));
+    CHECK_EQ(best_time(state, 3, true), 1500u);
+    CHECK_EQ(best_time(state, 3), 900u);
+    CHECK_EQ(best_time(state, 99, true), 0u);
+}

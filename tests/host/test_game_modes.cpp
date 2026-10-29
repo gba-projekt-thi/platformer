@@ -132,3 +132,28 @@ TEST_CASE(modes_records_follow_hard_mode_precedence_for_inconsistent_flags) {
     state.assist_mode_enabled = true;
     CHECK(modes::records_enabled(state));
 }
+
+TEST_CASE(modes_mirror_mode_needs_the_unlock) {
+    GameState state{};
+    modes::toggle_mirror_mode(state);
+    CHECK(!state.mirror_mode_enabled);
+    CHECK(!modes::mirror_active(state));
+}
+
+TEST_CASE(modes_mirror_mode_toggles_once_unlocked) {
+    GameState state{};
+    state.hard_mode_unlocked = true;
+    modes::toggle_mirror_mode(state);
+    CHECK(modes::mirror_active(state));
+    modes::toggle_mirror_mode(state);
+    CHECK(!modes::mirror_active(state));
+}
+
+TEST_CASE(modes_mirror_mode_goes_with_hard_and_assist_mode) {
+    GameState state{};
+    state.hard_mode_unlocked = true;
+    state.assist_mode_enabled = true;
+    modes::toggle_mirror_mode(state);
+    CHECK(modes::mirror_active(state));
+    CHECK(state.assist_mode_enabled);
+}

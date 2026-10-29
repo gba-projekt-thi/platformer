@@ -29,9 +29,9 @@
 //
 // Inserting a level into main.cpp's levels[] (anywhere but at the end) moves
 // every level index behind it, and the save stores those indices (level,
-// furthest_level, entry_level, best_time_frames, no_death_clears). Bump
-// SAVE_VERSION and add an insert_level() line to upgrade() below; DataManager
-// calls it with the version the slot was written with.
+// furthest_level, entry_level, best_time_frames, no_death_clears and their
+// mirror twins). Bump SAVE_VERSION and add an insert_level() line to upgrade()
+// below; DataManager calls it with the version the slot was written with.
 //
 // Saves older than MIN_VERSION (schema 1-4) have layouts that are not a prefix
 // of the current one (fields were inserted in the middle back then); they stay
@@ -65,6 +65,9 @@ inline auto valid_bytes(uint16_t version) -> int {
     if (version < 12) {
         return static_cast<int>(offsetof(GameState, play_frames));
     }
+    if (version < 13) {
+        return static_cast<int>(offsetof(GameState, best_time_frames_mirror));
+    }
     // Add "if (version < N) return offsetof(GameState, field);" lines here,
     // newest first, when a field is appended (see the procedure above).
     return static_cast<int>(sizeof(GameState));
@@ -83,9 +86,18 @@ inline void insert_level(GameState& state, int index) {
     }
     state.level_deaths[index] = 0;
 
+    for (int i = GameState::MAX_LEVELS - 1; i > index; --i) {
+        state.best_time_frames_mirror[i] = state.best_time_frames_mirror[i - 1];
+    }
+    state.best_time_frames_mirror[index] = 0;
+
     const uint32_t below = (uint32_t(1) << index) - 1;
     state.no_death_clears = (state.no_death_clears & below) |
                             ((state.no_death_clears & ~below) << 1);
+
+    state.no_death_clears_mirror =
+        (state.no_death_clears_mirror & below) |
+        ((state.no_death_clears_mirror & ~below) << 1);
 
     if (state.level >= index) {
         ++state.level;

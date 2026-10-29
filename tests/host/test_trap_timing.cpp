@@ -220,6 +220,22 @@ TEST_CASE(chase_target_stops_at_its_limit) {
     CHECK_EQ(trap_timing::chase_target(100, 28, -400, 600), 72);
 }
 
+TEST_CASE(chase_target_mirrored_trails_right_of_the_duck) {
+    // A negative follow distance is the mirrored chaser.
+    CHECK_EQ(trap_timing::chase_target(-100, -28, 400, 0), -72);
+    CHECK_EQ(trap_timing::chase_target(-300, -28, 400, 800), -272);
+    CHECK_EQ(trap_timing::chase_target(-1000, -28, 400, 800), -400);
+}
+
+TEST_CASE(chase_step_flies_away_from_where_it_trails) {
+    CHECK_EQ(trap_timing::chase_step(0, 10, 28, 3), 3);
+    CHECK_EQ(trap_timing::chase_step(0, 2, 28, 3), 2);
+    CHECK_EQ(trap_timing::chase_step(0, -10, 28, 3), 0);  // never retreats
+    CHECK_EQ(trap_timing::chase_step(0, -10, -28, 3), -3);
+    CHECK_EQ(trap_timing::chase_step(0, -2, -28, 3), -2);
+    CHECK_EQ(trap_timing::chase_step(0, 10, -28, 3), 0);
+}
+
 // --- What the factory builds from the level data ----------------------------
 
 #include "bn_fixed.h"

@@ -8,6 +8,7 @@
 
 #include "cfg.h"
 #include "data_manager.h"
+#include "game_modes.h"
 #include "level_manager.h"
 #include "level_scene.h"
 #include "menu_nav.h"
@@ -55,6 +56,16 @@ void LevelSelectScene::_rebuild_menu() {
 
     const WorldEntry& world = WorldIndex::WORLDS[_world_index];
     const GameState& game_state = _data_manager.state();
+    const bool mirror = modes::mirror_active(game_state);
+
+    // Mirror Mode (once the game has been finished): the levels flipped
+    // left-right, with their own times. SELECT switches it.
+    if (game_state.hard_mode_unlocked) {
+        _text_gen->generate(
+            Cfg::StartScreen::X, Cfg::LevelSelect::MIRROR_Y,
+            mirror ? "Mirror ON  (Select)" : "Mirror off (Select)",
+            _menu_sprites);
+    }
 
     const int first_y = menu_nav::first_row_y(
         world.level_count, Cfg::StartScreen::Y, Cfg::LevelSelect::ROW_SPACING,
@@ -70,13 +81,12 @@ void LevelSelectScene::_rebuild_menu() {
         if (!_is_unlocked(absolute_index)) {
             line.append(" (Locked)");
         } else if (
-            absolute_index < GameState::MAX_LEVELS &&
-            game_state.best_time_frames[absolute_index] > 0) {
+            best_time(game_state, unsigned(absolute_index), mirror) > 0) {
             // The personal-best clear time, e.g. " 01:23.45", plus a "*"
             // if that level has ever been cleared without dying.
-            line.append(' ').append_time(
-                frames_to_time(game_state.best_time_frames[absolute_index]));
-            if (has_no_death_clear(game_state, absolute_index)) {
+            line.append(' ').append_time(frames_to_time(
+                best_time(game_state, unsigned(absolute_index), mirror)));
+            if (has_no_death_clear(game_state, absolute_index, mirror)) {
                 line.append('*');
             }
         }
@@ -103,6 +113,14 @@ void LevelSelectScene::update() {
         } else if (bn::keypad::up_pressed()) {
             _selected_index =
                 (_selected_index + world.level_count - 1) % world.level_count;
+            changed = true;
+            AudioSettings::instance().play_sfx(bn::sound_items::select);
+        }
+
+        if (bn::keypad::select_pressed() &&
+            _data_manager.state().hard_mode_unlocked) {
+            modes::toggle_mirror_mode(_data_manager.state());
+            _data_manager.save();
             changed = true;
             AudioSettings::instance().play_sfx(bn::sound_items::select);
         }

@@ -15,8 +15,21 @@ namespace {
 
 replay::Player* playing = nullptr;
 
+// `make replay-mirror`: the same recordings on the mirrored levels, LEFT and
+// RIGHT swapped (Mirror Mode).
+#if defined(PLATFORMER_REPLAY_MIRROR)
+constexpr bool MIRROR = true;
+#else
+constexpr bool MIRROR = false;
+#endif
+
 void play(InputState& input) {
     input = playing->next();
+    if (MIRROR) {
+        const bool left = input.left_held;
+        input.left_held = input.right_held;
+        input.right_held = left;
+    }
 }
 
 // Frames a level may run past the end of its recording before it counts as
@@ -44,14 +57,15 @@ auto play_entry(
     replay::Player buttons(entry.runs, entry.run_count);
     playing = &buttons;
     player.set_input_hook(play);
-    level_manager.load(levels[index]);
+    level_manager.load(MIRROR ? *levels[index].mirror : levels[index]);
     // The layout the recording began with (death windows, a door that
     // moves): as after that many deaths in the level.
     if (entry.deaths > 0) {
         level_manager.set_deaths_in_level(entry.deaths);
     }
     if (entry.has_start) {
-        player.teleport_to(entry.start_x, entry.start_y);
+        player.teleport_to(
+            MIRROR ? -entry.start_x : entry.start_x, entry.start_y);
     }
 
     bool door = false;

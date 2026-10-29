@@ -49,6 +49,8 @@ Usage (from the repository root):
     python3 tools/Check_level_reachability.py --all
         Every level of main.cpp's levels[] in play order; the dash and wall
         jumps count only from their Cfg::...::UNLOCK_WORLD on, as in the game.
+    python3 tools/Check_level_reachability.py --all --mirror
+        The same for the mirrored levels of Mirror Mode (mirror_world*.h).
     python3 tools/Check_level_reachability.py FILE LEVEL...
         Detailed report (with and without dash, both start assumptions) for
         the named levels of one file, for every spot of their door.
@@ -1065,10 +1067,11 @@ def dash_allowed(level_index, worlds, unlock_world):
 CampaignLevel = namedtuple("CampaignLevel", "index name path dash wall pogo")
 
 
-def campaign(root):
+def campaign(root, mirror=False):
     """Every level of the game in play order (main.cpp's levels[]), with the
     file that defines it and whether the dash, wall jumps and the pogo are
-    available there (the pogo also in every level with a boss)."""
+    available there (the pogo also in every level with a boss). With `mirror`
+    the mirrored levels (Mirror Mode, mirror_world*.h, NAME_MIRROR) instead."""
     root = Path(root)
     order = _cwi.parse_levels((root / "game/src/main.cpp").read_text())
     worlds = _cwi.parse_worlds((root / "game/include/world_index.h").read_text())
@@ -1077,7 +1080,8 @@ def campaign(root):
             r"UNLOCK_WORLD\s*=\s*(\d+)", (root / "game/include" / header).read_text()
         ).group(1))
     defined = {}
-    for path in sorted((root / "game/include/level").glob("levels_world*.h")):
+    pattern = "mirror_world*.h" if mirror else "levels_world*.h"
+    for path in sorted((root / "game/include/level").glob(pattern)):
         for name in re.findall(r"(?:const|constexpr) LevelData (\w+)", path.read_text()):
             defined[name] = path
     bosses = set()
@@ -1085,8 +1089,9 @@ def campaign(root):
         for lv in json.loads(path.read_text())["levels"]:
             if any(t.get("type") == "BOSS" for t in (lv.get("traps") or {}).get("items", [])):
                 bosses.add(lv["name"])
+    suffix = "_MIRROR" if mirror else ""
     return [
-        CampaignLevel(i, name, defined[name],
+        CampaignLevel(i, name + suffix, defined[name + suffix],
                       dash_allowed(i, worlds, unlock("cfg_dash.h")),
                       dash_allowed(i, worlds, unlock("cfg_wall_jump.h")),
                       dash_allowed(i, worlds, unlock("cfg_pogo.h")) or name in bosses)
@@ -1111,7 +1116,8 @@ def load_world_widths(path):
         if content[m.end()] != "{":
             continue
         f = _ctr.top_level_fields(content[m.end() + 1 : _ctr.find_balanced_block(content, m.end())])
-        widths[m.group(1)] = _num(f[10]) if len(f) > 10 else 240
+        # Not written (or spelled Cfg::Screen::WIDTH): the screen width.
+        widths[m.group(1)] = _num(f[10]) if len(f) > 10 and f[10].strip()[0].isdigit() else 240
     return widths
 
 
@@ -1188,8 +1194,8 @@ def unreachable_doors(levels):
     return bad
 
 
-def main_all(root="."):
-    levels = campaign(root)
+def main_all(root=".", mirror=False):
+    levels = campaign(root, mirror)
     bad = unreachable_doors(levels)
     for level in levels:
         mine = [b for b in bad if b == level.name or b.startswith(level.name + " (")]
@@ -1210,6 +1216,8 @@ def main(argv):
     args = argv[:]
     if args == ["--all"]:
         return main_all()
+    if args == ["--all", "--mirror"]:
+        return main_all(mirror=True)
     if len(args) < 2:
         print(__doc__)
         return 2

@@ -259,6 +259,28 @@ levels without a high skill bar:
 - **When it applies.** Trap speeds are applied when a level loads, so a change
   takes effect from the next level load.
 
+### Mirror Mode
+
+A post-game mode: every level flipped left-right.
+
+- **Availability.** From the moment Hard Mode unlocks (the finale's reunion,
+  `GameState::hard_mode_unlocked`). **SELECT** in the level select switches it;
+  the first line there says `Mirror ON` / `Mirror off`.
+- **What is mirrored.** Platforms, traps (paths, speeds, lunges, chasers that
+  now trail on the right), triggers, checkpoints, the door and the spawn, the
+  pictures flipped. Backgrounds stay as they are. The physics is left-right
+  symmetric, so every recording of `game/replays/` finishes its mirrored level
+  with LEFT and RIGHT swapped (`make replay-mirror`).
+- **Own records.** The mirrored levels have their own best times and no-death
+  badges (`best_time_frames_mirror`, `no_death_clears_mirror`, save schema 13);
+  statistics (deaths, play time) are shared. Records follow the same rules as
+  everywhere (none in Assist Mode).
+- **How.** `tools/Generate_levels.py` writes every level mirrored into
+  `game/include/level/mirror_world*.h` (`<NAME>_MIRROR`, linked by
+  `LevelData::mirror`): about 67 KB of ROM, no RAM, no code in the level
+  loader. `LevelScene` picks the mirrored level; `make checks` runs the
+  reachability check on them too.
+
 ## Trap types & behaviors
 
 From a player's perspective, traps come in a few recognizable kinds:

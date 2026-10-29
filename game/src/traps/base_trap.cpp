@@ -20,6 +20,7 @@ BaseTrap::BaseTrap(
           max_vel),
       _trap_sprite(data.sprite.create_sprite(x, y), x, y) {
     sprite = &_trap_sprite;
+    _trap_sprite.sprite().set_horizontal_flip(data.flip_horizontal);
     if (data.sprite_scale != 1) {
         _trap_sprite.sprite().set_scale(data.sprite_scale);
     }

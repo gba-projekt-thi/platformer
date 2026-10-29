@@ -8,6 +8,7 @@
 #include "audio_settings.h"
 #include "cfg.h"
 #include "data_manager.h"
+#include "game_modes.h"
 #include "game_session.h"
 #include "level_manager.h"
 #include "level_records.h"
@@ -32,7 +33,13 @@ LevelScene::LevelScene(
       _level_index(data_manager.state().level),
       _level_manager(level_manager),
       _data_manager(data_manager),
+      _mirror(modes::mirror_active(data_manager.state())),
       _transition_requested(false) {}
+
+const LevelData& LevelScene::_level() const {
+    const LevelData& level = _levels[_level_index];
+    return _mirror && level.mirror != nullptr ? *level.mirror : level;
+}
 
 LevelScene::~LevelScene() {
     // Ensure all level-specific resources are released when the scene ends.
@@ -43,8 +50,8 @@ LevelScene::~LevelScene() {
 
 void LevelScene::init() {
     replay_capture::level_started(_player, _level_index);
-    _level_manager.load(_levels[_level_index]);
-    tour::level_started(_player, _level_index);
+    _level_manager.load(_level());
+    tour::level_started(_player, _level_index, _mirror);
     _player.set_visible(true);
     _player.set_hud_visible(true);
     _show_hint_if_needed();
@@ -53,9 +60,7 @@ void LevelScene::init() {
 void LevelScene::_show_hint_if_needed() {
     const char* text = _levels[_level_index].intro_hint;
     const uint32_t best =
-        _level_index < unsigned(GameState::MAX_LEVELS)
-            ? _data_manager.state().best_time_frames[_level_index]
-            : 0;
+        best_time(_data_manager.state(), _level_index, _mirror);
     _hint_text = hint::text_to_show(
         text, best, _data_manager.state().furthest_level, _level_index);
     if (_hint_text == nullptr) {
@@ -174,7 +179,7 @@ void LevelScene::update() {
     const bool new_best = record_clear(
         _data_manager.state(), _level_index, _level_manager.level_frame_count(),
         _level_manager.no_deaths_this_attempt(),
-        _level_manager.records_allowed());
+        _level_manager.records_allowed(), _mirror);
 
     const unsigned int next_level_index = _level_index + 1u;
     const bool completes_game =
@@ -294,7 +299,7 @@ void LevelScene::_show_new_best_banner() {
     if (_level_index < unsigned(GameState::MAX_LEVELS)) {
         TextBuffer<9> time;
         time.append_time(frames_to_time(
-            _data_manager.state().best_time_frames[_level_index]));
+            best_time(_data_manager.state(), _level_index, _mirror)));
         _banner_text_gen->generate(
             Cfg::NewBestBanner::X, Cfg::NewBestBanner::Y + 16, time.c_str(),
             _banner_sprites);
