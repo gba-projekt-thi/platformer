@@ -41,6 +41,14 @@ inline auto action_for(Option option) -> Action {
     }
 }
 
+// The fade alpha to show while paused. The scene manager sets its own fade
+// alpha every frame of a fade-in, so the dimming is applied again each paused
+// frame; it never gets lighter than the fade running at that moment.
+template <typename Alpha>
+auto dimmed_alpha(Alpha current, Alpha dim) -> Alpha {
+    return current > dim ? current : dim;
+}
+
 // Frees the title and the menu rows (any container with clear()).
 template <typename Title, typename Rows>
 void release(Title& title, Rows& rows) {

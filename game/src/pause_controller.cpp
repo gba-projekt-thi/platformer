@@ -35,7 +35,8 @@ struct PauseController::FlowOps {
     void rebuild_menu() { p._rebuild_menu(); }
     void show_title() { p._show_title(); }
     static void dim_level() {
-        bn::blending::set_fade_alpha(Cfg::PauseMenu::DIM_ALPHA);
+        bn::blending::set_fade_alpha(pause_flow::dimmed_alpha<bn::fixed>(
+            bn::blending::fade_alpha(), Cfg::PauseMenu::DIM_ALPHA));
     }
     static void undim_level() { bn::blending::set_fade_alpha(0); }
     static void pause_music() { bn::music::pause(); }
@@ -219,9 +220,9 @@ void PauseController::_change_option_level(int delta) {
         audio.set_music_level(uint8_t(level));
         state.music_volume = audio.music_level();
 
-        // Apply immediately so the player hears the change live. Safe to
-        // call directly here since the scene manager sits idle while
-        // paused (no fade in progress to fight with).
+        // Apply immediately so the player hears the change live. During a
+        // fade-in the scene manager sets the volume again every frame, from
+        // music_scale(), which already holds the new level.
         bn::music::set_volume(audio.music_scale());
     } else if (_option_row == 1) {
         int level = int(audio.sfx_level()) + delta;
@@ -279,6 +280,9 @@ PauseController::Action PauseController::update() {
     }
 
     if (_paused) {
+        // A fade-in of the scene manager overwrites the dimming every frame.
+        FlowOps::dim_level();
+
         if (_showing_controls) {
             if (bn::keypad::a_pressed() || bn::keypad::b_pressed()) {
                 _showing_controls = false;
