@@ -398,10 +398,14 @@ class RealLevelTests(unittest.TestCase):
             errors, _ = cc.check_level(lv, reach=False)
             self.assertEqual(errors, [], name)
 
-    def test_dash_level_checkpoint_is_reachable_and_flagged_as_dash_only(self):
-        errors, warnings = cc.check_level(self.levels["LEVEL_WORLD5_DASH"])
+    def test_dash_level_checkpoint_needs_the_dash_which_the_level_grants(self):
+        level = self.levels["LEVEL_WORLD5_DASH"]
+        errors, warnings = cc.check_level(level)
         self.assertEqual(errors, [])
         self.assertTrue(any("only reachable with the dash" in w for w in warnings))
+        dash_levels = {lv.name for lv in cc.sim.campaign(Path(__file__).resolve().parent.parent) if lv.dash}
+        self.assertIn(level.name, dash_levels)
+        self.assertEqual(cc.check_level(level, dash_granted=True), ([], []))
 
     def test_a_boss_checkpoint_is_reachable(self):
         self.assertEqual(len(self.levels["LEVEL_WORLD3_BOSS"].checkpoints), 1)

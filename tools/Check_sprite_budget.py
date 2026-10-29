@@ -7,7 +7,9 @@ game/include/level/levels_world*.h - the numbers a level has to stay inside
 long before anybody runs the ROM:
 
   * entity limits (Cfg::Level::Limits, read from cfg.h): platforms, triggers
-    and traps per level. LevelManager::_validate_level() asserts the same at
+    and traps per level, and ENTITY_SPRITES, the cap on the sprites of all of
+    them together (the per-kind limits alone allow more sprites than the
+    registry and the OAM hold). LevelManager::_validate_level() asserts the same at
     load time; this reports it at commit/CI time instead.
   * SpriteRegistry capacity (MAX_SPRITES, read from sprite_registry.h): every
     object that scrolls with the camera is a `Sprite` registered there - the
@@ -99,6 +101,7 @@ DEFAULTS = {
     "TRIGGERS": 16,
     "TOTAL_TRAPS": 32,
     "CHECKPOINTS": 1,
+    "ENTITY_SPRITES": 39,
     "MAX_STATIC_BODIES": 96,
     "MAX_PHYSICS_BODIES": 64,
     "MAX_COLLISION_SHAPES": 64,
@@ -228,7 +231,7 @@ def load_budget(root="."):
             root, "collision_registry.h", "MAX_COLLISION_SHAPES", DEFAULTS["MAX_COLLISION_SHAPES"], missing
         ),
     }
-    for key in ("PLATFORMS", "PLATFORM_BODIES", "TRIGGERS", "TOTAL_TRAPS", "CHECKPOINTS"):
+    for key in ("PLATFORMS", "PLATFORM_BODIES", "TRIGGERS", "TOTAL_TRAPS", "CHECKPOINTS", "ENTITY_SPRITES"):
         values[key] = read_int(root, "cfg.h", key, DEFAULTS[key], missing)
     budget = Budget(**values)
     budget.controls_lines = read_controls_lines(root)
@@ -318,6 +321,12 @@ def check_level(level, budget, dash=True, pogo=True):
         ("traps", len(level.traps), budget.TOTAL_TRAPS),
         ("triggers", len(level.triggers), budget.TRIGGERS),
         ("checkpoints", len(level.checkpoints), budget.CHECKPOINTS),
+        (
+            "platform, trap, checkpoint and switch sprites together",
+            len(level.platforms) + len(level.traps) + len(level.checkpoints)
+            + sum(1 for t in level.triggers if t.get("has_sprite")),
+            budget.ENTITY_SPRITES,
+        ),
     ):
         if count > limit:
             err(f"{count} {label}, Cfg::Level::Limits allows {limit}")
@@ -345,9 +354,9 @@ def check_configuration(budget):
     Returns (errors, warnings)."""
     errors, warnings = [], []
     b = budget
-    registry_worst = (
-        PLAYER_AND_DOOR + b.PLATFORMS + b.TOTAL_TRAPS + b.TRIGGERS + b.CHECKPOINTS + b.SLOTS
-    )
+    # the per-kind limits plus the combined cap (Limits::ENTITY_SPRITES) every level is held to
+    entities = min(b.PLATFORMS + b.TOTAL_TRAPS + b.TRIGGERS + b.CHECKPOINTS, b.ENTITY_SPRITES)
+    registry_worst = PLAYER_AND_DOOR + entities + b.SLOTS
     if registry_worst > b.MAX_SPRITES:
         warnings.append(
             f"Cfg::Level::Limits together allow {registry_worst} registered sprites "

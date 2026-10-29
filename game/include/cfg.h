@@ -146,6 +146,13 @@ inline constexpr unsigned int PLATFORM_BODIES = 32;
 inline constexpr unsigned int TRIGGERS = 16;
 inline constexpr unsigned int TOTAL_TRAPS = 32;
 inline constexpr unsigned int CHECKPOINTS = 1;
+// Cap on the sprites of one level's platforms, traps, checkpoints and
+// triggers with a switch sprite, together: the per-kind limits above alone
+// allow more than the 72 SpriteRegistry slots and the 128 hardware sprites
+// hold (2 duck/door + this + 4 dash trail + 20 HUD + 60 hint and banner, or
+// the 63 of the pause overlay, = 128). Checked in
+// LevelManager::_validate_level() and by tools/Check_sprite_budget.py.
+inline constexpr unsigned int ENTITY_SPRITES = 39;
 }  // namespace Limits
 }  // namespace Level
 
