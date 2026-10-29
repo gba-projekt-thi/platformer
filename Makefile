@@ -118,7 +118,6 @@ checks: duck-sim
 	python3 tools/Make_boss_music.py --check
 	python3 tools/Check_trigger_references.py
 	python3 tools/Check_level_hints.py
-	python3 tools/Check_world_index.py
 	python3 tools/Target_times.py --check
 	python3 tools/Check_checkpoints.py
 	python3 tools/Check_sprite_budget.py

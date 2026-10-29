@@ -75,10 +75,10 @@ def keypad_commands(frames):
 def _levels():
     sys.path.insert(0, str(ROOT / "tools"))
     import importlib.util
-    spec = importlib.util.spec_from_file_location("cwi", ROOT / "tools/Check_world_index.py")
-    cwi = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(cwi)
-    return cwi.parse_levels((ROOT / "game/src/main.cpp").read_text())
+    spec = importlib.util.spec_from_file_location("gl", ROOT / "tools/Generate_levels.py")
+    gl = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gl)
+    return [name for world in gl.roster() for name in world]
 
 
 def story_page_counts():

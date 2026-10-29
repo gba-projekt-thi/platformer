@@ -76,11 +76,6 @@ _spec = importlib.util.spec_from_file_location(
 _ctr = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_ctr)
 _spec = importlib.util.spec_from_file_location(
-    "check_world_index", _here / "Check_world_index.py"
-)
-_cwi = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(_cwi)
-_spec = importlib.util.spec_from_file_location(
     "generate_levels", _here / "Generate_levels.py"
 )
 _gen = importlib.util.module_from_spec(_spec)
@@ -783,13 +778,16 @@ CampaignLevel = namedtuple("CampaignLevel", "index name path dash wall pogo")
 
 
 def campaign(root, mirror=False):
-    """Every level of the game in play order (main.cpp's levels[]), with the
+    """Every level of the game in play order (the level JSON order), with the
     file that defines it and whether the dash, wall jumps and the pogo are
     available there (the pogo also in every level with a boss). With `mirror`
     the mirrored levels (Mirror Mode, mirror_world*.h, NAME_MIRROR) instead."""
     root = Path(root)
-    order = _cwi.parse_levels((root / "game/src/main.cpp").read_text())
-    worlds = _cwi.parse_worlds((root / "game/include/world_index.h").read_text())
+    roster = _gen.roster(root / "game/levels")
+    order = [name for world in roster for name in world]
+    # (name, first level index, level count), like WorldIndex::WORLDS
+    worlds = [(f"World {i + 1}", sum(len(w) for w in roster[:i]), len(world))
+              for i, world in enumerate(roster)]
     def unlock(header):
         return int(re.search(
             r"UNLOCK_WORLD\s*=\s*(\d+)", (root / "game/include" / header).read_text()

@@ -49,8 +49,10 @@ plus an include in `levels.h`.
 5. **Set spawn, door, and world size.** The spawn is where the duck begins and
    respawns; the door is the exit; the world size determines whether the stage
    scrolls and sets the duck's horizontal bounce boundary.
-6. **Register the stage** in `levels[]` (`main.cpp`) and `WorldIndex::WORLDS`;
-   the list drives the progression and the final-stage → kiss-scene transition.
+6. **Register the stage** by its place in the world's JSON: `levels[]`
+   (`main.cpp`) and `WorldIndex::WORLDS` are generated from the JSON order
+   (`Generate_levels.py` writes `level_roster.h`); the list drives the
+   progression and the final-stage → kiss-scene transition.
 7. **Build and test.** Verify the stage loads, every required jump is
    achievable, and hazards activate at the intended moments.
 
@@ -62,8 +64,7 @@ plus an include in `levels.h`.
 - Per-level save data (best times, no-death clears, `level`, `furthest_level`)
   is indexed by position in the level list, so a level inserted in the middle
   shifts the records of every level after it. Prefer inserting late (before a
-  world's boss, say) and run `tools/Check_world_index.py` after editing the
-  list and the world table.
+  world's boss, say).
 - Keep the stage readable: the player should see hazards and landings from the
   takeoff point.
 - Match the theme of the surrounding worlds (or introduce a new theme

@@ -69,10 +69,10 @@ FLAG_TRUNCATED = 0x01
 
 def _campaign_levels():
     spec = importlib.util.spec_from_file_location(
-        "check_world_index", ROOT / "tools/Check_world_index.py")
-    cwi = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(cwi)
-    return cwi.parse_levels((ROOT / "game/src/main.cpp").read_text())
+        "generate_levels", ROOT / "tools/Generate_levels.py")
+    gl = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gl)
+    return [name for world in gl.roster() for name in world]
 
 
 # ---- import -----------------------------------------------------------------

@@ -12,6 +12,7 @@
 #include "data_manager.h"
 #include "game_session.h"
 #include "level_manager.h"
+#include "level_roster.h"
 #include "levels.h"
 #include "player.h"
 #include "replay_runner.h"
@@ -50,36 +51,9 @@ int main() {
     // static: the list is shared by every scene for the whole program, so it
     // lives in static storage instead of copying all LevelData structs onto
     // main()'s stack (IWRAM, shared with every call below).
-    static const LevelData levels[] = {
-        LEVEL_0,
-        LEVEL_1,
-        LEVEL_WORLD1_SCROLL,
-        LEVEL_WORLD1_TRICK,
-        LEVEL_WORLD1_BOSS,
-        LEVEL_2,
-        LEVEL_WORLD2_SCROLL,
-        LEVEL_WORLD2_TRICK,
-        LEVEL_WORLD2_BOSS,
-        LEVEL_3,
-        LEVEL_WORLD3_SCROLL,
-        LEVEL_WORLD3_TRICK,
-        LEVEL_WORLD3_BOSS,
-        LEVEL_WORLD4_POGO,
-        LEVEL_WORLD4_SCROLL,
-        LEVEL_WORLD4_SCROLL_2,
-        LEVEL_WORLD4_TRICK,
-        LEVEL_WORLD4_BOSS,
-        LEVEL_WORLD5_SCROLL,
-        LEVEL_WORLD5_SCROLL_2,
-        LEVEL_WORLD5_DASH,
-        LEVEL_WORLD5_LEVERS,
-        LEVEL_WORLD5_CLIMB,
-        LEVEL_WORLD5_TRICK,
-        LEVEL_WORLD5_BOSS,
-        LEVEL_WORLD5_FINALE};
-    static_assert(
-        sizeof(levels) / sizeof(levels[0]) == WorldIndex::LEVEL_COUNT,
-        "levels[] and WorldIndex::WORLDS must list the same number of levels");
+    // The list (and the grouping into worlds) comes from
+    // game/levels/world*.json via level_roster.h, see WorldIndex.
+    static const LevelData levels[] = {LEVEL_ROSTER};
 
     // -------------------------------------------------------------------------
     // Create the player entity and apply an offset for the sprite anchor point.
