@@ -21,12 +21,12 @@ class LevelManager;
 // StoryScene
 //
 // A chapter of Hildegard's story (story.h): its pages one after the other,
-// centered in a panel on the chapter's picture, with a prompt. A or Start
-// turns to the next page; after the last one it goes on to the level
-// (GameState::level) in a LevelScene, or to the reunion (KissingScene) after
-// the ending. Shown by
-// StartScene before a new game, by LevelScene when the door leads into a
-// world for the first time, and by main() when the game is finished.
+// centered over the chapter's picture (a world background, dimmed), with a
+// prompt. A or Start turns to the next page; after the last one it goes on to
+// the level (GameState::level) in a LevelScene, or to the reunion
+// (KissingScene) after the ending. Shown by StartScene before a new game, by
+// LevelScene when the door leads into a world for the first time, and by main()
+// when the game is finished.
 // -----------------------------------------------------------------------------
 class StoryScene : public core::Scene {
    public:
@@ -39,6 +39,8 @@ class StoryScene : public core::Scene {
         DataManager& data_manager,
         LevelManager& level_manager,
         Then then = Then::Level);
+
+    ~StoryScene() override;
 
     void init() override;
     void update() override;
@@ -57,6 +59,8 @@ class StoryScene : public core::Scene {
     bool _transition_requested = false;
 
     bn::optional<bn::regular_bg_ptr> _bg;
+    // Hildegard, and Susanne in the ending: the real in-game sprites.
+    bn::vector<bn::sprite_ptr, 2> _ducks;
     bn::optional<bn::sprite_text_generator> _text_gen;
     // story::MAX_GLYPHS plus the prompt ("Press A (1/3)", 11 glyphs).
     bn::vector<bn::sprite_ptr, story::MAX_GLYPHS + 12> _sprites;

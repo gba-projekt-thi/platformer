@@ -2,15 +2,18 @@
 
 #include "audio_settings.h"
 #include "background.h"
+#include "bn_bg_palette_ptr.h"
+#include "bn_colors.h"
 #include "bn_core.h"
 #include "bn_keypad.h"
-#include "bn_regular_bg_items_story_castle.h"
-#include "bn_regular_bg_items_story_ending.h"
-#include "bn_regular_bg_items_story_forest.h"
-#include "bn_regular_bg_items_story_intro.h"
-#include "bn_regular_bg_items_story_sewer.h"
-#include "bn_regular_bg_items_story_village.h"
+#include "bn_regular_bg_items_world1.h"
+#include "bn_regular_bg_items_world2.h"
+#include "bn_regular_bg_items_world3.h"
+#include "bn_regular_bg_items_world4.h"
+#include "bn_regular_bg_items_world5.h"
 #include "bn_sound_items.h"
+#include "bn_sprite_items_ente.h"
+#include "bn_sprite_items_susanne16x16.h"
 #include "bn_unique_ptr.h"
 
 #include "cfg.h"
@@ -24,23 +27,23 @@
 
 namespace {
 
+// The pictures are the world backgrounds; the ending is staged in the castle.
 auto picture_item(story::Picture picture) -> const bn::regular_bg_item& {
     switch (picture) {
         case story::Picture::Sewer:
-            return bn::regular_bg_items::story_sewer;
+            return bn::regular_bg_items::world2;
         case story::Picture::Forest:
-            return bn::regular_bg_items::story_forest;
+            return bn::regular_bg_items::world3;
         case story::Picture::Village:
-            return bn::regular_bg_items::story_village;
+            return bn::regular_bg_items::world4;
         case story::Picture::Castle:
-            return bn::regular_bg_items::story_castle;
         case story::Picture::Ending:
-            return bn::regular_bg_items::story_ending;
+            return bn::regular_bg_items::world5;
         case story::Picture::Intro:
         default:
             break;
     }
-    return bn::regular_bg_items::story_intro;
+    return bn::regular_bg_items::world1;
 }
 
 }  // namespace
@@ -63,15 +66,36 @@ void StoryScene::init() {
     _player.set_visible(false);
     _player.set_hud_visible(false);
     _bg.emplace(create_background(picture_item(_chapter.picture)));
-    // The 256 x 256 map is centered on the screen: move the picture (its
-    // top-left 240 x 160 px) onto it.
-    _bg->set_position(Cfg::Story::BG_X, Cfg::Story::BG_Y);
+    // Dim the picture with a black fade of its own palette so the text stays
+    // readable (SceneManager owns the global fade for its transitions); the
+    // sprites (text, ducks) are not dimmed.
+    bn::bg_palette_ptr palette = _bg->palette();
+    palette.set_fade(bn::colors::black, Cfg::Story::DIM_ALPHA);
+
+    // Hildegard (with her top hat) at the bottom; Susanne joins her at the end.
+    const bool ending = _chapter.picture == story::Picture::Ending;
+    _ducks.push_back(bn::sprite_items::ente.create_sprite(
+        ending ? -64 : Cfg::Story::DUCK_X, Cfg::Story::DUCK_Y));
+    if (ending) {
+        _ducks.push_back(bn::sprite_items::susanne16x16.create_sprite(
+            64, Cfg::Story::DUCK_Y));
+    }
+    for (bn::sprite_ptr& duck : _ducks) {
+        duck.set_scale(2);
+    }
 
     _text_gen.emplace(common::variable_8x16_sprite_font);
     _text_gen->set_center_alignment();
     _text_gen->set_z_order(Cfg::ZOrder::PAUSE_MENU);
 
     _show_page();
+}
+
+StoryScene::~StoryScene() {
+    if (_bg) {
+        bn::bg_palette_ptr palette = _bg->palette();
+        palette.set_fade_intensity(0);
+    }
 }
 
 void StoryScene::_show_page() {
