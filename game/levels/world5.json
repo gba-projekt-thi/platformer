@@ -104,18 +104,18 @@
     },
     {
       "name": "LEVEL_WORLD5_DASH",
-      "note": "=============================================================================\nWORLD 5 DASH - \"Cloak Corridor\" (world_width=700)\nThe first level that REQUIRES the dash (enabled from World 3 onward, see\nCfg::Dash::UNLOCK_WORLD). Physics, measured with tools/\nCheck_level_reachability.py (same movement model as PlayerLocomotion):\n  - same-height edge-to-edge gaps up to ~61px (72px with a run-up and\n    coyote time) are reachable with a plain jump;\n  - with a jump + air dash up to ~103px, and the dash may start anywhere in\n    a ~12-18 frame window after takeoff.\nThe two dash gaps below are 84px and 92px wide: unreachable without the\ndash even under the most generous assumptions, comfortably inside the dash\nenvelope with a wide timing window. Every other gap is a plain jump (<=40px).\nThe axe chases from behind (it only punishes standing still), and an\nambush mimic sits in the gap before the last dash.\n=============================================================================",
+      "note": "=============================================================================\nWORLD 5 DASH - \"Cloak Corridor\" (world_width=700)\nThe first level that REQUIRES the dash (enabled from World 3 onward, see\nCfg::Dash::UNLOCK_WORLD). Physics, measured with tools/\nCheck_level_reachability.py (same movement model as PlayerLocomotion):\n  - same-height edge-to-edge gaps up to ~61px (72px with a run-up and\n    coyote time) are reachable with a plain jump;\n  - with a jump + air dash up to ~103px, and the dash may start anywhere in\n    a ~12-18 frame window after takeoff.\nThe three dash gaps below are 85px to 90px wide: unreachable without the\ndash even under the most generous assumptions, comfortably inside the dash\nenvelope with a wide timing window. Every other gap is a plain jump (<=40px).\nThe axe chases from behind (it only punishes standing still), and an\nambush mimic sits in the gap before the last dash.\n=============================================================================",
       "platforms": {
         "name": "world5_dash_platforms",
         "items": [
-          {"blank_before": true, "note": "Spawn platform; first dash gap (84px) follows.", "x": -296, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"blank_before": true, "note": "Spawn platform; first dash gap (90px) follows.", "x": -296, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
           {"x": -180, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
           {"note": "Ordinary hops: 32px and 40px gaps.", "x": -124, "y": 60, "width": 26, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0},
           {"x": -68, "y": 71, "width": 28, "height": 10, "offset_x": 0, "offset_y": -11, "sprite": "bars32x32", "sprite_index": 0},
-          {"note": "Second dash gap (88px), then a landing barrel.", "x": 44, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"note": "Second dash gap (85px), then a landing barrel.", "x": 44, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
           {"note": "Short hops across the mimic's gap (32px / 30px).", "x": 100, "y": 60, "width": 26, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0},
           {"x": 146, "y": 71, "width": 28, "height": 10, "offset_x": 0, "offset_y": -11, "sprite": "bars32x32", "sprite_index": 0},
-          {"note": "Last dash gap (92px), then the exit stretch.", "x": 262, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
+          {"note": "Last dash gap (89px), then the exit stretch.", "x": 262, "y": 68, "width": 26, "height": 16, "offset_x": 0, "offset_y": -8, "sprite": "barrel32x32", "sprite_index": 0},
           {"x": 314, "y": 60, "width": 26, "height": 10, "offset_x": 0, "offset_y": 0, "sprite": "chest32x32", "sprite_index": 0}
         ]
       },
@@ -130,7 +130,7 @@
       },
       "checkpoints": {
         "name": "world5_dash_checkpoints",
-        "note": "Checkpoint after the second 88px dash gap, so the third gap is retried\nwithout redoing the first two.",
+        "note": "Checkpoint after the second 85px dash gap, so the third gap is retried\nwithout redoing the first two.",
         "items": [
           {"x": 44, "y": 44}
         ]

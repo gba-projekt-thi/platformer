@@ -295,7 +295,7 @@ const LevelData LEVEL_WORLD1_TRICK = {
     "The tub forgives. Mostly."};
 
 // =============================================================================
-// WORLD 1 BOSS - "The Kugelfisch King" (world_width=480)
+// WORLD 1 BOSS - "The Kugelfisch King" (world_width=698)
 // A Hollow-Knight-style dodge gauntlet: a patrolling bubble sweep overlays
 // the whole arena, four trigger-gated "attacks" fire in sequence as the
 // duck advances, and a disguised pufferfish punishes lingering too long

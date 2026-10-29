@@ -35,7 +35,7 @@ advancing sprite frames based on movement state and facing. See
 (frames from level load to door reached, not reset on death within an
 attempt), shown in the level-select screen and persisted per save slot
 across game completions. Beating it triggers the
-[New Best banner](#new-best-banner). See
+[New Best banner](game-concepts.md#new-best-banner). See
 [Components — Level Management](components.md).
 
 **Base trap** — A static, always-dangerous hazard. The simplest trap category;
@@ -331,7 +331,7 @@ also when the save slot actually resets. See
 bytes that existed then are copied and fields added later keep their defaults,
 so a new `GameState` field does not wipe saves. Driven by a version table
 (`game_state_migration.h`); fields may only be appended. See
-[Architecture](architecture.md#save-migration).
+[Architecture](architecture.md#save--load-system).
 
 **Save slot** — One of three independent persistence slots selectable on the
 start screen, each previewed there as "New" or its furthest-reached world

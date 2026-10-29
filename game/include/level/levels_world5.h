@@ -182,7 +182,7 @@ const LevelData LEVEL_WORLD5_SCROLL_2 = {
 //     coyote time) are reachable with a plain jump;
 //   - with a jump + air dash up to ~103px, and the dash may start anywhere in
 //     a ~12-18 frame window after takeoff.
-// The two dash gaps below are 84px and 92px wide: unreachable without the
+// The three dash gaps below are 85px to 90px wide: unreachable without the
 // dash even under the most generous assumptions, comfortably inside the dash
 // envelope with a wide timing window. Every other gap is a plain jump (<=40px).
 // The axe chases from behind (it only punishes standing still), and an
@@ -190,18 +190,18 @@ const LevelData LEVEL_WORLD5_SCROLL_2 = {
 // =============================================================================
 constexpr PlatformData world5_dash_platforms[] = {
 
-    // Spawn platform; first dash gap (84px) follows.
+    // Spawn platform; first dash gap (90px) follows.
     {-296, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
     {-180, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
     // Ordinary hops: 32px and 40px gaps.
     {-124, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
     {-68, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
-    // Second dash gap (88px), then a landing barrel.
+    // Second dash gap (85px), then a landing barrel.
     {44, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
     // Short hops across the mimic's gap (32px / 30px).
     {100, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0},
     {146, 71, 28, 10, 0, -11, bn::sprite_items::bars32x32, 0},
-    // Last dash gap (92px), then the exit stretch.
+    // Last dash gap (89px), then the exit stretch.
     {262, 68, 26, 16, 0, -8, bn::sprite_items::barrel32x32, 0},
     {314, 60, 26, 10, 0, 0, bn::sprite_items::chest32x32, 0}};
 
@@ -245,7 +245,7 @@ constexpr TrapData world5_dash_traps[] = {
      -2.0,
      15}};
 
-// Checkpoint after the second 88px dash gap, so the third gap is retried
+// Checkpoint after the second 85px dash gap, so the third gap is retried
 // without redoing the first two.
 constexpr CheckpointData world5_dash_checkpoints[] = {{44, 44}};
 

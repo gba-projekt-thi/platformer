@@ -198,7 +198,7 @@
     },
     {
       "name": "LEVEL_WORLD1_BOSS",
-      "note": "=============================================================================\nWORLD 1 BOSS - \"The Kugelfisch King\" (world_width=480)\nA Hollow-Knight-style dodge gauntlet: a patrolling bubble sweep overlays\nthe whole arena, four trigger-gated \"attacks\" fire in sequence as the\nduck advances, and a disguised pufferfish punishes lingering too long\nnear the midpoint. Reaching the door on the right is \"winning\" the fight.\n=============================================================================",
+      "note": "=============================================================================\nWORLD 1 BOSS - \"The Kugelfisch King\" (world_width=698)\nA Hollow-Knight-style dodge gauntlet: a patrolling bubble sweep overlays\nthe whole arena, four trigger-gated \"attacks\" fire in sequence as the\nduck advances, and a disguised pufferfish punishes lingering too long\nnear the midpoint. Reaching the door on the right is \"winning\" the fight.\n=============================================================================",
       "platforms": {
         "name": "world1_boss_platforms",
         "items": [

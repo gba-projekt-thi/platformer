@@ -50,7 +50,7 @@ inline auto text_to_show(
 
 // Whether the hint's sprites exist this frame. While the game is paused they
 // are released: Butano counts hidden sprites too, and the pause overlay needs
-// up to ~57 glyph sprites (see tools/Check_sprite_budget.py), so a hint that
+// up to ~63 glyph sprites (see tools/Check_sprite_budget.py), so a hint that
 // merely hid would still take its slots.
 inline auto should_draw(bool timer_visible, bool paused) -> bool {
     return timer_visible && !paused;
@@ -146,7 +146,7 @@ class Display {
 };
 
 // One frame of the scene around the level: Start toggles the pause, and the
-// pause overlay allocates its ~57 sprites inside the level update, so the
+// pause overlay allocates its ~63 sprites inside the level update, so the
 // hint's sprites go first.
 template <typename Host>
 auto step_level(Host& h) {
