@@ -194,6 +194,11 @@ class CheckTests(Fixture):
         errors, warnings, _ = sb.check_level(lv, self.budget())
         self.assertEqual((errors, warnings), ([], []))
 
+    def test_a_level_over_the_combined_sprite_cap_is_an_error(self):
+        lv = self.load(level("OVER", plats=3))["OVER"]
+        errors, _, _ = sb.check_level(lv, self.budget(ENTITY_SPRITES=2))
+        self.assertTrue(any("together" in e for e in errors), errors)
+
     def test_entity_limits_are_inclusive(self):
         levels = self.load(level("FULL", plats=32), level("OVER", plats=33))
         b = self.budget()
@@ -242,21 +247,27 @@ class CheckTests(Fixture):
 
 class ConfigurationTests(unittest.TestCase):
     def test_hint_and_pause_overlay_are_not_added_up_in_the_worst_case(self):
-        b = sb.Budget(MAX_SPRITES=500)
+        b = sb.Budget(MAX_SPRITES=500, ENTITY_SPRITES=10**6)
         registry = (
             sb.PLAYER_AND_DOOR + b.PLATFORMS + b.TOTAL_TRAPS + b.TRIGGERS + b.CHECKPOINTS + b.SLOTS
         )
         fixed = registry + b.hud
         worst = fixed + max(sb.HINT_MAX_GLYPHS + b.banner, b.pause_overlay)
-        _, warnings = sb.check_configuration(sb.Budget(MAX_SPRITES=500, oam=worst))
+        _, warnings = sb.check_configuration(sb.Budget(MAX_SPRITES=500, ENTITY_SPRITES=10**6, oam=worst))
         self.assertEqual(warnings, [])
-        _, warnings = sb.check_configuration(sb.Budget(MAX_SPRITES=500, oam=worst - 1))
+        _, warnings = sb.check_configuration(sb.Budget(MAX_SPRITES=500, ENTITY_SPRITES=10**6, oam=worst - 1))
         self.assertEqual(len(warnings), 1)
 
     def test_default_limits_exceed_the_registry_and_warn(self):
-        errors, warnings = sb.check_configuration(sb.Budget())
+        errors, warnings = sb.check_configuration(sb.Budget(ENTITY_SPRITES=10**6))
         self.assertEqual(errors, [])
         self.assertTrue(any("SpriteRegistry holds" in w for w in warnings))
+
+    def test_the_combined_sprite_cap_makes_the_limits_fit(self):
+        b = sb.Budget()
+        self.assertEqual(sb.check_configuration(b), ([], []))
+        _, warnings = sb.check_configuration(sb.Budget(ENTITY_SPRITES=b.ENTITY_SPRITES + 1))
+        self.assertEqual(len(warnings), 1)  # one sprite more than the 128 hardware sprites
 
     def test_no_warning_when_the_registry_is_large_enough(self):
         errors, warnings = sb.check_configuration(sb.Budget(MAX_SPRITES=200, oam=400))

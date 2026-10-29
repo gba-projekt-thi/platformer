@@ -424,6 +424,15 @@ void LevelManager::_validate_level(const LevelData& level) {
         level_limits::within(
             level.checkpoint_count, Cfg::Level::Limits::CHECKPOINTS),
         "Too many checkpoints");
+    int entity_sprites =
+        level.platform_count + level.trap_count + level.checkpoint_count;
+    for (int i = 0; i < level.trigger_count; ++i) {
+        entity_sprites += level.triggers[i].sprite != nullptr ? 1 : 0;
+    }
+    BN_ASSERT(
+        level_limits::within(
+            entity_sprites, Cfg::Level::Limits::ENTITY_SPRITES),
+        "Too many platform, trap, checkpoint and switch sprites together");
 }
 
 void LevelManager::_load_platforms(const LevelData& level) {

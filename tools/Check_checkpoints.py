@@ -39,7 +39,8 @@ Warnings:
   - the respawn lies inside an AMBUSH trap's trigger range (it would lunge at
     once, even if it cannot hit)
   - checkpoints are not in left-to-right order, or two are closer than 24px
-  - the supporting platform is only reachable with the dash
+  - the supporting platform is only reachable with the dash, in a level that
+    does not have the dash (Cfg::Dash::UNLOCK_WORLD)
 
 Usage (from the repository root):
     python3 tools/Check_checkpoints.py [file ...]
@@ -207,7 +208,7 @@ class _Window:
         self.from_death, self.until_death = trap["from_death"], trap["until_death"]
 
 
-def check_level(level, limit=DEFAULT_MAX, reach=True):
+def check_level(level, limit=DEFAULT_MAX, reach=True, dash_granted=False):
     """Returns (errors, warnings) for one Level."""
     errors, warnings = [], []
     points = level.checkpoints
@@ -270,7 +271,7 @@ def check_level(level, limit=DEFAULT_MAX, reach=True):
                 if support.index not in dash:
                     err(f"{where}: platform {support.index} cannot be reached from the spawn{after}")
                     break
-                if support.index not in plain:
+                if support.index not in plain and not dash_granted:
                     warn(f"{where}: platform {support.index} is only reachable with the dash{after}")
                     break
 
@@ -308,12 +309,14 @@ def main(argv):
         print("No levels_world*.h files found - nothing to check.", file=sys.stderr)
         return 1
     limit = max_checkpoints()
+    # the dash is on from Cfg::Dash::UNLOCK_WORLD onward (see campaign())
+    dash_levels = {lv.name for lv in sim.campaign(_here.parent) if lv.dash}
     all_errors, all_warnings, checked = [], [], 0
     for path in paths:
         for level in pv.load_level_file(path).values():
             if level.checkpoints:
                 checked += 1
-            errors, warnings = check_level(level, limit)
+            errors, warnings = check_level(level, limit, dash_granted=level.name in dash_levels)
             all_errors.extend(errors)
             all_errors.extend(check_spawn(level))
             all_warnings.extend(warnings)
