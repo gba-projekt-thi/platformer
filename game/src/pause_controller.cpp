@@ -89,8 +89,7 @@ void PauseController::_release_sprites() {
     // Butano counts a hidden sprite like a visible one, so the overlay is
     // released, not hidden: it needs up to ~63 of the 128 sprites while it is
     // open and must not keep any of them while the level runs.
-    _title_sprites.clear();
-    _menu_sprites.clear();
+    pause_flow::release(_title_sprites, _menu_sprites);
 }
 
 void PauseController::_rebuild_menu() {
@@ -390,12 +389,10 @@ PauseController::Action PauseController::update() {
             FlowOps ops{*this};
             pause_flow::leave_for_action(ops);
 
-            switch (option) {
-                case MenuOption::Continue:
-                    return Action::None;
-                case MenuOption::Restart:
+            switch (pause_flow::outcome_for(option)) {
+                case pause_flow::Outcome::Restart:
                     return Action::RestartRequested;
-                case MenuOption::TitleScreen:
+                case pause_flow::Outcome::ReturnToTitle:
                     return Action::ReturnToTitleRequested;
                 default:
                     return Action::None;

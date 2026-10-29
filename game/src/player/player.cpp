@@ -252,7 +252,7 @@ void Player::begin_death_fx() {
 }
 
 void Player::end_death_fx() {
-    if (_duck_fx.end(Cfg::DeathFx::RESPAWN_BLINK_FRAMES)) {
+    if (_duck_fx.end()) {
         _show_after_death_fx();
     }
 }
@@ -269,11 +269,6 @@ void Player::_show_after_death_fx() {
 }
 
 void Player::death() {
-    // Where the duck died, for the death feedback's ghost (the teleport below
-    // overwrites it).
-    _death_x = pos.x;
-    _death_y = pos.y;
-
     _hud.on_player_death();
 
     set_velocity(0, 0);
@@ -282,8 +277,10 @@ void Player::death() {
     clear_dash_trail();
     _pogo_slash.reset();
 
-    pos.x = _restart_x;
-    pos.y = _restart_y;
+    // Where the duck died is kept for the death feedback's ghost; it goes
+    // back to the restart point.
+    death_fx::leave_death_spot(
+        pos.x, pos.y, _restart_x, _restart_y, _death_x, _death_y);
 
     AudioSettings::instance().play_sfx(bn::sound_items::duck_death);
 }

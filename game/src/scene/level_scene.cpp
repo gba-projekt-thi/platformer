@@ -56,12 +56,12 @@ void LevelScene::_show_hint_if_needed() {
         _level_index < unsigned(GameState::MAX_LEVELS)
             ? _data_manager.state().best_time_frames[_level_index]
             : 0;
-    if (!hint::should_show(
-            text, best, _data_manager.state().furthest_level, _level_index)) {
+    _hint_text = hint::text_to_show(
+        text, best, _data_manager.state().furthest_level, _level_index);
+    if (_hint_text == nullptr) {
         return;
     }
 
-    _hint_text = text;
     // A boss level's hint is about the arena: it starts there (_update_hint).
     if (_hint.show(_level_manager.has_boss())) {
         _draw_hint();

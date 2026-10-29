@@ -1,6 +1,7 @@
 #include "test_framework.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -37,7 +38,12 @@ struct Host {
     bool door_is_locked = false;
     bool trapped_door = false;
     bool layout_differs = false;
-    int freeze_frames = 3;
+    // Layout differs whenever the two death counts do (instead of
+    // layout_differs)
+    bool layout_by_compare = false;
+    // What the flow handed to the death feedback, and the shake it drew last
+    int shake_cue_frames = -1;
+    death_fx::Offset drawn_shake{0, 0};
     // Real rules the flow relies on
     death_fx::Sequence fx;
     respawn::Pending pending;
@@ -146,8 +152,18 @@ struct Host {
     [[nodiscard]] auto has_level() const -> bool { return level_loaded; }
     auto attempt() -> level_flow::Attempt& { return att; }
     [[nodiscard]] auto deaths() const -> unsigned { return player_deaths; }
-    auto layout_changes(unsigned, unsigned) -> bool { return layout_differs; }
-    STEP(cue_layout_change)
+    auto layout_changes(unsigned before, unsigned after) -> bool {
+        return layout_differs || (layout_by_compare && before != after);
+    }
+    void set_player_deaths_in_level(unsigned deaths) {
+        note("set_player_deaths_in_level");
+        player_deaths = att.at_entry + deaths;
+    }
+    void cue_layout_change(int shake_frames) {
+        note("cue_layout_change");
+        shake_cue_frames = shake_frames;
+        fx.shake(shake_frames);
+    }
     STEP(reset_crumbling)
     STEP(reset_fleeing)
     STEP(respawn_triggers)
@@ -177,9 +193,9 @@ struct Host {
         return saved;
     }
     STEP(force_save)
-    void start_death_fx() {
+    void start_death_fx(int hitstop_frames, int shake_frames) {
         note("start_death_fx");
-        fx.start(freeze_frames, 5);
+        fx.start(hitstop_frames, shake_frames);
     }
     STEP(begin_player_death_fx)
 
@@ -220,7 +236,10 @@ struct Host {
     STEP(update_boss_music)
     STEP(flee_door)
     STEP(update_camera)
-    STEP(apply_shake)
+    void apply_shake(int amplitude) {
+        note("apply_shake");
+        drawn_shake = fx.shake_offset(amplitude);
+    }
     STEP(sync_sprites)
     STEP(core_update)
 #undef STEP
@@ -469,14 +488,15 @@ TEST_CASE(level_flow_a_paused_game_does_not_simulate) {
 
 TEST_CASE(level_flow_a_death_in_the_world_respawns_when_the_freeze_ends) {
     Host h;
-    h.freeze_frames = 3;
     h.trap_kills_this_frame = true;
     frame(h);
     // the death frame: saved, but the next attempt waits for the freeze
     CHECK(!h.has("reset_entities"));
     CHECK_EQ(h.count("sync_save"), 1);
-    frame(h);
-    CHECK(!h.has("reset_entities"));
+    for (int i = 2; i < Cfg::DeathFx::HITSTOP_FRAMES; ++i) {
+        frame(h);
+        CHECK(!h.has("reset_entities"));
+    }
     frame(h);
     CHECK(h.has("reset_entities"));
     CHECK_EQ(h.count("snap_camera"), 1);
@@ -679,4 +699,68 @@ TEST_CASE(level_flow_load_gives_no_layout_cue) {
     h.layout_differs = true;
     level_flow::load(h);
     CHECK(!h.has("cue_layout_change"));
+}
+
+// --- the death feedback gets Cfg::DeathFx -----------------------------------
+
+TEST_CASE(level_flow_a_death_freezes_the_world_for_the_hitstop_frames) {
+    Host h;
+    h.trap_kills_this_frame = true;
+    frame(h);  // the death frame
+    int frozen_frames = 0;
+    while (h.fx.frozen() && frozen_frames < 100) {
+        frame(h);
+        ++frozen_frames;
+    }
+    // the death frame ran the physics and counted as the first frozen one
+    CHECK_EQ(frozen_frames, Cfg::DeathFx::HITSTOP_FRAMES - 1);
+    CHECK(!h.has("start_death_fx"));
+}
+
+TEST_CASE(level_flow_a_death_shakes_for_the_shake_frames_at_full_amplitude) {
+    Host h;
+    h.trap_kills_this_frame = true;
+    frame(h);
+    // the shake of the first rendered frame is the full amplitude
+    CHECK_EQ(std::abs(h.drawn_shake.x), Cfg::DeathFx::SHAKE_AMPLITUDE);
+    int shaking = 1;
+    while (h.fx.shaking() && shaking < 100) {
+        frame(h);
+        ++shaking;
+    }
+    CHECK_EQ(shaking, Cfg::DeathFx::SHAKE_FRAMES);
+    // and it fades to nothing at the end
+    CHECK(std::abs(h.drawn_shake.x) <= 1);
+}
+
+TEST_CASE(level_flow_a_changed_layout_shakes_for_the_layout_shake_frames) {
+    Host h;
+    h.layout_differs = true;
+    level_flow::finish_respawn(h);
+    CHECK_EQ(h.shake_cue_frames, Cfg::DeathFx::LAYOUT_SHAKE_FRAMES);
+    // the world keeps running: no freeze from the cue
+    CHECK(!h.fx.frozen());
+    CHECK(h.fx.shaking());
+}
+
+// --- a replay starts in its layout ------------------------------------------
+
+TEST_CASE(level_flow_a_replay_starts_in_its_layout_without_a_cue) {
+    Host h;
+    h.layout_by_compare = true;
+    h.att.at_entry = 4;
+    h.att.layout = 0;
+    level_flow::start_replay_at(h, 3);
+    CHECK_EQ(h.player_deaths, 7u);
+    CHECK_EQ(h.att.seen, 7u);
+    CHECK_EQ(h.att.layout, 3u);
+    CHECK(!h.has("cue_layout_change"));
+    CHECK(h.has("snap_camera"));
+}
+
+TEST_CASE(level_flow_a_replay_applies_its_layout_after_the_deaths_are_set) {
+    Host h;
+    level_flow::start_replay_at(h, 2);
+    CHECK(h.before("set_player_deaths_in_level", "apply_attempt"));
+    CHECK(h.before("set_player_deaths_in_level", "reset_entities"));
 }

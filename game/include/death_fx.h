@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include "cfg_death_fx.h"
+
 // -----------------------------------------------------------------------------
 // death_fx
 //
@@ -78,6 +80,9 @@ class DuckFx {
         return true;
     }
 
+    // The freeze ended: the flicker of Cfg::DeathFx::RESPAWN_BLINK_FRAMES.
+    auto end() -> bool { return end(Cfg::DeathFx::RESPAWN_BLINK_FRAMES); }
+
     // Like end() without the flicker (level load / unload, Restart Level).
     auto cancel() -> bool {
         if (!_active) {
@@ -104,6 +109,22 @@ class DuckFx {
     bool _active = false;
     int _blink = 0;
 };
+
+// The duck dies: where it was is remembered for the ghost, and it is moved
+// back to the restart point (the teleport would overwrite it).
+template <typename T>
+void leave_death_spot(
+    T& pos_x,
+    T& pos_y,
+    T restart_x,
+    T restart_y,
+    T& death_x,
+    T& death_y) {
+    death_x = pos_x;
+    death_y = pos_y;
+    pos_x = restart_x;
+    pos_y = restart_y;
+}
 
 class Sequence {
    public:

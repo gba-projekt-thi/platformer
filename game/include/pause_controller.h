@@ -5,6 +5,7 @@
 #include "bn_sprite_ptr.h"
 #include "bn_sprite_text_generator.h"
 #include "bn_vector.h"
+#include "pause_flow.h"
 
 class DataManager;
 
@@ -30,14 +31,7 @@ class PauseController {
     void reset();
 
    private:
-    enum class MenuOption : int {
-        Continue = 0,
-        Restart = 1,
-        Options = 2,
-        Controls = 3,
-        TitleScreen = 4,
-        Count = 5
-    };
+    using MenuOption = pause_flow::Option;
 
     // The steps of pause_flow.h (when the overlay's sprites exist).
     struct FlowOps;
