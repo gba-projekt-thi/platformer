@@ -91,10 +91,12 @@ class GlyphTests(unittest.TestCase):
         # the controls view (six lines, no title) ...
         controls = sum(sb.glyphs(line) for line in sb.DEFAULT_CONTROLS_LINES)
         self.assertEqual(controls, 59)
-        options = 10 + 8 + 13 + 15 + 10 + 1
+        # Music, SFX, Hard, Assist, Ghost, the trap speed line, the cursor
+        options = 10 + 8 + 9 + 11 + 10 + 10 + 1
         self.assertEqual(b.pause_menu, max(controls, options))
-        # ... stays below the options sub-menu with its 'Paused' title
-        self.assertEqual(b.pause_overlay, options + sb.PAUSE_TITLE_GLYPHS)
+        # ... and the options sub-menu (no title either) are the largest views
+        self.assertEqual(b.pause_overlay, max(controls, options))
+        self.assertEqual(b.pause_overlay, 59)
 
 
 class AbilityTests(unittest.TestCase):
@@ -114,7 +116,7 @@ class DemandTests(Fixture):
         lv = self.load(level("A", plats=3, traps=2, checkpoints=1))["A"]
         b = self.budget()
         registry, _ = sb.demand(lv, b)
-        self.assertEqual(registry, 2 + 3 + 2 + 1 + b.SLOTS + sb.POGO_SLASH)
+        self.assertEqual(registry, 2 + 3 + 2 + 1 + b.SLOTS + sb.POGO_SLASH + sb.GHOST)
 
     def test_objects_with_a_death_window_count_on_every_attempt(self):
         # Level Devil: a trap that moves after the 3rd death is two traps
@@ -135,7 +137,7 @@ class DemandTests(Fixture):
         lv = self.load(text)["W"]
         b = self.budget()
         registry, _ = sb.demand(lv, b)
-        self.assertEqual(registry, 2 + 1 + 2 + b.SLOTS + sb.POGO_SLASH)
+        self.assertEqual(registry, 2 + 1 + 2 + b.SLOTS + sb.POGO_SLASH + sb.GHOST)
 
     def test_dash_trail_counts_only_where_the_dash_is(self):
         lv = self.load(level("A", plats=3))["A"]
@@ -250,6 +252,7 @@ class ConfigurationTests(unittest.TestCase):
         b = sb.Budget(MAX_SPRITES=500, ENTITY_SPRITES=10**6)
         registry = (
             sb.PLAYER_AND_DOOR + b.PLATFORMS + b.TOTAL_TRAPS + b.TRIGGERS + b.CHECKPOINTS + b.SLOTS
+            + sb.GHOST
         )
         fixed = registry + b.hud
         worst = fixed + max(sb.HINT_MAX_GLYPHS + b.banner, b.pause_overlay)
@@ -272,8 +275,9 @@ class ConfigurationTests(unittest.TestCase):
     def test_the_combined_sprite_cap_makes_the_limits_fit(self):
         b = sb.Budget()
         self.assertEqual(sb.check_configuration(b), ([], []))
-        _, warnings = sb.check_configuration(sb.Budget(ENTITY_SPRITES=b.ENTITY_SPRITES + 1))
-        self.assertEqual(len(warnings), 1)  # one sprite more than the 128 hardware sprites
+        # the cap leaves a few sprites over; 4 more entity sprites are one too many
+        _, warnings = sb.check_configuration(sb.Budget(ENTITY_SPRITES=b.ENTITY_SPRITES + 4))
+        self.assertEqual(len(warnings), 1)
 
     def test_no_warning_when_the_registry_is_large_enough(self):
         errors, warnings = sb.check_configuration(sb.Budget(MAX_SPRITES=200, oam=400))

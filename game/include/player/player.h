@@ -79,6 +79,12 @@ class Player : public PhysicsBody, private PlayerDeathHandler {
     unsigned int get_deaths() const;
     void set_deaths(unsigned int deaths);
     Timer& get_timer();
+    // What the duck looks like now, for the ghost's recording
+    // (ghost_logic.h): its picture and whether it is mirrored.
+    [[nodiscard]] int sprite_frame() const { return _animator.frame_index(); }
+    [[nodiscard]] bool sprite_flipped() {
+        return _player_sprite.sprite().horizontal_flip();
+    }
 
    private:
     // Sprite

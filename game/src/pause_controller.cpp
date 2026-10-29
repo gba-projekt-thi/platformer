@@ -12,6 +12,7 @@
 #include "controls_text.h"
 #include "data_manager.h"
 #include "game_modes.h"
+#include "ghost_session.h"
 #include "level_manager.h"
 #include "menu_nav.h"
 #include "pause_flow.h"
@@ -89,7 +90,7 @@ void PauseController::_show_title() {
 
 void PauseController::_release_sprites() {
     // Butano counts a hidden sprite like a visible one, so the overlay is
-    // released, not hidden: it needs up to ~63 of the 128 sprites while it is
+    // released, not hidden: it needs up to ~59 of the 128 sprites while it is
     // open and must not keep any of them while the level runs.
     pause_flow::release(_title_sprites, _menu_sprites);
 }
@@ -166,10 +167,13 @@ void PauseController::_rebuild_options_menu() {
     // _change_option_level().
     const GameState& state = _data_manager.state();
     if (state.hard_mode_unlocked) {
-        _append_toggle_row(2, "Hard Mode < ", state.hard_mode_enabled);
+        _append_toggle_row(2, "Hard < ", state.hard_mode_enabled);
     }
     const int assist_row = _assist_row();
-    _append_toggle_row(assist_row, "Assist Mode < ", state.assist_mode_enabled);
+    _append_toggle_row(assist_row, "Assist < ", state.assist_mode_enabled);
+    // RAM only (ghost_session.h), not part of the save.
+    const int ghost_row = assist_row + 1;
+    _append_toggle_row(ghost_row, "Ghost < ", ghost_session::enabled());
 
     // Informational only (not selectable, not part of row_count): shows
     // what the active mode does to trap speed. Its own line below the
@@ -179,7 +183,7 @@ void PauseController::_rebuild_options_menu() {
     // update these strings too if those constants change. Only one mode
     // can be on at a time, so one line is enough.
     const int info_y = Cfg::PauseMenu::Y_OPTION_0 +
-                       (assist_row + 1) * Cfg::PauseMenu::OPTION_SPACING;
+                       (ghost_row + 1) * Cfg::PauseMenu::OPTION_SPACING;
     if (state.hard_mode_enabled) {
         _text_gen->generate(
             Cfg::PauseMenu::X, info_y, "  Traps x1.35", _menu_sprites);
@@ -250,6 +254,9 @@ void PauseController::_change_option_level(int delta) {
         // Audible preview at the just-set level, so raising SFX from 0
         // is itself audible feedback.
         audio.play_sfx(bn::sound_items::select);
+    } else if (_option_row == modes::ghost_row(state.hard_mode_unlocked)) {
+        ghost_session::set_enabled(!ghost_session::enabled());
+        AudioSettings::instance().play_sfx(bn::sound_items::select);
     } else if (_option_row == _assist_row()) {
         // Assist Mode row - a toggle; either direction flips it. Turning
         // it on turns Hard Mode off (mutually exclusive). Committed to
@@ -304,7 +311,7 @@ PauseController::Action PauseController::update() {
             bool changed = false;
 
             if (bn::keypad::down_pressed() || bn::keypad::up_pressed()) {
-                // Music, SFX, [Hard Mode], Assist Mode.
+                // Music, SFX, [Hard Mode], Assist Mode, Ghost.
                 const int row_count = modes::options_row_count(
                     _data_manager.state().hard_mode_unlocked);
                 _option_row = bn::keypad::down_pressed()
@@ -330,6 +337,7 @@ PauseController::Action PauseController::update() {
                 // expensive (see save-sync policy elsewhere in the code).
                 _data_manager.save();
                 _showing_options = false;
+                _show_title();
                 _rebuild_menu();
                 AudioSettings::instance().play_sfx(bn::sound_items::cancel);
             }
@@ -364,8 +372,11 @@ PauseController::Action PauseController::update() {
             if (option == MenuOption::Options) {
                 // Stay paused, switch into the sub-menu - no Action
                 // returned, no scene transition involved.
+                // Like the controls view it has no title: the sprites of
+                // the longest view must fit next to the level's.
                 _showing_options = true;
                 _option_row = 0;
+                _title_sprites.clear();
                 _rebuild_options_menu();
                 bn::core::update();
                 return Action::None;

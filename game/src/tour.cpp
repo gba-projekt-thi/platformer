@@ -29,9 +29,19 @@ void on_update() {
 }
 replay::Player buttons(nullptr, 0);
 
+// A level played a second time starts this many frames late, so that its
+// ghost (the first run, ghost_session.h) is ahead of the duck on the pictures.
+constexpr int REVISIT_DELAY = 40;
+bool visited[64] = {};
+int delay = 0;
 bool mirrored = false;
 
 void play(InputState& input) {
+    if (delay > 0) {
+        --delay;
+        input = InputState{};
+        return;
+    }
     input = buttons.next();
     if (mirrored) {
         const bool left = input.left_held;
@@ -104,6 +114,13 @@ void level_started(Player& player, unsigned level_index, bool mirror) {
         return;
     }
     buttons = replay::Player(entry.runs, entry.run_count);
+    delay = 0;
+    // A mirrored level has its own ghost.
+    const unsigned key = level_index + (mirror ? 32 : 0);
+    if (key < 64) {
+        delay = visited[key] ? REVISIT_DELAY : 0;
+        visited[key] = true;
+    }
     player.set_input_hook(play);
     if (entry.has_start) {
         player.teleport_to(
