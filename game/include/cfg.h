@@ -215,9 +215,12 @@ namespace LevelSelect {
 // still sits at LAST_ROW_Y at most.
 inline constexpr int ROW_SPACING = 16;
 inline constexpr int LAST_ROW_Y = 70;
-// The Mirror Mode line (Mirror Mode: see modes::mirror_active()), above the
-// first row of even the longest world (8 rows, the first at y = -42).
-inline constexpr int MIRROR_Y = -70;
+// The Mirror Mode line (Mirror Mode: see modes::mirror_active()) and below it
+// the selected level's goals ("[*] No death  [+] <1:30"), both above the first
+// row of even the longest world (8 rows, the first at y = -42).
+inline constexpr int MIRROR_Y = -72;
+inline constexpr int GOALS_X = -90;
+inline constexpr int GOALS_Y = -57;
 }  // namespace LevelSelect
 
 namespace Physics {

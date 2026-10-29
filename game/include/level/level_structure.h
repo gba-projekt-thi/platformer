@@ -501,4 +501,13 @@ struct LevelData {
     // this one while Mirror Mode is on. nullptr = none (a mirrored level
     // itself).
     const LevelData* mirror = nullptr;
+
+    // -------------------------------------------------------------------------
+    // Goal
+    // -------------------------------------------------------------------------
+
+    // The "Under X seconds" goal shown in the level select (goals.h): a
+    // personal best of at most this many seconds. Set by
+    // tools/Target_times.py from the level's replay and checked there.
+    int target_time_s = 0;
 };

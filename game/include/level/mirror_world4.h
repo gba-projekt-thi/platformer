@@ -242,7 +242,12 @@ const LevelData LEVEL_WORLD4_POGO_MIRROR = {
     460,
     160,
     1,
-    "New: strike down with R"};
+    "New: strike down with R",
+    nullptr,
+    0,
+    0,
+    nullptr,
+    7};
 
 // LEVEL_WORLD4_SCROLL mirrored left-right (Mirror Mode)
 constexpr PlatformData world4_scroll_platforms_mirror[] = {
@@ -657,7 +662,10 @@ const LevelData LEVEL_WORLD4_SCROLL_MIRROR = {
     nullptr,
     world4_scroll_checkpoints_mirror,
     sizeof(world4_scroll_checkpoints_mirror) /
-        sizeof(world4_scroll_checkpoints_mirror[0])};
+        sizeof(world4_scroll_checkpoints_mirror[0]),
+    0,
+    nullptr,
+    11};
 
 // LEVEL_WORLD4_SCROLL_2 mirrored left-right (Mirror Mode)
 constexpr PlatformData world4b_scroll_platforms_mirror[] = {
@@ -934,7 +942,14 @@ const LevelData LEVEL_WORLD4_SCROLL_2_MIRROR = {
      LEVEL_WORLD4_SCROLL_2_MIRROR_door_attempt_positions,
      3},
     320,
-    160};
+    160,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    nullptr,
+    9};
 
 // LEVEL_WORLD4_TRICK mirrored left-right (Mirror Mode)
 constexpr PlatformData world4_trick_platforms_mirror[] = {
@@ -1258,7 +1273,12 @@ const LevelData LEVEL_WORLD4_TRICK_MIRROR = {
     480,
     160,
     1,
-    "Bounce now, panic later."};
+    "Bounce now, panic later.",
+    nullptr,
+    0,
+    0,
+    nullptr,
+    9};
 
 // LEVEL_WORLD4_BOSS mirrored left-right (Mirror Mode)
 constexpr PlatformData world4_boss_platforms_mirror[] = {
@@ -1921,4 +1941,6 @@ const LevelData LEVEL_WORLD4_BOSS_MIRROR = {
     world4_boss_checkpoints_mirror,
     sizeof(world4_boss_checkpoints_mirror) /
         sizeof(world4_boss_checkpoints_mirror[0]),
-    6};
+    6,
+    nullptr,
+    18};

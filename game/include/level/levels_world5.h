@@ -96,7 +96,8 @@ const LevelData LEVEL_WORLD5_SCROLL = {
     world5_scroll_checkpoints,
     sizeof(world5_scroll_checkpoints) / sizeof(world5_scroll_checkpoints[0]),
     0,
-    &LEVEL_WORLD5_SCROLL_MIRROR};
+    &LEVEL_WORLD5_SCROLL_MIRROR,
+    12};
 
 // =============================================================================
 // WORLD 5 SCROLL 2 - dungeon theme, second level (world_width=380)
@@ -180,7 +181,8 @@ const LevelData LEVEL_WORLD5_SCROLL_2 = {
     nullptr,
     0,
     0,
-    &LEVEL_WORLD5_SCROLL_2_MIRROR};
+    &LEVEL_WORLD5_SCROLL_2_MIRROR,
+    7};
 
 // =============================================================================
 // WORLD 5 DASH - "Cloak Corridor" (world_width=700)
@@ -282,7 +284,8 @@ const LevelData LEVEL_WORLD5_DASH = {
     world5_dash_checkpoints,
     sizeof(world5_dash_checkpoints) / sizeof(world5_dash_checkpoints[0]),
     0,
-    &LEVEL_WORLD5_DASH_MIRROR};
+    &LEVEL_WORLD5_DASH_MIRROR,
+    12};
 
 // =============================================================================
 // WORLD 5 LEVERS - "Lever Hall" (world_width=700)
@@ -444,7 +447,8 @@ const LevelData LEVEL_WORLD5_LEVERS = {
     nullptr,
     0,
     0,
-    &LEVEL_WORLD5_LEVERS_MIRROR};
+    &LEVEL_WORLD5_LEVERS_MIRROR,
+    13};
 
 // =============================================================================
 // WORLD 5 CLIMB - "Barrel Tower", the wall-jump level (one screen)
@@ -508,7 +512,8 @@ const LevelData LEVEL_WORLD5_CLIMB = {
     nullptr,
     0,
     0,
-    &LEVEL_WORLD5_CLIMB_MIRROR};
+    &LEVEL_WORLD5_CLIMB_MIRROR,
+    7};
 
 // =============================================================================
 // WORLD 5 TRICK - "Liar's Keep", the Level Devil exam (world_width=640)
@@ -836,7 +841,8 @@ const LevelData LEVEL_WORLD5_TRICK = {
     nullptr,
     0,
     0,
-    &LEVEL_WORLD5_TRICK_MIRROR};
+    &LEVEL_WORLD5_TRICK_MIRROR,
+    14};
 
 // =============================================================================
 // WORLD 5 BOSS - "The Mimic Lord" (world_width=650)
@@ -1050,7 +1056,8 @@ const LevelData LEVEL_WORLD5_BOSS = {
     world5_boss_checkpoints,
     sizeof(world5_boss_checkpoints) / sizeof(world5_boss_checkpoints[0]),
     11,
-    &LEVEL_WORLD5_BOSS_MIRROR};
+    &LEVEL_WORLD5_BOSS_MIRROR,
+    24};
 
 // =============================================================================
 // WORLD 5 FINALE - "Reunited" (world_width=360, 1.5 screens)
@@ -1101,4 +1108,5 @@ const LevelData LEVEL_WORLD5_FINALE = {
     nullptr,
     0,
     0,
-    &LEVEL_WORLD5_FINALE_MIRROR};
+    &LEVEL_WORLD5_FINALE_MIRROR,
+    10};

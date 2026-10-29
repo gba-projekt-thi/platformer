@@ -93,7 +93,16 @@ DEFAULT_CONTROLS_LINES = (
     "D-Pad Move", "A Jump/Wall W5+", "B Dash W3+", "R Pogo W4+", "Start Pause", "Select Timer",
 )
 
+# level_select_scene.cpp: a row per level of the longest world, "Lv 1*+", the
+# selected one "> Lv 1 01:23.45*+", and above them the selected level's goals
+# and (once the game is finished) the Mirror Mode line.
+LEVEL_SELECT_ROW = "Lv 1*+"
+LEVEL_SELECT_SELECTED_ROW = "> Lv 1 01:23.45*+"
+LEVEL_SELECT_GOALS = "[*] No death  [+] <1:30"
+LEVEL_SELECT_MIRROR = "Mirror off (Select)"
+
 DEFAULTS = {
+    "LEVEL_SELECT_ROWS": 8,
     "MAX_SPRITES": 72,
     "SLOTS": 4,  # DashTrail::SLOTS
     "PLATFORMS": 32,
@@ -206,6 +215,18 @@ class Budget:
         return max(rows + title for rows, title in self._pause_views())
 
     @property
+    def level_select(self):
+        """Worst case of the level select: every row of the longest world
+        shows both marks, the selected one also its best time, plus the goals
+        and Mirror Mode lines."""
+        return (
+            (self.LEVEL_SELECT_ROWS - 1) * glyphs(LEVEL_SELECT_ROW)
+            + glyphs(LEVEL_SELECT_SELECTED_ROW)
+            + glyphs(LEVEL_SELECT_GOALS)
+            + glyphs(LEVEL_SELECT_MIRROR)
+        )
+
+    @property
     def banner(self):
         return sum(glyphs(t) for t in BANNER_LINES)
 
@@ -231,6 +252,11 @@ def load_budget(root="."):
             root, "collision_registry.h", "MAX_COLLISION_SHAPES", DEFAULTS["MAX_COLLISION_SHAPES"], missing
         ),
     }
+    world_index = find_file(root, "world_index.h")
+    if world_index is not None:
+        counts = re.findall(r'\{"World[^"]*",\s*\d+,\s*(\d+)\}', world_index.read_text())
+        if counts:
+            values["LEVEL_SELECT_ROWS"] = max(map(int, counts))
     for key in ("PLATFORMS", "PLATFORM_BODIES", "TRIGGERS", "TOTAL_TRAPS", "CHECKPOINTS", "ENTITY_SPRITES"):
         values[key] = read_int(root, "cfg.h", key, DEFAULTS[key], missing)
     budget = Budget(**values)
@@ -373,6 +399,12 @@ def check_configuration(budget):
         warnings.append(
             f"the same worst case needs {oam_worst} hardware sprites with hint and banner or the "
             f"pause overlay, the hardware has {b.oam}"
+        )
+
+    if b.level_select > b.oam:
+        errors.append(
+            f"the level select needs {b.level_select} hardware sprites in the worst case "
+            f"({b.LEVEL_SELECT_ROWS} rows with marks, one with its time, goals and Mirror lines), the hardware has {b.oam}"
         )
 
     shared = b.TRIGGERS + b.TOTAL_TRAPS + b.CHECKPOINTS + PLAYER_AND_DOOR

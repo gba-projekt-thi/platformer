@@ -65,7 +65,8 @@ const LevelData LEVEL_2 = {
     nullptr,
     0,
     0,
-    &LEVEL_2_MIRROR};
+    &LEVEL_2_MIRROR,
+    6};
 
 // =============================================================================
 // WORLD 2 SCROLL - new, uses the scrolling camera (world_width=432)
@@ -137,7 +138,8 @@ const LevelData LEVEL_WORLD2_SCROLL = {
     nullptr,
     0,
     0,
-    &LEVEL_WORLD2_SCROLL_MIRROR};
+    &LEVEL_WORLD2_SCROLL_MIRROR,
+    12};
 
 // =============================================================================
 // WORLD 2 TRICK - "Rigged Yard", a Level Devil level (world_width=480)
@@ -287,7 +289,8 @@ const LevelData LEVEL_WORLD2_TRICK = {
     nullptr,
     0,
     0,
-    &LEVEL_WORLD2_TRICK_MIRROR};
+    &LEVEL_WORLD2_TRICK_MIRROR,
+    6};
 
 // =============================================================================
 // WORLD 2 BOSS - "The Rusty Behemoth" (world_width=480)
@@ -463,4 +466,5 @@ const LevelData LEVEL_WORLD2_BOSS = {
     world2_boss_checkpoints,
     sizeof(world2_boss_checkpoints) / sizeof(world2_boss_checkpoints[0]),
     6,
-    &LEVEL_WORLD2_BOSS_MIRROR};
+    &LEVEL_WORLD2_BOSS_MIRROR,
+    13};

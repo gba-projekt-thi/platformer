@@ -306,8 +306,16 @@ const LevelData LEVEL_2_MIRROR = {
     bn::regular_bg_items::world2,
     bn::music_items::world2,
     {96, -32},
-    {-104, 0, bn::sprite_items::door32x32, DOOR32X32_GRAPHICS_INDEXES, 8,
-     true}};
+    {-104, 0, bn::sprite_items::door32x32, DOOR32X32_GRAPHICS_INDEXES, 8, true},
+    Cfg::Screen::WIDTH,
+    Cfg::Screen::HEIGHT,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    nullptr,
+    6};
 
 // LEVEL_WORLD2_SCROLL mirrored left-right (Mirror Mode)
 constexpr PlatformData world2_scroll_platforms_mirror[] = {
@@ -770,7 +778,14 @@ const LevelData LEVEL_WORLD2_SCROLL_MIRROR = {
     {-200, -16, bn::sprite_items::door32x32, DOOR32X32_GRAPHICS_INDEXES, 8,
      true},
     432,
-    160};
+    160,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    nullptr,
+    12};
 
 // LEVEL_WORLD2_TRICK mirrored left-right (Mirror Mode)
 constexpr PlatformData world2_trick_platforms_mirror[] = {
@@ -1410,7 +1425,12 @@ const LevelData LEVEL_WORLD2_TRICK_MIRROR = {
     480,
     160,
     1,
-    "Watch your step."};
+    "Watch your step.",
+    nullptr,
+    0,
+    0,
+    nullptr,
+    6};
 
 // LEVEL_WORLD2_BOSS mirrored left-right (Mirror Mode)
 constexpr PlatformData world2_boss_platforms_mirror[] = {
@@ -2247,4 +2267,6 @@ const LevelData LEVEL_WORLD2_BOSS_MIRROR = {
     world2_boss_checkpoints_mirror,
     sizeof(world2_boss_checkpoints_mirror) /
         sizeof(world2_boss_checkpoints_mirror[0]),
-    6};
+    6,
+    nullptr,
+    13};

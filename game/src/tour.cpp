@@ -70,10 +70,12 @@ void start_screen(DataManager& data_manager) {
         state.play_frames = (2u * 3600 + 14 * 60 + 5) * 60;
         for (int i = 0; i < WorldIndex::LEVEL_COUNT; ++i) {
             state.level_deaths[i] = uint16_t((i * 7) % 23);
-            state.best_time_frames[i] = 1800;
+            // Every third level within its target time (6 s or more), the
+            // others not (30 s): the level select shows both goal states.
+            state.best_time_frames[i] = i % 3 == 0 ? 300 : 1800;
         }
         state.best_time_frames[WorldIndex::LEVEL_COUNT - 1] = 0;
-        state.no_death_clears = 0x2D;
+        state.no_death_clears = 0x2D | (1u << 13) | (1u << 15);
         // Slot 2 has finished the game: Mirror Mode can be switched on.
         state.hard_mode_unlocked = true;
         data_manager.save();

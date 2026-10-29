@@ -45,6 +45,7 @@
       },
       "background": "world5",
       "music": "world5",
+      "target_time_s": 12,
       "spawn": [-272, 42],
       "door": {
         "x": 296,
@@ -89,6 +90,7 @@
       },
       "background": "world5",
       "music": "world5",
+      "target_time_s": 7,
       "spawn": [-168, 42],
       "door": {
         "x": 176,
@@ -137,6 +139,7 @@
       },
       "background": "world5",
       "music": "world5",
+      "target_time_s": 12,
       "spawn": [-296, 42],
       "door": {
         "x": 320,
@@ -198,6 +201,7 @@
       },
       "background": "world5",
       "music": "world5",
+      "target_time_s": 13,
       "spawn": [-232, 42],
       "door": {
         "x": 324,
@@ -245,6 +249,7 @@
       },
       "background": "world5",
       "music": "world5",
+      "target_time_s": 7,
       "spawn": [-100, 48],
       "door": {
         "x": 30,
@@ -312,6 +317,7 @@
       },
       "background": "world5",
       "music": "world5",
+      "target_time_s": 14,
       "spawn": [-296, 42],
       "door": {"x": 218, "y": 42, "trap_trigger_name": "door_lever", "attempt_positions": [[0, 0], [-52, -16]], "attempt_every": 3},
       "world_width": 640,
@@ -389,6 +395,7 @@
       },
       "background": "world5",
       "music": "world5",
+      "target_time_s": 24,
       "boss_music_order": 11,
       "spawn": [-424, 42],
       "door": {
@@ -431,6 +438,7 @@
       },
       "background": "world5",
       "music": "world5",
+      "target_time_s": 10,
       "spawn": [-160, 36],
       "door": {
         "x": 160,
