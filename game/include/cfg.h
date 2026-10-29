@@ -149,10 +149,10 @@ inline constexpr unsigned int CHECKPOINTS = 1;
 // Cap on the sprites of one level's platforms, traps, checkpoints and
 // triggers with a switch sprite, together: the per-kind limits above alone
 // allow more than the 72 SpriteRegistry slots and the 128 hardware sprites
-// hold (2 duck/door + this + 4 dash trail + 20 HUD + 60 hint and banner, or
-// the 63 of the pause overlay, = 128). Checked in
+// hold (2 duck/door + this + 4 dash trail + 1 ghost + 20 HUD + 60 hint and
+// banner, or the 59 of the pause overlay, = 125 of the 128). Checked in
 // LevelManager::_validate_level() and by tools/Check_sprite_budget.py.
-inline constexpr unsigned int ENTITY_SPRITES = 39;
+inline constexpr unsigned int ENTITY_SPRITES = 38;
 }  // namespace Limits
 }  // namespace Level
 
@@ -213,9 +213,12 @@ namespace LevelSelect {
 // still sits at LAST_ROW_Y at most.
 inline constexpr int ROW_SPACING = 16;
 inline constexpr int LAST_ROW_Y = 70;
-// The Mirror Mode line (Mirror Mode: see modes::mirror_active()), above the
-// first row of even the longest world (8 rows, the first at y = -42).
-inline constexpr int MIRROR_Y = -70;
+// The Mirror Mode line (Mirror Mode: see modes::mirror_active()) and below it
+// the selected level's goals ("[*] No death  [+] <1:30"), both above the first
+// row of even the longest world (8 rows, the first at y = -42).
+inline constexpr int MIRROR_Y = -72;
+inline constexpr int GOALS_X = -90;
+inline constexpr int GOALS_Y = -57;
 }  // namespace LevelSelect
 
 namespace Physics {

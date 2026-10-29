@@ -93,7 +93,8 @@ const LevelData LEVEL_3 = {
     nullptr,
     0,
     0,
-    &LEVEL_3_MIRROR};
+    &LEVEL_3_MIRROR,
+    18};
 
 // =============================================================================
 // WORLD 3 SCROLL - new, uses the scrolling camera (world_width=480)
@@ -173,7 +174,8 @@ const LevelData LEVEL_WORLD3_SCROLL = {
     nullptr,
     0,
     0,
-    &LEVEL_WORLD3_SCROLL_MIRROR};
+    &LEVEL_WORLD3_SCROLL_MIRROR,
+    15};
 
 // =============================================================================
 // WORLD 3 TRICK - "Trickwood", a Level Devil level (world_width=512)
@@ -357,7 +359,8 @@ const LevelData LEVEL_WORLD3_TRICK = {
     nullptr,
     0,
     0,
-    &LEVEL_WORLD3_TRICK_MIRROR};
+    &LEVEL_WORLD3_TRICK_MIRROR,
+    10};
 
 // =============================================================================
 // WORLD 3 BOSS - "Slitherman, Heart of the Forest" (world_width=520)
@@ -521,7 +524,8 @@ const LevelData LEVEL_WORLD3_BOSS = {
     world3_boss_checkpoints,
     sizeof(world3_boss_checkpoints) / sizeof(world3_boss_checkpoints[0]),
     8,
-    &LEVEL_WORLD3_BOSS_MIRROR};
+    &LEVEL_WORLD3_BOSS_MIRROR,
+    19};
 
 // Deliberately NOT given the slippery ground_friction the other two
 // World 3 levels use (see LEVEL_3 / LEVEL_WORLD3_SCROLL above) - a

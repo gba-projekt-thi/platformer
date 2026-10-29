@@ -496,7 +496,12 @@ const LevelData LEVEL_3_MIRROR = {
     240,
     160,
     0.55,
-    "New: Dash with B"};
+    "New: Dash with B",
+    nullptr,
+    0,
+    0,
+    nullptr,
+    18};
 
 // LEVEL_WORLD3_SCROLL mirrored left-right (Mirror Mode)
 constexpr PlatformData world3_scroll_platforms_mirror[] = {
@@ -967,7 +972,13 @@ const LevelData LEVEL_WORLD3_SCROLL_MIRROR = {
      true},
     480,
     160,
-    0.55};
+    0.55,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    nullptr,
+    15};
 
 // LEVEL_WORLD3_TRICK mirrored left-right (Mirror Mode)
 constexpr bn::fixed_point world3_trick_platforms_mirror_8_flee_path[] = {
@@ -1380,7 +1391,12 @@ const LevelData LEVEL_WORLD3_TRICK_MIRROR = {
     512,
     160,
     1,
-    "Trust nothing here."};
+    "Trust nothing here.",
+    nullptr,
+    0,
+    0,
+    nullptr,
+    10};
 
 // LEVEL_WORLD3_BOSS mirrored left-right (Mirror Mode)
 constexpr PlatformData world3_boss_platforms_mirror[] = {
@@ -2103,4 +2119,6 @@ const LevelData LEVEL_WORLD3_BOSS_MIRROR = {
     world3_boss_checkpoints_mirror,
     sizeof(world3_boss_checkpoints_mirror) /
         sizeof(world3_boss_checkpoints_mirror[0]),
-    8};
+    8,
+    nullptr,
+    19};

@@ -26,6 +26,16 @@ PlayerAnimator::PlayerAnimator(
     }
 }
 
+int PlayerAnimator::frame_index() const {
+    const int id = _sprite.sprite().tiles().id();
+    for (int i = 0; i < _cached_tiles.size(); ++i) {
+        if (_cached_tiles[i].id() == id) {
+            return i;
+        }
+    }
+    return 0;
+}
+
 void PlayerAnimator::update(bool onGround, bool sliding) {
     bool moving = bn::keypad::left_held() || bn::keypad::right_held();
     bool jumping = !onGround;

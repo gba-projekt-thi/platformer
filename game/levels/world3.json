@@ -42,6 +42,7 @@
       },
       "background": "world3",
       "music": "world3",
+      "target_time_s": 18,
       "spawn": [-96, 46],
       "door": {
         "x": 72,
@@ -99,6 +100,7 @@
       },
       "background": "world3",
       "music": "world3",
+      "target_time_s": 15,
       "spawn": [-224, 46],
       "door": {
         "x": 224,
@@ -154,6 +156,7 @@
       },
       "background": "world3",
       "music": "world3",
+      "target_time_s": 10,
       "spawn": [-232, 46],
       "door": {
         "x": 184,
@@ -232,6 +235,7 @@
       },
       "background": "world3",
       "music": "world3",
+      "target_time_s": 19,
       "boss_music_order": 8,
       "spawn": [-398, 42],
       "door": {

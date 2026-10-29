@@ -238,7 +238,16 @@ const LevelData LEVEL_0_MIRROR = {
     bn::regular_bg_items::world1,
     bn::music_items::world1,
     {96, 42},
-    {-32, 4, bn::sprite_items::door32x32, DOOR32X32_GRAPHICS_INDEXES, 8, true}};
+    {-32, 4, bn::sprite_items::door32x32, DOOR32X32_GRAPHICS_INDEXES, 8, true},
+    Cfg::Screen::WIDTH,
+    Cfg::Screen::HEIGHT,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    nullptr,
+    6};
 
 // LEVEL_1 mirrored left-right (Mirror Mode)
 constexpr PlatformData level1_platforms_mirror[] = {
@@ -605,7 +614,16 @@ const LevelData LEVEL_1_MIRROR = {
     bn::music_items::world1,
     {96, 42},
     {-112, 40, bn::sprite_items::door32x32, DOOR32X32_GRAPHICS_INDEXES, 8,
-     true}};
+     true},
+    Cfg::Screen::WIDTH,
+    Cfg::Screen::HEIGHT,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    nullptr,
+    7};
 
 // LEVEL_WORLD1_SCROLL mirrored left-right (Mirror Mode)
 constexpr PlatformData world1_scroll_platforms_mirror[] = {
@@ -1140,7 +1158,14 @@ const LevelData LEVEL_WORLD1_SCROLL_MIRROR = {
     {-176, 40, bn::sprite_items::door32x32, DOOR32X32_GRAPHICS_INDEXES, 8,
      true},
     384,
-    160};
+    160,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    nullptr,
+    12};
 
 // LEVEL_WORLD1_TRICK mirrored left-right (Mirror Mode)
 constexpr PlatformData world1_trick_platforms_mirror[] = {
@@ -1526,7 +1551,12 @@ const LevelData LEVEL_WORLD1_TRICK_MIRROR = {
     384,
     160,
     1,
-    "The tub forgives. Mostly."};
+    "The tub forgives. Mostly.",
+    nullptr,
+    0,
+    0,
+    nullptr,
+    6};
 
 // LEVEL_WORLD1_BOSS mirrored left-right (Mirror Mode)
 constexpr PlatformData world1_boss_platforms_mirror[] = {
@@ -2328,4 +2358,6 @@ const LevelData LEVEL_WORLD1_BOSS_MIRROR = {
     world1_boss_checkpoints_mirror,
     sizeof(world1_boss_checkpoints_mirror) /
         sizeof(world1_boss_checkpoints_mirror[0]),
-    9};
+    9,
+    nullptr,
+    13};

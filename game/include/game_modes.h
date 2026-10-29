@@ -71,13 +71,17 @@ inline void toggle_mirror_mode(GameState& state) {
 }
 
 // Options sub-menu rows: Music (0), SFX (1), [Hard Mode (2) once unlocked],
-// then Assist Mode.
+// Assist Mode, then Ghost (ghost_session.h).
 inline auto assist_row(bool hard_unlocked) -> int {
     return hard_unlocked ? 3 : 2;
 }
 
+inline auto ghost_row(bool hard_unlocked) -> int {
+    return assist_row(hard_unlocked) + 1;
+}
+
 inline auto options_row_count(bool hard_unlocked) -> int {
-    return hard_unlocked ? 4 : 3;
+    return ghost_row(hard_unlocked) + 1;
 }
 
 }  // namespace modes

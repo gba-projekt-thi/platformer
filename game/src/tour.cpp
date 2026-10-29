@@ -29,9 +29,19 @@ void on_update() {
 }
 replay::Player buttons(nullptr, 0);
 
+// A level played a second time starts this many frames late, so that its
+// ghost (the first run, ghost_session.h) is ahead of the duck on the pictures.
+constexpr int REVISIT_DELAY = 40;
+bool visited[64] = {};
+int delay = 0;
 bool mirrored = false;
 
 void play(InputState& input) {
+    if (delay > 0) {
+        --delay;
+        input = InputState{};
+        return;
+    }
     input = buttons.next();
     if (mirrored) {
         const bool left = input.left_held;
@@ -70,10 +80,12 @@ void start_screen(DataManager& data_manager) {
         state.play_frames = (2u * 3600 + 14 * 60 + 5) * 60;
         for (int i = 0; i < WorldIndex::LEVEL_COUNT; ++i) {
             state.level_deaths[i] = uint16_t((i * 7) % 23);
-            state.best_time_frames[i] = 1800;
+            // Every third level within its target time (6 s or more), the
+            // others not (30 s): the level select shows both goal states.
+            state.best_time_frames[i] = i % 3 == 0 ? 300 : 1800;
         }
         state.best_time_frames[WorldIndex::LEVEL_COUNT - 1] = 0;
-        state.no_death_clears = 0x2D;
+        state.no_death_clears = 0x2D | (1u << 13) | (1u << 15);
         // Slot 2 has finished the game: Mirror Mode can be switched on.
         state.hard_mode_unlocked = true;
         data_manager.save();
@@ -102,6 +114,13 @@ void level_started(Player& player, unsigned level_index, bool mirror) {
         return;
     }
     buttons = replay::Player(entry.runs, entry.run_count);
+    delay = 0;
+    // A mirrored level has its own ghost.
+    const unsigned key = level_index + (mirror ? 32 : 0);
+    if (key < 64) {
+        delay = visited[key] ? REVISIT_DELAY : 0;
+        visited[key] = true;
+    }
     player.set_input_hook(play);
     if (entry.has_start) {
         player.teleport_to(

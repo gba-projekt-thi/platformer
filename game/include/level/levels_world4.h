@@ -70,7 +70,8 @@ const LevelData LEVEL_WORLD4_POGO = {
     nullptr,
     0,
     0,
-    &LEVEL_WORLD4_POGO_MIRROR};
+    &LEVEL_WORLD4_POGO_MIRROR,
+    7};
 
 // =============================================================================
 // WORLD 4 SCROLL - garden theme (world_width=528)
@@ -142,7 +143,8 @@ const LevelData LEVEL_WORLD4_SCROLL = {
     world4_scroll_checkpoints,
     sizeof(world4_scroll_checkpoints) / sizeof(world4_scroll_checkpoints[0]),
     0,
-    &LEVEL_WORLD4_SCROLL_MIRROR};
+    &LEVEL_WORLD4_SCROLL_MIRROR,
+    11};
 
 // =============================================================================
 // WORLD 4 SCROLL 2 - garden theme, second level (world_width=320)
@@ -248,7 +250,8 @@ const LevelData LEVEL_WORLD4_SCROLL_2 = {
     nullptr,
     0,
     0,
-    &LEVEL_WORLD4_SCROLL_2_MIRROR};
+    &LEVEL_WORLD4_SCROLL_2_MIRROR,
+    9};
 
 // =============================================================================
 // WORLD 4 TRICK - "Hedge Your Bets", a Level Devil level (world_width=480)
@@ -358,7 +361,8 @@ const LevelData LEVEL_WORLD4_TRICK = {
     nullptr,
     0,
     0,
-    &LEVEL_WORLD4_TRICK_MIRROR};
+    &LEVEL_WORLD4_TRICK_MIRROR,
+    9};
 
 // =============================================================================
 // WORLD 4 BOSS - "The Hive Queen" (world_width=480)
@@ -562,4 +566,5 @@ const LevelData LEVEL_WORLD4_BOSS = {
     world4_boss_checkpoints,
     sizeof(world4_boss_checkpoints) / sizeof(world4_boss_checkpoints[0]),
     6,
-    &LEVEL_WORLD4_BOSS_MIRROR};
+    &LEVEL_WORLD4_BOSS_MIRROR,
+    18};

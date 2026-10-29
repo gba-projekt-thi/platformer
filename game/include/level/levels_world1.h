@@ -71,7 +71,8 @@ const LevelData LEVEL_0 = {
     nullptr,
     0,
     0,
-    &LEVEL_0_MIRROR};
+    &LEVEL_0_MIRROR,
+    6};
 
 // =============================================================================
 // LEVEL 1 (World 1) - unchanged
@@ -131,7 +132,8 @@ const LevelData LEVEL_1 = {
     nullptr,
     0,
     0,
-    &LEVEL_1_MIRROR};
+    &LEVEL_1_MIRROR,
+    7};
 
 // =============================================================================
 // WORLD 1 SCROLL - new, uses the scrolling camera (world_width=384)
@@ -210,7 +212,8 @@ const LevelData LEVEL_WORLD1_SCROLL = {
     nullptr,
     0,
     0,
-    &LEVEL_WORLD1_SCROLL_MIRROR};
+    &LEVEL_WORLD1_SCROLL_MIRROR,
+    12};
 
 // =============================================================================
 // WORLD 1 TRICK - "Second Chances", a kind Level Devil level (world_width=384)
@@ -319,7 +322,8 @@ const LevelData LEVEL_WORLD1_TRICK = {
     nullptr,
     0,
     0,
-    &LEVEL_WORLD1_TRICK_MIRROR};
+    &LEVEL_WORLD1_TRICK_MIRROR,
+    6};
 
 // =============================================================================
 // WORLD 1 BOSS - "The Kugelfisch King" (world_width=698)
@@ -495,4 +499,5 @@ const LevelData LEVEL_WORLD1_BOSS = {
     world1_boss_checkpoints,
     sizeof(world1_boss_checkpoints) / sizeof(world1_boss_checkpoints[0]),
     9,
-    &LEVEL_WORLD1_BOSS_MIRROR};
+    &LEVEL_WORLD1_BOSS_MIRROR,
+    13};

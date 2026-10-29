@@ -432,7 +432,10 @@ const LevelData LEVEL_WORLD5_SCROLL_MIRROR = {
     nullptr,
     world5_scroll_checkpoints_mirror,
     sizeof(world5_scroll_checkpoints_mirror) /
-        sizeof(world5_scroll_checkpoints_mirror[0])};
+        sizeof(world5_scroll_checkpoints_mirror[0]),
+    0,
+    nullptr,
+    12};
 
 // LEVEL_WORLD5_SCROLL_2 mirrored left-right (Mirror Mode)
 constexpr PlatformData world5b_scroll_platforms_mirror[] = {
@@ -709,7 +712,14 @@ const LevelData LEVEL_WORLD5_SCROLL_2_MIRROR = {
     {-176, 42, bn::sprite_items::door32x32, DOOR32X32_GRAPHICS_INDEXES, 8,
      true},
     380,
-    160};
+    160,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    nullptr,
+    7};
 
 // LEVEL_WORLD5_DASH mirrored left-right (Mirror Mode)
 constexpr PlatformData world5_dash_platforms_mirror[] = {
@@ -1047,7 +1057,10 @@ const LevelData LEVEL_WORLD5_DASH_MIRROR = {
     "Too far? Jump + B to dash",
     world5_dash_checkpoints_mirror,
     sizeof(world5_dash_checkpoints_mirror) /
-        sizeof(world5_dash_checkpoints_mirror[0])};
+        sizeof(world5_dash_checkpoints_mirror[0]),
+    0,
+    nullptr,
+    12};
 
 // LEVEL_WORLD5_LEVERS mirrored left-right (Mirror Mode)
 constexpr PlatformData world5_levers_platforms_mirror[] = {
@@ -1469,7 +1482,12 @@ const LevelData LEVEL_WORLD5_LEVERS_MIRROR = {
     700,
     160,
     1,
-    "Step on a lever to flip it"};
+    "Step on a lever to flip it",
+    nullptr,
+    0,
+    0,
+    nullptr,
+    13};
 
 // LEVEL_WORLD5_CLIMB mirrored left-right (Mirror Mode)
 constexpr PlatformData world5_climb_platforms_mirror[] = {
@@ -1749,7 +1767,12 @@ const LevelData LEVEL_WORLD5_CLIMB_MIRROR = {
     240,
     160,
     1,
-    "New: wall jump with A"};
+    "New: wall jump with A",
+    nullptr,
+    0,
+    0,
+    nullptr,
+    7};
 
 // LEVEL_WORLD5_TRICK mirrored left-right (Mirror Mode)
 constexpr PlatformData world5_trick_platforms_mirror[] = {
@@ -2291,7 +2314,12 @@ const LevelData LEVEL_WORLD5_TRICK_MIRROR = {
     640,
     160,
     1,
-    "Nothing works twice here."};
+    "Nothing works twice here.",
+    nullptr,
+    0,
+    0,
+    nullptr,
+    14};
 
 // LEVEL_WORLD5_BOSS mirrored left-right (Mirror Mode)
 constexpr PlatformData world5_boss_platforms_mirror[] = {
@@ -3045,7 +3073,9 @@ const LevelData LEVEL_WORLD5_BOSS_MIRROR = {
     world5_boss_checkpoints_mirror,
     sizeof(world5_boss_checkpoints_mirror) /
         sizeof(world5_boss_checkpoints_mirror[0]),
-    11};
+    11,
+    nullptr,
+    24};
 
 // LEVEL_WORLD5_FINALE mirrored left-right (Mirror Mode)
 constexpr PlatformData world5_finale_platforms_mirror[] = {
@@ -3262,4 +3292,11 @@ const LevelData LEVEL_WORLD5_FINALE_MIRROR = {
     {-160, 40, bn::sprite_items::susanne16x16, TRAP_GRAPHICS_INDEXES_8, 8,
      false},
     360,
-    160};
+    160,
+    1,
+    nullptr,
+    nullptr,
+    0,
+    0,
+    nullptr,
+    10};

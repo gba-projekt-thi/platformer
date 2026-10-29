@@ -30,6 +30,7 @@
       },
       "background": "world1",
       "music": "world1",
+      "target_time_s": 6,
       "spawn": [-96, 42],
       "door": {
         "x": 32,
@@ -76,6 +77,7 @@
       },
       "background": "world1",
       "music": "world1",
+      "target_time_s": 7,
       "spawn": [-96, 42],
       "door": {
         "x": 112,
@@ -131,6 +133,7 @@
       },
       "background": "world1",
       "music": "world1",
+      "target_time_s": 12,
       "spawn": [-176, 42],
       "door": {
         "x": 176,
@@ -184,6 +187,7 @@
       },
       "background": "world1",
       "music": "world1",
+      "target_time_s": 6,
       "spawn": [-176, 42],
       "door": {"x": 168, "y": 8, "attempt_positions": [[0, 0], [-128, 32]], "attempt_every": 3},
       "world_width": 384,
@@ -255,6 +259,7 @@
       },
       "background": "world1",
       "music": "world1",
+      "target_time_s": 13,
       "boss_music_order": 9,
       "spawn": [-333, 42],
       "door": {

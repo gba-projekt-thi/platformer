@@ -13,16 +13,16 @@ long before anybody runs the ROM:
     load time; this reports it at commit/CI time instead.
   * SpriteRegistry capacity (MAX_SPRITES, read from sprite_registry.h): every
     object that scrolls with the camera is a `Sprite` registered there - the
-    duck, the door, platforms, traps, switch sprites, checkpoint flags and the
-    dash afterimages. A sprite beyond the capacity is dropped by the registry
+    duck, the door, platforms, traps, switch sprites, checkpoint flags, the
+    dash afterimages and the ghost of the best run. A sprite beyond the capacity is dropped by the registry
     (logged, but it then stays pinned to its screen position).
   * the 128 hardware sprite slots (OAM): the registered sprites plus the HUD
     (death counter, timer), the level hint, the
     "New Best!" banner and the pause overlay. Butano counts hidden sprites
     too, so all of them are allocated at once in the worst case - except the
-    hint and the pause overlay: LevelScene releases the hint while paused, and
-    PauseController creates its title and rows only while paused and releases
-    them on resume.
+    hint and the pause overlay: LevelScene releases the hint while paused,
+    and PauseController creates its title and rows only while paused and
+    releases them on resume.
   * registry capacities of the collision system (collision_registry.h) against
     the entity limits.
 
@@ -69,6 +69,7 @@ OAM_SLOTS = 128  # GBA hardware: 128 sprites
 WARN_HEADROOM = 8
 PLAYER_AND_DOOR = 2  # the duck and the level's door are always registered
 POGO_SLASH = 1  # Player's slash while a pogo strike reaches (cfg_pogo.h)
+GHOST = 1  # the best run's ghost (ghost_session.cpp), a registered Sprite
 
 # Drawn glyphs of the always-present text (spaces draw nothing).
 DEATH_COUNTER_GLYPHS = 12  # "Deaths:" (7) + up to 5 digits (uint16_t)
@@ -79,13 +80,15 @@ BANNER_LINES = ("New Best!", "01:23.45", "Press A to continue")
 
 # pause_controller.cpp: main menu, options sub-menu and (controls_text.h)
 # controls view. Only one view exists at a time, so the overlay costs the
-# largest of them; each has one '>' cursor.
+# largest of them; each has one '>' cursor. The options and controls views
+# have no "Paused" title.
 PAUSE_MAIN_ROWS = ("Continue", "Restart Level", "Options", "Controls", "Title Screen")
 PAUSE_OPTIONS_ROWS = (
     "Music < 4/4 >",
     "SFX < 4/4 >",
-    "Hard Mode < Off >",
-    "Assist Mode < Off >",
+    "Hard < Off >",
+    "Assist < Off >",
+    "Ghost < Off >",
     "Traps x1.35",  # info line, only while a mode is on
 )
 CONTROLS_TITLE = "Controls"
@@ -93,7 +96,16 @@ DEFAULT_CONTROLS_LINES = (
     "D-Pad Move", "A Jump/Wall W5+", "B Dash W3+", "R Pogo W4+", "Start Pause", "Select Timer",
 )
 
+# level_select_scene.cpp: a row per level of the longest world, "Lv 1*+", the
+# selected one "> Lv 1 01:23.45*+", and above them the selected level's goals
+# and (once the game is finished) the Mirror Mode line.
+LEVEL_SELECT_ROW = "Lv 1*+"
+LEVEL_SELECT_SELECTED_ROW = "> Lv 1 01:23.45*+"
+LEVEL_SELECT_GOALS = "[*] No death  [+] <1:30"
+LEVEL_SELECT_MIRROR = "Mirror off (Select)"
+
 DEFAULTS = {
+    "LEVEL_SELECT_ROWS": 8,
     "MAX_SPRITES": 72,
     "SLOTS": 4,  # DashTrail::SLOTS
     "PLATFORMS": 32,
@@ -101,7 +113,7 @@ DEFAULTS = {
     "TRIGGERS": 16,
     "TOTAL_TRAPS": 32,
     "CHECKPOINTS": 1,
-    "ENTITY_SPRITES": 39,
+    "ENTITY_SPRITES": 38,
     "MAX_STATIC_BODIES": 96,
     "MAX_PHYSICS_BODIES": 64,
     "MAX_COLLISION_SHAPES": 64,
@@ -189,9 +201,9 @@ class Budget:
         no title at all."""
         main = sum(glyphs(r) for r in PAUSE_MAIN_ROWS) + 1
         options = sum(glyphs(r) for r in PAUSE_OPTIONS_ROWS) + 1
-        # the controls view has no title (pause_controller.cpp)
+        # the options and controls views have no title (pause_controller.cpp)
         controls = sum(glyphs(r) for r in self.controls_lines)
-        return ((main, PAUSE_TITLE_GLYPHS), (options, PAUSE_TITLE_GLYPHS), (controls, 0))
+        return ((main, PAUSE_TITLE_GLYPHS), (options, 0), (controls, 0))
 
     @property
     def pause_menu(self):
@@ -204,6 +216,18 @@ class Budget:
         open: the rows of the widest view plus its 'Paused' title. All of it is
         released on resume."""
         return max(rows + title for rows, title in self._pause_views())
+
+    @property
+    def level_select(self):
+        """Worst case of the level select: every row of the longest world
+        shows both marks, the selected one also its best time, plus the goals
+        and Mirror Mode lines."""
+        return (
+            (self.LEVEL_SELECT_ROWS - 1) * glyphs(LEVEL_SELECT_ROW)
+            + glyphs(LEVEL_SELECT_SELECTED_ROW)
+            + glyphs(LEVEL_SELECT_GOALS)
+            + glyphs(LEVEL_SELECT_MIRROR)
+        )
 
     @property
     def banner(self):
@@ -231,6 +255,11 @@ def load_budget(root="."):
             root, "collision_registry.h", "MAX_COLLISION_SHAPES", DEFAULTS["MAX_COLLISION_SHAPES"], missing
         ),
     }
+    world_index = find_file(root, "world_index.h")
+    if world_index is not None:
+        counts = re.findall(r'\{"World[^"]*",\s*\d+,\s*(\d+)\}', world_index.read_text())
+        if counts:
+            values["LEVEL_SELECT_ROWS"] = max(map(int, counts))
     for key in ("PLATFORMS", "PLATFORM_BODIES", "TRIGGERS", "TOTAL_TRAPS", "CHECKPOINTS", "ENTITY_SPRITES"):
         values[key] = read_int(root, "cfg.h", key, DEFAULTS[key], missing)
     budget = Budget(**values)
@@ -262,6 +291,7 @@ def demand(level, budget, dash=True, pogo=True):
         # death clears the trail first (one slot without the dash)
         + (budget.SLOTS if dash else 1)
         + (POGO_SLASH if pogo else 0)
+        + GHOST
     )
     fixed = registry + budget.hud
     hint = hint_glyphs(level)
@@ -356,7 +386,7 @@ def check_configuration(budget):
     b = budget
     # the per-kind limits plus the combined cap (Limits::ENTITY_SPRITES) every level is held to
     entities = min(b.PLATFORMS + b.TOTAL_TRAPS + b.TRIGGERS + b.CHECKPOINTS, b.ENTITY_SPRITES)
-    registry_worst = PLAYER_AND_DOOR + entities + b.SLOTS
+    registry_worst = PLAYER_AND_DOOR + entities + b.SLOTS + GHOST
     if registry_worst > b.MAX_SPRITES:
         warnings.append(
             f"Cfg::Level::Limits together allow {registry_worst} registered sprites "
@@ -373,6 +403,12 @@ def check_configuration(budget):
         warnings.append(
             f"the same worst case needs {oam_worst} hardware sprites with hint and banner or the "
             f"pause overlay, the hardware has {b.oam}"
+        )
+
+    if b.level_select > b.oam:
+        errors.append(
+            f"the level select needs {b.level_select} hardware sprites in the worst case "
+            f"({b.LEVEL_SELECT_ROWS} rows with marks, one with its time, goals and Mirror lines), the hardware has {b.oam}"
         )
 
     shared = b.TRIGGERS + b.TOTAL_TRAPS + b.CHECKPOINTS + PLAYER_AND_DOOR

@@ -4,7 +4,7 @@
 // pause_flow
 //
 // When the pause overlay's sprites exist. Butano counts a hidden sprite like a
-// visible one, and the overlay needs up to ~63 of the 128 sprites while it is
+// visible one, and the overlay needs up to ~59 of the 128 sprites while it is
 // open, so it is built when the game pauses and RELEASED (not hidden) on every
 // way out; a level that runs holds none of them (tools/Check_sprite_budget.py).
 //

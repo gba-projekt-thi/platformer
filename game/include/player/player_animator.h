@@ -23,6 +23,10 @@ class PlayerAnimator {
     // frame; sliding = locomotion::Core::wall_sliding().
     void update(bool onGround, bool sliding = false);
 
+    // The picture the duck shows now (index into the sprite item's tiles), for
+    // the ghost's recording (ghost_logic.h).
+    [[nodiscard]] int frame_index() const;
+
    private:
     Sprite& _sprite;
 
