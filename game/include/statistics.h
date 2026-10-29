@@ -25,8 +25,9 @@ static_assert(LEVELS <= GameState::MAX_LEVELS);
 // Lines of the screen: five totals, a heading, one line per level.
 inline constexpr int SUMMARY_LINES = 5;
 inline constexpr int LINE_COUNT = SUMMARY_LINES + 1 + LEVELS;
-// Lines shown at once.
-inline constexpr int VISIBLE_LINES = 7;
+// Lines shown at once: six, so that a screenful with the largest numbers, the
+// title and the hint fit the 128 sprites (tests/host/test_statistics.cpp).
+inline constexpr int VISIBLE_LINES = 6;
 inline constexpr int LINE_CHARS = 28;
 
 // Deaths in Assist Mode do not count, like its clear times (records_enabled).

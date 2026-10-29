@@ -53,5 +53,5 @@ class StatisticsScene : public core::Scene {
     bn::optional<bn::sprite_text_generator> _text_gen;
     // One sprite per glyph: a screenful of lines (checked by
     // tests/host/test_statistics.cpp) plus the title and the hint.
-    bn::vector<bn::sprite_ptr, 120> _sprites;
+    bn::vector<bn::sprite_ptr, 128> _sprites;
 };
