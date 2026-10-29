@@ -52,6 +52,17 @@ class TourTests(unittest.TestCase):
         for page in ("story_intro", "story_w2", "story_w3", "story_w4", "story_w5", "story_ending"):
             self.assertIn(page, names)
 
+    def test_every_page_of_every_story_chapter_is_photographed(self):
+        names = {n for _, n, _ in self.t.shots}
+        counts = tour.story_page_counts()
+        self.assertEqual(len(counts), 6)
+        self.assertTrue(all(1 <= c <= 3 for c in counts))
+        firsts = ("story_intro", "story_w2", "story_w3", "story_w4", "story_w5", "story_ending")
+        for first, count in zip(firsts, counts):
+            for page in range(2, count + 1):
+                self.assertIn(f"{first}_p{page}", names)
+            self.assertNotIn(f"{first}_p{count + 1}", names)
+
     def test_slot_1_starts_fresh_for_the_intro(self):
         self.assertEqual(self.slot_1[0], (0, 0))
 
