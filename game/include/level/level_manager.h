@@ -162,7 +162,7 @@ class LevelManager {
     struct FlowOps;
     // Level Devil: the respawn brought a different layout
     // (attempt_objects::layout_changes()) - a sound and a short shake.
-    void _cue_layout_change();
+    void _cue_layout_change(int shake_frames);
 
     static void _validate_level(const LevelData& level);
     void _load_platforms(const LevelData& level);

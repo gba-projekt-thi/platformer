@@ -1,5 +1,9 @@
 #include "test_framework.h"
 
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "attempt_objects.h"
 
 using attempt_objects::has_window;
@@ -134,4 +138,94 @@ TEST_CASE(attempt_objects_the_same_attempt_is_no_change) {
     const Level level{copies, 2, copies, 2, {}};
     CHECK(!layout_changes(level, 0, 0));
     CHECK(!layout_changes(level, 5, 5));
+}
+
+// -- apply() / load_dynamic() ------------------------------------------------
+
+namespace {
+
+struct FakePlatform {
+    unsigned from_death = 0;
+    unsigned until_death = 0;
+    const char* trigger_name = nullptr;
+    unsigned crumble_frames = 0;
+    std::vector<int> flee_path;
+};
+
+struct FakeTrap {
+    unsigned from_death = 0;
+    unsigned until_death = 0;
+};
+
+struct FakeLevel {
+    std::vector<FakePlatform> platforms;
+    std::vector<FakeTrap> traps;
+    int platform_count = 0;
+    int trap_count = 0;
+};
+
+auto make_level(std::vector<FakePlatform> p, std::vector<FakeTrap> t)
+    -> FakeLevel {
+    FakeLevel level;
+    level.platform_count = static_cast<int>(p.size());
+    level.trap_count = static_cast<int>(t.size());
+    level.platforms = std::move(p);
+    level.traps = std::move(t);
+    return level;
+}
+
+struct Recorder {
+    unsigned deaths = 0;
+    std::vector<std::string> log;
+    auto present(unsigned from, unsigned until) const -> bool {
+        return attempt_variant::active_for_deaths(deaths, from, until);
+    }
+    void show_platform(int i) { log.push_back("show" + std::to_string(i)); }
+    void hide_platform(int i) { log.push_back("hide" + std::to_string(i)); }
+    void set_trap_present(int i, bool on) {
+        log.push_back("trap" + std::to_string(i) + (on ? "+" : "-"));
+    }
+    void clear_dynamic() { log.push_back("clear_dynamic"); }
+    void clear_fleeing() { log.push_back("clear_fleeing"); }
+    void add_fleeing(int i) { log.push_back("flee" + std::to_string(i)); }
+    void add_switched(int i) { log.push_back("switch" + std::to_string(i)); }
+    void add_crumbling(int i) { log.push_back("crumble" + std::to_string(i)); }
+};
+
+}  // namespace
+
+TEST_CASE(attempt_objects_apply_shows_hides_and_leaves_switched_platforms) {
+    const FakeLevel level = make_level(
+        {{0, 0, nullptr, 0, {}},  // no window: untouched
+         {2, 0, nullptr, 0, {}},  // there from the 2nd death
+         {2, 0, "sw", 0, {}}},    // switched: left to its trigger
+        {{0, 0}, {0, 2}});        // trap 1 there until the 2nd death
+    Recorder before;
+    before.deaths = 0;
+    attempt_objects::apply(level, before);
+    CHECK((before.log == std::vector<std::string>{"hide1", "hide2", "trap1+"}));
+    Recorder after;
+    after.deaths = 2;
+    attempt_objects::apply(level, after);
+    CHECK((after.log == std::vector<std::string>{"show1", "trap1-"}));
+}
+
+TEST_CASE(attempt_objects_load_dynamic_keeps_absent_platforms_out) {
+    const FakeLevel level = make_level(
+        {{0, 0, "sw", 0, {}},
+         {0, 0, nullptr, 30, {}},
+         {2, 0, nullptr, 30, {}},  // absent at 0 deaths
+         {0, 0, nullptr, 0, {1, 2}}},
+        {});
+    Recorder r;
+    attempt_objects::load_dynamic(level, r);
+    CHECK(
+        (r.log == std::vector<std::string>{
+                      "clear_dynamic", "clear_fleeing", "switch0", "crumble1",
+                      "flee3"}));
+    Recorder later;
+    later.deaths = 2;
+    attempt_objects::load_dynamic(level, later);
+    CHECK(later.log.size() == 6u);
+    CHECK(later.log[4] == "crumble2");
 }

@@ -16,6 +16,37 @@
 
 namespace pause_flow {
 
+// The rows of the pause menu, in the order they are listed.
+enum class Option : int {
+    Continue = 0,
+    Restart = 1,
+    Options = 2,
+    Controls = 3,
+    TitleScreen = 4,
+    Count = 5
+};
+
+// What the level has to do once the menu closed on a confirmed row.
+enum class Outcome : int { None, Restart, ReturnToTitle };
+
+inline auto outcome_for(Option option) -> Outcome {
+    switch (option) {
+        case Option::Restart:
+            return Outcome::Restart;
+        case Option::TitleScreen:
+            return Outcome::ReturnToTitle;
+        default:
+            return Outcome::None;
+    }
+}
+
+// Frees the title and the menu rows (any container with clear()).
+template <typename Title, typename Rows>
+void release(Title& title, Rows& rows) {
+    title.clear();
+    rows.clear();
+}
+
 // The game just paused: the menu rows, then the title above them.
 template <typename Host>
 void open(Host& h) {

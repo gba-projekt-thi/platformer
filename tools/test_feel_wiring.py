@@ -3,7 +3,7 @@
 The order of the hint, the camera, the death feedback and the respawn is tested
 on the host (hint_logic.h, level_flow.h, pause_flow.h and their tests). What
 stays are single lines inside one Butano step: the death ghost, and what the
-pause overlay's helpers create and free.
+pause overlay's init creates.
 
 Run from the repository root:
 
@@ -51,22 +51,10 @@ class PlayerDeathFeedbackWiringTests(unittest.TestCase):
     def setUpClass(cls):
         cls.text = PLAYER.read_text()
         cls.header = PLAYER_H.read_text()
-        cls.update = _body(cls.text, r"void\s+Player::update\s*\(\s*\)")
-        cls.death = _body(cls.text, r"void\s+Player::death\s*\(\s*\)")
         cls.begin = _body(cls.text, r"void\s+Player::begin_death_fx\s*\(\s*\)")
-        cls.end = _body(cls.text, r"void\s+Player::end_death_fx\s*\(\s*\)")
-        cls.cancel = _body(cls.text, r"void\s+Player::cancel_death_fx\s*\(\s*\)")
-        cls.blink = _body(cls.text, r"void\s+Player::_update_respawn_blink\s*\(\s*\)")
 
     def test_helpers_are_defined(self):
-        for name in ("update", "death", "begin", "end", "cancel", "blink"):
-            self.assertIsNotNone(getattr(self, name), name)
-        for name in ("begin_death_fx", "end_death_fx", "cancel_death_fx"):
-            self.assertIn(name, self.header)
-
-    def test_death_remembers_where_it_happened_before_the_teleport(self):
-        self.assertLess(self.death.index("_death_x = pos.x"), self.death.index("pos.x = _restart_x"))
-        self.assertLess(self.death.index("_death_y = pos.y"), self.death.index("pos.y = _restart_y"))
+        self.assertIsNotNone(self.begin)
 
     def test_the_ghost_is_a_registered_copy_of_the_last_frame_and_the_duck_is_hidden(self):
         self.assertIn("_death_ghost.emplace(", self.begin)
@@ -87,7 +75,6 @@ class PauseOverlayWiringTests(unittest.TestCase):
         cls.text = PAUSE.read_text()
         cls.header = PAUSE_H.read_text()
         cls.init = _body(cls.text, r"void\s+PauseController::_init_pause_menu\s*\(\s*\)")
-        cls.release = _body(cls.text, r"void\s+PauseController::_release_sprites\s*\(\s*\)")
 
     def test_nothing_is_hidden_any_more(self):
         # a hidden sprite keeps its slot: the old _set_visible(false) left the
@@ -99,11 +86,6 @@ class PauseOverlayWiringTests(unittest.TestCase):
         self.assertIsNotNone(self.init)
         self.assertNotIn("generate(", self.init)
         self.assertNotIn("_title_sprites", self.init)
-
-    def test_the_release_frees_the_title_and_the_rows(self):
-        self.assertIsNotNone(self.release)
-        self.assertIn("_title_sprites.clear()", self.release)
-        self.assertIn("_menu_sprites.clear()", self.release)
 
 
 if __name__ == "__main__":

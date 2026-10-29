@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include "attempt_variant.h"
+#include "cfg_death_fx.h"
 #include "death_fx.h"
 #include "door_logic.h"
 #include "respawn_logic.h"
@@ -124,7 +125,7 @@ void unload(Host& h) {
 // A frame with the shake applied; the HUD and the background stay put.
 template <typename Host>
 void render_frame(Host& h) {
-    h.apply_shake();
+    h.apply_shake(Cfg::DeathFx::SHAKE_AMPLITUDE);
     h.sync_sprites();
     h.core_update();
 }
@@ -149,7 +150,7 @@ void finish_respawn(Host& h) {
         h.load_dynamic_platforms();
     }
     if (layout_changed) {
-        h.cue_layout_change();
+        h.cue_layout_change(Cfg::DeathFx::LAYOUT_SHAKE_FRAMES);
     }
     h.reset_crumbling();
     h.reset_fleeing();
@@ -157,6 +158,16 @@ void finish_respawn(Host& h) {
     // from the reset (or checkpoint-restored) triggers.
     h.respawn_triggers();
     h.snap_camera();
+}
+
+// A replay starts in the layout of `deaths` deaths in the level: no cue for
+// it, whatever the layout before was.
+template <typename Host>
+void start_replay_at(Host& h, unsigned deaths) {
+    h.set_player_deaths_in_level(deaths);
+    h.attempt().seen = h.deaths();
+    h.attempt().layout = deaths;
+    finish_respawn(h);
 }
 
 // A death the world caused waits for the end of its freeze; Restart Level
@@ -207,7 +218,7 @@ void check_player_died(Host& h) {
         return;
     }
     h.attempt().seen = deaths;
-    h.start_death_fx();
+    h.start_death_fx(Cfg::DeathFx::HITSTOP_FRAMES, Cfg::DeathFx::SHAKE_FRAMES);
     h.begin_player_death_fx();
 }
 
