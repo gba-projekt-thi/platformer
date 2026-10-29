@@ -38,8 +38,9 @@ PYTHON      	:=  python
 SOURCES     	:=  game/src game/src/traps game/src/player game/src/scene extern/engine/core/src extern/engine/extern/butano/common/src extern/engine/src/save_system/src
 INCLUDES    	:=  game/include game/include/player game/include/traps game/include/level game/include/scene extern/engine/core/include extern/engine/extern/butano/common/include extern/engine/src/save_system/include
 DATA        	:=
+# Butano re-reads this file from build/, where game/graphics does not exist; GRAPHICS is only used on the first pass.
 GRAPHICS_ROOT 	:= game/graphics
-GRAPHICS      	:= $(shell find $(GRAPHICS_ROOT) -type d) \ extern/engine/extern/butano/common/graphics
+GRAPHICS      	:= $(shell find $(GRAPHICS_ROOT) -type d 2>/dev/null) \ extern/engine/extern/butano/common/graphics
 #GRAPHICS 		:=  game/graphics game/graphics/global game/graphics/level1 game/graphics/level2 extern/engine/extern/butano/common/graphics
 AUDIO       	:=  game/audio extern/engine/extern/butano/common/audio
 AUDIOBACKEND	:=  maxmod
