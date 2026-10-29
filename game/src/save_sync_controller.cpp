@@ -1,5 +1,7 @@
 #include "save_sync_controller.h"
 
+#include "statistics.h"
+
 SaveSyncController::SaveSyncController(
     Player& player,
     DataManager& data_manager)
@@ -19,6 +21,11 @@ bool SaveSyncController::sync() {
         return false;
     }
 
+    // Every new death counts for the level the duck is in.
+    GameState& state = _data_manager.state();
+    for (unsigned d = _last_death_ct; d < _player.get_deaths(); ++d) {
+        statistics::record_death(state, unsigned(state.level));
+    }
     _last_death_ct = _player.get_deaths();
     _save_progress();
     return true;

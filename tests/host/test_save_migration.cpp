@@ -169,7 +169,7 @@ TEST_CASE(game_state_layout_lock) {
     // SAVE_VERSION, add the previous version's line to
     // game_state_migration.h::valid_bytes() (offsetof the new field), then
     // update the numbers below.
-    CHECK_EQ(static_cast<int>(sizeof(GameState)), 156);
+    CHECK_EQ(static_cast<int>(sizeof(GameState)), 224);
     CHECK_EQ(static_cast<int>(offsetof(GameState, level)), 0);
     CHECK_EQ(static_cast<int>(offsetof(GameState, furthest_level)), 10);
     CHECK_EQ(static_cast<int>(offsetof(GameState, best_time_frames)), 16);
@@ -177,7 +177,9 @@ TEST_CASE(game_state_layout_lock) {
     CHECK_EQ(static_cast<int>(offsetof(GameState, assist_mode_enabled)), 150);
     CHECK_EQ(static_cast<int>(offsetof(GameState, entry_level)), 152);
     CHECK_EQ(static_cast<int>(offsetof(GameState, entry_deaths)), 154);
-    CHECK_EQ(SAVE_VERSION, 11);
+    CHECK_EQ(static_cast<int>(offsetof(GameState, play_frames)), 156);
+    CHECK_EQ(static_cast<int>(offsetof(GameState, level_deaths)), 160);
+    CHECK_EQ(SAVE_VERSION, 12);
 }
 
 TEST_CASE(game_state_current_payload_roundtrips_exactly) {
@@ -462,4 +464,53 @@ TEST_CASE(game_state_v10_save_without_a_level_entered_stays_so) {
     game_state_migration::upgrade(state, 10);
     CHECK_EQ(int(state.level), 3);
     CHECK_EQ(int(state.entry_level), -1);
+}
+
+// ---- schema 12: statistics (play time, deaths per level)
+// --------------------------------------------------------------
+
+TEST_CASE(game_state_v11_payload_keeps_everything_before_play_frames) {
+    CHECK_EQ(
+        game_state_migration::valid_bytes(11),
+        static_cast<int>(offsetof(GameState, play_frames)));
+    CHECK_EQ(
+        game_state_migration::valid_bytes(10),
+        static_cast<int>(offsetof(GameState, play_frames)));
+}
+
+TEST_CASE(game_state_v11_slot_starts_with_empty_statistics) {
+    GameState saved{};
+    saved.level = 5;
+    saved.deaths = 9;
+    saved.best_time_frames[2] = 777;
+    saved.entry_level = 5;
+    saved.entry_deaths = 3;
+    uint8_t bytes[sizeof(GameState)];
+    std::memset(bytes, 0xAB, sizeof(bytes));
+    std::memcpy(bytes, &saved, offsetof(GameState, play_frames));
+
+    GameState out{};
+    CHECK(
+        restore_state(
+            bytes, offsetof(GameState, play_frames), 11,
+            &game_state_migration::valid_bytes,
+            out) == RestoreResult::Migrated);
+    game_state_migration::upgrade(out, 11);
+    CHECK_EQ(int(out.level), 5);
+    CHECK_EQ(out.best_time_frames[2], 777u);
+    CHECK_EQ(int(out.entry_level), 5);
+    CHECK_EQ(out.play_frames, 0u);
+    for (int i = 0; i < GameState::MAX_LEVELS; ++i) {
+        CHECK_EQ(int(out.level_deaths[i]), 0);
+    }
+}
+
+TEST_CASE(game_state_inserting_a_level_moves_its_deaths_too) {
+    GameState state{};
+    state.level_deaths[2] = 4;
+    state.level_deaths[3] = 5;
+    game_state_migration::insert_level(state, 3);
+    CHECK_EQ(int(state.level_deaths[2]), 4);
+    CHECK_EQ(int(state.level_deaths[3]), 0);
+    CHECK_EQ(int(state.level_deaths[4]), 5);
 }

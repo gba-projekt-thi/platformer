@@ -58,6 +58,16 @@ void start_screen(DataManager& data_manager) {
         tour_data::SLOT_1[index].furthest);
     if (part == 0) {
         seed(data_manager, 1, 0, WorldIndex::LEVEL_COUNT - 1);
+        // Something to show on slot 2's statistics screen.
+        GameState& state = data_manager.state();
+        state.play_frames = (2u * 3600 + 14 * 60 + 5) * 60;
+        for (int i = 0; i < WorldIndex::LEVEL_COUNT; ++i) {
+            state.level_deaths[i] = uint16_t((i * 7) % 23);
+            state.best_time_frames[i] = 1800;
+        }
+        state.best_time_frames[WorldIndex::LEVEL_COUNT - 1] = 0;
+        state.no_death_clears = 0x2D;
+        data_manager.save();
     }
     data_manager.set_slot_index(0);
     ++part;

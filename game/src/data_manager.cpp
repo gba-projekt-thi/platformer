@@ -61,6 +61,12 @@ void DataManager::reset() {
     // hard_mode_enabled (the toggle) is deliberately NOT preserved here,
     // matching the audio volume settings' reset-to-default behavior.
     const bool hard_mode_unlocked = _game_state.hard_mode_unlocked;
+    // Statistics (statistics.h) are lifetime numbers of the slot too.
+    const uint32_t play_frames = _game_state.play_frames;
+    uint16_t level_deaths[GameState::MAX_LEVELS];
+    for (int i = 0; i < GameState::MAX_LEVELS; ++i) {
+        level_deaths[i] = _game_state.level_deaths[i];
+    }
 
     // Reset runtime state.
     _game_state = {};
@@ -70,6 +76,10 @@ void DataManager::reset() {
     }
     _game_state.no_death_clears = no_death_clears;
     _game_state.hard_mode_unlocked = hard_mode_unlocked;
+    _game_state.play_frames = play_frames;
+    for (int i = 0; i < GameState::MAX_LEVELS; ++i) {
+        _game_state.level_deaths[i] = level_deaths[i];
+    }
 
     // Then persist the cleared save.
     _save_mgr.save(_slot_index, _game_state);
