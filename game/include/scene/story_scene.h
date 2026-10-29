@@ -4,6 +4,7 @@
 #include "core_scene_manager.h"
 
 #include "bn_optional.h"
+#include "bn_regular_bg_ptr.h"
 #include "bn_span.h"
 #include "bn_sprite_ptr.h"
 #include "bn_sprite_text_generator.h"
@@ -19,9 +20,11 @@ class LevelManager;
 // -----------------------------------------------------------------------------
 // StoryScene
 //
-// One page of Hildegard's story (story.h) on a black screen, centered, with
-// a prompt; A or Start goes on to the level (GameState::level) in a
-// LevelScene, or to the reunion (KissingScene) after the ending. Shown by
+// A chapter of Hildegard's story (story.h): its pages one after the other,
+// centered in a panel on the chapter's picture, with a prompt. A or Start
+// turns to the next page; after the last one it goes on to the level
+// (GameState::level) in a LevelScene, or to the reunion (KissingScene) after
+// the ending. Shown by
 // StartScene before a new game, by LevelScene when the door leads into a
 // world for the first time, and by main() when the game is finished.
 // -----------------------------------------------------------------------------
@@ -30,7 +33,7 @@ class StoryScene : public core::Scene {
     enum class Then { Level, Reunion };
 
     StoryScene(
-        const story::Page& page,
+        const story::Chapter& chapter,
         Player& player,
         bn::span<const LevelData> levels,
         DataManager& data_manager,
@@ -41,7 +44,10 @@ class StoryScene : public core::Scene {
     void update() override;
 
    private:
-    const story::Page& _page;
+    void _show_page();
+
+    const story::Chapter& _chapter;
+    int _page = 0;
     Then _then;
     Player& _player;
     bn::span<const LevelData> _levels;
@@ -50,7 +56,8 @@ class StoryScene : public core::Scene {
 
     bool _transition_requested = false;
 
+    bn::optional<bn::regular_bg_ptr> _bg;
     bn::optional<bn::sprite_text_generator> _text_gen;
-    // story::MAX_GLYPHS plus the prompt ("Press A", 6 glyphs).
-    bn::vector<bn::sprite_ptr, story::MAX_GLYPHS + 10> _sprites;
+    // story::MAX_GLYPHS plus the prompt ("Press A (1/3)", 11 glyphs).
+    bn::vector<bn::sprite_ptr, story::MAX_GLYPHS + 12> _sprites;
 };
