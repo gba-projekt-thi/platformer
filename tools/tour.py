@@ -139,7 +139,10 @@ def build_tour(levels):
     start_screen(0, 0)
     t.press("A").wait(fade)
     story(0, "story_intro", "Story: Intro bei einem neuen Spiel")
-    t.press("A").wait(fade).shot("level0", "Level 1 beginnt")
+    # Paused while the level still fades in: the dimming must hold.
+    t.press("A").wait(75).press("START").wait(6)
+    t.shot("pause_during_fade", "Pause in der ersten Sekunde (Einblendung): Level abgedunkelt, Text hell")
+    t.press("START").wait(fade).shot("level0", "Level 1 beginnt")
     t.press("START").wait(20).shot("pause_level0", "Pausemenü über Level 1: Level abgedunkelt, Text hell")
     t.press("DOWN", 2).press("A").wait(20)
     t.shot("pause_options", "Pausemenü, Optionen: Level abgedunkelt")

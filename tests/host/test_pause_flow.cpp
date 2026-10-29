@@ -93,6 +93,13 @@ TEST_CASE(pause_flow_the_level_is_dimmed_while_paused_and_clear_after) {
     CHECK(!h.dimmed);
 }
 
+TEST_CASE(pause_flow_dimming_never_gets_lighter_than_a_running_fade) {
+    CHECK_EQ(pause_flow::dimmed_alpha(1.0, 0.6), 1.0);  // start of a fade-in
+    CHECK_EQ(pause_flow::dimmed_alpha(0.8, 0.6), 0.8);
+    CHECK_EQ(pause_flow::dimmed_alpha(0.3, 0.6), 0.6);  // late in the fade
+    CHECK_EQ(pause_flow::dimmed_alpha(0.0, 0.6), 0.6);  // no fade
+}
+
 TEST_CASE(pause_flow_every_way_out_undims_the_level) {
     Host h;
     pause_flow::open(h);
