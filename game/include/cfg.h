@@ -196,17 +196,15 @@ inline constexpr int HINT_Y = 68;
 
 namespace Story {
 // StoryScene: up to story::MAX_LINES centered lines from FIRST_LINE_Y, the
-// prompt below them (checked to fit by tests/host/test_story.cpp), all inside
-// the text panel of the story pictures (PANEL in
-// tools/Generate_story_backgrounds.py: screen y 28..122).
+// prompt below them (checked to fit by tests/host/test_story.cpp), over the
+// dimmed world background. The duck (2x scaled) stands below the prompt.
 inline constexpr int FIRST_LINE_Y = -42;
 inline constexpr int LINE_SPACING = 18;
-inline constexpr int PROMPT_Y = 30;  // A 256 x 256 background is centered on
-                                     // the screen; this puts its top-left
-// corner (where the pictures are) on the screen's: (256 - 240) / 2, (256 - 160)
-// / 2.
-inline constexpr int BG_X = 8;
-inline constexpr int BG_Y = 48;
+inline constexpr int PROMPT_Y = 30;
+inline constexpr int DUCK_X = 0;
+inline constexpr int DUCK_Y = 58;
+// Black fade of the picture: the village and the bathtub are busy behind text.
+inline constexpr bn::fixed DIM_ALPHA = 0.75;
 }  // namespace Story
 
 namespace LevelSelect {
