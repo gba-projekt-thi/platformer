@@ -325,3 +325,26 @@ TEST_CASE(death_fx_duck_show_or_hide_by_the_game_stops_the_flicker) {
     duck.stop_blink();
     CHECK(duck.tick(true) == Blink::Idle);
 }
+
+TEST_CASE(death_fx_ending_the_freeze_flickers_for_the_respawn_blink_frames) {
+    DuckFx duck;
+    duck.begin();
+    CHECK(duck.end());
+    int flicker = 0;
+    while (duck.tick(true) != Blink::Idle && flicker < 100) {
+        ++flicker;
+    }
+    CHECK_EQ(flicker, C::RESPAWN_BLINK_FRAMES);
+}
+
+TEST_CASE(death_fx_the_duck_leaves_the_spot_it_died_at_for_the_restart_point) {
+    int x = 40;
+    int y = 90;
+    int dx = 0;
+    int dy = 0;
+    death_fx::leave_death_spot(x, y, 8, 16, dx, dy);
+    CHECK_EQ(dx, 40);
+    CHECK_EQ(dy, 90);
+    CHECK_EQ(x, 8);
+    CHECK_EQ(y, 16);
+}

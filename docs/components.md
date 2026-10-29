@@ -1,12 +1,10 @@
 # Components
 
 This page gives a **conceptual deep-dive** into the three largest gameplay
-systems: the **Player System**, the **Trap System**, and **Level Management**,
-plus the smaller **Audio System** and **Progress Feedback** systems built on
-top of them. Each section describes responsibilities, states, and
-interactions — not code.
-
-For the high-level view of how these fit together, see
+systems: the **Player System**, the **Trap System** and **Level Management**,
+plus the smaller **Progress Feedback** and **Audio System**. Each section
+describes responsibilities, states and interactions, with the names of the
+files that hold the rules. For the high-level view see
 [Project Architecture](architecture.md).
 
 ---
@@ -14,13 +12,13 @@ For the high-level view of how these fit together, see
 ## 5.1 Player System
 
 The player is the duck. It is built by **composition**: a top-level entity that
-owns several focused collaborators. Each collaborator has one job, which keeps
-the system easy to reason about and extend.
+owns several focused collaborators.
 
 ```mermaid
 graph TD
     Player[Player entity] --> Sprite[Sprite<br/>visible duck]
-    Player --> Loc[Locomotion<br/>physics + input]
+    Player --> Loc[PlayerLocomotion<br/>input + collision probes]
+    Loc --> Core[locomotion::Core<br/>movement rules]
     Player --> Anim[Animator<br/>frame selection]
     Player --> SM[State Machine<br/>Idle/Run/Jump/Fall]
     Player --> HUD[HUD<br/>deaths + timer]
@@ -30,210 +28,169 @@ graph TD
 
 ### Player states & capabilities
 
-The state machine tracks a small set of coarse movement states that the
-animator and locomotion react to:
+The state machine tracks four coarse movement states that the animator reacts
+to:
 
-| State | Meaning | Typical animation |
-|-------|---------|-------------------|
-| **Idle** | Standing still, on the ground. | A static/idle frame (or facing-back when not moving). |
-| **Run** | Moving horizontally on the ground. | Alternating left/right walk frames. |
-| **Jump** | Rising after a jump. | Ascent frames matched to facing direction. |
-| **Fall** | Descending (not jumping). | Descent frames matched to facing direction. |
+| State | Meaning |
+|-------|---------|
+| **Idle** | Standing still on the ground (a static frame, or facing back). |
+| **Run** | Moving horizontally on the ground (alternating walk frames). |
+| **Jump** | Rising after a jump. |
+| **Fall** | Descending. |
 
-The locomotion component also tracks a **facing** direction (forward, back,
-left, right) that feeds the animator and lets the duck turn to look at the
-camera when idle.
+Locomotion also tracks a **facing** direction (forward, back, left, right) for
+the animator.
 
 ### Movement mechanics
 
-Locomotion owns the per-frame physics step, performed in a deliberate order so
-that collisions, ground detection, and death checks all happen consistently
-within a single frame:
+The movement rules live in `locomotion::Core` (`locomotion.h`), which has no
+Butano dependency and is host-tested (`tests/host/test_locomotion.cpp`).
+`PlayerLocomotion` is the adapter: it reads the buttons into an `InputState`,
+answers the core's collision probes (ground, ceiling, left/right wall, pogo
+box) from the physics body, and turns the returned `Effects` into sounds and
+`PlayerEvents`. One `Core::step()` per frame:
 
-1. **Horizontal input** — accelerate left/right up to the max speed, applying
-   the configured acceleration per frame.
-2. **Jump handling** — including **coyote time** (a few grace frames after
-   leaving a ledge) and **jump buffering** (a few frames before landing).
-3. **Gravity** — applied every frame to build downward velocity.
-4. **Variable jump** — releasing the jump button early shortens the ascent.
-5. **Velocity clamping** — keeps the horizontal and fall speeds within the
-   configured caps.
-6. **Bounds** — the duck bounces off the world's left/right edges (the boundary
-   is set per level by the level manager, based on the world width).
-7. **Ground state update** — queries the collision system to determine whether
-   the duck is currently resting on a platform.
-8. **Death check** — if the duck falls below a configured death height, a death
-   is raised.
+1. Store the jump input in the jump buffer.
+2. If a [dash](#dash) is running it owns the frame; the steps below are skipped
+   except the fall-death check and the ground-state update.
+3. Horizontal input: accelerate up to the max speed; brake with
+   `DECELERATION`.
+4. Jump handling with **coyote time** and **jump buffering**; wall slide and
+   wall jump; pogo strike.
+5. Gravity; **variable jump** (releasing A early ends the rise); clamping of
+   horizontal and fall speed.
+6. **Bounds**: the duck bounces off the world's left/right edges (set per level
+   from the world width).
+7. **Ground state** from the probes, and the **death check**: falling below
+   `Cfg::Player::DEATH_HEIGHT` raises a death.
 
-The ground state and facing direction are then made available to the animator
-and state machine so they can pick the correct frames for this tick.
+The tuning values (acceleration, max speed, jump speed, gravity, fall clamp,
+coyote/buffer frames, death height) live in `Cfg::Player` (`cfg.h`) so the feel
+can be tuned in one place for every stage.
 
 ### Dash
 
-The dash rules live in `DashController` (`dash_controller.h`), which has no
-Butano dependency so it is unit-tested on the host. Locomotion
-(`update_dash()`) gathers the frame's inputs and environment flags into a
-`DashInput`, calls `update()`, and applies the returned `DashStep`
-(start: facing/sound; end: hand-over velocity; moving: dash velocity). It is
-tuned by `Cfg::Dash` (`cfg_dash.h`). It is checked first in
-the per-frame step: while a dash runs it owns the whole frame, and the normal
-steps above (input, gravity, variable jump, clamping) are skipped; only the
-fall-death check and the ground-state update still run.
+The dash rules live in `DashController` (`dash_controller.h`, Butano-free,
+host-tested), tuned by `Cfg::Dash` (`cfg_dash.h`). `Core::_update_dash()` fills
+a `DashInput` from the frame's input and environment, calls `update()` and
+applies the returned `DashStep`.
 
-- **Start.** B pressed, dash enabled for the level, air dash charge
-  available, cooldown elapsed. Direction is the held D-Pad direction, else the
-  facing direction.
-- **Motion.** `vel_x = ±SPEED`, `vel_y = 0` each frame for `DURATION_FRAMES`.
+- **Start.** B pressed, dash enabled for the level, air dash charge available,
+  cooldown elapsed. Direction is the held D-Pad direction, else the facing.
+- **Motion.** `vel_x = ±SPEED`, `vel_y = 0` for `DURATION_FRAMES`.
   `PhysicsBody::move_velocity()` clamps by magnitude, so `SPEED` must stay
   below the player's `vel_max`.
 - **End.** Timer elapsed, a wall zeroed `vel_x`, the world's bounce edge was
   reached, or a buffered jump on the ground (dash-jump). Normal movement
-  resumes the same frame at walking top speed with zero vertical velocity,
-  and the cooldown starts.
+  resumes the same frame at walking top speed, and the cooldown starts.
 - **Charge.** The air dash is refilled by a real ground probe hit, never by
-  coyote time - otherwise dashing off a ledge would refill it at once - and
-  `DashController::land()` ignores the call while a dash is running, so a dash
-  started on the ground cannot refill itself on the next ground probe and be
-  chained into an air dash right off the ledge.
-- **Reset.** `Player::death()` and every level load call `reset_dash()`, so a
-  dash never carries over a respawn.
+  coyote time. `DashController::land()` ignores the call while a dash runs, so
+  a dash started on the ground cannot refill itself.
+- **Reset.** `Player::death()` and every level load call `reset_dash()`.
 - **Enablement.** `LevelManager::_load_player_spawn()` enables it when the
-  loaded level index is at or beyond the start of `Cfg::Dash::UNLOCK_WORLD`
-  (via `WorldIndex::WORLDS`). No save field is involved, so there is no
-  schema change.
-- **Animation.** While dashing the animator is given "not on ground", so the
-  jump pose plays, also for a dash started on the ground.
-- **Feedback.** Starting a dash plays `bn::sound_items::dash`. While it runs,
-  `Player` leaves afterimage ghosts: `DashTrail` (`dash_trail.h`, Butano-free
-  and unit-tested) decides when a ghost is spawned (every second dash frame),
-  which of its four slots it takes, how long it lives (six frames) and when it
-  is drawn - on odd remaining life only, so it flickers like a transparency
-  without touching the blending setup the scene fades use. Each slot is a
-  `Sprite` copy of the duck's current frame (same tile set, same palette),
-  registered with `SpriteRegistry` so it stays put in world space while the
-  camera scrolls, and one z-step behind the duck. Ghosts are cleared on death,
-  when the duck is hidden for a menu, and when a level ends (`LevelManager`
-  calls `Player::clear_dash_trail()`), so none stays frozen on screen.
+  loaded level is at or beyond the start of `Cfg::Dash::UNLOCK_WORLD` (via
+  `WorldIndex::WORLDS`). No save field is involved. The pogo and the wall jump
+  are enabled the same way from their own `UNLOCK_WORLD`; the pogo also in
+  every level that has a BOSS trap.
+- **Animation.** While dashing the animator gets "not on ground", so the jump
+  pose plays.
+- **Feedback.** Starting a dash plays `bn::sound_items::dash`. `Player` leaves
+  afterimage ghosts: `DashTrail` (`dash_trail.h`, Butano-free) decides when a
+  ghost spawns (every second dash frame), which of its 4 slots it takes, how
+  long it lives (6 frames) and when it is drawn (odd remaining life only, so it
+  flickers without touching the blending setup the scene fades use). Each slot
+  is a `Sprite` copy of the duck's current frame registered with
+  `SpriteRegistry`, one z-step behind the duck. Ghosts are cleared on death,
+  when the duck is hidden for a menu, and when a level ends.
 
-### Jump physics principles
+### Pogo and wall jump
 
-The jump is not a single impulse; it is a small set of cooperating rules that
-together give the duck a responsive, controllable leap:
-
-- The duck receives an upward velocity when a jump begins.
-- The jump is **height-controllable**: holding the jump button extends the
-  ascent, releasing early shortens it.
-- **Gravity** constantly pulls the duck down, and a **max fall speed** keeps
-  descents predictable.
-- **Coyote time** and **jump buffering** forgive small input timing errors,
-  which is essential for tight platform layouts to feel fair.
-
-The exact tuning values (acceleration, max speed, jump speed, gravity, fall
-speed clamp, coyote/buffer frames, death height) live in a central
-configuration so designers can tune the feel in one place and have it propagate
-to every stage.
+Both live in `locomotion::Core`, tuned by `Cfg::Pogo` (`cfg_pogo.h`) and
+`Cfg::WallJump` (`cfg_wall_jump.h`); the player-facing rules are in
+[Game Concepts](game-concepts.md#pogo). The pogo strike asks the world for
+`probe_pogo()` (a trap in the strike's box below the duck); a hit bounces the duck and
+refills the air dash, and a boss is also told it was struck
+(`strike_targets.h`). The wall slide/jump asks for
+`probe_left()` / `probe_right()` and is only probed with wall jumps enabled.
 
 ### Ground friction
 
-Speeding up and braking are deliberately separate constants
-(`Cfg::Player::ACCELERATION` and `Cfg::Player::DECELERATION`), so either can be
-tuned without touching the other - most usefully, acceleration can be snappier
-without also making braking snappier (which would quietly give every level
-more stopping precision than it was authored around).
-
-Braking is also the one movement value a level can override on its own:
-`LevelData::ground_friction` (default `1`) scales `DECELERATION` only,
-applied via `Player::set_ground_friction()` when the level loads. A value
-below `1` makes the floor slippery - the duck skids further before coming
-to a stop - which World 3's non-boss levels use for a mossy-forest feel.
-Because the override never touches acceleration, gravity, or jump speed,
-it cannot change how high or far a jump reaches; it only changes how
-precisely the duck can stop once it's on the ground. See
-[Level Design — Platform placement principles](level-design.md#platform-placement-principles)
-for why that distinction matters for level clearability.
+Speeding up and braking are separate constants (`Cfg::Player::ACCELERATION`
+and `DECELERATION`). Braking is also the one movement value a level can
+override: `LevelData::ground_friction` (default `1`) scales `DECELERATION`
+only, applied via `Player::set_ground_friction()` when the level loads. Below
+`1` the floor is slippery (`LEVEL_3` and `LEVEL_WORLD3_SCROLL` use `0.55`).
+Because acceleration, gravity and jump speed are untouched, it cannot change
+how far a jump reaches. See
+[Level Design - Platform placement principles](level-design.md#platform-placement-principles).
 
 ### Death & respawn system
-
-Death is simple and forgiving:
 
 ```mermaid
 stateDiagram-v2
     [*] --> Alive
     Alive --> Dead: touch a trap or fall past death height
-    Dead --> RespawnDelay: brief pause
+    Dead --> RespawnDelay: death feedback (freeze)
     RespawnDelay --> Alive: teleport to spawn, reset velocity
 ```
 
 - A **trap collision** or **falling past the death height** triggers a death.
-- The duck briefly pauses (so the player registers what happened), then
-  teleports back to the stage's **spawn point** with velocity reset.
-- The **death counter** increments, and the **save-sync** system persists the
-  updated total.
-- The level manager uses a **generic reset interface** to put every trap back to
-  its starting state, so a respawn always faces the same hazard layout.
+- The **death counter** increments and the **save-sync** system persists the
+  total.
+- The level manager puts every trap and trigger back to its starting state
+  through the shared **resettable** interface.
 - With a **checkpoint** reached, the respawn point is that flag (see
-  [Checkpoints](#checkpoints) below); a death resets traps and triggers as always.
-- Whether *any* death occurred during the current attempt is tracked
-  separately from the running total, feeding the **no-death clear** record
-  described under [Progress Feedback](#54-progress-feedback) below.
+  [Checkpoints](#checkpoints)).
+- Whether *any* death occurred during the current attempt is tracked separately
+  from the running total, feeding the **no-death clear** record (see
+  [Progress Feedback](#54-progress-feedback)).
 
-The locomotion component does **not** own respawn logic itself. Instead it
-raises a death through a small **callback interface**, and the player entity
-handles the rest — keeping locomotion focused purely on movement.
+Locomotion does **not** own respawn logic. It raises a death through a small
+**callback interface** (`PlayerDeathHandler`) and the player entity handles the
+rest.
 
 #### Death feedback
 
-The teleport itself is instant; what the player sees is a short sequence
-layered on top of it (`death_fx.h`, Butano-free and unit-tested, tuned by
-`Cfg::DeathFx` in `cfg_death_fx.h`). `LevelManager::_check_player_died()` spots
-a new death right after the physics step:
+The respawn is instant in the data, but the player sees a short sequence
+(`death_fx.h`, Butano-free and unit-tested, tuned by `Cfg::DeathFx` in
+`cfg_death_fx.h`). `level_flow::check_player_died()` spots a new death right
+after the physics step:
 
-- **Hitstop.** The world freezes for 6 frames (~0.1s): no physics, no traps, no
-  camera movement, no level clock and no run timer, so the feedback never costs
-  record time. The duck is hidden and `Player::begin_death_fx()` leaves a copy of
-  its last frame where it died (a `Sprite` registered with `SpriteRegistry`,
-  taking one of the dash afterimages' slots, which death has just cleared). The
-  trap that killed it stays where it is: `_reset_entities()` is deferred until
-  the freeze ends.
-- **Screen shake.** The picture shakes for 14 frames, starting at 3px and fading
-  out, so it is still settling after the freeze. `Camera::set_shake()` offsets
-  every sprite that is synced through the camera; the HUD and the screen-locked
-  background stay put.
+- **Hitstop.** The world freezes for 6 frames: no physics, traps, camera
+  movement, level clock or run timer, so the feedback never costs record time.
+  The duck is hidden and `Player::begin_death_fx()` leaves a copy of its last
+  frame where it died (a `Sprite` registered with `SpriteRegistry`). The trap
+  that killed it stays where it is: the entity reset is deferred until the
+  freeze ends.
+- **Screen shake.** The picture shakes for 14 frames, starting at 3px and
+  fading out. `Camera::set_shake()` offsets every sprite synced through the
+  camera; the HUD and the screen-locked background stay put.
 - **Respawn.** When the freeze ends the ghost goes, the duck reappears at the
-  respawn point, traps and triggers are re-armed and the camera cuts to the duck.
-  The duck then flickers for 18 frames so the eye finds it. That is **visual
-  only: it gives no invulnerability.**
+  respawn point, traps and triggers are re-armed and the camera cuts to the
+  duck. The duck then flickers for 18 frames. That is **visual only: no
+  invulnerability.**
 
-Restart Level from the pause menu is a death on purpose and skips all of this
-(and cancels a freeze that was still running). It takes and saves its one death
-right away (`_deaths_seen`, `_save_sync.sync()`) and sets up the next attempt
-before the physics step of that frame: `_respawn()` asks
-`respawn::when()` (`respawn_logic.h`, host-tested) - a death waits for the end
-of its freeze, Restart Level is set up at once - so the previous attempt's
-traps never run a frame around the duck at the spawn.
-Pausing during the freeze stops it where it is, and loading or unloading a
-level cancels it (`Player::cancel_death_fx()`). A fall past the death height
-gets the same freeze and shake, with the ghost off screen.
+Restart Level from the pause menu is a death on purpose and skips all of this:
+`level_flow::restart_level()` takes and saves its one death right away and sets
+up the next attempt before the physics step of that frame. `respawn::when()`
+(`respawn_logic.h`, host-tested) decides: a death waits for the end of its
+freeze, Restart Level is set up at once. Pausing during the freeze stops it,
+and loading or unloading a level cancels it (`Player::cancel_death_fx()`). A
+fall past the death height gets the same freeze and shake.
 
 ### HUD components
 
-The player owns an HUD consisting of:
-
-- **Death counter** — a numeric readout that increments on each respawn.
-- **Run timer** — minutes, seconds, centiseconds, driven by a frame counter
-  tuned for the handheld's refresh rate and avoiding expensive division.
-
-The HUD exposes a **visibility toggle** so title screens and the kiss scene can
-hide it without destroying it. Timer digits are only updated when their value
-actually changes, to avoid redundant work each frame.
+The player owns an HUD with a **death counter** and a **run timer** (minutes,
+seconds, centiseconds, driven by a frame counter without expensive division).
+It has a visibility toggle so title screens and the kiss scene can hide it.
+Timer digits only update when their value changes.
 
 ---
 
 ## 5.2 Trap System
 
-Traps are the hazards the duck must avoid. They share a **base trap** for the
-concerns every trap has and specialize in behavior through subclasses chosen by
-a **trap factory** at level load.
+Traps are the hazards. They share a **base trap** and specialize through
+subclasses chosen by the **trap factory** (`trap_factory.h`) at level load.
 
 ```mermaid
 classDiagram
@@ -246,238 +203,186 @@ classDiagram
     ChaserTrap --|> BaseTrap
     AmbushTrap --|> BaseTrap
     CycleTrap --|> BaseTrap
+    BossTrap --|> BaseTrap
 ```
 
 ### Base responsibilities
 
-The base trap owns:
+The base trap owns a **collision volume** linked to a sprite (position, size,
+offset); **collision with the player** (the duck dies and the hit sound plays);
+an optional looping **sprite animation**; and **sprite registration** with
+`SpriteRegistry`.
 
-- A **collision volume** linked to a sprite, with a position, size, and offset.
-- **Collision with the player** — when the duck enters the trap's collision
-  area, the base trap kills the duck and plays the appropriate hit sound.
-- **Optional sprite animation** — a looping animation action is attached when
-  the level data specifies an animation frame sequence.
-- **Sprite registration** with the engine's sprite system, so the trap's pixels
-  are properly managed for the current scene.
+### Trap categories
 
-### Trap categories & purposes
-
-| Category | Activation | Movement | Design purpose |
-|----------|-----------|----------|----------------|
+| Category | Activation | Movement | Purpose |
+|----------|-----------|----------|---------|
 | **Base** | Always active | None | Static obstacles that punish careless landing. |
-| **Moving** | Trigger-linked | Acceleration-driven once triggered | Timed hazards released mid-run. |
-| **Path** | Trigger-linked | Interpolates along defined waypoints | Patrols, sweeping hazards, figure-8 enemies. |
-| **Chase** | Watches the player | Moves to close the gap when the player advances | Pressure hazard that punishes hesitation. |
-| **Ambush** | Watches the player (proximity) | Lunges once in a fixed direction, then returns | Disguised hazards that punish getting too close. |
-| **Cycle** | Own clock (optionally gated by a trigger) | Moves out, stays, moves back, rests - on repeat | Spikes out of the floor, rhythm hazards. |
+| **Moving** | Trigger-linked | Accelerates once triggered | Timed hazards released mid-run. |
+| **Path** | Trigger-linked | Interpolates along waypoints | Patrols, sweeping hazards. |
+| **Chase** | Watches the player | Closes the gap when the player advances | Pressure that punishes hesitation. |
+| **Ambush** | Watches the player (proximity) | Lunges once, then returns | Disguised hazards. |
+| **Cycle** | Own clock (optionally trigger-gated) | Out, hold, back, rest - on repeat | Rhythm hazards (spikes from the floor). |
+| **Boss** | Trigger `arena` | Path across the pit, faster per phase | The one beatable enemy, see [Game Concepts](game-concepts.md#bosses). |
 
-### Trap behaviors & characteristics
-
-- **Base traps** stay exactly where they are placed. They can still animate
-  their sprite (e.g. a mimic breathing) while remaining motionless as a hazard.
-- **Moving traps** start dormant. When their linked **trigger** fires, the trap
-  begins accelerating in a configured direction up to a maximum velocity. Once
-  the duck respawns, the trap returns to its start position and re-arms.
-- **Path traps** follow a route defined by waypoints relative to their origin.
-  They interpolate smoothly between nodes, waiting a configured number of
-  frames on each step. This creates patrols and other repeating trajectories.
-- **Chase traps** bypass normal physics entirely. They watch the player's
-  position and drift rightward to keep a configured distance behind them, but
-  only up to a maximum speed. Because they only ever move right, they never
-  retreat — the duck must keep moving forward to stay ahead.
-- **Ambush traps** stay motionless (optionally animating, like a mimic) until
-  the player comes within a configured horizontal range. They then lunge
-  once in a fixed direction for a fixed duration, ease back to their start
-  position, and re-arm. Like chase traps they read the player's position
-  directly rather than reacting to a Trigger, but activation is
-  proximity-based rather than continuous tracking, and movement is a single
-  bounded lunge rather than an ongoing pursuit.
-- **Fakes** are ordinary BASE traps with the sprite of a door or a checkpoint.
-  `TrapData::sprite_z_order` (any trap type) is applied by `TrapFactory::create()`
-  after the concrete trap is built, through `BaseTrap::set_sprite_z_order()`, so
-  the fake stands behind the duck like the real one.
-- **False exits** are the real door lying, decided in `door_logic.h` (pure,
-  host-tested): `on_touch(reached, locked, trapped, died)` turns a touch into
-  `Finish`, `Kill` or nothing (a boss-locked door does neither; a duck a trap
-  already caught this frame is not killed twice), `trapped()`
-  reads the `DoorData::trap_trigger_name` trigger that `LevelManager` looks up
-  after loading the triggers (and tells `CheckpointRun::forget_trigger()` to
-  leave out of the checkpoint snapshot - which is why `Check_trigger_references.py`
-  rejects a trap trigger that follows another one or that anything else uses), and `attempt_offset()` picks the door's spot
-  from `DoorData::attempt_positions` with `attempt_variant::variant_for_attempt()`.
-  `LevelManager::_check_door_trap()` runs right after the collision update,
-  before `_check_player_died()`, so a door that kills starts the death
-  feedback like a trap does; it clears the door's `reached()` and calls
-  `Player::death()`. `_deaths_at_entry` (set where `_deaths_seen` is on level
-  load) gives `_deaths_in_level()`, and `_place_door()` hands it to
-  `Door::place_for_attempt()` on load and in `_finish_respawn()` - which
-  every death, checkpoint respawn and Restart Level ends in. The door keeps
-  no tell: its sprite never changes.
+- **Base traps** stay where they are placed; their sprite may animate.
+- **Moving traps** start dormant. When their trigger fires they accelerate in a
+  configured direction up to a maximum velocity. Respawn returns them to the
+  start and re-arms them.
+- **Path traps** follow waypoints relative to their origin, waiting a
+  configured number of frames on each node.
+- **Chase traps** bypass normal physics: they drift rightward to keep a
+  configured distance behind the player, up to a maximum speed. They only move
+  right, so the duck must keep moving. `chase_limit` stops them before a boss
+  arena.
+- **Ambush traps** stay motionless (optionally animating) until the player
+  comes within a configured range, lunge once for a fixed duration (along x, or
+  along y with `ambush_vertical`; `ambush_logic.h`), ease back and re-arm.
 - **Cycle traps** run a fixed timeline (`trap_timing::CycleTiming`, pure and
-  unit-tested: `cycle_progress()` returns how far out the trap is in permille
-  for a frame of the round, `next_cycle_frame()` wraps the round without a
-  division). `CycleTrap` only turns that into a position
-  (`start + (dx, dy) * permille / 1000`), writes `pos`, `shape_pos` and the
-  sprite directly like `PathTrap`, and starts `cycle_phase_frames` into its
-  round. An optional trigger gates it: while the trigger is off the trap stays
-  where it is and its clock stands still. `reset()` returns to the phase it
-  started in. The factory scales the five frame counts by the Hard/Assist
-  multiplier and refuses a round of zero frames at load time.
+  unit-tested: `cycle_progress()` returns how far out the trap is in permille,
+  `next_cycle_frame()` wraps the round without a division). `CycleTrap` turns
+  that into a position (`start + (dx, dy) * permille / 1000`), writing `pos`,
+  `shape_pos` and the sprite directly like `PathTrap`, and starts
+  `cycle_phase_frames` into its round. An optional trigger gates it: while off,
+  the trap stays where it is and its clock stands still. The factory scales the
+  five frame counts by the Hard/Assist multiplier and refuses a round of zero
+  frames at load time.
+- **Fakes** are ordinary BASE traps wearing the sprite of a door or checkpoint.
+  `TrapData::sprite_z_order` (any trap type) is applied by
+  `TrapFactory::create()` through `BaseTrap::set_sprite_z_order()`, so the fake
+  stands behind the duck like the real one.
+- **False exits** are the real door lying (`door_logic.h`, pure, host-tested in
+  `tests/host/test_door_logic.cpp`). `on_touch(reached, locked, trapped, died)`
+  turns a touch into `Finish`, `Kill` or nothing (a boss-locked door does
+  neither; a duck a trap already caught this frame is not killed twice).
+  `trapped()` reads the `DoorData::trap_trigger_name` trigger that
+  `LevelManager` looks up after loading the triggers; it is left out of the
+  checkpoint snapshot via `CheckpointRun::forget_trigger()`, which is why
+  `Check_trigger_references.py` rejects a trap trigger that follows another one
+  or that anything else uses. `attempt_offset()` picks the door's spot from
+  `DoorData::attempt_positions` with `attempt_variant::variant_for_attempt()`;
+  `Door::place_for_attempt()` places it on load and in every respawn.
+  `level_flow::check_door_trap()` runs right after the collision update, before
+  `check_player_died()`, so a door that kills starts the death feedback like a
+  trap does. The door keeps no tell: its sprite never changes.
 
 ### Activation mechanisms
 
-Two activation styles exist:
-
-- **Trigger-linked activation.** Moving and path traps reference a trigger by
-  its stable name. When the duck crosses into the trigger's invisible
-  rectangle, the trigger flips "on" and every trap bound to that name begins
-  its behavior.
-**Direct player tracking.** Chase and ambush traps read the player's
-  position every frame. Chase traps use it continuously to ease toward a
-  following distance; ambush traps only use it to test a proximity
-  threshold, then run a fixed, self-contained lunge sequence independent of
-  further player movement.
+- **Trigger-linked.** Moving, Path and Cycle traps reference a trigger by name.
+  When the trigger turns on, every trap bound to that name starts.
+- **Direct player tracking.** Chase and ambush traps read the player's position
+  every frame: chase continuously, ambush only to test a proximity threshold
+  before a self-contained lunge.
 
 ### Trigger modes and switched platforms
 
 `Trigger` keeps its state in a `TriggerState` (`trigger_logic.h`, Butano-free
 and unit-tested). The mode (`TriggerData::mode`) decides what an entry or exit
-does: **Latch** (default), **Toggle**
-(flip on every entry) or **Hold** (on while inside). `Trigger` also
-implements the resettable interface, and the level manager registers every
-trigger in its resettable list - so a trigger that drives only platforms still
-resets on death. An optional sprite (`TriggerData::sprite` plus an off and an
-on tile index) is wrapped in `Sprite` and registered with `SpriteRegistry`;
-both tile sets are created up front, so a state change is a tile swap.
+does: **Latch** (default), **Toggle** (flip on every entry), **Hold** (on while
+inside) or **Timer**. `Trigger` is resettable and registered in the level
+manager's resettable list, so a trigger that drives only platforms still resets
+on death. An optional sprite (`TriggerData::sprite` plus an off and an on tile
+index) is wrapped in `Sprite`; both tile sets are created up front, so a state
+change is a tile swap.
 
 `TriggerState` also carries the delay and the timer. `triggered()` is what
-traps and switched platforms read; `pressed()` is what the duck caused and is
-what a visible switch shows. With `TriggerData::delay_frames` > 0 the first
-follows the second after that many frames (a change that is undone in time
-never shows); a **Timer** trigger sets itself `delay_frames` frames after the
-last `reset()`. `Trigger::update()` - called every frame through
-`CollisionRegistry::update_all()` like any collision shape - runs
-`TriggerState::tick()`, so neither needs a second update path, and both stand
-still while the game is paused or frozen by the death feedback. A checkpoint
-respawn restores a snapshot immediately (`TriggerState::restore()`).
+traps and switched platforms read; `pressed()` is what the duck caused and what
+a visible switch shows. With `delay_frames` > 0 the first follows the second
+after that many frames (a change undone in time never shows); a Timer trigger
+sets itself `delay_frames` after the last `reset()`. `Trigger::update()` runs
+`TriggerState::tick()` through `CollisionRegistry::update_all()`, so both stand
+still while paused or frozen by the death feedback. A checkpoint respawn
+restores a snapshot immediately (`TriggerState::restore()`).
 
-A trigger with `TriggerData::action` Jump or Dash fires from `update()`
-instead of the overlap callback: `on_enter()` / `on_exit()` only track whether
-the duck is inside, and `action_fires(action, inside, jumped, dashed)`
-(`trigger_logic.h`) decides each frame whether the duck's jump or dash counts as
-an entry. The events come from `PlayerEvents` (`player_events.h`, a Butano-free
-header singleton): `PlayerLocomotion::update()` ends the previous frame's events
-with `begin_frame()` and notes a jump when `handle_jump()` really starts one and
-a dash when `update_dash()` starts one; `LevelManager::_load_player_spawn()`
-clears them on level load. An event stays readable until the player's next
-update, so every trigger sees it exactly once, whatever the order of the
-collision shapes in `CollisionRegistry`.
+A trigger with `TriggerData::action` Jump or Dash fires from `update()` instead
+of the overlap callback: `on_enter()` / `on_exit()` only track whether the duck
+is inside, and `action_fires(action, inside, jumped, dashed)` decides each
+frame whether the duck's jump or dash counts as an entry. The events come from
+`PlayerEvents` (`player_events.h`, a Butano-free singleton):
+`PlayerLocomotion::update()` ends the previous frame's events with
+`begin_frame()` and notes a jump or dash when one really starts;
+`LevelManager::_load_player_spawn()` clears them on level load. An event stays
+readable until the player's next update, so every trigger sees it exactly once
+whatever the order of the collision shapes.
 
 **Delayed trap chains.** A trigger with `TriggerData::follows` is built as a
-*follower* (`TriggerState(default_on, mode, delay, true)`): `on_enter()` /
-`on_exit()` and its own mode do nothing, and `follow(source_active)` presses it
-to `!default_on` or releases it - only a change starts its delay. A follower
-follows whether its source is **activated** (`triggered()` differs from the
-source's `default_on`), not the raw state: the first `capture()` after
-`clear()` (the level load) takes every trigger's state as its default. The links live
-in `TriggerChains` (`trigger_logic.h`, Butano-free, unit-tested in
-`tests/host/test_trigger_chain.cpp`): `_load_triggers()` resolves each
-`follows` name to an index once every trigger exists and takes their start
-state with `capture()`. Every frame, right after the collision update,
-`_trigger_chains.propagate(_triggers)` hands each follower its source's state
-**of the previous frame** and then takes the new one. So every hop costs
-exactly one frame plus the follower's delay, independent of the order of the
-trigger array and of the chain's length, and a cycle of followers can neither
-fire (nobody in it is activated at load, and nothing outside can start it) nor
-loop. `_finish_respawn()` calls `capture()` after the reset and the
-checkpoint restore, so nothing from before the death reaches a follower: a
-chain the checkpoint saw fully fired stays on, a hop that was still counting
-runs again from the respawn. That relies on a fired follower being *on* (the
-snapshot only switches triggers back on), so `Check_trigger_references.py`
-rejects a follower with `default_on: true`.
+*follower*: `on_enter()` / `on_exit()` and its own mode do nothing, and
+`follow(source_active)` presses it or releases it - only a change starts its
+delay. A follower follows whether its source is **activated** (`triggered()`
+differs from the source's `default_on`): the first `capture()` after `clear()`
+(level load) takes every trigger's state as its default. The links live in
+`TriggerChains` (`trigger_logic.h`, tested in `tests/host/test_trigger_chain.cpp`):
+`_load_triggers()` resolves each `follows` name to an index once every trigger
+exists. Every frame, right after the collision update,
+`propagate()` hands each follower its source's state **of the previous frame**
+and then takes the new one. So every hop costs exactly one frame plus the
+follower's delay, independent of array order and chain length, and a cycle of
+followers can neither fire nor loop. The respawn calls `capture()` after the
+reset and the checkpoint restore, so nothing from before the death reaches a
+follower. That relies on a fired follower being *on* (the snapshot only
+switches triggers back on), so `Check_trigger_references.py` rejects a follower
+with `default_on: true`.
 
 Platforms bind to a trigger through `PlatformData::trigger_name`. After the
-triggers load, `LevelManager::_bind_switched_platforms()` resolves each name
-once with `get_trigger_by_name()`. Every frame, right after the collision
-update, `_sync_switched_platforms()` compares `switch_logic::
-platform_active(trigger_on, active_when_on)` with the platform body's enabled
-state and enables or disables the body (so it stops blocking and being
-discoverable by probes) and its sprite together. A platform that is about to
-re-appear is held back while its box overlaps the duck's
-(`switch_logic::boxes_overlap()`, same strict comparisons as the collision
-registry), because every move into an overlapping body is blocked and the duck
-would be stuck.
+triggers load, the switched platforms are handed to `DynamicPlatforms`
+(`dynamic_platforms.h`, host-tested). Every frame after the collision update
+`sync_switched()` compares `switch_logic::platform_active(trigger_on,
+active_when_on)` with the body's enabled state and enables or disables body
+and sprite together. A platform about to re-appear is held back while its box
+overlaps the duck's (`switch_logic::boxes_overlap()`), since the duck would be
+stuck.
 
 ### Trigger lookup
 
-A trigger can optionally carry a stable name (`TriggerData::name`); a trap
-binds to it via `TrapData::trigger_name`, resolved through
-`LevelManager::get_trigger_by_name()`. This is the *only* binding mechanism
-Moving/Path traps use - every one in every level sets `trigger_name`. Named
-lookup is a simple linear scan over the level's triggers — with a per-level
-cap of 16 and the lookup happening once per trap at level load (never per
-frame), this costs nothing worth measuring.
-
-See the [Extensibility Guide](extensibility.md) for how to author a trigger.
-Because binding is by identity rather than position, one trigger can freely
-activate several traps at once (a **trigger chain**): give each trap the
-same `trigger_name` and they all fire together, as `level0_traps` in
-`game/levels/world1.json` and several other levels already do.
+A trigger can carry a stable name (`TriggerData::name`); a trap binds to it via
+`TrapData::trigger_name`, resolved through
+`LevelManager::get_trigger_by_name()`. Named lookup is a linear scan over at
+most 16 triggers, once per trap at level load. One trigger can activate several
+traps: give each the same `trigger_name`, as `level0_traps` in
+`game/levels/world1.json` does. See the
+[Extensibility Guide](extensibility.md) for how to author a trigger.
 
 ### Interactions with the player
 
-Traps and the player meet through the **collision layer system**. Traps belong
-to a **trap layer** and the player subscribes to it; when the player's body
-overlaps a trap, the trap's collision handler kills the player. This same
-layered approach is what lets platforms block the player, triggers sense the
-player without being touched back, and doors signal completion when entered —
-all from the same underlying collision framework.
+Traps belong to a **trap layer** the player subscribes to; when the player's
+body overlaps a trap, the trap's handler kills the player. The same collision
+framework lets platforms block the player, triggers sense it without being
+touched back, and doors signal completion.
 
 ### Reset model
 
-Every trap implements the shared **resettable** interface. On player death or a
-manual restart, the level manager walks its resettable list and calls reset on
-each. Traps return to their start positions, re-arm, and (for chase traps)
-forget their tracking history. This keeps respawn deterministic: the same stage
-layout faces the player each time - unless the level asks for a different one
-(see [Death windows](#death-windows-level-devil) below).
+Every trap and trigger implements the **resettable** interface. On player death
+or a manual restart, the level manager walks its resettable list and resets
+each. This keeps respawn deterministic - unless the level asks for a different
+layout (see [Death windows](#death-windows-level-devil)).
 
 ### Hard Mode speed scaling
 
-Moving, Chase, and Ambush traps read a **Hard Mode multiplier** from the level
-manager at construction time (`LevelManager::trap_speed_multiplier()`), which
-returns a configured scale factor when the loaded save slot has Hard Mode
-enabled, or `1` otherwise. The multiplier is applied once, in the **trap
-factory**, to the relevant velocity/speed parameters before the concrete trap
-type is constructed - it is not re-applied per frame, and it never touches
-the underlying level data itself. Path traps are scaled too, but their pacing
-is a waypoint-to-waypoint frame count (`path_waits`) rather than a velocity,
-so the factory divides it by the multiplier instead:
+Moving, Chase and Ambush traps read a speed multiplier from the level manager
+at construction (`LevelManager::trap_speed_multiplier()`):
+`Cfg::HardMode::SPEED_MULTIPLIER` (1.35) with Hard Mode on,
+`Cfg::AssistMode::TRAP_SPEED_MULTIPLIER` (0.5) with Assist Mode on, else `1`
+(`modes::trap_speed_mode()` in `game_modes.h` decides; Hard Mode wins if both
+flags were ever set). The multiplier is applied once in the **trap factory** to
+the velocity/speed parameters, never to the level data. Path and Cycle traps
+are scaled too, but their pacing is a frame count, so the factory divides it:
 `trap_timing::scaled_frames(frames, speed_percent)` (`trap_timing.h`,
 Butano-free and unit-tested) rounds to the nearest frame, never turns a
-non-zero count into 0 and leaves 0 ("does not move") alone. With x1.35 a
-15-frame node becomes 11 frames, with Assist Mode's x0.5 it becomes 30.
+non-zero count into 0 and leaves 0 alone. With x1.35 a 15-frame node becomes 11
+frames, with x0.5 it becomes 30.
 
-Because the scaling happens at construction, toggling Hard Mode takes effect
-the next time a level loads (on Continue/Restart from the pause menu, or on
-the next level transition) rather than retroactively on already-placed traps
-mid-level. See [Game Concepts — Hard Mode](game-concepts.md#hard-mode) for the
-player-facing unlock/toggle flow.
+Because scaling happens at construction, a toggle takes effect the next time a
+level loads. See [Game Concepts - Hard Mode](game-concepts.md#hard-mode).
 
-### Assist Mode scaling
+### Assist Mode
 
-Assist Mode reuses the Hard Mode plumbing. `LevelManager::
-trap_speed_multiplier()` returns `Cfg::HardMode::SPEED_MULTIPLIER` with Hard
-Mode on, `Cfg::AssistMode::TRAP_SPEED_MULTIPLIER` (0.5) with Assist Mode on,
-or `1`; the trap factory applies it once at construction to Moving, Chase,
-and Ambush traps and, as a divisor of the frame count, to Path traps (see
-above). Additionally,
-`LevelManager::_load_player_spawn()` calls `Player::set_assist_mode()`,
-which swaps `PlayerLocomotion`'s coyote and jump-buffer windows to
-`Cfg::AssistMode` values. Only forgiveness timing changes - jump speed,
-gravity, and acceleration are untouched, so the physics envelope that level
-layouts rely on does not move. The two modes are mutually exclusive
-(enforced in the Options menu; if both flags were ever set, Hard Mode wins).
+Assist Mode reuses that plumbing. Additionally
+`LevelManager::_load_player_spawn()` calls `Player::set_assist_mode()`, which
+swaps the coyote and jump-buffer windows to `Cfg::AssistMode` values (8 and 12
+frames). Jump speed, gravity and acceleration are untouched, so the physics
+envelope level layouts rely on does not move. The two modes are mutually
+exclusive: `modes::toggle_hard_mode()` / `toggle_assist_mode()`
+(`game_modes.h`) keep them so.
 
 Assisted runs do not set records: `LevelManager::records_allowed()` is false
 when Assist Mode was on at level load or is on now (so a mid-level toggle
@@ -487,22 +392,17 @@ are unaffected.
 
 ### Pause menu views
 
-The pause controller has three views: the main menu (Continue / Restart
-Level / Options / Controls / Title Screen), the Options sub-menu, and the
-Controls overview. The Options sub-menu and the Controls view both replace
-the menu in place rather than switching scenes - leaving the level would
-destroy it. The Controls view draws `ControlsText` (shared with the
-start-screen `ControlsScene`) and returns on A or B. List cursors wrap via
-`menu_nav::next_index()` / `prev_index()`, and the Hard Mode / Assist Mode
-toggles go through `modes::toggle_hard_mode()` /
-`modes::toggle_assist_mode()` (`game_modes.h`), which keep the two modes
-mutually exclusive.
+The pause controller has three views: the main menu (Continue / Restart Level
+/ Options / Controls / Title Screen), the Options sub-menu and the Controls
+overview. The latter two replace the menu in place rather than switching
+scenes - leaving the level would destroy it. The Controls view draws
+`ControlsText` (shared with the start-screen `ControlsScene`) and returns on A
+or B. List cursors wrap via `menu_nav::next_index()` / `prev_index()`.
 
-The overlay's sprites (the 'Paused' title and the rows) are created when the
-game pauses and released - not just hidden - when it resumes, restarts or goes
-to the title: Butano counts hidden sprites like visible ones, and the overlay
-needs up to ~63 of the 128 hardware sprites while it is open. The Controls view
-drops the title as well.
+The overlay's sprites are created when the game pauses and released - not just
+hidden - when it resumes, restarts or goes to the title: Butano counts hidden
+sprites like visible ones, and the overlay needs up to ~63 of the 128 hardware
+sprites. The Controls view drops the title as well.
 
 ---
 
@@ -527,122 +427,114 @@ graph TD
 
 ### Resource management
 
-The level manager holds its collections in **fixed-capacity** containers sized
-to the maximum the game expects. This choice avoids heap fragmentation on a
-device where memory is precious and long play sessions must remain stable. On
-unload, every resource is explicitly released before the next stage loads, so
-the next stage's assets can claim the same sprite slots and palettes without
-contention.
+Collections are **fixed-capacity** (`Cfg::Level::Limits`: 32 platforms, 16
+triggers, 32 traps, 1 checkpoint) to avoid heap fragmentation. On unload every
+resource is explicitly released before the next stage loads, so its assets can
+claim the same sprite slots and palettes.
 
 Platform sprites are wrapped in the shared **Sprite** type and registered with
-**SpriteRegistry** at load time — the same pattern used for the door and every
-trap. This is what lets platforms scroll correctly with the camera on wide
-levels; a raw sprite handle that bypasses this wrapper stays pinned to its
-initial screen position regardless of camera movement.
+**SpriteRegistry** (capacity 72) at load time, like the door and every trap.
+That is what lets them scroll with the camera; a raw sprite handle stays pinned
+to its screen position.
 
-### Level lifecycle
+### Level lifecycle and order of steps
 
-A stage goes through four phases:
+The order of the steps lives in `level_flow.h`, as templates over a `Host`
+(`LevelManager::FlowOps` forwards to the private steps). The order cannot be
+seen by the compiler - a misplaced or dropped step silently breaks the game -
+so `tests/host/test_level_flow.cpp` plays frames through the same code with a
+recording host.
 
-1. **Load.** The manager receives the stage's declarative data and builds the
-   runtime world: place the platform sprites and register their collision
-   bodies; create the triggers; construct each trap through the factory
-   (applying the Hard Mode multiplier where relevant - see
-   [Trap System](#hard-mode-speed-scaling) above) and add it to both the trap
-   list and the resettable list; place the door; set the music and
-   background; configure the camera bounds and horizontal bounce boundary;
-   set the player's spawn point; establish the save-sync baseline (including
-   the no-death-clear baseline); reset the level's internal frame clock used
-   for the best-time record.
-2. **Run (per frame).** Each frame the manager updates the pause controller,
-   the level clock, the player, the traps, the door, and the save-sync
-   controller, then reports an outcome to the calling scene:
-   - **None** — keep running (or paused).
-   - **LevelComplete** — the door was reached; advance.
-   - **ReturnToTitle** — the player chose "Title" from the pause menu.
-3. **Reset (optional).** On player death or a manual restart, the manager walks
-   its resettable list, restoring traps to their initial states. A death also
-   disqualifies the current attempt from earning a no-death-clear badge (see
-   [Progress Feedback](#54-progress-feedback) below).
-4. **Unload.** When leaving the stage, the manager releases every resource —
-   sprites, backgrounds, music — so the next scene starts with a clean pool.
+1. **Load** (`level_flow::load()`). Reset the pause controller and the player,
+   clear the death feedback, take the attempt's death counts, place the door,
+   set music, background and camera bounds, clear the runtime state, validate
+   the level against `Cfg::Level::Limits`, create platforms and triggers, look
+   up the door's trap trigger, hand switched/crumbling/fleeing platforms to
+   their helpers, construct each trap through the factory (with the speed
+   multiplier) and add it to the trap and resettable lists, create checkpoints,
+   apply the attempt's layout.
+2. **Run** (`level_flow::update()`, per frame). Pause handling first; during a
+   death freeze only rendering and the freeze run. Otherwise: the level clock,
+   the collision update, trigger chains, checkpoints, switched and crumbling
+   platforms, fleeing platforms, the boss door, boss hit feel and boss music,
+   the fleeing door, the door trap, the death check, the camera, rendering,
+   the save sync, and a respawn if a death was saved. The outcome goes to the
+   calling scene:
+   - **None** - keep running (or paused).
+   - **LevelComplete** - the door was reached.
+   - **ReturnToTitle** - the player chose "Title Screen".
+3. **Reset.** On death or restart the resettable list is walked
+   (`level_flow::finish_respawn()`); a death disqualifies the attempt from the
+   no-death badge.
+4. **Unload** (`level_flow::unload()`). Release sprites, backgrounds and music
+   so the next scene starts with a clean pool.
 
-### Scene transitions
+The level manager does not switch scenes. It reports an outcome to the level
+**scene**, which asks the **core scene manager** to move on; the scene manager
+guarantees the previous stage is torn down before the next one initializes.
 
-The level manager does not directly switch scenes. It reports an outcome to the
-level **scene**, and the scene asks the **core scene manager** to move to the
-next scene. The scene manager guarantees the previous stage is torn down before
-the next one initializes, which is critical on a device with limited shared
-resources (palettes, sprite slots, VRAM).
+### Boss door and music
+
+A level with a `BOSS` trap keeps its door shut (`_sync_boss_door()`) until the
+boss is gone. While the duck is in the arena (`boss_fighting()`) the level's
+music switches from the world theme to the boss section of the module (made by
+`tools/Make_boss_music.py`, `LevelData::boss_music_order`). Boss hits freeze and
+shake the world (`_feel_boss_hits()`, `Cfg::Boss`).
 
 ### Crumbling platforms
 
 `PlatformData::crumble_frames` makes a platform give way under the duck. The
-state machine is `crumble::State` (`crumble_logic.h`, Butano-free and
-unit-tested): Solid -> Shaking (solid, `crumble_frames` long, not stopped by
-stepping off) -> Falling (not solid, 20 frames of drop animation) -> Gone (not
-solid, hidden; back after `crumble_respawn_frames`, or never). `update(standing,
-blocked)` returns an event; `LevelManager` applies it.
+state machine is `crumble::State` (`crumble_logic.h`, Butano-free, unit-tested):
+Solid -> Shaking (solid, `crumble_frames` long, not stopped by stepping off) ->
+Falling (not solid, 20 frames of drop animation) -> Gone (not solid, hidden;
+back after `crumble_respawn_frames`, or never). `update(standing, blocked)`
+returns an event; `DynamicPlatforms` applies it.
 
-`_load_crumble_platforms()` runs after the platforms are created and keeps a
-non-owning entry per crumbling platform (body, sprite, state), like the
-switched ones. Every frame after the collision update `_sync_crumble_platforms()`
-asks the player's bottom probe (`probe_bottom(Cfg::Layer::PLATFORM)`) which
-platform bodies the duck stands on, steps every state and applies the events:
-`Fell` disables the body, `Vanished` hides the sprite, `Respawned` enables both
-(only once `switch_logic::boxes_overlap()` says the duck is not inside the box).
-The shake and the fall are the sprite's `pos.offset_x/offset_y`, so the
-collision box never moves. `_finish_respawn()` calls
-`_reset_crumble_platforms()`, which also covers Restart Level. No new sprites
-are created, so the sprite budget is unchanged.
+Every frame after the collision update `_sync_crumble_platforms()` asks the
+player's bottom probe (`probe_bottom(Cfg::Layer::PLATFORM)`) which platform
+bodies the duck stands on and steps every state: `Fell` disables the body,
+`Vanished` hides the sprite, `Respawned` enables both (only once the duck is
+not inside the box). The shake and the fall are the sprite's
+`pos.offset_x/offset_y`, so the collision box never moves. The respawn resets
+all crumbling platforms, Restart Level included. No new sprites are created.
 
 ### Death windows (Level Devil)
 
-`PlatformData` and `TrapData` end with `from_death` / `until_death`: the
-object is only there while `attempt_variant::active_for_deaths(deaths, from,
-until)` holds, where `deaths` is `_deaths_in_level()` - the run's death total
-minus `_deaths_at_entry`, which `_load_player_spawn()` takes right where it
-takes `_deaths_seen`: `attempt_variant::entry_deaths()` keeps
+`PlatformData` and `TrapData` end with `from_death` / `until_death`: the object
+is only there while `attempt_variant::active_for_deaths(deaths, from, until)`
+holds. `deaths` is the visit's death count (`level_flow::Attempt::in_level()`:
+the run's total minus `at_entry`). `Attempt::enter()` keeps
 `GameState::entry_deaths` when `GameState::entry_level` is the level being
 loaded (Title -> Continue carries on with the level's deaths), else the run's
-total; both are written back on every load and saved with the next death
-(schema 10). `_layout_deaths` starts at that attempt, so a continued level
-gives no layout cue. 0, 0 (the default) is always there, and such objects are
-never touched, so every level without windows behaves as before.
+total; both are written back on every load and saved with the next death.
+`Attempt::layout` starts at that attempt, so a continued level gives no layout
+cue. 0, 0 (the default) is always there and such objects are never touched.
 
 Everything is created at load as usual; `_apply_attempt()` then shows or hides
-the objects with a window. It runs at the end of `load()` and in
-`_finish_respawn()` after the entities are reset, so it covers a death, the
+the objects with a window. It runs at the end of the load and in
+`finish_respawn()` after the entities are reset, so it covers a death, the
 checkpoint respawn and Restart Level alike - and only after the death freeze,
-so the trap that killed the duck stays put while the world is frozen.
+so the trap that killed the duck stays put.
 
-`_finish_respawn()` first asks `attempt_objects::layout_changes(level,
-_layout_deaths, deaths)` (host-tested): does a platform or trap window flip, or
-does the moving door stand somewhere else, between the layout that was there
-and the next one? It compares with `_layout_deaths` rather than `deaths - 1`,
-since Restart Level during a freeze skips an attempt. If so,
+`finish_respawn()` first asks `attempt_objects::layout_changes(level,
+attempt.layout, deaths)` (host-tested) whether a window flips or the moving
+door stands elsewhere, compared with the layout that was there (not `deaths -
+1`: Restart Level during a freeze skips an attempt). If so,
 `_cue_layout_change()` plays `bn::sound_items::layout_shift` (generated by
 `tools/Generate_dash_sound.py`) and starts a shake without a freeze
-(`death_fx::Sequence::shake()`, `Cfg::DeathFx::LAYOUT_SHAKE_FRAMES`) - no
-sprites. Level load sets `_layout_deaths` to 0 and the replay ROM's
-`set_deaths_in_level()` to its start, so neither gives the cue.
+(`Cfg::DeathFx::LAYOUT_SHAKE_FRAMES`). Level load and the replay ROM's
+`set_deaths_in_level()` give no cue.
 
-- **Traps**: `BaseTrap::set_present()` switches the body (the duck's shape does
-  not find it), the collision shape (it does not find the duck) and the sprite.
-  An absent trap keeps updating invisibly and is reset like any other before it
-  reappears. A BOSS cannot have a window (`Generate_levels.py` rejects it, the
-  load asserts it).
-- **Platforms**: the decision is `attempt_objects::platform_action()`
-  (`attempt_objects.h`, Butano-free, host-tested): absent -> Hide (body and
-  sprite off), present -> Show, present and switched -> LeaveToSwitch
-  (`sync_switched()` decides as always, so a returning switched platform still
-  never appears inside the duck). `_load_dynamic_platforms()` starts
-  `_dynamic_platforms` and `_fleeing_platforms` over on every respawn and
-  registers only the platforms that are there, so no crumble respawn, switch or
-  flee can bring an absent one back; the following `reset_crumbling()` /
-  `reset()` put the present ones back untouched.
-- **Checkpoints** are not windowed, and the checkpoint snapshot only restores
-  trigger states, so it is independent of the windows.
+- **Traps**: `BaseTrap::set_present()` switches the body, the collision shape
+  and the sprite. An absent trap keeps updating invisibly and is reset like any
+  other. A BOSS cannot have a window (`Generate_levels.py` rejects it, the load
+  asserts it).
+- **Platforms**: `attempt_objects::platform_action()` decides: absent -> Hide,
+  present -> Show, present and switched -> LeaveToSwitch (a returning switched
+  platform still never appears inside the duck). `_load_dynamic_platforms()`
+  restarts `DynamicPlatforms` and `FleeingPlatforms` on every respawn and
+  registers only the platforms that are there.
+- **Checkpoints** are not windowed; the snapshot only restores trigger states.
   `Check_checkpoints.py` keeps a flag off platforms with a window.
 
 Absent objects keep their sprites allocated (hidden), so the sprite budget
@@ -653,113 +545,90 @@ counts every copy.
 `LevelData::checkpoints` lists `CheckpointData {x, y}` entries (center of the
 flag sprite = respawn position). `LevelManager::_load_checkpoints()` creates one
 `Checkpoint` per entry: a `PhysicsBody` that senses the player on the trigger
-layer and only raises a flag in `on_enter()`; `take_hit()` hands it to the
-manager once. It is deliberately not resettable - a death keeps it.
+layer and raises a flag in `on_enter()`; `take_hit()` hands it to the manager
+once. It is deliberately not resettable.
 
-Once per frame, right after the collision update, `_sync_checkpoints()` asks
-every checkpoint for its touch and lets `CheckpointTracker`
-(`checkpoint_logic.h`, Butano-free and unit-tested) decide: only a flag
-further along than the active one counts. The new active flag becomes the
-player's spawn point (`Player::set_spawn_point()`), its frame switches to the
-raised green flag, and the manager snapshots which triggers are on as a 16-bit
-mask (`pack_flags()`).
+Once per frame `_sync_checkpoints()` asks every checkpoint for its touch and
+lets `CheckpointRun` / `CheckpointTracker` (`checkpoint_logic.h`, Butano-free,
+unit-tested) decide: only a flag further along than the active one counts. The
+new active flag becomes the player's spawn point (`Player::set_spawn_point()`),
+its frame switches to the raised green flag, and the manager snapshots which
+triggers are on as a 16-bit mask (`pack_flags()`).
 
-After a death, `_reset_entities()` resets traps and triggers as usual (a trap's
-own `reset()` also resets its trigger); then `_restore_checkpoint_triggers()`
-switches the snapshot's triggers back on via `Trigger::restore()` -
-`TriggerState::restore()` ignores Hold triggers, which are only on while the
-duck stands in them. Restart Level (`PauseController::Action::RestartRequested`)
-calls `_clear_checkpoint()` first: tracker and snapshot reset, spawn point back
-to the level's own, flags lowered. Loading and unloading a level clear
-everything with the other runtime state.
+After a death the entity reset runs as usual, then the snapshot's triggers are
+switched back on via `Trigger::restore()` (`TriggerState::restore()` ignores
+Hold triggers). Restart Level calls `_clear_checkpoint()` first: tracker and
+snapshot reset, spawn point back to the level's own, flags lowered. Level load
+and unload clear everything.
 
 Budget: at most `Cfg::Level::Limits::CHECKPOINTS` (1) per level, one sprite and
-one physics body each - the registries' capacities keep their headroom.
+one physics body each.
 
 ### Level hints
 
 `LevelScene::init()` calls `_show_hint_if_needed()` after the level has loaded.
-`hint::should_show()` (`hint_logic.h`, Butano-free and unit-tested) decides:
-the level has an `intro_hint` and has not been cleared yet: no personal best
+`hint::should_show()` (`hint_logic.h`, Butano-free and unit-tested) decides: the
+level has an `intro_hint` and has not been cleared yet - no personal best
 (`best_time_frames[level] == 0`) and `furthest_level <= level` (an Assist Mode
-clear records no best time but still advances `furthest_level`) - so the hint
-needs no save field and ends with the first clear. The text is drawn centered at `Cfg::Hint::Y`
-with the shared text generator; a `hint::Timer` counts `Cfg::Hint::FRAMES`
-(five seconds) and B dismisses it early. The hint never pauses or blocks the
-level. While the game is paused its sprites are released and the countdown
-stands still (`hint::should_draw()`): Butano counts hidden sprites too, and the
-pause overlay needs the slots. `LevelScene` frees them before the call in which
-Start opens the pause menu, because the overlay allocates its sprites inside
-that call, and draws the hint again on resume.
+clear records no best time but still advances `furthest_level`). So the hint
+needs no save field and ends with the first clear. The text is drawn centered
+at `Cfg::Hint::Y`; a `hint::Timer` counts `Cfg::Hint::FRAMES` (300, five
+seconds) and B dismisses it early. In a boss level `hint::should_start()` waits
+until the duck reached the arena. The hint never pauses or blocks the level.
+While paused its sprites are released (`hint::should_draw()`) and the countdown
+stands still; `LevelScene` frees them before the call in which Start opens the
+pause menu, because the overlay allocates its sprites inside that call, and
+draws the hint again on resume.
 
 ### Level data organization
 
-A stage is defined by immutable, ROM-resident data describing:
-
-- The **platform list** — position, size, sprite, and tile index for each
-  solid surface.
-- The **trigger list** — invisible rectangles that activate hazards.
-- The **trap list** — one entry per hazard with its type, sprite, animation,
-  activation, and behavior-specific parameters.
-- The **background** tilemap, the **music** track, the player's **spawn point**,
-  and the **door** position.
-- The **world dimensions** — a wider world enables real camera scrolling;
-  screen-sized values keep the camera effectively fixed.
-
-Keeping stage contents as static data means designers can add or tune stages
-without touching engine or gameplay code paths — see
-[Extensibility Guide](extensibility.md). Hard Mode deliberately sits outside
-this list: it is a runtime multiplier applied at load time, not a property a
-stage's data ever encodes, so no stage needs a "hard mode variant" authored.
+A stage is immutable, ROM-resident data (generated from `game/levels/*.json`,
+see [Level Design](level-design.md#where-the-level-data-lives)): platforms,
+triggers, traps, checkpoints, the background and music, the spawn point, the
+door, and the world dimensions (a wider world enables camera scrolling).
+Stage contents are data, so designers can add or tune stages without touching
+gameplay code - see the [Extensibility Guide](extensibility.md). Hard Mode is a
+runtime multiplier, never part of a stage's data.
 
 ### Camera systems
 
 The camera is configured per stage from its world dimensions. When the world
-matches the screen size, the camera is effectively static and the duck moves
-within the visible area. When the world is wider, the camera follows the duck
-and clamps to the world's edges. The same world-width value also sets the
-duck's horizontal bounce boundary, so the duck never leaves the intended play
-area.
+matches the screen the camera is static; when it is wider the camera follows
+the duck and clamps to the world's edges. The same world width sets the duck's
+horizontal bounce boundary.
 
-The camera does not stick to the duck. `LevelManager::_update_camera()` feeds
-the duck's position and horizontal velocity into a `CameraRig`
-(`camera_rig.h`, Butano-free and unit-tested, tuned by `Cfg::CameraFollow` in
-`cfg_camera.h`) and hands the result to `Camera::follow()`, which still clamps
-it to the world:
+`LevelManager::_update_camera()` feeds the duck's position and horizontal
+velocity into a `CameraRig` (`camera_rig.h`, Butano-free, unit-tested, tuned by
+`Cfg::CameraFollow` in `cfg_camera.h`) and hands the result to
+`Camera::follow()`, which clamps it to the world:
 
 - **Dead zone (horizontal).** The duck can move 8px either way before the
   camera moves; beyond that the camera moves exactly as far as the duck, with
-  no easing. The duck keeps its spot on the screen, small steps do not scroll
-  at all and nothing slides on after it stops (an eased follow would make the
-  duck wobble by a pixel when tapping the D-Pad). Vertically the camera still
-  closes 1/8 of the gap per frame and never overshoots.
+  no easing, so small steps do not scroll and nothing slides on after it stops.
+  Vertically the camera closes 1/8 of the gap per frame and never overshoots.
 - **Look-ahead.** It aims 20px in front of the duck in its direction of travel,
   easing in slowly, and keeps that direction while the duck stands still. Only
-  a run of 15 frames at 1px/frame or more sets the direction, so taps and
-  creeping do not swing the view. `tests/host/test_camera_view.cpp` checks what
-  the player sees: the real movement rules, `CameraRig` and `Camera` together,
-  rounded to pixels like the sprite hardware.
+  a run of 15 frames at 1px/frame or more sets the direction.
+  `tests/host/test_camera_view.cpp` checks what the player sees: the real
+  movement rules, `CameraRig` and `Camera` together, rounded to pixels.
 - **Look up / down.** Holding the D-Pad up or down for 24 frames moves the view
   32px that way and back on release. This only shows in levels taller than the
-  screen (`LevelData::world_height` above 160): in a 160px world the camera
-  cannot move vertically, and no level is that tall yet.
+  screen (`LevelData::world_height` above 160).
 - **Cuts.** Level load and every respawn (death, checkpoint, Restart Level)
-  cut to the duck instead of gliding across the level.
-- **Edges.** The rig clamps its own aim to the limits `Camera::follow()` uses
+  cut to the duck instead of gliding.
+- **Edges.** The rig clamps its aim to the limits `Camera::follow()` uses
   (`camera_rig::max_offset()`), so turning around at a world edge is followed
-  at once instead of the aim having to travel back from beyond the edge.
+  at once.
 
-The background stays screen-locked (see above); only registered sprites move
-with the camera.
+The background stays screen-locked; only registered sprites move with the
+camera.
 
 ---
 
 ## 5.4 Progress Feedback
 
-Beyond the always-on HUD (death counter + timer), three smaller systems give
-the player feedback about their progress against their own past runs. All
-three read from fields already tracked in the per-slot save state - none
-needed a new persistent counter of their own.
+Beyond the always-on HUD, a few systems give feedback about progress against
+the player's own past runs. All read fields already in the per-slot save state.
 
 ```mermaid
 graph TD
@@ -775,91 +644,55 @@ graph TD
 
 ### New Best banner
 
-When the door is reached, the level scene compares the just-finished
-attempt's frame count against that level's stored `best_time_frames` entry.
-If it's a new record (including the level's first-ever clear), the scene:
-
-1. Updates the stored best time.
-2. Holds the scene on a **"New Best!"** banner showing the new time
-   (mm:ss.cc) and a "Press A to continue" prompt, instead of transitioning
-   immediately.
-3. Only proceeds to the next level (or the kiss scene, on the final level)
-   once the player presses A or Start.
-
-The level-clear logic itself (advancing `level`/`furthest_level`, persisting
-deaths/timer) is unaffected by whether a banner shows - the banner only gates
-the *scene transition*, not whether progress was recorded.
+When the door is reached, the level scene compares the attempt's frame count
+with the level's stored `best_time_frames`. If it is a new record (including
+the first clear) it updates the stored time and holds the scene on a **"New
+Best!"** banner (time as mm:ss.cc, "Press A to continue"); it proceeds to the
+next level (or the kiss scene on the final level) on A or Start. The banner only
+gates the *scene transition*, not whether progress is recorded.
 
 ### No-death clears
 
-Separately from the running death total, the save-sync controller tracks
-whether the player's death count has changed since the level was loaded (or
-since the last reset/restart). If the duck reaches the door with that count
-unchanged - i.e. this specific attempt had zero deaths - the level scene sets
-a bit for that level in a `no_death_clears` bitmask (one bit per level,
-stored per save slot, same indexing as `best_time_frames`).
-
-This is a "have I ever done this" record, not a per-attempt flag: once set
-for a level, it stays set (it survives a full-game reset the same way
-`best_time_frames` does) even if a later attempt on that level does involve a
-death. Level Select reads the bit to append a trailing `*` to that level's
-best-time readout once it's been set.
+The save-sync controller tracks whether the death count has changed since the
+level was loaded (or since the last restart). If the duck reaches the door with
+that count unchanged, the level scene sets a bit for that level in the
+`no_death_clears` bitmask (one bit per level, same indexing as
+`best_time_frames`). It is a "have I ever done this" record: once set it stays
+set, and survives a full-game reset like `best_time_frames`. Level Select
+appends a `*` to the best-time readout when the bit is set.
 
 ### World-select stats line
 
-World Select's menu already lists each world with a locked/unlocked state
-derived from `furthest_level`. Underneath that list, a single aggregate line
-is computed straight from the loaded save slot's existing fields:
-
-- **Deaths** — the slot's running total death count (not per-level).
-- **Cleared** — how many levels have a non-zero `best_time_frames` entry
-  (i.e. have been finished at least once), out of the total level count.
-
-Nothing new is written to the save for this line; it's a read-time
-aggregation over data the level-clear and death-tracking systems already
-maintain, rebuilt whenever the menu is (re)built.
+Under World Select's list of worlds (locked/unlocked by `furthest_level`) a
+single line is computed from the loaded slot at menu build time: the slot's
+total **Deaths** and **Cleared** - levels with a non-zero `best_time_frames`
+out of the total level count. Nothing new is saved for it.
 
 ### Run-complete summary
 
-`SummaryScene` is a small scene inserted between `KissingScene` and
-`StartScene`, existing purely to total up what a finished playthrough
-recorded before that data gets reset. Its `init()` sums every entry of
-`best_time_frames` for a total-time readout, reads `deaths` directly, and
-counts `has_no_death_clear()` hits across the level list - the same fields
-`LevelSelectScene` and the World-select stats line already read, just
-aggregated once more, at the moment right after completion when the totals
-are most meaningful.
-
-`DataManager::reset()` runs here rather than in `KissingScene` so the ordering
-works: `SummaryScene::init()` reads `GameState` while it's still the just-finished
-run's live state, and only calls `reset()` itself once the player
-acknowledges the screen with A or Start - a held-scene-transition pattern
-matching the New Best banner's "read the state, then gate the transition on
-a button press" shape, not `KissingScene`'s own timer-based auto-advance.
+`SummaryScene` sits between `KissingScene` and `StartScene`. Its `init()` sums
+every entry of `best_time_frames`, reads `deaths`, and counts
+`has_no_death_clear()` hits. `DataManager::reset()` runs here rather than in
+`KissingScene`: `SummaryScene` reads `GameState` while it is still the
+finished run's live state and only calls `reset()` once the player presses A or
+Start.
 
 ### Save-slot preview
 
-`StartScene` previews all three save slots before the player picks one, by
-calling the new `DataManager::peek_state(slot_id, out)` for each - a thin
-wrapper around the underlying `SaveManager::load()` that writes into a
-caller-supplied `GameState&` without touching the active slot, `_slot_index`,
-or any runtime state. This read happens exactly once, in `init()` (SRAM
-reads across all three slots on every visit to the start screen, never
-per-frame or per-keypress); moving the cursor only re-renders cached
-results via a `_rebuild_slot_list()` helper, mirroring the
-`_rebuild_menu()` pattern every other menu scene already uses. Each slot
-shows "New" if unused, or its furthest-reached world via the same
-`WorldIndex::world_for_level()` helper `WorldSelectScene`'s unlock check
-uses internally - factored out to `world_index.h` specifically so both call
-sites share one implementation of "which world is this `furthest_level`
-in."
+`StartScene` previews all three slots by calling `DataManager::peek_state(
+slot_id, out)` for each - a wrapper around `SaveManager::load()` that writes
+into a caller-supplied `GameState&` without touching the active slot. The read
+happens once, in `init()`; moving the cursor only re-renders cached results via
+`_rebuild_slot_list()`. Each slot shows "New" if unused, or its furthest world
+via `WorldIndex::world_for_level()` (shared with `WorldSelectScene`'s unlock
+check).
 
 ---
 
 ## 5.5 Audio System
 
-Sound is split across two independent volume levels the player can tune from
-the pause menu: **music** and **SFX**, each 0-4 (4 = full volume).
+Sound has two independent volume levels the player tunes from the pause menu:
+**music** and **SFX**, each 0-4 (4 = full volume).
 
 ```mermaid
 graph TD
@@ -872,59 +705,31 @@ graph TD
     HM --> GS2[GameState<br/>hard_mode_enabled]
 ```
 
-### AudioSettings
-
 `AudioSettings` is an **engine-level singleton** (alongside `Camera` and
-`SpriteRegistry`) holding the two current volume levels. It is
-theme-agnostic and knows nothing about save slots or menus — it just holds
-the current levels and exposes them as a `bn::fixed` scale factor
-(`music_scale()` / `sfx_scale()`) plus a `play_sfx()` helper that scales a
-one-shot sound effect (and no-ops at level 0 rather than calling `play(0)`).
+`SpriteRegistry`) that holds the two levels and exposes them as `bn::fixed`
+scale factors (`music_scale()` / `sfx_scale()`) plus a `play_sfx()` helper
+(a no-op at level 0). It lives in the engine layer because the **core scene
+manager** reads `music_scale()` for fades, and the engine must not depend on
+game types (see [Project Architecture](architecture.md)).
 
-It lives in the shared engine layer rather than `game/include/` because the
-**core scene manager** reads `music_scale()` while computing fade progress,
-and the engine must not depend on game-side types (see
-[Project Architecture](architecture.md)'s dependency-direction rule).
+**Persistence.** The levels are mirrored into `GameState::music_volume` /
+`sfx_volume` (per slot) and restored into the singleton whenever a slot loads
+(`LevelManager::restoreHUD()`). The mode fields (`hard_mode_unlocked`,
+`hard_mode_enabled`, `assist_mode_enabled`) live directly on `GameState`;
+`LevelManager` reads them off the data manager whenever the multiplier is
+needed.
 
-### Persistence
-
-The two levels are mirrored into `GameState::music_volume` /
-`GameState::sfx_volume` (per save slot) and restored into the
-`AudioSettings` singleton whenever a slot loads — `LevelManager::restoreHUD()`
-does this alongside the existing deaths/timer restoration, so it covers both
-the level manager's construction and `StartScene`'s post-load path. Hard
-Mode's unlock/toggle fields live directly on `GameState` instead
-(`hard_mode_unlocked`, `hard_mode_enabled`), since - unlike volume - they have
-no engine-layer singleton counterpart to restore into; `LevelManager` reads
-`hard_mode_enabled` straight off the data manager's state whenever the trap
-factory needs the current multiplier.
-
-### The Options sub-menu
-
-The **pause controller** has a main-menu entry, **Options**, which switches
-into an embedded sub-menu rather than triggering a scene transition —
-adjusting sound (or Hard Mode) never leaves gameplay. Up/Down selects a row,
-Left/Right steps Music/SFX by one level or flips the Hard Mode toggle, and B
-returns to the main pause menu. The change is written to SRAM once, on
-leaving the sub-menu, matching the project's general save-sync policy of
-writing only on meaningful, infrequent events rather than every keypress.
-
-The sub-menu always shows two rows (Music, SFX); a third **Hard Mode** row is
-appended only once `GameState::hard_mode_unlocked` is set for the loaded
-slot - see [Game Concepts — Hard Mode](game-concepts.md#hard-mode) for the
-unlock condition and gameplay effect, and
-[Trap System — Hard Mode speed scaling](#hard-mode-speed-scaling) above for
-how the toggle changes trap behavior. While the toggle is on, a fourth,
-non-selectable line ("Traps x1.35") shows `Cfg::HardMode::SPEED_MULTIPLIER`
-spelled out as a literal string - not derived from the constant at
-render time, so a future change to that constant needs a matching edit
-to this display string. It's its own line rather than appended to the
-Hard Mode row itself, which already sits close to the screen's right
-edge.
-
-An **Assist Mode** row follows (always shown, so the sub-menu has three or
-four rows); the info line then moves below it and shows "Traps x0.5" while
-Assist Mode is on. Turning either mode on turns the other off.
+**The Options sub-menu.** Options switches into an embedded sub-menu rather
+than a scene transition. Up/Down selects a row, Left/Right steps Music/SFX by
+one level or flips a mode toggle, B returns. The change is written to SRAM once,
+on leaving the sub-menu. Rows: Music, SFX, **Hard Mode** (only once
+`hard_mode_unlocked`), **Assist Mode** (always); turning one mode on turns the
+other off. A non-selectable line under the last row shows the active speed
+multiplier ("Traps x1.35" or "Traps x0.5"). Those strings are literals in
+`pause_controller.cpp`, not derived from `Cfg::HardMode::SPEED_MULTIPLIER` /
+`Cfg::AssistMode::TRAP_SPEED_MULTIPLIER`, so a change to the constants needs a
+matching edit. See [Game Concepts - Hard Mode](game-concepts.md#hard-mode) and
+[Hard Mode speed scaling](#hard-mode-speed-scaling).
 
 ---
 

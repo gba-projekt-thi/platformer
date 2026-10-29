@@ -42,6 +42,62 @@ inline auto platform_action(bool present, bool switched) -> PlatformAction {
     return switched ? PlatformAction::LeaveToSwitch : PlatformAction::Show;
 }
 
+// An attempt starts: every platform and trap with a window is shown, hidden
+// or left to its switch (platform_action()). Level is LevelData in the game;
+// Host (LevelManager's steps) says what is present for the current deaths and
+// does the showing.
+template <typename Level, typename Host>
+void apply(const Level& level, Host& h) {
+    for (int i = 0; i < level.platform_count; ++i) {
+        const auto& platform = level.platforms[i];
+        if (!has_window(platform.from_death, platform.until_death)) {
+            continue;
+        }
+        switch (platform_action(
+            h.present(platform.from_death, platform.until_death),
+            platform.trigger_name != nullptr)) {
+            case PlatformAction::Show:
+                h.show_platform(i);
+                break;
+            case PlatformAction::Hide:
+                h.hide_platform(i);
+                break;
+            case PlatformAction::LeaveToSwitch:
+            default:
+                break;
+        }
+    }
+    for (int i = 0; i < level.trap_count; ++i) {
+        const auto& trap = level.traps[i];
+        if (has_window(trap.from_death, trap.until_death)) {
+            h.set_trap_present(i, h.present(trap.from_death, trap.until_death));
+        }
+    }
+}
+
+// The platforms that move, crumble or switch are handed to their helpers
+// afresh; one that is not there this attempt stays out of them, so nothing
+// brings it back (see PlatformAction::Hide).
+template <typename Level, typename Host>
+void load_dynamic(const Level& level, Host& h) {
+    h.clear_dynamic();
+    h.clear_fleeing();
+    for (int i = 0; i < level.platform_count; ++i) {
+        const auto& platform = level.platforms[i];
+        if (!h.present(platform.from_death, platform.until_death)) {
+            continue;
+        }
+        if (!platform.flee_path.empty()) {
+            h.add_fleeing(i);
+        }
+        if (platform.trigger_name != nullptr) {
+            h.add_switched(i);
+        } else if (platform.crumble_frames > 0) {
+            h.add_crumbling(i);
+        }
+    }
+}
+
 // Whether an object with this window is there on one of the two attempts
 // (deaths in the level) and not on the other.
 inline auto

@@ -143,3 +143,22 @@ TEST_CASE(pause_flow_a_second_pause_after_a_resume_leaves_no_old_menu_behind) {
     pause_flow::close(h);
     CHECK_EQ(h.alive(), 0);
 }
+
+TEST_CASE(pause_flow_confirming_restart_or_title_screen_tells_the_level) {
+    using pause_flow::Option;
+    using pause_flow::Outcome;
+    CHECK(pause_flow::outcome_for(Option::Restart) == Outcome::Restart);
+    CHECK(
+        pause_flow::outcome_for(Option::TitleScreen) == Outcome::ReturnToTitle);
+    CHECK(pause_flow::outcome_for(Option::Continue) == Outcome::None);
+    CHECK(pause_flow::outcome_for(Option::Options) == Outcome::None);
+    CHECK(pause_flow::outcome_for(Option::Controls) == Outcome::None);
+}
+
+TEST_CASE(pause_flow_release_frees_the_title_and_the_rows) {
+    std::vector<int> title(6);
+    std::vector<int> rows(5);
+    pause_flow::release(title, rows);
+    CHECK(title.empty());
+    CHECK(rows.empty());
+}

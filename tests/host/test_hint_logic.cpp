@@ -119,3 +119,17 @@ TEST_CASE(hint_of_a_boss_level_waits_for_the_arena) {
     CHECK(!hint::should_start(true, false));
     CHECK(hint::should_start(true, true));
 }
+
+TEST_CASE(hint_text_to_show_hands_on_the_levels_own_text) {
+    const char* text = "Jump over it";
+    // the very pointer, not a copy
+    CHECK(hint::text_to_show(text, 0, 0, 2) == text);
+}
+
+TEST_CASE(hint_text_to_show_hands_on_nothing_once_the_level_is_cleared) {
+    const char* text = "Jump over it";
+    CHECK(hint::text_to_show(text, 120, 0, 2) == nullptr);
+    CHECK(hint::text_to_show(text, 0, 3, 2) == nullptr);
+    CHECK(hint::text_to_show(nullptr, 0, 0, 2) == nullptr);
+    CHECK(hint::text_to_show("", 0, 0, 2) == nullptr);
+}

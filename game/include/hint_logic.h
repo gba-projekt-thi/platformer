@@ -36,6 +36,18 @@ inline auto should_show(
     return text != nullptr && text[0] != '\0' && !cleared;
 }
 
+// The text the scene hands on to the display: the level's hint while it is
+// still to be shown, nullptr otherwise.
+inline auto text_to_show(
+    const char* text,
+    uint32_t best_time_frames,
+    int furthest_level,
+    unsigned level_index) -> const char* {
+    return should_show(text, best_time_frames, furthest_level, level_index)
+               ? text
+               : nullptr;
+}
+
 // Whether the hint's sprites exist this frame. While the game is paused they
 // are released: Butano counts hidden sprites too, and the pause overlay needs
 // up to ~57 glyph sprites (see tools/Check_sprite_budget.py), so a hint that

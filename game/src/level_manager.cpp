@@ -94,11 +94,16 @@ struct LevelManager::FlowOps {
     void reset_entities() { m._reset_entities(); }
     [[nodiscard]] bool has_level() const { return level != nullptr; }
     level_flow::Attempt& attempt() { return m._attempt; }
+    void set_player_deaths_in_level(unsigned deaths) {
+        m._player.set_deaths(m._attempt.at_entry + deaths);
+    }
     [[nodiscard]] unsigned deaths() const { return m._player.get_deaths(); }
     bool layout_changes(unsigned before, unsigned after) {
         return attempt_objects::layout_changes(*level, before, after);
     }
-    void cue_layout_change() { m._cue_layout_change(); }
+    void cue_layout_change(int shake_frames) {
+        m._cue_layout_change(shake_frames);
+    }
     void reset_crumbling() { m._dynamic_platforms.reset_crumbling(); }
     void reset_fleeing() { m._fleeing_platforms.reset(); }
     void respawn_triggers() {
@@ -126,9 +131,8 @@ struct LevelManager::FlowOps {
     void kill_player() { m._player.death(); }
     bool sync_save() { return m._save_sync.sync(); }
     void force_save() { m._save_sync.force_save(); }
-    void start_death_fx() {
-        m._death_fx.start(
-            Cfg::DeathFx::HITSTOP_FRAMES, Cfg::DeathFx::SHAKE_FRAMES);
+    void start_death_fx(int hitstop_frames, int shake_frames) {
+        m._death_fx.start(hitstop_frames, shake_frames);
     }
     void begin_player_death_fx() { m._player.begin_death_fx(); }
 
@@ -174,11 +178,10 @@ struct LevelManager::FlowOps {
         }
     }
     void update_camera() { m._update_camera(); }
-    void apply_shake() {
+    void apply_shake(int amplitude) {
         // The shake moves what is registered with SpriteRegistry (the duck's
         // ghost, platforms, traps, door); the HUD and the background stay put.
-        const death_fx::Offset shake =
-            m._death_fx.shake_offset(Cfg::DeathFx::SHAKE_AMPLITUDE);
+        const death_fx::Offset shake = m._death_fx.shake_offset(amplitude);
         Camera::instance().set_shake(shake.x, shake.y);
     }
     void sync_sprites() {
@@ -289,12 +292,8 @@ unsigned LevelManager::_deaths_in_level() const {
 }
 
 void LevelManager::set_deaths_in_level(unsigned deaths) {
-    _player.set_deaths(_attempt.at_entry + deaths);
-    _attempt.seen = _player.get_deaths();
-    // The replay starts in that layout: no cue for it.
-    _attempt.layout = deaths;
     FlowOps ops{*this, _level};
-    level_flow::finish_respawn(ops);
+    level_flow::start_replay_at(ops, deaths);
 }
 
 // The door that moves between attempts stands where the deaths in this level
@@ -401,8 +400,8 @@ void LevelManager::_update_camera() {
 // The level is not the one of the last attempt: a low rustle and a short
 // shake as the new layout appears (after the death freeze - _finish_respawn()
 // runs when it ends).
-void LevelManager::_cue_layout_change() {
-    _death_fx.shake(Cfg::DeathFx::LAYOUT_SHAKE_FRAMES);
+void LevelManager::_cue_layout_change(int shake_frames) {
+    _death_fx.shake(shake_frames);
     AudioSettings::instance().play_sfx(bn::sound_items::layout_shift);
 }
 
@@ -506,36 +505,42 @@ void LevelManager::_load_triggers(const LevelData& level) {
 }
 
 void LevelManager::_load_dynamic_platforms(const LevelData& level) {
-    _dynamic_platforms.clear();
-    _fleeing_platforms.clear();
     // _platforms / _platform_bodies hold exactly one entry per platform, in
     // the same order as level.platforms (see _load_platforms()).
-    for (int i = 0; i < level.platform_count; ++i) {
-        const PlatformData& platform = level.platforms[i];
-        // One that is not there this attempt stays hidden (_apply_attempt()):
-        // no switch, crumble or flee may bring it back.
-        if (!_present(platform.from_death, platform.until_death)) {
-            continue;
+    struct Ops {
+        LevelManager& m;
+        const LevelData& level;
+        [[nodiscard]] bool present(unsigned from, unsigned until) const {
+            return m._present(from, until);
         }
-        if (!platform.flee_path.empty()) {
-            _fleeing_platforms.add(
-                _platform_bodies[i], *_platforms[i], platform.x, platform.y,
+        void clear_dynamic() { m._dynamic_platforms.clear(); }
+        void clear_fleeing() { m._fleeing_platforms.clear(); }
+        void add_fleeing(int i) {
+            const PlatformData& platform = level.platforms[i];
+            m._fleeing_platforms.add(
+                m._platform_bodies[i], *m._platforms[i], platform.x, platform.y,
                 platform.flee_path.data(), platform.flee_path.size(),
                 platform.flee_range, platform.flee_frames);
         }
-        if (platform.trigger_name != nullptr) {
+        void add_switched(int i) {
+            const PlatformData& platform = level.platforms[i];
             BN_ASSERT(
                 platform.crumble_frames == 0,
                 "A platform cannot be switched and crumbling");
-            _dynamic_platforms.add_switched(
-                get_trigger_by_name(platform.trigger_name), _platform_bodies[i],
-                *_platforms[i], platform.active_when_on);
-        } else if (platform.crumble_frames > 0) {
-            _dynamic_platforms.add_crumbling(
-                _platform_bodies[i], *_platforms[i], platform.crumble_frames,
-                platform.crumble_respawn_frames);
+            m._dynamic_platforms.add_switched(
+                m.get_trigger_by_name(platform.trigger_name),
+                m._platform_bodies[i], *m._platforms[i],
+                platform.active_when_on);
         }
-    }
+        void add_crumbling(int i) {
+            const PlatformData& platform = level.platforms[i];
+            m._dynamic_platforms.add_crumbling(
+                m._platform_bodies[i], *m._platforms[i],
+                platform.crumble_frames, platform.crumble_respawn_frames);
+        }
+    };
+    Ops ops{*this, level};
+    attempt_objects::load_dynamic(level, ops);
 }
 
 void LevelManager::_sync_crumble_platforms() {
@@ -561,36 +566,27 @@ bool LevelManager::_present(unsigned from_death, unsigned until_death) const {
 }
 
 void LevelManager::_apply_attempt(const LevelData& level) {
-    // Objects without a window are never touched.
-    for (int i = 0; i < level.platform_count; ++i) {
-        const PlatformData& platform = level.platforms[i];
-        if (!attempt_objects::has_window(
-                platform.from_death, platform.until_death)) {
-            continue;
+    // Objects without a window are never touched. _traps holds one trap per
+    // level.traps entry, in order (_load_traps()).
+    struct Ops {
+        LevelManager& m;
+        [[nodiscard]] bool present(unsigned from, unsigned until) const {
+            return m._present(from, until);
         }
-        switch (attempt_objects::platform_action(
-            _present(platform.from_death, platform.until_death),
-            platform.trigger_name != nullptr)) {
-            case attempt_objects::PlatformAction::Show:
-                _platform_bodies[i].enable();
-                _platforms[i]->enable();
-                break;
-            case attempt_objects::PlatformAction::Hide:
-                _platform_bodies[i].disable();
-                _platforms[i]->disable();
-                break;
-            case attempt_objects::PlatformAction::LeaveToSwitch:
-            default:
-                break;
+        void show_platform(int i) {
+            m._platform_bodies[i].enable();
+            m._platforms[i]->enable();
         }
-    }
-    // _traps holds one trap per level.traps entry, in order (_load_traps()).
-    for (int i = 0; i < level.trap_count; ++i) {
-        const TrapData& trap = level.traps[i];
-        if (attempt_objects::has_window(trap.from_death, trap.until_death)) {
-            _traps[i]->set_present(_present(trap.from_death, trap.until_death));
+        void hide_platform(int i) {
+            m._platform_bodies[i].disable();
+            m._platforms[i]->disable();
         }
-    }
+        void set_trap_present(int i, bool present) {
+            m._traps[i]->set_present(present);
+        }
+    };
+    Ops ops{*this};
+    attempt_objects::apply(level, ops);
 }
 
 void LevelManager::_load_traps(const LevelData& level) {
