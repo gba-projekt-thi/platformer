@@ -25,6 +25,9 @@ jobs:
   gba-build:
     name: GBA build + headless boot
     runs-on: ubuntu-latest
+    # Publish release (tags only) creates the release and uploads the ROM.
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -82,3 +85,15 @@ jobs:
           docker run --rm --user "$(id -u):$(id -g)" \
             -v ${{ github.workspace }}:/workspace -w /workspace \
             projectgba bash -c "make replay"
+      # A version tag (v1.0.0, ...) publishes the tested ROM as a GitHub
+      # release; plain pushes stop after the replays.
+      - name: Name the ROM after the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: cp platformer.gba "hildegards-adventure-${GITHUB_REF_NAME}.gba"
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: hildegards-adventure-${{ github.ref_name }}.gba
+          generate_release_notes: true
