@@ -325,7 +325,8 @@ with `default_on: true`.
 
 Platforms bind to a trigger through `PlatformData::trigger_name`. After the
 triggers load, the switched platforms are handed to `DynamicPlatforms`
-(`dynamic_platforms.h`, host-tested). Every frame after the collision update
+(`dynamic_platforms.h`, host-tested), which `PlatformSet` (`platform_set.h`,
+host-tested) owns next to the platform bodies and sprites. Every frame after the collision update
 `sync_switched()` compares `switch_logic::platform_active(trigger_on,
 active_when_on)` with the body's enabled state and enables or disables body
 and sprite together. A platform about to re-appear is held back while its box
@@ -490,8 +491,9 @@ Falling (not solid, 20 frames of drop animation) -> Gone (not solid, hidden;
 back after `crumble_respawn_frames`, or never). `update(standing, blocked)`
 returns an event; `DynamicPlatforms` applies it.
 
-Every frame after the collision update `_sync_crumble_platforms()` asks the
-player's bottom probe (`probe_bottom(Cfg::Layer::PLATFORM)`) which platform
+Every frame after the collision update `_sync_crumble_platforms()` (->
+`PlatformSet::sync_crumbling()`) asks the player's bottom probe
+(`probe_bottom(Cfg::Layer::PLATFORM)`) which platform
 bodies the duck stands on and steps every state: `Fell` disables the body,
 `Vanished` hides the sprite, `Respawned` enables both (only once the duck is
 not inside the box). The shake and the fall are the sprite's
@@ -532,8 +534,9 @@ door stands elsewhere, compared with the layout that was there (not `deaths -
 - **Platforms**: `attempt_objects::platform_action()` decides: absent -> Hide,
   present -> Show, present and switched -> LeaveToSwitch (a returning switched
   platform still never appears inside the duck). `_load_dynamic_platforms()`
-  restarts `DynamicPlatforms` and `FleeingPlatforms` on every respawn and
-  registers only the platforms that are there.
+  (`PlatformSet::load_dynamic()`) restarts `DynamicPlatforms` and
+  `FleeingPlatforms` on every respawn and registers only the platforms that are
+  there.
 - **Checkpoints** are not windowed; the snapshot only restores trigger states.
   `Check_checkpoints.py` keeps a flag off platforms with a window.
 
@@ -543,8 +546,8 @@ counts every copy.
 ### Checkpoints
 
 `LevelData::checkpoints` lists `CheckpointData {x, y}` entries (center of the
-flag sprite = respawn position). `LevelManager::_load_checkpoints()` creates one
-`Checkpoint` per entry: a `PhysicsBody` that senses the player on the trigger
+flag sprite = respawn position). `LevelManager::_load_checkpoints()` (-> `CheckpointSystem::load()`,
+`checkpoint_system.h`, host-tested) creates one `Checkpoint` per entry: a `PhysicsBody` that senses the player on the trigger
 layer and raises a flag in `on_enter()`; `take_hit()` hands it to the manager
 once. It is deliberately not resettable.
 

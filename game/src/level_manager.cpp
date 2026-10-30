@@ -60,7 +60,7 @@ struct LevelManager::FlowOps {
         m._door_trap = m.find_trigger(level->door.trap_trigger_name);
     }
     void forget_door_trap_in_checkpoints() {
-        m._checkpoint_run.forget_trigger(
+        m._checkpoints.forget_trigger(
             m._door_trap != nullptr ? m._door_trap - m._triggers.data()
                                     : CheckpointRun::NO_TRIGGER);
     }
@@ -69,7 +69,7 @@ struct LevelManager::FlowOps {
     void load_checkpoints() { m._load_checkpoints(*level); }
     void remember_level() { m._level = level; }
     void apply_attempt() { m._apply_attempt(*level); }
-    void sync_switched() { m._dynamic_platforms.sync_switched(m._player.pos); }
+    void sync_switched() { m._platforms.sync_switched(m._player.pos); }
     void release_scenery() {
         m._background.reset();
         m._door.reset();
@@ -79,16 +79,13 @@ struct LevelManager::FlowOps {
 
     void forget_boss() { m._boss = nullptr; }
     void forget_door_trap() { m._door_trap = nullptr; }
-    void clear_dynamic_platforms() { m._dynamic_platforms.clear(); }
-    void clear_fleeing_platforms() { m._fleeing_platforms.clear(); }
-    void clear_platforms() {
-        m._platforms.clear();
-        m._platform_bodies.clear();
-    }
+    void clear_dynamic_platforms() { m._platforms.clear_dynamic(); }
+    void clear_fleeing_platforms() { m._platforms.clear_fleeing(); }
+    void clear_platforms() { m._platforms.clear_platforms(); }
     void clear_triggers() { m._triggers.clear(); }
     void clear_traps() { m._traps.clear(); }
-    void clear_checkpoints() { m._checkpoints.clear(); }
-    void forget_checkpoint_run() { m._checkpoint_run = CheckpointRun(); }
+    void clear_checkpoints() { m._checkpoints.clear_flags(); }
+    void forget_checkpoint_run() { m._checkpoints.forget_run(); }
     void clear_resettables() { m._resettables.clear(); }
 
     // -- respawn ---------------------------------------------------------
@@ -105,11 +102,11 @@ struct LevelManager::FlowOps {
     void cue_layout_change(int shake_frames) {
         m._cue_layout_change(shake_frames);
     }
-    void reset_crumbling() { m._dynamic_platforms.reset_crumbling(); }
-    void reset_fleeing() { m._fleeing_platforms.reset(); }
+    void reset_crumbling() { m._platforms.reset_crumbling(); }
+    void reset_fleeing() { m._platforms.reset_fleeing(); }
     void respawn_triggers() {
         m._trigger_chains.respawn(m._triggers, [this](auto& triggers) {
-            m._checkpoint_run.restore(triggers);
+            m._checkpoints.restore_triggers(triggers);
         });
     }
     void snap_camera() {
@@ -171,7 +168,7 @@ struct LevelManager::FlowOps {
     void sync_checkpoints() { m._sync_checkpoints(); }
     void sync_crumbling() { m._sync_crumble_platforms(); }
     void update_fleeing() {
-        m._fleeing_platforms.update(m._player.pos.x, m._player.pos.y);
+        m._platforms.update_fleeing(m._player.pos.x, m._player.pos.y);
     }
     void sync_boss_door() { m._sync_boss_door(); }
     void feel_boss_hits() { m._feel_boss_hits(); }
@@ -255,8 +252,7 @@ void LevelManager::_reset_entities() {
 void LevelManager::_load_player_spawn(const LevelData& level) {
     _player.teleport_to(level.player_data.x, level.player_data.y);
     _player.set_spawn_point(level.player_data.x, level.player_data.y);
-    _spawn_x = level.player_data.x;
-    _spawn_y = level.player_data.y;
+    _checkpoints.set_level_spawn(level.player_data.x, level.player_data.y);
     _player.set_ground_friction(level.ground_friction);
     _player.set_assist_mode(assist_mode_active());
     _loaded_in_assist_mode = assist_mode_active();
@@ -459,14 +455,11 @@ void LevelManager::_load_platforms(const LevelData& level) {
         auto wrapped_sprite = bn::make_unique<Sprite>(
             bn::move(raw_sprite), platform.x, platform.y);
 
-        _platform_bodies.emplace_back(
-            platform.x, platform.y, platform.width, platform.height,
-            Cfg::Layer::PLATFORM);
-        _platform_bodies.back().pos.offset_x = platform.offset_x;
-        _platform_bodies.back().pos.offset_y = platform.offset_y;
-        _platform_bodies.back().sprite = wrapped_sprite.get();
-
-        _platforms.push_back(bn::move(wrapped_sprite));
+        StaticBody& body = _platforms.add(
+            bn::move(wrapped_sprite), platform.x, platform.y, platform.width,
+            platform.height, Cfg::Layer::PLATFORM);
+        body.pos.offset_x = platform.offset_x;
+        body.pos.offset_y = platform.offset_y;
     }
 }
 
@@ -510,59 +503,22 @@ void LevelManager::_load_triggers(const LevelData& level) {
 }
 
 void LevelManager::_load_dynamic_platforms(const LevelData& level) {
-    // _platforms / _platform_bodies hold exactly one entry per platform, in
-    // the same order as level.platforms (see _load_platforms()).
-    struct Ops {
-        LevelManager& m;
-        const LevelData& level;
-        [[nodiscard]] bool present(unsigned from, unsigned until) const {
-            return m._present(from, until);
-        }
-        void clear_dynamic() { m._dynamic_platforms.clear(); }
-        void clear_fleeing() { m._fleeing_platforms.clear(); }
-        void add_fleeing(int i) {
-            const PlatformData& platform = level.platforms[i];
-            m._fleeing_platforms.add(
-                m._platform_bodies[i], *m._platforms[i], platform.x, platform.y,
-                platform.flee_path.data(), platform.flee_path.size(),
-                platform.flee_range, platform.flee_frames);
-        }
-        void add_switched(int i) {
-            const PlatformData& platform = level.platforms[i];
+    _platforms.load_dynamic(
+        level,
+        [this](unsigned from, unsigned until) { return _present(from, until); },
+        [this](const PlatformData& platform) -> Trigger& {
             BN_ASSERT(
                 platform.crumble_frames == 0,
                 "A platform cannot be switched and crumbling");
-            m._dynamic_platforms.add_switched(
-                m.get_trigger_by_name(platform.trigger_name),
-                m._platform_bodies[i], *m._platforms[i],
-                platform.active_when_on);
-        }
-        void add_crumbling(int i) {
-            const PlatformData& platform = level.platforms[i];
-            m._dynamic_platforms.add_crumbling(
-                m._platform_bodies[i], *m._platforms[i],
-                platform.crumble_frames, platform.crumble_respawn_frames);
-        }
-    };
-    Ops ops{*this, level};
-    attempt_objects::load_dynamic(level, ops);
+            return get_trigger_by_name(platform.trigger_name);
+        });
 }
 
 void LevelManager::_sync_crumble_platforms() {
-    if (!_dynamic_platforms.has_crumbling()) {
-        return;
-    }
-    // What the duck stands on right now (1px probe below its feet).
-    const CollisionResult below = _player.probe_bottom(Cfg::Layer::PLATFORM);
-    _dynamic_platforms.sync_crumbling(
-        _player.pos, [&below](const StaticBody& body) {
-            for (int hit = 0; hit < below.count; ++hit) {
-                if (below.hits[hit].body == &body) {
-                    return true;
-                }
-            }
-            return false;
-        });
+    _platforms.sync_crumbling(_player.pos, [this] {
+        // What the duck stands on right now (1px probe below its feet).
+        return _player.probe_bottom(Cfg::Layer::PLATFORM);
+    });
 }
 
 bool LevelManager::_present(unsigned from_death, unsigned until_death) const {
@@ -578,14 +534,8 @@ void LevelManager::_apply_attempt(const LevelData& level) {
         [[nodiscard]] bool present(unsigned from, unsigned until) const {
             return m._present(from, until);
         }
-        void show_platform(int i) {
-            m._platform_bodies[i].enable();
-            m._platforms[i]->enable();
-        }
-        void hide_platform(int i) {
-            m._platform_bodies[i].disable();
-            m._platforms[i]->disable();
-        }
+        void show_platform(int i) { m._platforms.show(i); }
+        void hide_platform(int i) { m._platforms.hide(i); }
         void set_trap_present(int i, bool present) {
             m._traps[i]->set_present(present);
         }
@@ -651,26 +601,17 @@ void LevelManager::flash_door(bool lit) {
 }
 
 void LevelManager::_load_checkpoints(const LevelData& level) {
-    for (int i = 0; i < level.checkpoint_count; ++i) {
-        _checkpoints.emplace_back(
-            level.checkpoints[i].x, level.checkpoints[i].y);
-        _checkpoints.back().set_active(false);
-    }
+    _checkpoints.load(level);
 }
 
 void LevelManager::_sync_checkpoints() {
-    const int reached = _checkpoint_run.sync(_checkpoints, _triggers);
-    if (reached < 0) {
-        return;
+    if (_checkpoints.sync(_triggers, _player)) {
+        AudioSettings::instance().play_sfx(bn::sound_items::confirm);
     }
-    _player.set_spawn_point(
-        _checkpoints[reached].pos.x, _checkpoints[reached].pos.y);
-    AudioSettings::instance().play_sfx(bn::sound_items::confirm);
 }
 
 void LevelManager::_clear_checkpoint() {
-    _checkpoint_run.clear(_checkpoints);
-    _player.set_spawn_point(_spawn_x, _spawn_y);
+    _checkpoints.clear(_player);
 }
 
 void LevelManager::load(const LevelData& level) {
