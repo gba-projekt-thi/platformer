@@ -62,10 +62,10 @@ class LevelManagerGlueTests(unittest.TestCase):
 
     def test_the_duck_standing_on_a_platform_comes_from_the_bottom_probe(self):
         self.assertIn("_player.probe_bottom(Cfg::Layer::PLATFORM)", self.crumble)
-        self.assertIn("_dynamic_platforms.sync_crumbling(", self.crumble)
+        self.assertIn("_platforms.sync_crumbling(", self.crumble)
 
     def test_the_level_spawn_is_remembered_for_restart(self):
-        self.assertIn("_spawn_x = level.player_data.x", self.spawn)
+        self.assertIn("_checkpoints.set_level_spawn(level.player_data.x", self.spawn)
 
 
 if __name__ == "__main__":

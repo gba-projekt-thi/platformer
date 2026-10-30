@@ -17,6 +17,7 @@
 #include "cfg.h"
 #include "checkpoint.h"
 #include "checkpoint_logic.h"
+#include "checkpoint_system.h"
 #include "crumble_logic.h"
 #include "data_manager.h"
 #include "death_fx.h"
@@ -30,6 +31,7 @@
 #include "level_structure.h"
 #include "log.h"
 #include "pause_controller.h"
+#include "platform_set.h"
 #include "player.h"
 #include "respawn_logic.h"
 #include "save_sync_controller.h"
@@ -169,16 +171,14 @@ class LevelManager {
     void _load_triggers(const LevelData& level);
     void _load_traps(const LevelData& level);
     void _load_checkpoints(const LevelData& level);
-    // Takes this frame's checkpoint touches (CheckpointRun) and makes a newly
-    // reached flag the respawn point.
+    // Takes this frame's checkpoint touches (CheckpointSystem) and makes a
+    // newly reached flag the respawn point.
     void _sync_checkpoints();
     // Restart Level / level load: no checkpoint, respawn at the level spawn.
     void _clear_checkpoint();
-    // Hands the switched (trigger_name) and crumbling (crumble_frames)
-    // platforms to _dynamic_platforms and the running ones (flee_path) to
-    // _fleeing_platforms, after the platforms and triggers are loaded - only
-    // those that are there on this attempt (_present()). Starts both over, so
-    // a respawn calls it again after every death.
+    // Hands the switched, crumbling and running platforms to _platforms (see
+    // PlatformSet::load_dynamic()), after the platforms and triggers are
+    // loaded. A respawn calls it again after every death.
     void _load_dynamic_platforms(const LevelData& level);
 
     // Level Devil: deaths of this visit of the level (the run's total since
@@ -200,38 +200,31 @@ class LevelManager {
     // without LevelManager needing to know their concrete type.
     void _reset_entities();
 
-    bn::vector<bn::unique_ptr<Sprite>, Cfg::Level::Limits::PLATFORMS>
+    // The platforms: bodies and pictures, the switched, crumbling and running
+    // ones (platform_set.h).
+    PlatformSet<
+        bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES>,
+        bn::vector<bn::unique_ptr<Sprite>, Cfg::Level::Limits::PLATFORMS>,
+        Trigger,
+        bn::fixed_point,
+        Cfg::Level::Limits::PLATFORMS>
         _platforms;
-    bn::vector<StaticBody, Cfg::Level::Limits::PLATFORM_BODIES>
-        _platform_bodies;
     bn::vector<Trigger, Cfg::Level::Limits::TRIGGERS> _triggers;
     bn::vector<bn::unique_ptr<BaseTrap>, Cfg::Level::Limits::TOTAL_TRAPS>
         _traps;
-    bn::vector<Checkpoint, Cfg::Level::Limits::CHECKPOINTS> _checkpoints;
-
-    // Active checkpoint and the triggers that were on when it was reached
-    // (checkpoint_logic.h); the level's own spawn point to fall back to.
-    CheckpointRun _checkpoint_run;
+    // The flags, the active one with the triggers that were on when it was
+    // reached, and the level's own spawn point to fall back to
+    // (checkpoint_system.h).
+    CheckpointSystem<
+        bn::vector<Checkpoint, Cfg::Level::Limits::CHECKPOINTS>,
+        bn::fixed>
+        _checkpoints;
     // Which trigger follows which (TriggerData::follows) and the hand-over
     // between them, once per frame.
     TriggerChains _trigger_chains;
     static_assert(
         Cfg::Level::Limits::TRIGGERS <= TriggerChains::MAX_TRIGGERS,
         "TriggerChains must cover every trigger of a level");
-    bn::fixed _spawn_x = 0;
-    bn::fixed _spawn_y = 0;
-
-    // Switched and crumbling platforms (dynamic_platforms.h). Non-owning -
-    // the platform bodies/sprites and triggers live in the containers above.
-    DynamicPlatforms<StaticBody, Sprite, Trigger, Cfg::Level::Limits::PLATFORMS>
-        _dynamic_platforms;
-    // Platforms that run away from the duck (fleeing_platforms.h).
-    FleeingPlatforms<
-        StaticBody,
-        Sprite,
-        bn::fixed_point,
-        Cfg::Level::Limits::PLATFORMS>
-        _fleeing_platforms;
 
     // Non-owning view over every currently-loaded IResettable entity:
     // the triggers (registered in _load_triggers()) and the traps
