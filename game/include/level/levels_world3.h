@@ -36,11 +36,11 @@ constexpr PlatformData level3_platforms[] = {
     {-64, -8, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
     {-96, -24, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
     {-48, -40, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
-    {8, -32, 32, 8, 0, 0, bn::sprite_items::nebel, 0},
-    // Final section
-    {56, -48, 16, 8, 0, 0, bn::sprite_items::baumstamm, 0},
-    {72, -48, 16, 8, 0, 0, bn::sprite_items::baumstamm, 1},
-    {88, -48, 16, 8, 0, 0, bn::sprite_items::baumstamm, 2}};
+    // Dash gap: 85px from the fog above to the final section, too wide for a
+    // jump
+    {61, -48, 16, 8, 0, 0, bn::sprite_items::baumstamm, 0},
+    {77, -48, 16, 8, 0, 0, bn::sprite_items::baumstamm, 1},
+    {93, -48, 16, 8, 0, 0, bn::sprite_items::baumstamm, 2}};
 
 constexpr TriggerData level3_triggers[] = {
     // Trigger activated during upper fog climb
@@ -68,6 +68,9 @@ constexpr TrapData level3_traps[] = {
     {TrapType::BASE, 80, 48, 32, 28, 0, 2, bn::sprite_items::mushroom32x32, 16,
      TRAP_GRAPHICS_INDEXES_0, 0, 0, 0, NO_PATH_TRAP}};
 
+// Right before the dash gap: a miss costs only the last climb step.
+constexpr CheckpointData level3_checkpoints[] = {{-42, -52}};
+
 const LevelData LEVEL_3 = {
     level3_platforms,
     sizeof(level3_platforms) / sizeof(level3_platforms[0]),
@@ -80,7 +83,7 @@ const LevelData LEVEL_3 = {
     // Player spawn
     {-96, 46},
     // Door position
-    {72, -64},
+    {77, -64},
     // World size (single-screen; spelled out so ground_friction below can
     // be set - the same 240x160 default every non-scrolling level uses)
     240,
@@ -90,8 +93,8 @@ const LevelData LEVEL_3 = {
     // First level with the dash enabled (Cfg::Dash::UNLOCK_WORLD = World 3):
     // tell the player once.
     "New: Dash with B",
-    nullptr,
-    0,
+    level3_checkpoints,
+    sizeof(level3_checkpoints) / sizeof(level3_checkpoints[0]),
     0,
     &LEVEL_3_MIRROR,
     18};
